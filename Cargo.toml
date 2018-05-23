@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "codegen",
+    "lib",
+    "examples/http",
+    "examples/timer"
+]

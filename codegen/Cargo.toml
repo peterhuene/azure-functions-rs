@@ -1,0 +1,16 @@
+[package]
+name = "azure-functions-codegen"
+license = "MIT"
+version = "0.1.1"
+authors = ["Peter Huene <peterhuene@protonmail.com>"]
+description = "Code generation for writing Azure Functions in Rust."
+repository = "https://github.com/peterhuene/azure-functions-rs/"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "0.6.3"
+syn = { version = "0.14.2", features = ["full"] }
+proc-macro2 = { version = "0.4", features = ["nightly"] }
+lazy_static = "1.0.1"

@@ -1,0 +1,392 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `Status` struct in crate `azure_functions`."><meta name="keywords" content="rust, rustlang, rust-lang, Status"><title>azure_functions::http::Status - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc struct"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><p class='location'>Struct Status</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.from_code">from_code</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Debug">Debug</a><a href="#impl-Clone">Clone</a><a href="#impl-Copy">Copy</a><a href="#impl-Hash">Hash</a><a href="#impl-PartialEq">PartialEq</a><a href="#impl-Eq">Eq</a><a href="#impl-ToString">ToString</a><a href="#impl-From%3Cu16%3E">From&lt;u16&gt;</a></div><a class="sidebar-title" href="#synthetic-implementations">Auto Trait Implementations</a><div class="sidebar-links"><a href="#impl-Send">Send</a><a href="#impl-Sync">Sync</a></div></div><p class='location'><a href='../index.html'>azure_functions</a>::<wbr><a href='index.html'>http</a></p><script>window.sidebarCurrent = {name: 'Status', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>azure_functions</a>::<wbr><a href='index.html'>http</a>::<wbr><a class="struct" href=''>Status</a></span><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/azure_functions/http/status.rs.html#3' title='goto source code'>[src]</a></span></h1><div class="docblock type-decl"><pre class='rust struct'>pub struct Status(_);</pre></div><div class='docblock'><p>Represents a HTTP status code.</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#36-99' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='associatedconstant.Continue' class="associatedconstant"><span id='Continue.v' class='invisible'><code>pub const <a href='#associatedconstant.Continue' class="constant"><b>Continue</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Continue</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">100</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+100
+</b>.</p>
+</div><h4 id='associatedconstant.SwitchingProtocols' class="associatedconstant"><span id='SwitchingProtocols.v' class='invisible'><code>pub const <a href='#associatedconstant.SwitchingProtocols' class="constant"><b>SwitchingProtocols</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">SwitchingProtocols</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">101</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+101
+</b>.</p>
+</div><h4 id='associatedconstant.Processing' class="associatedconstant"><span id='Processing.v' class='invisible'><code>pub const <a href='#associatedconstant.Processing' class="constant"><b>Processing</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Processing</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">102</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+102
+</b>.</p>
+</div><h4 id='associatedconstant.Ok' class="associatedconstant"><span id='Ok.v' class='invisible'><code>pub const <a href='#associatedconstant.Ok' class="constant"><b>Ok</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="prelude-val">Ok</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">200</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+200
+</b>.</p>
+</div><h4 id='associatedconstant.Created' class="associatedconstant"><span id='Created.v' class='invisible'><code>pub const <a href='#associatedconstant.Created' class="constant"><b>Created</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Created</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">201</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+201
+</b>.</p>
+</div><h4 id='associatedconstant.Accepted' class="associatedconstant"><span id='Accepted.v' class='invisible'><code>pub const <a href='#associatedconstant.Accepted' class="constant"><b>Accepted</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Accepted</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">202</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+202
+</b>.</p>
+</div><h4 id='associatedconstant.NonAuthoritativeInformation' class="associatedconstant"><span id='NonAuthoritativeInformation.v' class='invisible'><code>pub const <a href='#associatedconstant.NonAuthoritativeInformation' class="constant"><b>NonAuthoritativeInformation</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NonAuthoritativeInformation</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">203</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+203
+</b>.</p>
+</div><h4 id='associatedconstant.NoContent' class="associatedconstant"><span id='NoContent.v' class='invisible'><code>pub const <a href='#associatedconstant.NoContent' class="constant"><b>NoContent</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NoContent</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">204</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+204
+</b>.</p>
+</div><h4 id='associatedconstant.ResetContent' class="associatedconstant"><span id='ResetContent.v' class='invisible'><code>pub const <a href='#associatedconstant.ResetContent' class="constant"><b>ResetContent</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">ResetContent</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">205</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+205
+</b>.</p>
+</div><h4 id='associatedconstant.PartialContent' class="associatedconstant"><span id='PartialContent.v' class='invisible'><code>pub const <a href='#associatedconstant.PartialContent' class="constant"><b>PartialContent</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">PartialContent</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">206</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+206
+</b>.</p>
+</div><h4 id='associatedconstant.MultiStatus' class="associatedconstant"><span id='MultiStatus.v' class='invisible'><code>pub const <a href='#associatedconstant.MultiStatus' class="constant"><b>MultiStatus</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">MultiStatus</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">207</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+207
+</b>.</p>
+</div><h4 id='associatedconstant.AlreadyReported' class="associatedconstant"><span id='AlreadyReported.v' class='invisible'><code>pub const <a href='#associatedconstant.AlreadyReported' class="constant"><b>AlreadyReported</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">AlreadyReported</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">208</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+208
+</b>.</p>
+</div><h4 id='associatedconstant.ImUsed' class="associatedconstant"><span id='ImUsed.v' class='invisible'><code>pub const <a href='#associatedconstant.ImUsed' class="constant"><b>ImUsed</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">ImUsed</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">226</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+226
+</b>.</p>
+</div><h4 id='associatedconstant.MultipleChoices' class="associatedconstant"><span id='MultipleChoices.v' class='invisible'><code>pub const <a href='#associatedconstant.MultipleChoices' class="constant"><b>MultipleChoices</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">MultipleChoices</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">300</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+300
+</b>.</p>
+</div><h4 id='associatedconstant.MovedPermanently' class="associatedconstant"><span id='MovedPermanently.v' class='invisible'><code>pub const <a href='#associatedconstant.MovedPermanently' class="constant"><b>MovedPermanently</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">MovedPermanently</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">301</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+301
+</b>.</p>
+</div><h4 id='associatedconstant.Found' class="associatedconstant"><span id='Found.v' class='invisible'><code>pub const <a href='#associatedconstant.Found' class="constant"><b>Found</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Found</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">302</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+302
+</b>.</p>
+</div><h4 id='associatedconstant.SeeOther' class="associatedconstant"><span id='SeeOther.v' class='invisible'><code>pub const <a href='#associatedconstant.SeeOther' class="constant"><b>SeeOther</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">SeeOther</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">303</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+303
+</b>.</p>
+</div><h4 id='associatedconstant.NotModified' class="associatedconstant"><span id='NotModified.v' class='invisible'><code>pub const <a href='#associatedconstant.NotModified' class="constant"><b>NotModified</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NotModified</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">304</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+304
+</b>.</p>
+</div><h4 id='associatedconstant.UseProxy' class="associatedconstant"><span id='UseProxy.v' class='invisible'><code>pub const <a href='#associatedconstant.UseProxy' class="constant"><b>UseProxy</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">UseProxy</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">305</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+305
+</b>.</p>
+</div><h4 id='associatedconstant.TemporaryRedirect' class="associatedconstant"><span id='TemporaryRedirect.v' class='invisible'><code>pub const <a href='#associatedconstant.TemporaryRedirect' class="constant"><b>TemporaryRedirect</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">TemporaryRedirect</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">307</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+307
+</b>.</p>
+</div><h4 id='associatedconstant.PermanentRedirect' class="associatedconstant"><span id='PermanentRedirect.v' class='invisible'><code>pub const <a href='#associatedconstant.PermanentRedirect' class="constant"><b>PermanentRedirect</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">PermanentRedirect</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">308</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+308
+</b>.</p>
+</div><h4 id='associatedconstant.BadRequest' class="associatedconstant"><span id='BadRequest.v' class='invisible'><code>pub const <a href='#associatedconstant.BadRequest' class="constant"><b>BadRequest</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">BadRequest</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">400</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+400
+</b>.</p>
+</div><h4 id='associatedconstant.Unauthorized' class="associatedconstant"><span id='Unauthorized.v' class='invisible'><code>pub const <a href='#associatedconstant.Unauthorized' class="constant"><b>Unauthorized</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Unauthorized</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">401</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+401
+</b>.</p>
+</div><h4 id='associatedconstant.PaymentRequired' class="associatedconstant"><span id='PaymentRequired.v' class='invisible'><code>pub const <a href='#associatedconstant.PaymentRequired' class="constant"><b>PaymentRequired</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">PaymentRequired</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">402</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+402
+</b>.</p>
+</div><h4 id='associatedconstant.Forbidden' class="associatedconstant"><span id='Forbidden.v' class='invisible'><code>pub const <a href='#associatedconstant.Forbidden' class="constant"><b>Forbidden</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Forbidden</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">403</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+403
+</b>.</p>
+</div><h4 id='associatedconstant.NotFound' class="associatedconstant"><span id='NotFound.v' class='invisible'><code>pub const <a href='#associatedconstant.NotFound' class="constant"><b>NotFound</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NotFound</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">404</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+404
+</b>.</p>
+</div><h4 id='associatedconstant.MethodNotAllowed' class="associatedconstant"><span id='MethodNotAllowed.v' class='invisible'><code>pub const <a href='#associatedconstant.MethodNotAllowed' class="constant"><b>MethodNotAllowed</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">MethodNotAllowed</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">405</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+405
+</b>.</p>
+</div><h4 id='associatedconstant.NotAcceptable' class="associatedconstant"><span id='NotAcceptable.v' class='invisible'><code>pub const <a href='#associatedconstant.NotAcceptable' class="constant"><b>NotAcceptable</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NotAcceptable</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">406</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+406
+</b>.</p>
+</div><h4 id='associatedconstant.ProxyAuthenticationRequired' class="associatedconstant"><span id='ProxyAuthenticationRequired.v' class='invisible'><code>pub const <a href='#associatedconstant.ProxyAuthenticationRequired' class="constant"><b>ProxyAuthenticationRequired</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">ProxyAuthenticationRequired</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">407</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+407
+</b>.</p>
+</div><h4 id='associatedconstant.RequestTimeout' class="associatedconstant"><span id='RequestTimeout.v' class='invisible'><code>pub const <a href='#associatedconstant.RequestTimeout' class="constant"><b>RequestTimeout</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">RequestTimeout</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">408</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+408
+</b>.</p>
+</div><h4 id='associatedconstant.Conflict' class="associatedconstant"><span id='Conflict.v' class='invisible'><code>pub const <a href='#associatedconstant.Conflict' class="constant"><b>Conflict</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Conflict</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">409</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+409
+</b>.</p>
+</div><h4 id='associatedconstant.Gone' class="associatedconstant"><span id='Gone.v' class='invisible'><code>pub const <a href='#associatedconstant.Gone' class="constant"><b>Gone</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Gone</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">410</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+410
+</b>.</p>
+</div><h4 id='associatedconstant.LengthRequired' class="associatedconstant"><span id='LengthRequired.v' class='invisible'><code>pub const <a href='#associatedconstant.LengthRequired' class="constant"><b>LengthRequired</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">LengthRequired</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">411</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+411
+</b>.</p>
+</div><h4 id='associatedconstant.PreconditionFailed' class="associatedconstant"><span id='PreconditionFailed.v' class='invisible'><code>pub const <a href='#associatedconstant.PreconditionFailed' class="constant"><b>PreconditionFailed</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">PreconditionFailed</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">412</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+412
+</b>.</p>
+</div><h4 id='associatedconstant.PayloadTooLarge' class="associatedconstant"><span id='PayloadTooLarge.v' class='invisible'><code>pub const <a href='#associatedconstant.PayloadTooLarge' class="constant"><b>PayloadTooLarge</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">PayloadTooLarge</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">413</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+413
+</b>.</p>
+</div><h4 id='associatedconstant.UriTooLong' class="associatedconstant"><span id='UriTooLong.v' class='invisible'><code>pub const <a href='#associatedconstant.UriTooLong' class="constant"><b>UriTooLong</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">UriTooLong</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">414</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+414
+</b>.</p>
+</div><h4 id='associatedconstant.UnsupportedMediaType' class="associatedconstant"><span id='UnsupportedMediaType.v' class='invisible'><code>pub const <a href='#associatedconstant.UnsupportedMediaType' class="constant"><b>UnsupportedMediaType</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">UnsupportedMediaType</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">415</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+415
+</b>.</p>
+</div><h4 id='associatedconstant.RangeNotSatisfiable' class="associatedconstant"><span id='RangeNotSatisfiable.v' class='invisible'><code>pub const <a href='#associatedconstant.RangeNotSatisfiable' class="constant"><b>RangeNotSatisfiable</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">RangeNotSatisfiable</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">416</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+416
+</b>.</p>
+</div><h4 id='associatedconstant.ExpectationFailed' class="associatedconstant"><span id='ExpectationFailed.v' class='invisible'><code>pub const <a href='#associatedconstant.ExpectationFailed' class="constant"><b>ExpectationFailed</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">ExpectationFailed</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">417</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+417
+</b>.</p>
+</div><h4 id='associatedconstant.ImATeapot' class="associatedconstant"><span id='ImATeapot.v' class='invisible'><code>pub const <a href='#associatedconstant.ImATeapot' class="constant"><b>ImATeapot</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">ImATeapot</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">418</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+418
+</b>.</p>
+</div><h4 id='associatedconstant.MisdirectedRequest' class="associatedconstant"><span id='MisdirectedRequest.v' class='invisible'><code>pub const <a href='#associatedconstant.MisdirectedRequest' class="constant"><b>MisdirectedRequest</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">MisdirectedRequest</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">421</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+421
+</b>.</p>
+</div><h4 id='associatedconstant.UnprocessableEntity' class="associatedconstant"><span id='UnprocessableEntity.v' class='invisible'><code>pub const <a href='#associatedconstant.UnprocessableEntity' class="constant"><b>UnprocessableEntity</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">UnprocessableEntity</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">422</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+422
+</b>.</p>
+</div><h4 id='associatedconstant.Locked' class="associatedconstant"><span id='Locked.v' class='invisible'><code>pub const <a href='#associatedconstant.Locked' class="constant"><b>Locked</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">Locked</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">423</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+423
+</b>.</p>
+</div><h4 id='associatedconstant.FailedDependency' class="associatedconstant"><span id='FailedDependency.v' class='invisible'><code>pub const <a href='#associatedconstant.FailedDependency' class="constant"><b>FailedDependency</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">FailedDependency</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">424</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+424
+</b>.</p>
+</div><h4 id='associatedconstant.UpgradeRequired' class="associatedconstant"><span id='UpgradeRequired.v' class='invisible'><code>pub const <a href='#associatedconstant.UpgradeRequired' class="constant"><b>UpgradeRequired</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">UpgradeRequired</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">426</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+426
+</b>.</p>
+</div><h4 id='associatedconstant.PreconditionRequired' class="associatedconstant"><span id='PreconditionRequired.v' class='invisible'><code>pub const <a href='#associatedconstant.PreconditionRequired' class="constant"><b>PreconditionRequired</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">PreconditionRequired</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">428</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+428
+</b>.</p>
+</div><h4 id='associatedconstant.TooManyRequests' class="associatedconstant"><span id='TooManyRequests.v' class='invisible'><code>pub const <a href='#associatedconstant.TooManyRequests' class="constant"><b>TooManyRequests</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">TooManyRequests</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">429</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+429
+</b>.</p>
+</div><h4 id='associatedconstant.RequestHeaderFieldsTooLarge' class="associatedconstant"><span id='RequestHeaderFieldsTooLarge.v' class='invisible'><code>pub const <a href='#associatedconstant.RequestHeaderFieldsTooLarge' class="constant"><b>RequestHeaderFieldsTooLarge</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">RequestHeaderFieldsTooLarge</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">431</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+431
+</b>.</p>
+</div><h4 id='associatedconstant.UnavailableForLegalReasons' class="associatedconstant"><span id='UnavailableForLegalReasons.v' class='invisible'><code>pub const <a href='#associatedconstant.UnavailableForLegalReasons' class="constant"><b>UnavailableForLegalReasons</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">UnavailableForLegalReasons</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">451</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+451
+</b>.</p>
+</div><h4 id='associatedconstant.InternalServerError' class="associatedconstant"><span id='InternalServerError.v' class='invisible'><code>pub const <a href='#associatedconstant.InternalServerError' class="constant"><b>InternalServerError</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">InternalServerError</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">500</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+500
+</b>.</p>
+</div><h4 id='associatedconstant.NotImplemented' class="associatedconstant"><span id='NotImplemented.v' class='invisible'><code>pub const <a href='#associatedconstant.NotImplemented' class="constant"><b>NotImplemented</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NotImplemented</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">501</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+501
+</b>.</p>
+</div><h4 id='associatedconstant.BadGateway' class="associatedconstant"><span id='BadGateway.v' class='invisible'><code>pub const <a href='#associatedconstant.BadGateway' class="constant"><b>BadGateway</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">BadGateway</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">502</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+502
+</b>.</p>
+</div><h4 id='associatedconstant.ServiceUnavailable' class="associatedconstant"><span id='ServiceUnavailable.v' class='invisible'><code>pub const <a href='#associatedconstant.ServiceUnavailable' class="constant"><b>ServiceUnavailable</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">ServiceUnavailable</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">503</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+503
+</b>.</p>
+</div><h4 id='associatedconstant.GatewayTimeout' class="associatedconstant"><span id='GatewayTimeout.v' class='invisible'><code>pub const <a href='#associatedconstant.GatewayTimeout' class="constant"><b>GatewayTimeout</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">GatewayTimeout</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">504</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+504
+</b>.</p>
+</div><h4 id='associatedconstant.HttpVersionNotSupported' class="associatedconstant"><span id='HttpVersionNotSupported.v' class='invisible'><code>pub const <a href='#associatedconstant.HttpVersionNotSupported' class="constant"><b>HttpVersionNotSupported</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">HttpVersionNotSupported</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">505</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+505
+</b>.</p>
+</div><h4 id='associatedconstant.VariantAlsoNegotiates' class="associatedconstant"><span id='VariantAlsoNegotiates.v' class='invisible'><code>pub const <a href='#associatedconstant.VariantAlsoNegotiates' class="constant"><b>VariantAlsoNegotiates</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">VariantAlsoNegotiates</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">506</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+506
+</b>.</p>
+</div><h4 id='associatedconstant.InsufficientStorage' class="associatedconstant"><span id='InsufficientStorage.v' class='invisible'><code>pub const <a href='#associatedconstant.InsufficientStorage' class="constant"><b>InsufficientStorage</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">InsufficientStorage</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">507</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+507
+</b>.</p>
+</div><h4 id='associatedconstant.LoopDetected' class="associatedconstant"><span id='LoopDetected.v' class='invisible'><code>pub const <a href='#associatedconstant.LoopDetected' class="constant"><b>LoopDetected</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">LoopDetected</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">508</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+508
+</b>.</p>
+</div><h4 id='associatedconstant.NotExtended' class="associatedconstant"><span id='NotExtended.v' class='invisible'><code>pub const <a href='#associatedconstant.NotExtended' class="constant"><b>NotExtended</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NotExtended</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">510</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+510
+</b>.</p>
+</div><h4 id='associatedconstant.NetworkAuthenticationRequired' class="associatedconstant"><span id='NetworkAuthenticationRequired.v' class='invisible'><code>pub const <a href='#associatedconstant.NetworkAuthenticationRequired' class="constant"><b>NetworkAuthenticationRequired</b></a>: <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></h4>
+<div class='docblock'><pre class="rust ">
+<span class="ident">NetworkAuthenticationRequired</span>: <span class="ident">Status</span> <span class="op">=</span> <span class="ident">Status</span>(<span class="number">511</span>)</pre>
+<p><a href="struct.Status.html">Status</a> with code <b>
+511
+</b>.</p>
+</div><h4 id='method.from_code' class="method"><span id='from_code.v' class='invisible'><table class='table-display'><tbody><tr><td><code>pub fn <a href='#method.from_code' class='fnname'>from_code</a>(code: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>) -&gt; Self</code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#27-32' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Returns a <code>Status</code> given a status code <code>code</code>.</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>Create a <code>Status</code> from a status code <code>code</code>:</p>
+
+<pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">azure_functions</span>::<span class="ident">http</span>::<span class="ident">Status</span>;
+
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">Status</span>::<span class="ident">from_code</span>(<span class="number">404</span>), <span class="ident">Status</span>::<span class="ident">NotFound</span>);</pre>
+</div></div>
+                <h2 id='implementations' class='small-section-header'>
+                  Trait Implementations<a href='#implementations' class='anchor'></a>
+                </h2>
+                <div id='implementations-list'><h3 id='impl-Debug' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Debug' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-Clone' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Clone' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='method.clone' class="method"><span id='clone.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class="method"><span id='clone_from.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Self)</code></span></td><td><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/clone.rs.html#130-132' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 id='impl-Copy' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Copy' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'></div><h3 id='impl-Hash' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html" title="trait core::hash::Hash">Hash</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Hash' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='method.hash' class="method"><span id='hash.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#tymethod.hash' class='fnname'>hash</a>&lt;__H:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html" title="trait core::hash::Hasher">Hasher</a>&gt;(&amp;self, state: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>__H)</code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Feeds this value into the given [<code>Hasher</code>]. <a href="https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#tymethod.hash">Read more</a></p>
+</div><h4 id='method.hash_slice' class="method"><span id='hash_slice.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[Self]</a>, state: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>H) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;H: <a class="trait" href="https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html" title="trait core::hash::Hasher">Hasher</a>,&nbsp;</span></code></span></td><td><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.3.0'>1.3.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/hash/mod.rs.html#203-209' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Feeds a slice of this type into the given [<code>Hasher</code>]. <a href="https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice">Read more</a></p>
+</div></div><h3 id='impl-PartialEq' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq">PartialEq</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-PartialEq' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='method.eq' class="method"><span id='eq.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, other: &amp;<a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
+</div><h4 id='method.ne' class="method"><span id='ne.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;<a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>This method tests for <code>!=</code>.</p>
+</div></div><h3 id='impl-Eq' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html" title="trait core::cmp::Eq">Eq</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Eq' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#2' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'></div><h3 id='impl-ToString' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/alloc/string/trait.ToString.html" title="trait alloc::string::ToString">ToString</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-ToString' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#101-105' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='method.to_string' class="method"><span id='to_string.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/alloc/string/trait.ToString.html#tymethod.to_string' class='fnname'>to_string</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a></code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#102-104' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Converts the given value to a <code>String</code>. <a href="https://doc.rust-lang.org/nightly/alloc/string/trait.ToString.html#tymethod.to_string">Read more</a></p>
+</div></div><h3 id='impl-From%3Cu16%3E' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>&gt; for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-From%3Cu16%3E' class='anchor'></a></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#107-111' title='goto source code'>[src]</a></span></td></tr></tbody></table></h3><div class='impl-items'><h4 id='method.from' class="method"><span id='from.v' class='invisible'><table class='table-display'><tbody><tr><td><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(code: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>) -&gt; Self</code></span></td><td><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/azure_functions/http/status.rs.html#108-110' title='goto source code'>[src]</a></td></tr></tbody></table></span></h4><div class='docblock'><p>Performs the conversion.</p>
+</div></div></div>
+                <h2 id='synthetic-implementations' class='small-section-header'>
+                  Auto Trait Implementations<a href='#synthetic-implementations' class='anchor'></a>
+                </h2>
+                <div id='synthetic-implementations-list'>
+            <h3 id='impl-Send' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Send' class='anchor'></a></span></td><td><span class='out-of-band'></span></td></tr></tbody></table></h3><div class='impl-items'></div><h3 id='impl-Sync' class='impl'><span class='in-band'><table class='table-display'><tbody><tr><td><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> for <a class="struct" href="../../azure_functions/http/struct.Status.html" title="struct azure_functions::http::Status">Status</a></code><a href='#impl-Sync' class='anchor'></a></span></td><td><span class='out-of-band'></span></td></tr></tbody></table></h3><div class='impl-items'></div></div></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../";window.currentCrate = "azure_functions";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

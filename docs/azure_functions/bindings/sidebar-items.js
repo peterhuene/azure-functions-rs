@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["HttpRequest","Represents a HTTP trigger binding."],["HttpResponse","Represents a HTTP output binding."],["HttpResponseBuilder","Represents a builder for HTTP responses."],["ScheduleStatus","Represents a timer binding schedule status."],["TimerInfo","Represents the timer information from a timer trigger binding."]]});

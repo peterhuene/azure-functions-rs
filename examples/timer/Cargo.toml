@@ -1,0 +1,8 @@
+[package]
+name = "example-timer"
+version = "0.1.0"
+authors = ["Peter Huene <peterhuene@protonmail.com>"]
+
+[dependencies]
+azure-functions = { version = "0.1.1", path = "../../lib" }
+log = "0.4.2"
