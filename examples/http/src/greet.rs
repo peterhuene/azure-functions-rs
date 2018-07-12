@@ -1,7 +1,7 @@
 use azure_functions::bindings::{HttpRequest, HttpResponse};
 use azure_functions::func;
 
-#[func(disabled = true)]
+#[func]
 #[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(req: &HttpRequest) -> HttpResponse {
     debug!("Request: {:?}", req);

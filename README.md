@@ -16,7 +16,7 @@ An example anonymous, HTTP-triggered Azure Function:
 use azure_functions::bindings::{HttpRequest, HttpResponse};
 use azure_functions::func;
 
-#[func(disabled = true)]
+#[func]
 #[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(req: &HttpRequest) -> HttpResponse {
     info!("The request was: {:?}", req);
