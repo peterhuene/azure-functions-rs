@@ -67,7 +67,6 @@ pub struct TimerInfo {
 
 impl<'a> From<&'a protocol::TypedData> for TimerInfo {
     fn from(data: &'a protocol::TypedData) -> Self {
-        println!("{}", data.get_json());
         if !data.has_json() {
             panic!("expected JSON data for timer trigger binding");
         }
