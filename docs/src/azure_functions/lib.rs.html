@@ -170,6 +170,8 @@
 <span id="170">170</span>
 <span id="171">171</span>
 <span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! # Azure Functions for Rust</span>
 <span class="doccomment">//!</span>
@@ -197,7 +199,7 @@
 <span class="doccomment">//! Edit `Cargo.toml` to include the following dependencies:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```toml</span>
-<span class="doccomment">//! azure-functions = { path = &quot;&lt;path_to_lib&gt;&quot; } # In the future, version of published crate</span>
+<span class="doccomment">//! azure-functions = &quot;0.1.1&quot;</span>
 <span class="doccomment">//! log = &quot;0.4.2&quot;</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
@@ -264,6 +266,8 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The expected response would be `Hello from Rust, John!`.</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">proc_macro</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">proc_macro_mod</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">proc_macro_gen</span>)]</span>
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">azure_functions_codegen</span>;

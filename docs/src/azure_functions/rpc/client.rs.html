@@ -364,8 +364,6 @@
 <span id="364">364</span>
 <span id="365">365</span>
 <span id="366">366</span>
-<span id="367">367</span>
-<span id="368">368</span>
 </pre><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">protocol</span>;
 <span class="kw">use</span> <span class="ident">futures</span>::<span class="ident">future</span>::{<span class="ident">lazy</span>, <span class="ident">ok</span>};
@@ -417,8 +415,7 @@
         <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">clone</span>()
     }
 
-    <span class="comment">// TODO: change the return type here to impl Trait when https://github.com/rust-lang/rust/issues/50865 is fixed</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">connect</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">host</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">port</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Client</span>, <span class="ident">Error</span> <span class="op">=</span> ()<span class="op">&gt;&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">connect</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">host</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">port</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="kw">impl</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Client</span>, <span class="ident">Error</span> <span class="op">=</span> ()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">channel</span> <span class="op">=</span> <span class="ident">ChannelBuilder</span>::<span class="ident">new</span>(<span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">EnvBuilder</span>::<span class="ident">new</span>().<span class="ident">build</span>()));
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">len</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">max_message_len</span> {
@@ -461,29 +458,27 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StreamingMessage</span>::<span class="ident">new</span>();
         <span class="ident">message</span>.<span class="ident">mut_start_stream</span>().<span class="ident">worker_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">worker_id</span>.<span class="ident">to_owned</span>();
 
-        <span class="ident">Box</span>::<span class="ident">new</span>(
-            <span class="self">self</span>.<span class="ident">send</span>(<span class="ident">message</span>)
-                .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">read</span>())
-                .<span class="ident">and_then</span>(<span class="op">|</span>(<span class="kw-2">mut</span> <span class="ident">c</span>, <span class="ident">msg</span>)<span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">msg</span>.<span class="ident">expect</span>(<span class="string">&quot;host disconnected during worker initialization&quot;</span>);
+        <span class="self">self</span>.<span class="ident">send</span>(<span class="ident">message</span>)
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">read</span>())
+            .<span class="ident">and_then</span>(<span class="op">|</span>(<span class="kw-2">mut</span> <span class="ident">c</span>, <span class="ident">msg</span>)<span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">msg</span>.<span class="ident">expect</span>(<span class="string">&quot;host disconnected during worker initialization&quot;</span>);
 
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">msg</span>.<span class="ident">has_worker_init_request</span>() {
-                        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;expected a worker init request, but received: {:?}.&quot;</span>, <span class="ident">msg</span>);
-                    }
+                <span class="kw">if</span> <span class="op">!</span><span class="ident">msg</span>.<span class="ident">has_worker_init_request</span>() {
+                    <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;expected a worker init request, but received: {:?}.&quot;</span>, <span class="ident">msg</span>);
+                }
 
-                    <span class="ident">c</span>.<span class="ident">host_version</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">msg</span>.<span class="ident">get_worker_init_request</span>().<span class="ident">host_version</span>.<span class="ident">clone</span>());
+                <span class="ident">c</span>.<span class="ident">host_version</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">msg</span>.<span class="ident">get_worker_init_request</span>().<span class="ident">host_version</span>.<span class="ident">clone</span>());
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StreamingMessage</span>::<span class="ident">new</span>();
-                    {
-                        <span class="kw">let</span> <span class="ident">worker_init_res</span> <span class="op">=</span> <span class="ident">msg</span>.<span class="ident">mut_worker_init_response</span>();
-                        <span class="ident">worker_init_res</span>.<span class="ident">worker_version</span> <span class="op">=</span> <span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).<span class="ident">to_owned</span>();
-                        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">worker_init_res</span>.<span class="ident">mut_result</span>();
-                        <span class="ident">result</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StatusResult_Status</span>::<span class="ident">Success</span>;
-                    }
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StreamingMessage</span>::<span class="ident">new</span>();
+                {
+                    <span class="kw">let</span> <span class="ident">worker_init_res</span> <span class="op">=</span> <span class="ident">msg</span>.<span class="ident">mut_worker_init_response</span>();
+                    <span class="ident">worker_init_res</span>.<span class="ident">worker_version</span> <span class="op">=</span> <span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).<span class="ident">to_owned</span>();
+                    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">worker_init_res</span>.<span class="ident">mut_result</span>();
+                    <span class="ident">result</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StatusResult_Status</span>::<span class="ident">Success</span>;
+                }
 
-                    <span class="ident">c</span>.<span class="ident">send</span>(<span class="ident">msg</span>)
-                }),
-        )
+                <span class="ident">c</span>.<span class="ident">send</span>(<span class="ident">msg</span>)
+            })
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send</span>(
@@ -586,7 +581,7 @@
             }));
         }
 
-        <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">pool</span>.<span class="ident">shutdown_on_idle</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ok</span>(<span class="self">self</span>)))
+        <span class="ident">pool</span>.<span class="ident">shutdown_on_idle</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ok</span>(<span class="self">self</span>))
     }
 
     <span class="kw">fn</span> <span class="ident">handle_function_load_request</span>(
@@ -647,14 +642,14 @@
                             <span class="kw-2">*</span><span class="ident">n</span>.<span class="ident">borrow_mut</span>() <span class="op">=</span> <span class="ident">func</span>.<span class="ident">name</span>;
                         });
 
-                        <span class="comment">// let context =</span>
-                        <span class="comment">//     ::Context::new(&amp;req.invocation_id, &amp;req.function_id, name);</span>
+                        <span class="comment">// TODO: pass a context to the callback that can be passed to any &quot;context&quot; pseudo-binding</span>
+                        <span class="comment">// let context = Context::new(&amp;req.invocation_id, &amp;req.function_id, func.name);</span>
                         (<span class="ident">func</span>.<span class="ident">callback</span>)(<span class="ident">req</span>)
                     }) {
                         <span class="prelude-val">Ok</span>(<span class="ident">res</span>) <span class="op">=&gt;</span> <span class="ident">res</span>,
                         <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=&gt;</span> {
-                            <span class="comment">//http::Response::from(http::Response::build().status(500)).into()</span>
                             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">InvocationResponse</span>::<span class="ident">new</span>();
+                            <span class="ident">res</span>.<span class="ident">set_invocation_id</span>(<span class="ident">req</span>.<span class="ident">invocation_id</span>.<span class="ident">clone</span>());
                             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StatusResult</span>::<span class="ident">new</span>();
                             <span class="ident">result</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StatusResult_Status</span>::<span class="ident">Failure</span>;
                             <span class="ident">result</span>.<span class="ident">result</span> <span class="op">=</span>
@@ -668,6 +663,7 @@
                 <span class="prelude-val">Some</span>(<span class="ident">res</span>) <span class="op">=&gt;</span> <span class="ident">res</span>,
                 <span class="prelude-val">None</span> <span class="op">=&gt;</span> {
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">InvocationResponse</span>::<span class="ident">new</span>();
+                    <span class="ident">res</span>.<span class="ident">set_invocation_id</span>(<span class="ident">req</span>.<span class="ident">invocation_id</span>.<span class="ident">clone</span>());
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StatusResult</span>::<span class="ident">new</span>();
                     <span class="ident">result</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">protocol</span>::<span class="ident">StatusResult_Status</span>::<span class="ident">Failure</span>;
                     <span class="ident">result</span>.<span class="ident">result</span> <span class="op">=</span>

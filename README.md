@@ -3,6 +3,11 @@
 This is an early-stage prototype for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/en-US/).
 
+***Disclaimer: althougth the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
+and is not an endorsement of any future product offering from Microsoft.***
+
+***This is simply a labor of love by a developer who would like to see Rust adoption flourish.***
+
 ## Examples
 
 An example anonymous, HTTP-triggered Azure Function:
@@ -42,7 +47,9 @@ See the [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/
 
 # Documentation
 
-Until there is a published crate for this repository, you can view the documentation from [GitHub](https://peterhuene.github.io/azure-functions-rs/azure_functions/index.html).
+Currently, the documentation for the `azure-functions` crate can't be automatically generated due to the build dependency on `protoc` being installed.
+
+Use the [GitHub documentation](https://peterhuene.github.io/azure-functions-rs/azure_functions/index.html)  until that issue is resolved.
 
 # Azure Functions Bindings
 
