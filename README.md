@@ -172,7 +172,7 @@ Where `$SCRIPT_ROOT_PATH` above represents the path to the root directory create
 
 _Note: the syntax above works on macOS and Linux; on Windows, set the `AzureWebJobsScriptRoot` environment variable before running `dotnet run`._
 
-_Note: if using trigger bindings, you must set the `AzureWebJobsStorage` environment variable to a Azure Storage connection string._
+_Note: if using bindings that require storage (such as timer triggers), you must set the `AzureWebJobsStorage` environment variable to an Azure Storage connection string._
 
 ### Invoke the `greet` function
 
