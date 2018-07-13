@@ -123,6 +123,7 @@ pub mod codegen;
 pub mod http;
 #[doc(hidden)]
 pub mod rpc;
+pub mod timer;
 #[doc(no_inline)]
 pub use azure_functions_codegen::main;
 pub use context::Context;

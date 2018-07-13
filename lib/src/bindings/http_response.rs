@@ -1,4 +1,4 @@
-use http::{Body, Status};
+use http::{Body, ResponseBuilder, Status};
 use rpc::protocol;
 use std::collections::HashMap;
 use std::mem::replace;
@@ -120,21 +120,21 @@ use std::mem::replace;
 /// ```
 #[derive(Debug)]
 pub struct HttpResponse {
-    data: protocol::RpcHttp,
-    status: Status,
+    pub(crate) data: protocol::RpcHttp,
+    pub(crate) status: Status,
 }
 
 impl HttpResponse {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         HttpResponse {
             data: protocol::RpcHttp::new(),
             status: Status::Ok,
         }
     }
 
-    /// Creates a new [HttpResponseBuilder](struct.HttpResponseBuilder.html) for building a response.
-    pub fn build() -> HttpResponseBuilder {
-        HttpResponseBuilder::new()
+    /// Creates a new [ResponseBuilder](../http/struct.ResponseBuilder.html) for building a response.
+    pub fn build() -> ResponseBuilder {
+        ResponseBuilder::new()
     }
 
     /// Gets the status code for the response.
@@ -173,8 +173,8 @@ where
     }
 }
 
-impl<'a> From<&'a mut HttpResponseBuilder> for HttpResponse {
-    fn from(builder: &'a mut HttpResponseBuilder) -> Self {
+impl<'a> From<&'a mut ResponseBuilder> for HttpResponse {
+    fn from(builder: &'a mut ResponseBuilder) -> Self {
         replace(&mut builder.0, HttpResponse::new())
     }
 }
@@ -184,104 +184,5 @@ impl Into<protocol::TypedData> for HttpResponse {
         let mut data = protocol::TypedData::new();
         data.set_http(self.data);
         data
-    }
-}
-
-/// Represents a builder for HTTP responses.
-#[derive(Debug)]
-pub struct HttpResponseBuilder(HttpResponse);
-
-impl HttpResponseBuilder {
-    /// Creates a new `HttpResponseBuilder`.
-    pub fn new() -> HttpResponseBuilder {
-        HttpResponseBuilder(HttpResponse::new())
-    }
-
-    /// Sets the status for the response.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
-    /// use azure_functions::http::Status;
-    ///
-    /// let response: HttpResponse = HttpResponse::build()
-    ///     .status(Status::InternalServerError)
-    ///     .into();
-    ///
-    /// assert_eq!(response.status(), Status::InternalServerError);
-    /// ```
-    pub fn status<S: Into<Status>>(&mut self, status: S) -> &mut Self {
-        self.0.status = status.into();
-        self
-    }
-
-    /// Sets a header for the response.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
-    ///
-    /// let value = "custom header value";
-    ///
-    /// let response: HttpResponse = HttpResponse::build()
-    ///     .header("X-Custom-Header", value)
-    ///     .into();
-    ///
-    /// assert_eq!(
-    ///     response
-    ///         .headers()
-    ///         .get("X-Custom-Header")
-    ///         .unwrap(),
-    ///     value
-    /// );
-    /// ```
-    pub fn header<T: Into<String>, U: Into<String>>(&mut self, name: T, value: U) -> &mut Self {
-        self.0.data.mut_headers().insert(name.into(), value.into());
-        self
-    }
-
-    /// Sets the body of the response.
-    ///
-    /// This will automatically set a `Content-Type` header for the response depending on the body type.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
-    /// use azure_functions::http::{Body, Status};
-    ///
-    /// let message = "The resouce was created.";
-    ///
-    /// let response: HttpResponse = HttpResponse::build()
-    ///     .status(Status::Created)
-    ///     .body(message)
-    ///     .into();
-    ///
-    /// assert_eq!(response.status(), Status::Created);
-    /// assert_eq!(
-    ///     match response.body() {
-    ///         Body::String(s) => s,
-    ///         _ => panic!("unexpected body.")
-    ///     },
-    ///     message
-    /// );
-    /// ```
-    pub fn body<'a, B: Into<Body<'a>>>(&mut self, body: B) -> &mut Self {
-        let body = body.into();
-        match &body {
-            Body::Empty => {
-                self.0.data.clear_body();
-                return self;
-            }
-            _ => {}
-        };
-
-        if !self.0.headers().contains_key("Content-Type") {
-            self.header("Content-Type", body.default_content_type());
-        }
-        self.0.data.set_body(body.into());
-        self
     }
 }

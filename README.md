@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
-[![crates.io](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
+[![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
 
 This is an early-stage prototype for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/en-US/).
@@ -130,7 +130,7 @@ Use `cargo` to run the tests:
 cargo test
 ```
 
-_Author's note: I've been a bad developer and haven't written any tests yet beause I've been focused on getting a working prototype :/  There are some doc tests, at least.  I promise to shore up the tests soon._
+Right now there are only doc tests, but more tests are coming soon.
 
 ## Running the examples locally
 
