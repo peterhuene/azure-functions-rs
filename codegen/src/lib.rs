@@ -106,7 +106,7 @@ pub fn func(args: TokenStream, input: TokenStream) -> TokenStream {
 /// A proc_macro solution to https://github.com/rust-lang/rfcs/issues/752
 #[doc(hidden)]
 #[proc_macro_attribute]
-pub fn mod_path(_: TokenStream, input: TokenStream) -> TokenStream {
+pub fn generated_mod(_: TokenStream, input: TokenStream) -> TokenStream {
     let m = syn::parse::<syn::ItemMod>(input.clone()).unwrap();
 
     let ident = &m.ident;

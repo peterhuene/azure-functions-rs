@@ -1,8 +1,8 @@
-use azure_functions_codegen::mod_path;
+use azure_functions_codegen::generated_mod;
 
-#[mod_path]
+#[generated_mod]
 mod FunctionRpc {}
-#[mod_path]
+#[generated_mod]
 mod FunctionRpc_grpc {}
 
 pub use self::FunctionRpc::*;
