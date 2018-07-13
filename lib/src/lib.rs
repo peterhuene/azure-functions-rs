@@ -43,7 +43,7 @@
 //! #[binding(name = "request", auth_level = "anonymous")]
 //! pub fn greet(request: &HttpRequest) -> HttpResponse {
 //!     // Log the request on the Azure Functions Host
-//!     debug!("Request: {:?}", request);
+//!     info!("Request: {:?}", request);
 //!
 //!     // Return a formatted string as the response
 //!     format!(

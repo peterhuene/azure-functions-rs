@@ -5,5 +5,5 @@ use azure_functions::func;
 #[func]
 #[binding(name = "info", schedule = "0 */5 * * * *")]
 pub fn timer(info: &TimerInfo) {
-    debug!("Info: {:?}", info);
+    info!("Info: {:?}", info);
 }

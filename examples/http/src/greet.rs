@@ -4,7 +4,7 @@ use azure_functions::func;
 #[func]
 #[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(req: &HttpRequest) -> HttpResponse {
-    debug!("Request: {:?}", req);
+    info!("Request: {:?}", req);
 
     format!(
         "Hello from Rust, {}!\n",
