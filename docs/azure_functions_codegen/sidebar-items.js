@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["func","Implements the `func` attribute."],["main","Implements the `main!` macro."]]});

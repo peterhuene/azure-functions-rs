@@ -1,6 +1,8 @@
 # Azure Functions In Rust
 
-[![Crates.io](https://img.shields.io/crates/v/azure-functions.svg?maxAge=2592000)](https://crates.io/crates/azure-functions)
+[![crates.io](https://img.shields.io/crates/v/azure-functions.svg?maxAge=2592000)](https://crates.io/crates/azure-functions)
+[![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
+
 
 This is an early-stage prototype for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/en-US/).
@@ -49,9 +51,7 @@ See the [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/
 
 # Documentation
 
-Currently, the documentation for the `azure-functions` crate can't be automatically generated due to the build dependency on `protoc` being installed.
-
-Use the [GitHub documentation](https://peterhuene.github.io/azure-functions-rs/azure_functions/index.html)  until that issue is resolved.
+Documentation for the [latest published version](https://docs.rs/azure-functions).
 
 # Azure Functions Bindings
 
