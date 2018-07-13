@@ -1,5 +1,7 @@
 # Azure Functions In Rust
 
+[![Crates.io](https://img.shields.io/crates/v/azure-functions.svg?maxAge=2592000)](https://crates.io/crates/azure-functions)
+
 This is an early-stage prototype for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/en-US/).
 
