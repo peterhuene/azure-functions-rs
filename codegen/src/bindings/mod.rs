@@ -44,16 +44,24 @@ lazy_static! {
 
 #[derive(Debug)]
 pub enum Binding {
+    Context,
     HttpTrigger(HttpTrigger),
     Http(Http),
     TimerTrigger(TimerTrigger),
 }
 
 impl Binding {
+    pub fn is_context(&self) -> bool {
+        match self {
+            Binding::Context => true,
+            _ => false,
+        }
+    }
+
     pub fn is_trigger(&self) -> bool {
         match self {
             Binding::HttpTrigger(_) | Binding::TimerTrigger(_) => true,
-            Binding::Http(_) => false,
+            Binding::Context | Binding::Http(_) => false,
         }
     }
 }
@@ -61,6 +69,7 @@ impl Binding {
 impl ToTokens for Binding {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         match self {
+            Binding::Context => panic!("context bindings should not be tokenized"),
             Binding::HttpTrigger(b) => quote!(
                 ::azure_functions::codegen::Binding::HttpTrigger(#b)
             ).to_tokens(tokens),

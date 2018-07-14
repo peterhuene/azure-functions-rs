@@ -1,13 +1,14 @@
 use codegen::Binding;
 use rpc::protocol;
 use serde::{ser::SerializeMap, Serialize, Serializer};
+use Context;
 
 #[doc(hidden)]
 pub struct Function {
     pub name: &'static str,
     pub disabled: bool,
     pub bindings: &'static [&'static Binding],
-    pub callback: fn(&protocol::InvocationRequest) -> protocol::InvocationResponse,
+    pub callback: fn(&protocol::InvocationRequest, &Context) -> protocol::InvocationResponse,
 }
 
 // TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive

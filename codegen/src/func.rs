@@ -9,6 +9,7 @@ use syn::{parse, Attribute, FnArg, Ident, ItemFn, Lit, Pat, ReturnType, Type, Vi
 use util::{AttributeArguments, ToString};
 
 const RETURN_BINDING_NAME: &'static str = "$return";
+const CONTEXT_TYPE_NAME: &'static str = "Context";
 
 #[derive(Default, Debug)]
 struct Function {
@@ -78,7 +79,7 @@ impl ToTokens for Function {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let name = &self.name;
         let disabled = &self.disabled;
-        let bindings = &self.bindings;
+        let bindings = self.bindings.iter().filter(|x| !x.is_context());
         let callback = self
             .callback
             .as_ref()
@@ -96,6 +97,53 @@ impl ToTokens for Function {
 
 struct TargetInvoker<'a>(&'a ItemFn);
 
+impl<'a> TargetInvoker<'a> {
+    fn get_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
+        self.iter_args()
+            .filter_map(|(name, arg_type)| {
+                if let Type::Path(tp) = arg_type {
+                    if tp.path.to_string() == CONTEXT_TYPE_NAME {
+                        return None;
+                    }
+                }
+
+                Some((name, arg_type))
+            })
+            .unzip()
+    }
+
+    fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
+        self.iter_args()
+            .map(|(name, arg_type)| {
+                if let Type::Path(tp) = arg_type {
+                    if tp.path.to_string() == CONTEXT_TYPE_NAME {
+                        return quote!(__ctx);
+                    }
+                }
+
+                let name_str = name.to_string();
+                quote!(&#name.expect(concat!("parameter binding '", #name_str, "' was not provided")))
+            })
+            .collect()
+    }
+
+    fn iter_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
+        self.0.decl.inputs.iter().map(|x| match x {
+            FnArg::Captured(arg) => (
+                match &arg.pat {
+                    Pat::Ident(name) => &name.ident,
+                    _ => panic!("expected ident argument pattern"),
+                },
+                match &arg.ty {
+                    Type::Reference(tr) => &*tr.elem,
+                    _ => panic!("expected a type reference"),
+                },
+            ),
+            _ => panic!("expected captured arguments"),
+        })
+    }
+}
+
 impl<'a> ToTokens for TargetInvoker<'a> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let invoker = Ident::new(
@@ -104,37 +152,18 @@ impl<'a> ToTokens for TargetInvoker<'a> {
         );
         let target = &self.0.ident;
 
-        let (args, arg_types): (Vec<_>, Vec<_>) = self
-            .0
-            .decl
-            .inputs
-            .iter()
-            .map(|x| match x {
-                FnArg::Captured(arg) => (
-                    match &arg.pat {
-                        Pat::Ident(name) => &name.ident,
-                        _ => panic!("expected ident argument pattern"),
-                    },
-                    match &arg.ty {
-                        Type::Reference(tr) => &tr.elem,
-                        _ => panic!("expected a type reference"),
-                    },
-                ),
-                _ => panic!("expected captured arguments"),
-            })
-            .unzip();
-
+        let (args, arg_types) = self.get_args();
         let args_for_match = args.clone();
-        let args_for_func = args.clone();
-
         let arg_names: Vec<_> = args.iter().map(|x| x.to_string()).collect();
-        let arg_names_for_expect = arg_names.clone();
+
+        let args_for_call = self.get_args_for_call();
 
         let output = OutputSetter(&self.0.decl.output);
 
         quote!(#[allow(dead_code)]
         fn #invoker(
             __req: &::azure_functions::rpc::protocol::InvocationRequest,
+            __ctx: &::azure_functions::Context
         ) -> ::azure_functions::rpc::protocol::InvocationResponse {
             #(let mut #args: Option<#arg_types> = None;)*
 
@@ -145,7 +174,7 @@ impl<'a> ToTokens for TargetInvoker<'a> {
                 };
             }
 
-            let __ret = #target(#(&#args_for_func.expect(concat!("parameter binding '", #arg_names_for_expect, "' was not provided")),)*);
+            let __ret = #target(#(#args_for_call,)*);
 
             let mut __res = ::azure_functions::rpc::protocol::InvocationResponse::new();
             __res.set_invocation_id(__req.invocation_id.clone());
@@ -248,6 +277,10 @@ fn bind_argument(
             Type::Reference(r) => match &*r.elem {
                 Type::Path(tp) => {
                     let type_name = tp.path.to_string();
+
+                    if type_name == CONTEXT_TYPE_NAME {
+                        return Ok(Binding::Context);
+                    }
 
                     let factory = match TRIGGERS.get(type_name.as_str()) {
                         Some(factory) => match r.mutability {
@@ -448,7 +481,7 @@ pub fn func_attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     for arg in &target.decl.inputs {
         match bind_argument(&arg, has_trigger, &mut binding_args) {
             Ok(binding) => {
-                has_trigger = binding.is_trigger();
+                has_trigger |= binding.is_trigger();
                 func.bindings.push(binding);
             }
             Err(e) => {
@@ -495,7 +528,7 @@ pub fn func_attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                             "cannot bind to a function without a return value".to_string()
                         }
                         v @ _ => format!(
-                            "cannot bind to '{}' because it is not a parameter of the function",
+                            "cannot bind to '{}' because it is not a binding parameter of the function",
                             v
                         ),
                     })

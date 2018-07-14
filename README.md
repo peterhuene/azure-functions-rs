@@ -70,6 +70,9 @@ The current list of supported bindings:
 | `azure_functions::bindings::HttpRequest`  | HTTP Trigger            |
 | `azure_functions::bindings::HttpResponse` | HTTP Output             |
 | `azure_functions::bindings::TimerInfo`    | Timer Trigger           |
+| `azure_functions::Context`*               | Invocation Context      |
+
+\****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 
 More bindings will be implemented in the future, including support for retreiving data from custom bindings.
 

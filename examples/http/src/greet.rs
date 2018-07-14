@@ -1,10 +1,10 @@
 use azure_functions::bindings::{HttpRequest, HttpResponse};
-use azure_functions::func;
+use azure_functions::{func, Context};
 
 #[func]
 #[binding(name = "req", auth_level = "anonymous")]
-pub fn greet(req: &HttpRequest) -> HttpResponse {
-    info!("Request: {:?}", req);
+pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
+    info!("Context: {:?}, Request: {:?}", context, req);
 
     format!(
         "Hello from Rust, {}!\n",

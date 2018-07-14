@@ -11,6 +11,7 @@ use std::panic;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use tokio_threadpool;
+use Context;
 
 pub type Sender = mpsc::Sender<protocol::StreamingMessage>;
 type Receiver = ClientDuplexReceiver<protocol::StreamingMessage>;
@@ -275,9 +276,10 @@ impl Client {
                             *n.borrow_mut() = func.name;
                         });
 
-                        // TODO: pass a context to the callback that can be passed to any "context" pseudo-binding
-                        // let context = Context::new(&req.invocation_id, &req.function_id, func.name);
-                        (func.callback)(req)
+                        (func.callback)(
+                            req,
+                            &Context::new(&req.invocation_id, &req.function_id, func.name),
+                        )
                     }) {
                         Ok(res) => res,
                         Err(_) => {
