@@ -1,9 +1,8 @@
 use azure_functions::bindings::TimerInfo;
 use azure_functions::func;
 
-// Example of an Azure Function that is invoked every 5 minutes
 #[func]
-#[binding(name = "info", schedule = "0 */5 * * * *")]
+#[binding(name = "info", schedule = "0 */1 * * * *")]
 pub fn timer(info: &TimerInfo) {
-    info!("Info: {:?}", info);
+    info!("Hello every minute from Rust!");
 }
