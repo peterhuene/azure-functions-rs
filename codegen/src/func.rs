@@ -547,6 +547,7 @@ pub fn func_attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let invoker = TargetInvoker(&target);
 
     let expanded = quote!{
+        #[allow(unused_variables)]
         #target
 
         #invoker
