@@ -318,7 +318,7 @@ fn bind_argument(
                                 None => Err(tp
                                     .span()
                                     .unstable()
-                                    .error("expected an Azure Function trigger or input binding type"))
+                                    .error("expected an Azure Functions trigger or input binding type"))
                             },
                         },
                     }?;
@@ -344,10 +344,10 @@ fn bind_argument(
                     .ty
                     .span()
                     .unstable()
-                    .error("expected an Azure Function trigger or input binding type")),
+                    .error("expected an Azure Functions trigger or input binding type")),
             },
             _ => Err(arg.ty.span().unstable().error(
-                "expected an Azure Function trigger or input binding type passed by reference",
+                "expected an Azure Functions trigger or input binding type passed by reference",
             )),
         },
         FnArg::SelfRef(_) | FnArg::SelfValue(_) => Err(arg
@@ -383,12 +383,12 @@ fn bind_return_type(
                 None => Err(tp
                     .span()
                     .unstable()
-                    .error("expected an Azure Function output binding type")),
+                    .error("expected an Azure Functions output binding type")),
             },
             _ => Err(ty
                 .span()
                 .unstable()
-                .error("expected an Azure Function output binding type")),
+                .error("expected an Azure Functions output binding type")),
         },
     }
 }

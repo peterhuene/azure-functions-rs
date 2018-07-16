@@ -7,9 +7,9 @@ use std::fs;
 use std::sync::{Arc, Mutex};
 
 pub fn create_app<'a, 'b>() -> App<'a, 'b> {
-    App::new("Azure Function Language Worker for Rust")
+    App::new("Azure Functions Language Worker for Rust")
         .version(env!("CARGO_PKG_VERSION"))
-        .about("Provides an Azure Function Worker for functions written in Rust.")
+        .about("Provides an Azure Functions Worker for functions written in Rust.")
         .arg(
             Arg::with_name("host")
                 .long("host")
@@ -128,7 +128,7 @@ pub fn generate_functions_app(root: &str, registry: Arc<Mutex<Registry>>) {
         );
         fs::write(
             &script_file,
-            "// This file is intentionally empty.\n// It is needed by Azure Functions Host to register the Azure function."
+            "// This file is intentionally empty.\n// It is needed by the Azure Functions Host to register the Azure Function."
         ).expect(&format!("Failed to create '{}'", script_file.display()));
 
         let function_json = function_dir.join(FUNCTION_FILE);
