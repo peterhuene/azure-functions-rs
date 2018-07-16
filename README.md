@@ -13,11 +13,11 @@ in [Rust](https://www.rust-lang.org/en-US/).
 Althougth the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
 and is not an endorsement of any future product offering from Microsoft.
 
-This project is simply a labor of love by a developer who would like to see Rust adoption flourish.
+This project is simply a labor of love by a developer who would like to see the Rust ecosystem flourish.
 
-## Examples
+## Example
 
-An example anonymous, HTTP-triggered Azure Function:
+A simple HTTP-triggered Azure Function:
 
 ```rust
 use azure_functions::bindings::{HttpRequest, HttpResponse};
@@ -26,7 +26,8 @@ use azure_functions::func;
 #[func]
 #[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(req: &HttpRequest) -> HttpResponse {
-    info!("The request was: {:?}", req);
+    // Log the message with the Azure Functions Host
+    info!("Request: {:?}", req);
 
     format!(
         "Hello from Rust, {}!\n",
@@ -35,22 +36,7 @@ pub fn greet(req: &HttpRequest) -> HttpResponse {
 }
 ```
 
-A timer-triggered Azure Function that is invoked every 5 minutes:
-
-```rust
-use azure_functions::bindings::TimerInfo;
-use azure_functions::func;
-
-#[func]
-#[binding(name = "info", schedule = "0 */5 * * * *")]
-pub fn timer(info: &TimerInfo) {
-    info!("Rust function invoked by timer!");
-}
-```
-
-_Note: the `info!` macro used in the above examples comes from the [log crate](https://crates.io/crates/log); the messages will be logged on the Azure Functions Host._
-
-See the [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) directory for the complete source code.
+See the [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) directory for the complete list of examples.
 
 # Documentation
 
@@ -137,61 +123,3 @@ cargo test
 ```
 
 Right now there are only doc tests, but more tests are coming soon.
-
-## Running the examples locally
-
-Currently, the Azure Functions Host does not support the Rust language worker.  Until that time, Azure Functions written in Rust must be executed locally using a [fork of the Azure Functions Host that does](https://github.com/peterhuene/azure-functions-host/tree/rust-worker-provider).
-
-### Run the HTTP example
-
-Run the following commands:
-
-```
-cd examples/http
-cargo run -q -- --create root
-```
-
-This will build and run the sample to create the Azure Functions "script root" containing the Rust worker and the example Azure Function metadata.
-
-Remember the path to the root directory from this step, it will be needed for running the Azure Functions Host (see below).
-
-### Download a .NET SDK
-
-The Azure Functions Host is implemented with .NET Core, so download and install a [.NET Core SDK](https://www.microsoft.com/net/download).
-
-### Clone the fork of the Azure Functions Host
-
-Run the following command to clone the fork:
-
-```
-git clone -b rust-worker-provider git@github.com:peterhuene/azure-functions-host.git
-```
-
-### Run the Azure Functions Host
-
-Run the following commands to run the Azure Functions Host locally:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-AzureWebJobsScriptRoot=$SCRIPT_ROOT_PATH dotnet run
-```
-
-Where `$SCRIPT_ROOT_PATH` above represents the path to the root directory created from running `cargo run` above.
-
-_Note: the syntax above works on macOS and Linux; on Windows, set the `AzureWebJobsScriptRoot` environment variable before running `dotnet run`._
-
-_Note: if using bindings that require storage (such as timer triggers), you must set the `AzureWebJobsStorage` environment variable to an Azure Storage connection string._
-
-### Invoke the `greet` function
-
-The easiest way to invoke the function is to use `curl` (substitute for your preferred method of sending HTTP requests):
-
-```
-curl localhost:5000/api/greet\?name=Peter
-```
-
-With any luck, you should see the following output:
-
-```
-Hello from Rust, Peter!
-```
