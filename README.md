@@ -2,15 +2,18 @@
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
+[![CircleCI branch](https://img.shields.io/circleci/project/github/peterhuene/azure-functions-rs/master.svg)](https://circleci.com/gh/peterhuene/azure-functions-rs/tree/master)
 [![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
 
 This is an early-stage prototype for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/en-US/).
 
-***Disclaimer: althougth the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
-and is not an endorsement of any future product offering from Microsoft.***
+## Disclaimer
 
-***This is simply a labor of love by a developer who would like to see Rust adoption flourish.***
+Althougth the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
+and is not an endorsement of any future product offering from Microsoft.
+
+This project is simply a labor of love by a developer who would like to see Rust adoption flourish.
 
 ## Examples
 

@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: peterhuene/azure-functions-rs-ci
+    steps:
+      - checkout
+      - restore_cache:
+          key: project-cache
+      - run:
+          name: Sync Azure Functions Languge Worker Protobuf
+          command: git submodule sync && git submodule update --init
+      - run:
+          name: Check source formatting
+          command: |
+            rustfmt --version
+            cargo fmt -- --check
+      - run:
+          name: Build
+          command: cargo build
+      - run:
+          name: Test
+          command: cargo test
+      - save_cache:
+          key: project-cache
+          paths:
+            - "~/.cargo"
+            - "./target"
