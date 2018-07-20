@@ -15,8 +15,8 @@ use timer::ScheduleStatus;
 /// use azure_functions::func;
 ///
 /// #[func]
-/// #[binding(name = "info", schedule = "0 */5 * * * *")]
-/// pub fn timer(info: &TimerInfo) {
+/// #[binding(name = "_info", schedule = "0 */5 * * * *")]
+/// pub fn timer(_info: &TimerInfo) {
 ///     info!("Rust Azure function ran!");
 /// }
 /// ```

@@ -2,11 +2,11 @@ use bindings::{Binding, INPUT_BINDINGS, INPUT_OUTPUT_BINDINGS, OUTPUT_BINDINGS, 
 use proc_macro::{Diagnostic, TokenStream};
 use proc_macro2::Span;
 use quote::ToTokens;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::{parse, Attribute, FnArg, Ident, ItemFn, Lit, Pat, ReturnType, Type, Visibility};
-use util::{AttributeArguments, ToString};
+use util::{to_camel_case, AttributeArguments, ToString};
 
 const RETURN_BINDING_NAME: &'static str = "$return";
 const CONTEXT_TYPE_NAME: &'static str = "Context";
@@ -154,7 +154,7 @@ impl<'a> ToTokens for TargetInvoker<'a> {
 
         let (args, arg_types) = self.get_args();
         let args_for_match = args.clone();
-        let arg_names: Vec<_> = args.iter().map(|x| x.to_string()).collect();
+        let binding_names: Vec<_> = args.iter().map(|x| to_camel_case(&x.to_string())).collect();
 
         let args_for_call = self.get_args_for_call();
 
@@ -169,7 +169,7 @@ impl<'a> ToTokens for TargetInvoker<'a> {
 
             for __param in __req.input_data.iter() {
                 match __param.name.as_str() {
-                    #(#arg_names => #args_for_match = Some(__param.data.get_ref().into()),)*
+                    #(#binding_names => #args_for_match = Some(__param.data.get_ref().into()),)*
                     _ => panic!(format!("unexpected parameter binding '{}'", __param.name)),
                 };
             }
@@ -283,42 +283,40 @@ fn bind_argument(
                     }
 
                     let factory = match TRIGGERS.get(type_name.as_str()) {
-                        Some(factory) => match r.mutability {
-                            Some(m) => Err(m
-                                .span()
-                                .unstable()
-                                .error("trigger arguments cannot be passed by mutable reference")),
-                            None => {
-                                if has_trigger {
-                                    Err(tp
-                                        .span()
-                                        .unstable()
-                                        .error("Azure Functions can only have one trigger binding"))
-                                } else {
-                                    Ok(factory)
+                        Some(factory) => {
+                            match r.mutability {
+                                Some(m) => Err(m.span().unstable().error(
+                                    "trigger bindings cannot be passed by mutable reference",
+                                )),
+                                None => {
+                                    if has_trigger {
+                                        Err(tp.span().unstable().error(
+                                            "Azure Functions can only have one trigger binding",
+                                        ))
+                                    } else {
+                                        Ok(factory)
+                                    }
                                 }
                             }
-                        },
+                        }
                         None => match INPUT_BINDINGS.get(type_name.as_str()) {
                             Some(factory) => match r.mutability {
                                 Some(m) => Err(m
                                     .span()
                                     .unstable()
-                                    .error("input arguments cannot be passed by mutable reference")),
+                                    .error("input bindings cannot be passed by mutable reference")),
                                 None => Ok(factory),
                             },
                             None => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
                                 Some(factory) => match r.mutability {
                                     Some(_) => Ok(factory),
-                                    None => Err(r
-                                        .span()
-                                        .unstable()
-                                        .error("input-output arguments must be passed by mutable reference")),
+                                    None => Err(r.span().unstable().error(
+                                        "input-output bindings must be passed by mutable reference",
+                                    )),
                                 },
-                                None => Err(tp
-                                    .span()
-                                    .unstable()
-                                    .error("expected an Azure Functions trigger or input binding type"))
+                                None => Err(tp.span().unstable().error(
+                                    "expected an Azure Functions trigger or input binding type",
+                                )),
                             },
                         },
                     }?;
@@ -337,7 +335,7 @@ fn bind_argument(
                             .pat
                             .span()
                             .unstable()
-                            .error("arguments must have a named binding")),
+                            .error("bindings must have a named identifier")),
                     }
                 }
                 _ => Err(arg
@@ -353,15 +351,15 @@ fn bind_argument(
         FnArg::SelfRef(_) | FnArg::SelfValue(_) => Err(arg
             .span()
             .unstable()
-            .error("Azure Functions cannot have self arguments")),
+            .error("Azure Functions cannot have self parameters")),
         FnArg::Inferred(_) => Err(arg
             .span()
             .unstable()
-            .error("Azure Functions cannot have inferred arguments")),
+            .error("Azure Functions cannot have inferred parameters")),
         FnArg::Ignored(_) => Err(arg
             .span()
             .unstable()
-            .error("Azure Functions cannot have ignored arguments")),
+            .error("Azure Functions cannot have ignored parameters")),
     }
 }
 
@@ -477,11 +475,24 @@ pub fn func_attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    let mut names = HashSet::new();
     let mut has_trigger = false;
     for arg in &target.decl.inputs {
         match bind_argument(&arg, has_trigger, &mut binding_args) {
             Ok(binding) => {
                 has_trigger |= binding.is_trigger();
+
+                match binding.name() {
+                    Some(name) => if !names.insert(name.to_string()) {
+                        arg.span()
+                            .unstable()
+                            .error(format!("parameter has camel-cased binding name of '{}' that conflicts with a prior parameter.", name))
+                            .emit();
+                        return input;
+                    },
+                    None => {}
+                };
+
                 func.bindings.push(binding);
             }
             Err(e) => {
@@ -547,7 +558,6 @@ pub fn func_attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let invoker = TargetInvoker(&target);
 
     let expanded = quote!{
-        #[allow(unused_variables)]
         #target
 
         #invoker

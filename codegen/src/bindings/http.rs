@@ -2,8 +2,8 @@ use proc_macro::Diagnostic;
 use quote::ToTokens;
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
-use syn::{Ident, Lit};
-use util::AttributeArguments;
+use syn::Lit;
+use util::{to_camel_case, AttributeArguments};
 
 #[derive(Debug)]
 pub struct Http {
@@ -22,18 +22,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for Http {
             match key_str.as_str() {
                 "name" => match value {
                     Lit::Str(s) => {
-                        let v = s.value();
-                        name = match v.as_ref() {
-                            "$return" => Some(v),
-                            _ => s
-                                .parse::<Ident>()
-                                .map(|x| Some(x.to_string()))
-                                .map_err(|_| {
-                                    value.span().unstable().error(
-                                            "a legal parameter identifier is required for the 'name' argument",
-                                        )
-                                })?,
-                        };
+                        name = Some(to_camel_case(&s.value()));
                     }
                     _ => {
                         return Err(value
