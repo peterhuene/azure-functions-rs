@@ -1,4 +1,4 @@
-#![feature(proc_macro)]
+#![feature(proc_macro_diagnostic)]
 #![feature(drain_filter)]
 #![feature(try_from)]
 #![recursion_limit = "128"]

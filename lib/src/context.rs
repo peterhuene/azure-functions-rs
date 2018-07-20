@@ -6,7 +6,7 @@ use std::path::PathBuf;
 /// # Examples
 ///
 /// ```rust
-/// # #![feature(proc_macro)] extern crate azure_functions;
+/// # #![feature(use_extern_macros)] extern crate azure_functions;
 /// # #[macro_use] extern crate log;
 /// use azure_functions::{func, Context};
 /// use azure_functions::bindings::HttpRequest;
@@ -38,7 +38,7 @@ impl<'a> Context<'a> {
     /// # Examples
     ///
     /// ```rust
-    /// # #![feature(proc_macro)] extern crate azure_functions;
+    /// # #![feature(use_extern_macros)] extern crate azure_functions;
     /// # #[macro_use] extern crate log;
     /// use azure_functions::{func, Context};
     /// use azure_functions::bindings::HttpRequest;
@@ -57,7 +57,7 @@ impl<'a> Context<'a> {
     /// # Examples
     ///
     /// ```rust
-    /// # #![feature(proc_macro)] extern crate azure_functions;
+    /// # #![feature(use_extern_macros)] extern crate azure_functions;
     /// # #[macro_use] extern crate log;
     /// use azure_functions::{func, Context};
     /// use azure_functions::bindings::HttpRequest;
@@ -76,7 +76,7 @@ impl<'a> Context<'a> {
     /// # Examples
     ///
     /// ```rust
-    /// # #![feature(proc_macro)] extern crate azure_functions;
+    /// # #![feature(use_extern_macros)] extern crate azure_functions;
     /// # #[macro_use] extern crate log;
     /// use azure_functions::{func, Context};
     /// use azure_functions::bindings::HttpRequest;
@@ -95,7 +95,7 @@ impl<'a> Context<'a> {
     /// # Examples
     ///
     /// ```rust
-    /// # #![feature(proc_macro)] extern crate azure_functions;
+    /// # #![feature(use_extern_macros)] extern crate azure_functions;
     /// # #[macro_use] extern crate log;
     /// use azure_functions::{func, Context};
     /// use azure_functions::bindings::HttpRequest;
@@ -114,7 +114,7 @@ impl<'a> Context<'a> {
     /// # Examples
     ///
     /// ```rust
-    /// # #![feature(proc_macro)] extern crate azure_functions;
+    /// # #![feature(use_extern_macros)] extern crate azure_functions;
     /// # #[macro_use] extern crate log;
     /// use azure_functions::{func, Context};
     /// use azure_functions::bindings::HttpRequest;
