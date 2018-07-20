@@ -34,7 +34,7 @@
 //! applying the `func` attribute:
 //!
 //! ```rust
-//! # #![feature(proc_macro)] extern crate azure_functions;
+//! # #![feature(use_extern_macros)] extern crate azure_functions;
 //! # #[macro_use] extern crate log;
 //! use azure_functions::func;
 //! use azure_functions::bindings::{HttpRequest, HttpResponse};
@@ -57,7 +57,7 @@
 //! the Azure Functions Host:
 //!
 //! ```rust,ignore
-//! #![feature(proc_macro)]
+//! #![feature(use_extern_macros)]
 //!
 //! #[macro_use]
 //! extern crate log;
@@ -90,7 +90,7 @@
 //! The above Azure Function can be invoked with `http://localhost:5000/api/greet?name=John`.
 //!
 //! The expected response would be `Hello from Rust, John!`.
-#![feature(proc_macro)]
+#![feature(use_extern_macros)]
 #![feature(proc_macro_mod)]
 #![feature(proc_macro_gen)]
 #![deny(missing_docs)]

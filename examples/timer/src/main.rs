@@ -1,4 +1,4 @@
-#![feature(proc_macro)]
+#![feature(use_extern_macros)]
 
 extern crate azure_functions;
 #[macro_use]

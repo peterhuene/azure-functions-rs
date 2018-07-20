@@ -9,7 +9,7 @@ use std::collections::HashMap;
 /// A function that responds with a friendly greeting:
 ///
 /// ```rust
-/// # #![feature(proc_macro)] extern crate azure_functions;
+/// # #![feature(use_extern_macros)] extern crate azure_functions;
 /// use azure_functions::func;
 /// use azure_functions::bindings::{HttpRequest, HttpResponse};
 ///
@@ -53,7 +53,7 @@ impl<'a> HttpRequest<'a> {
     /// # Examples
     ///
     /// ```rust
-    /// # #![feature(proc_macro)] extern crate azure_functions;
+    /// # #![feature(use_extern_macros)] extern crate azure_functions;
     /// use azure_functions::func;
     /// use azure_functions::bindings::{HttpRequest, HttpResponse};
     ///
