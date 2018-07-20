@@ -19,7 +19,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for TimerTrigger<'a> {
         let mut run_on_startup = None;
         let mut use_monitor = None;
 
-        for (key, value) in args.0.iter() {
+        for (key, value) in args.list.iter() {
             let key_str = key.to_string();
 
             match key_str.as_str() {

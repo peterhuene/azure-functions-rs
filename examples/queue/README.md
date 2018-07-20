@@ -1,20 +1,38 @@
-# Example Timer Azure Function
+# Example Queue Triggered Azure Function
 
-This package is an example of a simple timer-triggered Azure Function.
+This package is an example of a simple queue-triggered Azure Function.
 
-## Example function implementation
+## Example function implementations
 
-The example timer-triggered Azure Function that runs every minute:
+An example queue-triggered Azure Function that runs when a new message is posted
+to the `test` Azure Storage Queue.
 
 ```rust
-use azure_functions::bindings::TimerInfo;
+use azure_functions::bindings::QueueTrigger;
 use azure_functions::func;
 
 #[func]
-#[binding(name = "info", schedule = "0 */1 * * * *")]
-pub fn timer(info: &TimerInfo) {
-    info!("Hello from Rust!");
-    info!("Timer information: {:?}", info);
+#[binding(name = "trigger", queue_name = "test")]
+pub fn queue(trigger: &QueueTrigger) {
+    info!("Message: {}", trigger.message());
+}
+```
+
+An example queue-triggered Azure Function that outputs a message to another storage queue:
+
+```rust
+use azure_functions::bindings::{QueueMessage, QueueTrigger};
+use azure_functions::func;
+
+#[func]
+#[binding(name = "trigger", queue_name = "echo-in")]
+#[binding(name = "$return", queue_name = "echo-out")]
+pub fn queue_with_output(trigger: &QueueTrigger) -> QueueMessage {
+    let message = trigger.message();
+
+    info!("Message: {}", message);
+
+    message.into()
 }
 ```
 
@@ -72,21 +90,25 @@ Where `$SCRIPT_ROOT` above represents the path to the root directory created fro
 
 _Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `dotnet run`._
 
-## Invoke the `timer` function
+## Invoke the `queue` function
 
-The example function is automatically invoked by the Azure Functions Host when the timer expires.
+To invoke the queue function from this example, create an Azure Storage Queue named `test` for the Azure Storage account
+that was used for the `$CONNECTION_STRING` variable above.
 
-Wait a minute and then check the Azure Functions Host output.
+Post a `hello world!` message to the queue.
 
 With any luck, you should see the following output from the Azure Functions Host:
 
 ```
-info: Function.timer[0]
+info: Function.queue[0]
       => System.Collections.Generic.Dictionary`2[System.String,System.Object]
-      Executing 'Functions.timer' (Reason='Timer fired at 2018-07-15T23:34:00.0200030-07:00', Id=99936a5b-8df1-48c7-97b7-afec3b579215)
-info: Worker.Rust.7ed9c518-6f7e-4c0b-bc5d-0fdb77a0d1b1[0]
-      Hello every minute from Rust!
-info: Function.timer[0]
+      Executing 'Functions.queue' (Reason='New queue message detected on 'test'.', Id=01912ed1-83aa-4ac7-ae2a-9b2b1ae80830)
+info: Worker.Rust.30489a08-ea06-4e63-b87b-686680a387c7[0]
+      Message: hello world!
+info: Function.queue[0]
       => System.Collections.Generic.Dictionary`2[System.String,System.Object]
-      Executed 'Functions.timer' (Succeeded, Id=99936a5b-8df1-48c7-97b7-afec3b579215)
+      Executed 'Functions.queue' (Succeeded, Id=01912ed1-83aa-4ac7-ae2a-9b2b1ae80830)
 ```
+
+Likewise, to invoke the `queue_with_output` function, post a message to the `echo-in` queue.  After the function invokes,
+you should see the same message posted back to the `echo-out` queue.

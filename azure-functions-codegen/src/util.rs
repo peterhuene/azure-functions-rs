@@ -27,14 +27,20 @@ pub fn to_camel_case(input: &str) -> String {
     result
 }
 
-pub struct AttributeArguments(pub Vec<(Ident, Lit)>);
+pub struct AttributeArguments {
+    pub span: Span,
+    pub list: Vec<(Ident, Lit)>,
+}
 
 impl AttributeArguments {
     pub fn with_name(name: &str, span: ::proc_macro2::Span) -> Self {
-        AttributeArguments(vec![(
-            Ident::new("name", span.clone()),
-            Lit::Str(LitStr::new(name, span)),
-        )])
+        AttributeArguments {
+            span: span.unstable(),
+            list: vec![(
+                Ident::new("name", span.clone()),
+                Lit::Str(LitStr::new(name, span)),
+            )],
+        }
     }
 }
 
@@ -43,7 +49,10 @@ impl TryFrom<TokenStream> for AttributeArguments {
 
     fn try_from(stream: TokenStream) -> Result<Self, Self::Error> {
         if stream.is_empty() {
-            return Ok(AttributeArguments(Vec::new()));
+            return Ok(AttributeArguments {
+                span: Span::call_site(),
+                list: Vec::new(),
+            });
         }
 
         parse::<AttributeArguments>(stream).map_err(|e| Span::call_site().error(e.to_string()))
@@ -55,7 +64,10 @@ impl TryFrom<::proc_macro2::TokenStream> for AttributeArguments {
 
     fn try_from(stream: ::proc_macro2::TokenStream) -> Result<Self, Self::Error> {
         if stream.is_empty() {
-            return Ok(AttributeArguments(Vec::new()));
+            return Ok(AttributeArguments {
+                span: Span::call_site(),
+                list: Vec::new(),
+            });
         }
 
         parse2::<AttributeArguments>(stream).map_err(|e| Span::call_site().error(e.to_string()))
@@ -77,19 +89,23 @@ impl TryFrom<Attribute> for AttributeArguments {
             }
         };
 
-        AttributeArguments::try_from(stream)
+        let mut args = AttributeArguments::try_from(stream)?;
+        args.span = span.unstable();
+        Ok(args)
     }
 }
 
 impl Synom for AttributeArguments {
     named!(parse -> Self, map!(
         Punctuated::<ArgumentAssignmentExpr, Token![,]>::parse_terminated_nonempty,
-        |exprs| AttributeArguments(exprs.into_iter().fold(Vec::new(), |mut list, expr| {
-            let ArgumentAssignmentExpr(name, value) = expr;
-            list.push((name, value));
-            list
-        })
-    )));
+        |exprs| AttributeArguments{
+            span: Span::call_site(),
+            list: exprs.into_iter().fold(Vec::new(), |mut list, expr| {
+                let ArgumentAssignmentExpr(name, value) = expr;
+                list.push((name, value));
+                list
+            }),
+        }));
 
     fn description() -> Option<&'static str> {
         Some("attribute arguments")
@@ -132,16 +148,12 @@ impl<T: ToTokens> ToTokens for QuotableOption<T> {
 }
 
 #[derive(Default)]
-pub struct PathVec {
-    paths: Vec<Path>,
-}
+pub struct PathVec(Vec<Path>);
 
 impl Synom for PathVec {
     named!(parse -> Self, map!(
         call!(Punctuated::<Path, Token![,]>::parse_terminated_nonempty),
-        |paths| PathVec {
-            paths: paths.into_iter().collect(),
-        }
+        |paths| PathVec(paths.into_iter().collect())
     ));
 }
 
@@ -150,7 +162,7 @@ impl IntoIterator for PathVec {
     type IntoIter = ::std::vec::IntoIter<Path>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.paths.into_iter()
+        self.0.into_iter()
     }
 }
 

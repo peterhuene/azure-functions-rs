@@ -6,10 +6,12 @@
 //!
 //! * [HTTP triggers](bindings/struct.HttpRequest.html)
 //! * [Timer triggers](bindings/struct.TimerInfo.html)
+//! * [Queue triggers](bindings/struct.QueueTrigger.html)
 //!
 //! The following Azure Functions output bindings are supported:
 //!
 //! * [HTTP output](bindings/struct.HttpResponse.html)
+//! * [Queue message output](bindings/struct.QueueMessage.html)
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
 //!
@@ -119,9 +121,11 @@ pub use azure_functions_shared::codegen;
 mod cli;
 mod logger;
 mod registry;
+mod util;
 
 pub mod bindings;
 pub mod http;
+pub mod queue;
 #[doc(hidden)]
 pub mod rpc;
 pub mod timer;

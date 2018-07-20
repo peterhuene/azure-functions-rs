@@ -1,4 +1,4 @@
-use codegen::bindings::{Http, HttpTrigger, TimerTrigger};
+use codegen::bindings::{Http, HttpTrigger, Queue, QueueTrigger, TimerTrigger};
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(untagged, rename_all = "camelCase")]
@@ -7,6 +7,8 @@ pub enum Binding {
     HttpTrigger(HttpTrigger),
     Http(Http),
     TimerTrigger(TimerTrigger),
+    QueueTrigger(QueueTrigger),
+    Queue(Queue),
 }
 
 impl Binding {
@@ -16,6 +18,8 @@ impl Binding {
             Binding::HttpTrigger(b) => Some(&b.name),
             Binding::Http(b) => Some(&b.name),
             Binding::TimerTrigger(b) => Some(&b.name),
+            Binding::QueueTrigger(b) => Some(&b.name),
+            Binding::Queue(b) => Some(&b.name),
         }
     }
 
@@ -28,8 +32,8 @@ impl Binding {
 
     pub fn is_trigger(&self) -> bool {
         match self {
-            Binding::HttpTrigger(_) | Binding::TimerTrigger(_) => true,
-            Binding::Context | Binding::Http(_) => false,
+            Binding::HttpTrigger(_) | Binding::TimerTrigger(_) | Binding::QueueTrigger(_) => true,
+            Binding::Context | Binding::Http(_) | Binding::Queue(_) => false,
         }
     }
 }

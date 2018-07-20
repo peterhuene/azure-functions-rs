@@ -1,5 +1,5 @@
 use azure_functions_shared::codegen;
-use func::bindings::{Http, HttpTrigger, TimerTrigger};
+use func::bindings::{Http, HttpTrigger, Queue, QueueTrigger, TimerTrigger};
 use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
@@ -26,6 +26,14 @@ impl<'a> ToTokens for Binding<'a> {
                 let b = TimerTrigger(Cow::Borrowed(b));
                 quote!(::azure_functions::codegen::Binding::TimerTrigger(#b)).to_tokens(tokens)
             }
+            codegen::Binding::QueueTrigger(b) => {
+                let b = QueueTrigger(Cow::Borrowed(b));
+                quote!(::azure_functions::codegen::Binding::QueueTrigger(#b)).to_tokens(tokens)
+            }
+            codegen::Binding::Queue(b) => {
+                let b = Queue(Cow::Borrowed(b));
+                quote!(::azure_functions::codegen::Binding::Queue(#b)).to_tokens(tokens)
+            }
         };
     }
 }
@@ -45,6 +53,11 @@ lazy_static! {
                 TimerTrigger::try_from(args)?.0.into_owned(),
             ))
         });
+        map.insert("QueueTrigger", |args| {
+            Ok(codegen::Binding::QueueTrigger(
+                QueueTrigger::try_from(args)?.0.into_owned(),
+            ))
+        });
         map
     };
     pub static ref INPUT_BINDINGS: HashMap<&'static str, BindingFactory> = {
@@ -59,6 +72,11 @@ lazy_static! {
         let mut map: HashMap<&'static str, BindingFactory> = HashMap::new();
         map.insert("HttpResponse", |args| {
             Ok(codegen::Binding::Http(Http::try_from(args)?.0.into_owned()))
+        });
+        map.insert("QueueMessage", |args| {
+            Ok(codegen::Binding::Queue(
+                Queue::try_from(args)?.0.into_owned(),
+            ))
         });
         map
     };

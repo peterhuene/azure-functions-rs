@@ -148,7 +148,7 @@ fn bind_argument(
                                 Some(args) => (*factory)(&args),
                                 None => (*factory)(&AttributeArguments::with_name(
                                     &name_str,
-                                    name.span(),
+                                    name.ident.span(),
                                 )),
                             }
                         }
@@ -220,7 +220,7 @@ fn drain_binding_attributes(
         let attr_span = attr.span();
         let args = AttributeArguments::try_from(attr)?;
 
-        let (name, name_span) = match args.0.iter().find(|(k, _)| k.to_string() == "name") {
+        let (name, name_span) = match args.list.iter().find(|(k, _)| k.to_string() == "name") {
             Some((_, v)) => match v {
                 Lit::Str(s) => (s.value(), s.span()),
                 _ => {
@@ -336,7 +336,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 
     if let Some((_, args)) = binding_args.iter().nth(0) {
         let (_, value) = args
-            .0
+            .list
             .iter()
             .find(|(k, _)| k.to_string() == "name")
             .unwrap();

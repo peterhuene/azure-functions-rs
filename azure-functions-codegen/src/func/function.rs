@@ -18,7 +18,7 @@ impl<'a> TryFrom<TokenStream> for Function<'a> {
         let mut name = None;
         let mut disabled = None;
 
-        for (key, value) in AttributeArguments::try_from(stream)?.0.into_iter() {
+        for (key, value) in AttributeArguments::try_from(stream)?.list.into_iter() {
             let key_str = key.to_string();
 
             match key_str.as_str() {

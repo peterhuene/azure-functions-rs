@@ -1,9 +1,13 @@
 use rpc::protocol;
-use serde_json;
+use serde::de::Error;
+use serde::Deserialize;
+use serde_json::{from_str, Result, Value};
 use std::borrow::Cow;
+use std::fmt;
+use std::str::from_utf8;
 
 /// Represents the body of a HTTP request or response.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Body<'a> {
     /// Represents an empty body.
     Empty,
@@ -35,14 +39,56 @@ impl<'a> Body<'a> {
     /// ```
     pub fn default_content_type(&self) -> &str {
         match self {
+            Body::Empty | Body::String(_) => "text/plain",
             Body::Json(_) => "application/json",
             Body::Bytes(_) => "application/octet-stream",
-            _ => "text/plain",
+        }
+    }
+
+    /// Gets the body as a string.
+    ///
+    /// Returns None if there is no valid string representation of the message.
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Body::Empty => Some(""),
+            Body::String(s) => Some(s),
+            Body::Json(s) => Some(s),
+            Body::Bytes(b) => from_utf8(b).map(|s| s).ok(),
+        }
+    }
+
+    /// Gets the body as a slice of bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            Body::Empty => &[],
+            Body::String(s) => s.as_bytes(),
+            Body::Json(s) => s.as_bytes(),
+            Body::Bytes(b) => b,
+        }
+    }
+
+    /// Deserializes the body as JSON to the requested type.
+    pub fn from_json<'b, T>(&'b self) -> Result<T>
+    where
+        T: Deserialize<'b>,
+    {
+        match self {
+            Body::Empty => from_str(""),
+            Body::String(s) => from_str(s.as_ref()),
+            Body::Json(s) => from_str(s.as_ref()),
+            Body::Bytes(b) => from_str(from_utf8(b).map_err(|e| {
+                ::serde_json::Error::custom(format!("body is not valid UTF-8: {}", e))
+            })?),
         }
     }
 }
 
-#[doc(hidden)]
+impl<'a> fmt::Display for Body<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_str().unwrap_or(""))
+    }
+}
+
 impl<'a> From<&'a protocol::TypedData> for Body<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         if data.has_string() {
@@ -53,6 +99,9 @@ impl<'a> From<&'a protocol::TypedData> for Body<'a> {
         }
         if data.has_bytes() {
             return Body::Bytes(Cow::Borrowed(data.get_bytes()));
+        }
+        if data.has_stream() {
+            return Body::Bytes(Cow::Borrowed(data.get_stream()));
         }
 
         Body::Empty
@@ -71,8 +120,8 @@ impl<'a> From<String> for Body<'a> {
     }
 }
 
-impl<'a> From<serde_json::Value> for Body<'a> {
-    fn from(data: serde_json::Value) -> Self {
+impl<'a> From<Value> for Body<'a> {
+    fn from(data: Value) -> Self {
         Body::Json(Cow::Owned(data.to_string()))
     }
 }

@@ -1,3 +1,4 @@
+use bindings::Trigger;
 use http::Body;
 use rpc::protocol;
 use std::collections::HashMap;
@@ -90,9 +91,13 @@ impl<'a> HttpRequest<'a> {
 
 impl<'a> From<&'a protocol::TypedData> for HttpRequest<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
-        match data.data.as_ref().expect("expected type data") {
-            protocol::TypedData_oneof_data::http(http) => HttpRequest(http),
-            _ => panic!("unexpected type data for HTTP request."),
+        if !data.has_http() {
+            panic!("unexpected type data for HTTP request.");
         }
+        HttpRequest(data.get_http())
     }
+}
+
+impl<'a> Trigger<'a> for HttpRequest<'a> {
+    fn read_metadata(&mut self, _: &'a HashMap<String, protocol::TypedData>) {}
 }
