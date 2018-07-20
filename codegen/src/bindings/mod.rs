@@ -51,6 +51,15 @@ pub enum Binding {
 }
 
 impl Binding {
+    pub fn name(&self) -> Option<&str> {
+        match self {
+            Binding::Context => None,
+            Binding::HttpTrigger(b) => Some(&b.name),
+            Binding::Http(b) => Some(&b.name),
+            Binding::TimerTrigger(b) => Some(&b.name),
+        }
+    }
+
     pub fn is_context(&self) -> bool {
         match self {
             Binding::Context => true,

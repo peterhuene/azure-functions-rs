@@ -8,6 +8,25 @@ use syn::spanned::Spanned;
 use syn::synom::Synom;
 use syn::{parse, parse2, Attribute, Ident, Lit, LitStr, Path};
 
+pub fn to_camel_case(input: &str) -> String {
+    let mut result = String::new();
+    let mut capitalize = false;
+    let mut first = true;
+    for ch in input.chars() {
+        if ch == '_' {
+            capitalize = true;
+        } else {
+            result.push(match capitalize && !first {
+                true => ch.to_ascii_uppercase(),
+                false => ch,
+            });
+            first = false;
+            capitalize = false;
+        }
+    }
+    result
+}
+
 #[derive(Default)]
 pub struct PathVec {
     paths: Vec<Path>,
