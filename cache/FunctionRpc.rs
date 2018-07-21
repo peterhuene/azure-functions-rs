@@ -7464,9 +7464,10 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     key\x18\x01\x20\x01(\tR\x03key\x12\x14\n\x05value\x18\x02\x20\x01(\tR\
     \x05value:\x028\x012|\n\x0bFunctionRpc\x12m\n\x0bEventStream\x12+.AzureF\
     unctionsRpcMessages.StreamingMessage\x1a+.AzureFunctionsRpcMessages.Stre\
-    amingMessage\"\0(\x010\x01Bl\n*com.microsoft.azure.functions.rpc.message\
-    sB\rFunctionProtoP\x01\xaa\x02,Microsoft.Azure.WebJobs.Script.Grpc.Messa\
-    gesb\x06proto3\
+    amingMessage\"\0(\x010\x01B\xa5\x01\n*com.microsoft.azure.functions.rpc.\
+    messagesB\rFunctionProtoP\x01Z7github.com/Azure/azure-functions-go-worke\
+    r/internal/rpc\xaa\x02,Microsoft.Azure.WebJobs.Script.Grpc.Messagesb\x06\
+    proto3\
 ";
 
 static mut file_descriptor_proto_lazy: ::protobuf::lazy::Lazy<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::lazy::Lazy {

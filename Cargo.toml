@@ -1,8 +1,10 @@
 [workspace]
 
 members = [
-    "codegen",
-    "lib",
+    "azure-functions",
+    "azure-functions-codegen",
+    "azure-functions-shared",
+    "azure-functions-shared-codegen",
     "examples/http",
     "examples/timer"
 ]
