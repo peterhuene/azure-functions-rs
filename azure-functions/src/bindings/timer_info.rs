@@ -1,5 +1,7 @@
+use bindings::Trigger;
 use rpc::protocol;
 use serde_json::from_str;
+use std::collections::HashMap;
 use timer::ScheduleStatus;
 
 /// Represents the timer information from a timer trigger binding.
@@ -38,4 +40,8 @@ impl<'a> From<&'a protocol::TypedData> for TimerInfo {
 
         from_str(data.get_json()).expect("failed to parse timer JSON data")
     }
+}
+
+impl<'a> Trigger<'a> for TimerInfo {
+    fn read_metadata(&mut self, _: &'a HashMap<String, protocol::TypedData>) {}
 }

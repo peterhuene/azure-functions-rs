@@ -58,6 +58,8 @@ The current list of supported bindings:
 |-------------------------------------------|-------------------------|
 | `azure_functions::bindings::HttpRequest`  | HTTP Trigger            |
 | `azure_functions::bindings::HttpResponse` | HTTP Output             |
+| `azure_functions::bindings::QueueMessage` | Output Queue Message    |
+| `azure_functions::bindings::QueueTrigger` | Queue Trigger           |
 | `azure_functions::bindings::TimerInfo`    | Timer Trigger           |
 | `azure_functions::Context`*               | Invocation Context      |
 

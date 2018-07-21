@@ -6,5 +6,6 @@ members = [
     "azure-functions-shared",
     "azure-functions-shared-codegen",
     "examples/http",
-    "examples/timer"
+    "examples/timer",
+    "examples/queue"
 ]

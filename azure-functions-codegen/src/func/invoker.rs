@@ -1,3 +1,4 @@
+use func::TRIGGERS;
 use func::{ReturnValueSetter, CONTEXT_TYPE_NAME};
 use quote::ToTokens;
 use syn::{FnArg, Ident, ItemFn, Pat, Type};
@@ -26,6 +27,15 @@ impl<'a> Invoker<'a> {
                 Some((name, arg_type))
             })
             .unzip()
+    }
+
+    fn get_trigger_arg(&self) -> Option<(&'a Ident, &'a Type)> {
+        self.iter_args().find(|(_, arg_type)| {
+            if let Type::Path(tp) = arg_type {
+                return TRIGGERS.contains_key(last_ident_in_path(&tp.path).as_str());
+            }
+            false
+        })
     }
 
     fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
@@ -70,6 +80,9 @@ impl<'a> ToTokens for Invoker<'a> {
 
         let (args, arg_types) = self.get_args();
         let args_for_match = args.clone();
+        let (trigger_arg, _) = self
+            .get_trigger_arg()
+            .expect("the function must have a trigger");
         let binding_names: Vec<_> = args.iter().map(|x| to_camel_case(&x.to_string())).collect();
 
         let args_for_call = self.get_args_for_call();
@@ -89,6 +102,12 @@ impl<'a> ToTokens for Invoker<'a> {
                     _ => panic!(format!("unexpected parameter binding '{}'", __param.name)),
                 };
             }
+
+            use ::azure_functions::bindings::Trigger;
+            match #trigger_arg.as_mut() {
+                Some(t) => t.read_metadata(&__req.trigger_metadata),
+                None => {}
+            };
 
             let __ret = #target(#(#args_for_call,)*);
 

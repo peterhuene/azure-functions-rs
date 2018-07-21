@@ -20,7 +20,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for HttpTrigger<'a> {
         let mut route = None;
         let mut web_hook_type = None;
 
-        for (key, value) in args.0.iter() {
+        for (key, value) in args.list.iter() {
             let key_str = key.to_string();
 
             match key_str.as_str() {

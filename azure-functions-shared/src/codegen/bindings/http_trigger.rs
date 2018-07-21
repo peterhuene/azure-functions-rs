@@ -22,17 +22,18 @@ impl Serialize for HttpTrigger {
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("type", "httpTrigger")?;
         map.serialize_entry("direction", "in")?;
-        if self.auth_level.is_some() {
-            map.serialize_entry("authLevel", self.auth_level.as_ref().unwrap())?;
+
+        if let Some(auth_level) = self.auth_level.as_ref() {
+            map.serialize_entry("authLevel", auth_level)?;
         }
         if !self.methods.is_empty() {
             map.serialize_entry("methods", &self.methods)?;
         }
-        if self.route.is_some() {
-            map.serialize_entry("route", self.route.as_ref().unwrap())?;
+        if let Some(route) = self.route.as_ref() {
+            map.serialize_entry("route", route)?;
         }
-        if self.web_hook_type.is_some() {
-            map.serialize_entry("webHookType", self.web_hook_type.as_ref().unwrap())?;
+        if let Some(web_hook_type) = self.web_hook_type.as_ref() {
+            map.serialize_entry("webHookType", web_hook_type)?;
         }
 
         map.end()

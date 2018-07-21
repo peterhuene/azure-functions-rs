@@ -1,4 +1,4 @@
-//! Module for HTTP-related types.
+//! Module for HTTP types.
 mod body;
 mod response_builder;
 mod status;
