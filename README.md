@@ -10,7 +10,7 @@ in [Rust](https://www.rust-lang.org/en-US/).
 
 ## Disclaimer
 
-Althougth the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
+Although the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
 and is not an endorsement of any future product offering from Microsoft.
 
 This project is simply a labor of love by a developer who would like to see the Rust ecosystem flourish.
@@ -57,9 +57,9 @@ The current list of supported bindings:
 | Rust Type                                 | Azure Functions Binding |
 |-------------------------------------------|-------------------------|
 | `azure_functions::bindings::HttpRequest`  | HTTP Trigger            |
-| `azure_functions::bindings::HttpResponse` | HTTP Output             |
-| `azure_functions::bindings::QueueMessage` | Output Queue Message    |
+| `azure_functions::bindings::HttpResponse` | Output HTTP Response    |
 | `azure_functions::bindings::QueueTrigger` | Queue Trigger           |
+| `azure_functions::bindings::QueueMessage` | Output Queue Message    |
 | `azure_functions::bindings::TimerInfo`    | Timer Trigger           |
 | `azure_functions::Context`*               | Invocation Context      |
 
@@ -88,8 +88,7 @@ This repository is split into multiple Rust crates:
 * [azure-functions-shared](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared) - The `azure-functions-shared` crate that defines types and functions that are shared between the `azure-functions-codegen` and `azure-functions` crates.
     * Note: the `azure-functions-shared/protobuf` directory is the git submodule for [Azure Functions Language Worker Protocol](https://github.com/Azure/azure-functions-language-worker-protobuf).
 * [azure-functions-shared-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared-codegen) - The `azure-functions-shared-codegen` crate that defines the procedural macros used by the shared `azure-functions-shared` crate.
-* [examples/http](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http) - An example of an HTTP-triggered function.
-* [examples/timer](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/timer) - An example of a timer-triggered function.
+* [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) - The directory containing example Azure Functions.
 
 ## Prerequisites
 
@@ -127,3 +126,57 @@ cargo test
 ```
 
 Right now there are only doc tests, but more tests are coming soon.
+
+## Deploying to Azure Functions
+
+Deploying to Azure Functions is best accomplished with a Docker image for your Rust Azure Functions application.
+
+Copy this content to a `Dockerfile` at the root of your source:
+
+```docker
+FROM peterhuene/azure-functions-rs-ci:latest AS build-env
+
+COPY . /src
+
+RUN cargo run --release -- init --worker-path /usr/local/bin/rust_worker --script-root /home/site/wwwroot
+
+FROM microsoft/azure-functions-dotnet-core2.0:dev-nightly
+
+COPY --from=build-env ["/usr/local/bin/rust_worker", "/usr/local/bin/rust_worker"]
+COPY --from=build-env ["/home/site/wwwroot", "/home/site/wwwroot"]
+
+RUN    mkdir /azure-functions-host/workers/rust \
+    && curl https://gist.githubusercontent.com/peterhuene/00ba85ed18bb42437355f63829f2471e/raw/9d29d3b8eaf01e1d2d44e7df2a569a9730fbafa3/worker.config.json > /azure-functions-host/workers/rust/worker.config.json
+```
+
+Add a `.dockerignore` at the root of your source with the following contents:
+
+```
+target/
+Cargo.lock
+.vscode/
+.git/
+```
+
+Build the Docker image:
+
+```
+docker build -t $IMAGE:latest .
+```
+
+Where `$IMAGE` is the name of the tag for the image (e.g. `peterhuene/azure-functions-rs-example`).
+
+Push the image to a repository:
+
+```
+docker push $IMAGE
+```
+
+Create the Function App in [Azure](https://portal.azure.com) using the Docker "OS", specifying the image that was pushed:
+
+![Azure Portal](docs/images/create-function-app.png)
+
+Add a new setting for `WEBSITES_ENABLE_APP_SERVICE_STORAGE` under `Application Settings` and set it to `false`.
+This will enable the Docker image itself to provide the service storage (i.e. script root and worker).
+
+Finally, restart the Function App.  After the application has initialized again, your Rust Azure Functions should be displayed in the Azure Portal.
