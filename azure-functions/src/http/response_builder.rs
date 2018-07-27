@@ -82,7 +82,10 @@ impl ResponseBuilder {
     ///     message
     /// );
     /// ```
-    pub fn body<'a, B: Into<Body<'a>>>(&mut self, body: B) -> &mut Self {
+    pub fn body<B>(&mut self, body: B) -> &mut Self
+    where
+        B: Into<Body<'a>>,
+    {
         let body = body.into();
         match &body {
             Body::Empty => {

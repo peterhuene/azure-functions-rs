@@ -10,10 +10,10 @@ use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr};
 
 pub struct Http<'a>(pub Cow<'a, codegen::bindings::Http>);
 
-impl<'a> TryFrom<&'a AttributeArguments> for Http<'a> {
+impl TryFrom<AttributeArguments> for Http<'_> {
     type Error = Diagnostic;
 
-    fn try_from(args: &AttributeArguments) -> Result<Self, Self::Error> {
+    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
 
         for (key, value) in args.list.iter() {
@@ -46,7 +46,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for Http<'a> {
     }
 }
 
-impl<'a> ToTokens for Http<'a> {
+impl ToTokens for Http<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let name = QuotableBorrowedStr(&self.0.name);
         quote!(::azure_functions::codegen::bindings::Http { name: #name }).to_tokens(tokens)

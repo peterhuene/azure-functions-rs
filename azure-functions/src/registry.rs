@@ -2,13 +2,13 @@ use codegen::Function;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
-pub struct Registry {
-    functions: HashMap<String, &'static Function>,
-    registered: HashMap<String, &'static Function>,
+pub struct Registry<'a> {
+    functions: HashMap<String, &'a Function>,
+    registered: HashMap<String, &'a Function>,
 }
 
-impl Registry {
-    pub fn new(functions: &[&'static Function]) -> Registry {
+impl Registry<'a> {
+    pub fn new(functions: &[&'a Function]) -> Registry<'a> {
         Registry {
             functions: functions
                 .iter()
@@ -33,11 +33,11 @@ impl Registry {
         }
     }
 
-    pub fn get(&self, id: &str) -> Option<&'static Function> {
+    pub fn get(&self, id: &str) -> Option<&'a Function> {
         self.registered.get(id).map(|x| *x)
     }
 
-    pub fn iter(&self) -> Iter<String, &'static Function> {
+    pub fn iter(&self) -> Iter<String, &'a Function> {
         self.functions.iter()
     }
 }

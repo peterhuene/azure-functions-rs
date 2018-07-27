@@ -1,7 +1,7 @@
 //! # Azure Functions for Rust
 //!
 //! This crate supports the code generation for the `azure-functions` crate.
-
+#![feature(rust_2018_preview)]
 #![feature(proc_macro_diagnostic)]
 #![feature(drain_filter)]
 #![feature(try_from)]

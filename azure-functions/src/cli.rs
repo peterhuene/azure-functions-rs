@@ -1,6 +1,6 @@
 use clap::{App, Arg, SubCommand};
 
-pub fn create_app<'a, 'b>() -> App<'a, 'b> {
+pub fn create_app() -> App<'a, 'b> {
     App::new("Azure Functions Language Worker for Rust")
         .version(env!("CARGO_PKG_VERSION"))
         .about("Provides an Azure Functions Worker for functions written in Rust.")

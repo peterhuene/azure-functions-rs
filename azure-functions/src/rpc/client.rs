@@ -146,7 +146,7 @@ impl Client {
 
     pub fn process_all_messages(
         mut self,
-        registry: Arc<Mutex<Registry>>,
+        registry: Arc<Mutex<Registry<'static>>>,
     ) -> impl Future<Item = Client, Error = ()> {
         let pool = tokio_threadpool::ThreadPool::new();
 
@@ -219,7 +219,7 @@ impl Client {
     }
 
     fn handle_function_load_request(
-        registry: Arc<Mutex<Registry>>,
+        registry: Arc<Mutex<Registry<'static>>>,
         sender: Sender,
         req: &protocol::FunctionLoadRequest,
     ) {
@@ -259,7 +259,7 @@ impl Client {
     }
 
     fn handle_invocation_request(
-        registry: Arc<Mutex<Registry>>,
+        registry: Arc<Mutex<Registry<'static>>>,
         sender: Sender,
         req: &protocol::InvocationRequest,
     ) {
@@ -334,7 +334,7 @@ impl Client {
     }
 
     fn handle_request(
-        registry: Arc<Mutex<Registry>>,
+        registry: Arc<Mutex<Registry<'static>>>,
         sender: Sender,
         msg: &protocol::StreamingMessage,
     ) {

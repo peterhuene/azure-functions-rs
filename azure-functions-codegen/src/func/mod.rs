@@ -145,8 +145,8 @@ fn bind_argument(
                         Pat::Ident(name) => {
                             let name_str = name.ident.to_string();
                             match binding_args.remove(&name_str) {
-                                Some(args) => (*factory)(&args),
-                                None => (*factory)(&AttributeArguments::with_name(
+                                Some(args) => (*factory)(args),
+                                None => (*factory)(AttributeArguments::with_name(
                                     &name_str,
                                     name.ident.span(),
                                 )),
@@ -193,8 +193,8 @@ fn bind_return_type(
         ReturnType::Type(_, ty) => match &**ty {
             Type::Path(tp) => match OUTPUT_BINDINGS.get(last_ident_in_path(&tp.path).as_str()) {
                 Some(factory) => match binding_args.remove(RETURN_BINDING_NAME) {
-                    Some(args) => (*factory)(&args),
-                    None => (*factory)(&AttributeArguments::with_name(
+                    Some(args) => (*factory)(args),
+                    None => (*factory)(AttributeArguments::with_name(
                         RETURN_BINDING_NAME,
                         ty.span(),
                     )),

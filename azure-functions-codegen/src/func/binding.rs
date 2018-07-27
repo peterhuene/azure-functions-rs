@@ -10,7 +10,7 @@ use util::AttributeArguments;
 
 pub struct Binding<'a>(pub &'a codegen::Binding);
 
-impl<'a> ToTokens for Binding<'a> {
+impl ToTokens for Binding<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self.0 {
             codegen::Binding::Context => panic!("context bindings cannot be tokenized"),
@@ -38,11 +38,12 @@ impl<'a> ToTokens for Binding<'a> {
     }
 }
 
-pub type BindingFactory = fn(&AttributeArguments) -> Result<codegen::Binding, Diagnostic>;
+pub type BindingFactory = fn(AttributeArguments) -> Result<codegen::Binding, Diagnostic>;
+type BindingMap = HashMap<&'static str, BindingFactory>;
 
 lazy_static! {
-    pub static ref TRIGGERS: HashMap<&'static str, BindingFactory> = {
-        let mut map: HashMap<&'static str, BindingFactory> = HashMap::new();
+    pub static ref TRIGGERS: BindingMap = {
+        let mut map: BindingMap = HashMap::new();
         map.insert("HttpRequest", |args| {
             Ok(codegen::Binding::HttpTrigger(
                 HttpTrigger::try_from(args)?.0.into_owned(),
@@ -60,16 +61,16 @@ lazy_static! {
         });
         map
     };
-    pub static ref INPUT_BINDINGS: HashMap<&'static str, BindingFactory> = {
-        let map: HashMap<&'static str, BindingFactory> = HashMap::new();
+    pub static ref INPUT_BINDINGS: BindingMap = {
+        let map: BindingMap = HashMap::new();
         map
     };
-    pub static ref INPUT_OUTPUT_BINDINGS: HashMap<&'static str, BindingFactory> = {
-        let map: HashMap<&'static str, BindingFactory> = HashMap::new();
+    pub static ref INPUT_OUTPUT_BINDINGS: BindingMap = {
+        let map: BindingMap = HashMap::new();
         map
     };
-    pub static ref OUTPUT_BINDINGS: HashMap<&'static str, BindingFactory> = {
-        let mut map: HashMap<&'static str, BindingFactory> = HashMap::new();
+    pub static ref OUTPUT_BINDINGS: BindingMap = {
+        let mut map: BindingMap = HashMap::new();
         map.insert("HttpResponse", |args| {
             Ok(codegen::Binding::Http(Http::try_from(args)?.0.into_owned()))
         });

@@ -32,7 +32,7 @@ pub struct TimerInfo {
     pub is_past_due: bool,
 }
 
-impl<'a> From<&'a protocol::TypedData> for TimerInfo {
+impl From<&'a protocol::TypedData> for TimerInfo {
     fn from(data: &'a protocol::TypedData) -> Self {
         if !data.has_json() {
             panic!("expected JSON data for timer trigger binding");
@@ -42,6 +42,6 @@ impl<'a> From<&'a protocol::TypedData> for TimerInfo {
     }
 }
 
-impl<'a> Trigger<'a> for TimerInfo {
+impl Trigger<'a> for TimerInfo {
     fn read_metadata(&mut self, _: &'a HashMap<String, protocol::TypedData>) {}
 }

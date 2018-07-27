@@ -19,7 +19,7 @@ pub enum Body<'a> {
     Bytes(Cow<'a, [u8]>),
 }
 
-impl<'a> Body<'a> {
+impl Body<'_> {
     /// Gets the default content type for a body.
     ///
     /// Returns `application/json` for `Body::Json`.
@@ -68,7 +68,7 @@ impl<'a> Body<'a> {
     }
 
     /// Deserializes the body as JSON to the requested type.
-    pub fn from_json<'b, T>(&'b self) -> Result<T>
+    pub fn from_json<T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -83,13 +83,13 @@ impl<'a> Body<'a> {
     }
 }
 
-impl<'a> fmt::Display for Body<'a> {
+impl fmt::Display for Body<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str().unwrap_or(""))
     }
 }
 
-impl<'a> From<&'a protocol::TypedData> for Body<'a> {
+impl From<&'a protocol::TypedData> for Body<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         if data.has_string() {
             return Body::String(Cow::Borrowed(data.get_string()));
@@ -108,37 +108,37 @@ impl<'a> From<&'a protocol::TypedData> for Body<'a> {
     }
 }
 
-impl<'a> From<&'a str> for Body<'a> {
+impl From<&'a str> for Body<'a> {
     fn from(data: &'a str) -> Self {
         Body::String(Cow::Borrowed(data))
     }
 }
 
-impl<'a> From<String> for Body<'a> {
+impl From<String> for Body<'_> {
     fn from(data: String) -> Self {
         Body::String(Cow::Owned(data))
     }
 }
 
-impl<'a> From<Value> for Body<'a> {
+impl From<Value> for Body<'_> {
     fn from(data: Value) -> Self {
         Body::Json(Cow::Owned(data.to_string()))
     }
 }
 
-impl<'a> From<&'a [u8]> for Body<'a> {
+impl From<&'a [u8]> for Body<'a> {
     fn from(data: &'a [u8]) -> Self {
         Body::Bytes(Cow::Borrowed(data))
     }
 }
 
-impl<'a> From<Vec<u8>> for Body<'a> {
+impl From<Vec<u8>> for Body<'_> {
     fn from(data: Vec<u8>) -> Self {
         Body::Bytes(Cow::Owned(data))
     }
 }
 
-impl<'a> Into<protocol::TypedData> for Body<'a> {
+impl Into<protocol::TypedData> for Body<'_> {
     fn into(self) -> protocol::TypedData {
         let mut data = protocol::TypedData::new();
 

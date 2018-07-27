@@ -10,10 +10,10 @@ use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOptio
 
 pub struct TimerTrigger<'a>(pub Cow<'a, codegen::bindings::TimerTrigger>);
 
-impl<'a> TryFrom<&'a AttributeArguments> for TimerTrigger<'a> {
+impl TryFrom<AttributeArguments> for TimerTrigger<'_> {
     type Error = Diagnostic;
 
-    fn try_from(args: &AttributeArguments) -> Result<Self, Self::Error> {
+    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
         let mut schedule = None;
         let mut run_on_startup = None;
@@ -83,7 +83,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for TimerTrigger<'a> {
     }
 }
 
-impl<'a> ToTokens for TimerTrigger<'a> {
+impl ToTokens for TimerTrigger<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let name = QuotableBorrowedStr(&self.0.name);
         let schedule = QuotableOption(self.0.schedule.as_ref().map(|x| QuotableBorrowedStr(x)));

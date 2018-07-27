@@ -164,17 +164,17 @@ impl Into<protocol::RpcHttp> for HttpResponse {
     }
 }
 
-impl<'a, T> From<T> for HttpResponse
+impl<T> From<T> for HttpResponse
 where
-    T: Into<Body<'a>>,
+    T: Into<Body<'_>>,
 {
     fn from(data: T) -> Self {
         HttpResponse::build().body(data).into()
     }
 }
 
-impl<'a> From<&'a mut ResponseBuilder> for HttpResponse {
-    fn from(builder: &'a mut ResponseBuilder) -> Self {
+impl From<&mut ResponseBuilder> for HttpResponse {
+    fn from(builder: &mut ResponseBuilder) -> Self {
         replace(&mut builder.0, HttpResponse::new())
     }
 }
