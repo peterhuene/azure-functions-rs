@@ -9,10 +9,10 @@ use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOptio
 
 pub struct QueueTrigger<'a>(pub Cow<'a, codegen::bindings::QueueTrigger>);
 
-impl<'a> TryFrom<&'a AttributeArguments> for QueueTrigger<'a> {
+impl TryFrom<AttributeArguments> for QueueTrigger<'_> {
     type Error = Diagnostic;
 
-    fn try_from(args: &'a AttributeArguments) -> Result<Self, Self::Error> {
+    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
         let mut queue_name = None;
         let mut connection = None;
@@ -75,7 +75,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for QueueTrigger<'a> {
     }
 }
 
-impl<'a> ToTokens for QueueTrigger<'a> {
+impl ToTokens for QueueTrigger<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let name = QuotableBorrowedStr(&self.0.name);
         let queue_name = QuotableBorrowedStr(&self.0.queue_name);

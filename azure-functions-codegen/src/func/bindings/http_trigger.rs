@@ -10,10 +10,10 @@ use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOptio
 
 pub struct HttpTrigger<'a>(pub Cow<'a, codegen::bindings::HttpTrigger>);
 
-impl<'a> TryFrom<&'a AttributeArguments> for HttpTrigger<'a> {
+impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
     type Error = Diagnostic;
 
-    fn try_from(args: &AttributeArguments) -> Result<Self, Self::Error> {
+    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
         let mut auth_level = None;
         let mut methods = Vec::new();
@@ -134,7 +134,7 @@ impl<'a> TryFrom<&'a AttributeArguments> for HttpTrigger<'a> {
     }
 }
 
-impl<'a> ToTokens for HttpTrigger<'a> {
+impl ToTokens for HttpTrigger<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let name = QuotableBorrowedStr(&self.0.name);
         let auth_level = QuotableOption(self.0.auth_level.as_ref().map(|x| QuotableBorrowedStr(x)));

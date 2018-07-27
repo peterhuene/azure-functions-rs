@@ -1,6 +1,7 @@
 //! # Azure Functions for Rust
 //!
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
+#![feature(rust_2018_preview)]
 #![feature(use_extern_macros)]
 #![feature(proc_macro_mod)]
 #![feature(proc_macro_gen)]

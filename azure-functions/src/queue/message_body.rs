@@ -17,7 +17,7 @@ pub enum MessageBody<'a> {
     Bytes(Cow<'a, [u8]>),
 }
 
-impl<'a> MessageBody<'a> {
+impl MessageBody<'_> {
     /// Gets the contents of the message as a string.
     ///
     /// Returns None if there is no valid string representation of the message.
@@ -39,7 +39,7 @@ impl<'a> MessageBody<'a> {
     }
 
     /// Deserializes the message as JSON to the requested type.
-    pub fn from_json<'b, T>(&'b self) -> Result<T>
+    pub fn from_json<T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -53,13 +53,13 @@ impl<'a> MessageBody<'a> {
     }
 }
 
-impl<'a> fmt::Display for MessageBody<'a> {
+impl fmt::Display for MessageBody<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str().unwrap_or(""))
     }
 }
 
-impl<'a> From<&'a protocol::TypedData> for MessageBody<'a> {
+impl From<&'a protocol::TypedData> for MessageBody<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         if data.has_string() {
             return MessageBody::String(Cow::Borrowed(data.get_string()));
@@ -78,37 +78,37 @@ impl<'a> From<&'a protocol::TypedData> for MessageBody<'a> {
     }
 }
 
-impl<'a> From<&'a str> for MessageBody<'a> {
+impl From<&'a str> for MessageBody<'a> {
     fn from(data: &'a str) -> Self {
         MessageBody::String(Cow::Borrowed(data))
     }
 }
 
-impl<'a> From<String> for MessageBody<'a> {
+impl From<String> for MessageBody<'_> {
     fn from(data: String) -> Self {
         MessageBody::String(Cow::Owned(data))
     }
 }
 
-impl<'a> From<Value> for MessageBody<'a> {
+impl From<Value> for MessageBody<'_> {
     fn from(data: Value) -> Self {
         MessageBody::Json(Cow::Owned(data.to_string()))
     }
 }
 
-impl<'a> From<&'a [u8]> for MessageBody<'a> {
+impl From<&'a [u8]> for MessageBody<'a> {
     fn from(data: &'a [u8]) -> Self {
         MessageBody::Bytes(Cow::Borrowed(data))
     }
 }
 
-impl<'a> From<Vec<u8>> for MessageBody<'a> {
+impl From<Vec<u8>> for MessageBody<'_> {
     fn from(data: Vec<u8>) -> Self {
         MessageBody::Bytes(Cow::Owned(data))
     }
 }
 
-impl<'a> Into<protocol::TypedData> for MessageBody<'a> {
+impl Into<protocol::TypedData> for MessageBody<'_> {
     fn into(self) -> protocol::TypedData {
         let mut data = protocol::TypedData::new();
 

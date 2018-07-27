@@ -91,6 +91,7 @@
 //! The above Azure Function can be invoked with `http://localhost:5000/api/greet?name=John`.
 //!
 //! The expected response would be `Hello from Rust, John!`.
+#![feature(rust_2018_preview)]
 #![feature(use_extern_macros)]
 #![feature(proc_macro_mod)]
 #![feature(proc_macro_gen)]
@@ -141,7 +142,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Registry>>) {
+fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Registry<'static>>>) {
     const FUNCTION_FILE: &'static str = "function.json";
     const RUST_SCRIPT_FILE: &'static str = "run.rs";
 
@@ -238,12 +239,12 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
     }
 }
 
-fn run_worker<'a>(
+fn run_worker(
     worker_id: &str,
     host: &str,
     port: u32,
     max_message_length: Option<i32>,
-    registry: Arc<Mutex<Registry>>,
+    registry: Arc<Mutex<Registry<'static>>>,
 ) {
     let client = rpc::Client::new(worker_id.to_string(), max_message_length);
 

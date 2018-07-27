@@ -8,13 +8,11 @@ const INVOKER_PREFIX: &'static str = "__invoke_";
 
 pub struct Invoker<'a>(pub &'a ItemFn);
 
-impl<'a> Invoker<'a> {
+impl Invoker<'a> {
     pub fn name(&self) -> String {
         format!("{}{}", INVOKER_PREFIX, self.0.ident)
     }
-}
 
-impl<'a> Invoker<'a> {
     fn get_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
         self.iter_args()
             .filter_map(|(name, arg_type)| {
@@ -70,7 +68,7 @@ impl<'a> Invoker<'a> {
     }
 }
 
-impl<'a> ToTokens for Invoker<'a> {
+impl ToTokens for Invoker<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let invoker = Ident::new(
             &format!("{}{}", INVOKER_PREFIX, self.0.ident.to_string()),

@@ -11,7 +11,7 @@ use util::{AttributeArguments, QuotableBorrowedStr, QuotableOption};
 
 pub struct Function<'a>(pub Cow<'a, codegen::Function>);
 
-impl<'a> TryFrom<TokenStream> for Function<'a> {
+impl TryFrom<TokenStream> for Function<'_> {
     type Error = Diagnostic;
 
     fn try_from(stream: TokenStream) -> Result<Self, Self::Error> {
@@ -68,7 +68,7 @@ impl<'a> TryFrom<TokenStream> for Function<'a> {
     }
 }
 
-impl<'a> ToTokens for Function<'a> {
+impl ToTokens for Function<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let name = QuotableBorrowedStr(&self.0.name);
         let disabled = self.0.disabled;

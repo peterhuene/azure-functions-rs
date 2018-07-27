@@ -3,7 +3,7 @@ use syn::ReturnType;
 
 pub struct ReturnValueSetter<'a>(pub &'a ReturnType);
 
-impl<'a> ToTokens for ReturnValueSetter<'a> {
+impl ToTokens for ReturnValueSetter<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         match self.0 {
             ReturnType::Default => {}

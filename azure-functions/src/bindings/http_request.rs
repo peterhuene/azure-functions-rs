@@ -29,7 +29,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub struct HttpRequest<'a>(&'a protocol::RpcHttp);
 
-impl<'a> HttpRequest<'a> {
+impl HttpRequest<'_> {
     /// Gets the HTTP method (e.g. "GET") for the request.
     pub fn method(&self) -> &str {
         &self.0.method
@@ -89,7 +89,7 @@ impl<'a> HttpRequest<'a> {
     }
 }
 
-impl<'a> From<&'a protocol::TypedData> for HttpRequest<'a> {
+impl From<&'a protocol::TypedData> for HttpRequest<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         if !data.has_http() {
             panic!("unexpected type data for HTTP request.");
@@ -98,6 +98,6 @@ impl<'a> From<&'a protocol::TypedData> for HttpRequest<'a> {
     }
 }
 
-impl<'a> Trigger<'a> for HttpRequest<'a> {
+impl Trigger<'a> for HttpRequest<'a> {
     fn read_metadata(&mut self, _: &'a HashMap<String, protocol::TypedData>) {}
 }

@@ -5,9 +5,9 @@ use rpc::protocol;
 #[derive(Debug)]
 pub struct QueueMessage(protocol::TypedData);
 
-impl<'a, T> From<T> for QueueMessage
+impl<T> From<T> for QueueMessage
 where
-    T: Into<MessageBody<'a>>,
+    T: Into<MessageBody<'_>>,
 {
     fn from(data: T) -> Self {
         let data: MessageBody = data.into();
@@ -15,13 +15,7 @@ where
     }
 }
 
-impl<'a> From<&'a MessageBody<'a>> for QueueMessage {
-    fn from(data: &'a MessageBody) -> Self {
-        QueueMessage(data.clone().into())
-    }
-}
-
-impl<'a> Into<protocol::TypedData> for QueueMessage {
+impl Into<protocol::TypedData> for QueueMessage {
     fn into(self) -> protocol::TypedData {
         self.0
     }

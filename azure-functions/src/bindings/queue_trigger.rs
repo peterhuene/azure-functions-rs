@@ -23,14 +23,14 @@ pub struct QueueTrigger<'a> {
     pub pop_receipt: &'a str,
 }
 
-impl<'a> QueueTrigger<'a> {
+impl QueueTrigger<'_> {
     /// Gets the message that triggered the function.
     pub fn message(&self) -> MessageBody {
         MessageBody::from(self.data)
     }
 }
 
-impl<'a> From<&'a protocol::TypedData> for QueueTrigger<'a> {
+impl From<&'a protocol::TypedData> for QueueTrigger<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         QueueTrigger {
             data: data,
@@ -44,7 +44,7 @@ impl<'a> From<&'a protocol::TypedData> for QueueTrigger<'a> {
     }
 }
 
-impl<'a> Trigger<'a> for QueueTrigger<'a> {
+impl Trigger<'a> for QueueTrigger<'a> {
     fn read_metadata(&mut self, metadata: &'a HashMap<String, protocol::TypedData>) {
         if let Some(id) = metadata.get("Id") {
             self.id = id.get_string();

@@ -129,7 +129,7 @@ impl Synom for ArgumentAssignmentExpr {
 
 pub struct QuotableBorrowedStr<'a>(pub &'a str);
 
-impl<'a> ToTokens for QuotableBorrowedStr<'a> {
+impl ToTokens for QuotableBorrowedStr<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let s = self.0;
         quote!(::std::borrow::Cow::Borrowed(#s)).to_tokens(tokens);
