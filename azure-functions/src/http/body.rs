@@ -33,7 +33,7 @@ impl Body<'_> {
     /// ```rust
     /// use azure_functions::http::Body;
     ///
-    /// let body: Body = [1u8, 2u8, 3u8][..].into();
+    /// let body: Body = [1, 2, 3][..].into();
     ///
     /// assert_eq!(body.default_content_type(), "application/octet-stream");
     /// ```
@@ -48,6 +48,16 @@ impl Body<'_> {
     /// Gets the body as a string.
     ///
     /// Returns None if there is no valid string representation of the message.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use azure_functions::http::Body;
+    /// use std::borrow::Cow;
+    ///
+    /// let body = Body::String(Cow::Borrowed("test"));
+    /// assert_eq!(body.as_str().unwrap(), "test");
+    /// ```
     pub fn as_str(&self) -> Option<&str> {
         match self {
             Body::Empty => Some(""),
@@ -58,6 +68,16 @@ impl Body<'_> {
     }
 
     /// Gets the body as a slice of bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use azure_functions::http::Body;
+    /// use std::borrow::Cow;
+    ///
+    /// let body = Body::String(Cow::Borrowed("test"));
+    /// assert_eq!(body.as_bytes(), "test".as_bytes());
+    /// ```
     pub fn as_bytes(&self) -> &[u8] {
         match self {
             Body::Empty => &[],
@@ -68,6 +88,25 @@ impl Body<'_> {
     }
 
     /// Deserializes the body as JSON to the requested type.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # #[macro_use] extern crate serde_derive;
+    /// # extern crate serde;
+    /// # extern crate azure_functions;
+    /// use azure_functions::http::Body;
+    /// use std::borrow::Cow;
+    ///
+    /// #[derive(Deserialize)]
+    /// struct Data {
+    ///     message: String
+    /// }
+    ///
+    /// let body = Body::String(Cow::Borrowed(r#"{ "message": "hello" }"#));
+    /// let data = body.from_json::<Data>().unwrap();
+    /// assert_eq!(data.message, "hello");
+    /// ```
     pub fn from_json<T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
@@ -150,5 +189,165 @@ impl Into<protocol::TypedData> for Body<'_> {
         };
 
         data
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::to_value;
+    use std::fmt::Write;
+
+    #[test]
+    fn it_has_a_default_content_type() {
+        let body = Body::Empty;
+        assert_eq!(body.default_content_type(), "text/plain");
+
+        let body = Body::String(Cow::Borrowed("test"));
+        assert_eq!(body.default_content_type(), "text/plain");
+
+        let body = Body::Json(Cow::Borrowed("1"));
+        assert_eq!(body.default_content_type(), "application/json");
+
+        let body = Body::Bytes(Cow::Borrowed(&[]));
+        assert_eq!(body.default_content_type(), "application/octet-stream");
+    }
+
+    #[test]
+    fn it_has_a_string_body() {
+        const BODY: &'static str = "test body";
+
+        let body: Body = BODY.into();
+        assert_eq!(body.as_str().unwrap(), BODY);
+
+        let data: protocol::TypedData = body.into();
+        assert_eq!(data.get_string(), BODY);
+    }
+
+    #[test]
+    fn it_has_a_json_body() {
+        #[derive(Serialize, Deserialize)]
+        struct Data {
+            message: String,
+        };
+
+        const MESSAGE: &'static str = "test";
+
+        let data = Data {
+            message: MESSAGE.to_string(),
+        };
+
+        let body: Body = ::serde_json::to_value(data).unwrap().into();
+        assert_eq!(body.from_json::<Data>().unwrap().message, MESSAGE);
+
+        let data: protocol::TypedData = body.into();
+        assert_eq!(data.get_json(), r#"{"message":"test"}"#);
+    }
+
+    #[test]
+    fn it_has_a_bytes_body() {
+        const BODY: &'static [u8] = &[1, 2, 3];
+
+        let body: Body = BODY.into();
+        assert_eq!(body.as_bytes(), BODY);
+
+        let data: protocol::TypedData = body.into();
+        assert_eq!(data.get_bytes(), BODY);
+    }
+
+    #[test]
+    fn it_displays_as_a_string() {
+        const BODY: &'static str = "test";
+
+        let body: Body = BODY.into();
+
+        let mut s = String::new();
+        write!(s, "{}", body);
+
+        assert_eq!(s, BODY);
+    }
+
+    #[test]
+    fn it_converts_from_typed_data() {
+        let mut data = protocol::TypedData::new();
+        data.set_string("test".to_string());
+        let body: Body = (&data).into();
+        assert!(matches!(body, Body::String(_)));
+        assert_eq!(body.as_str().unwrap(), "test");
+
+        let mut data = protocol::TypedData::new();
+        data.set_json("test".to_string());
+        let body: Body = (&data).into();
+        assert!(matches!(body, Body::Json(_)));
+        assert_eq!(body.as_str().unwrap(), "test");
+
+        let mut data = protocol::TypedData::new();
+        data.set_bytes(vec![0, 1, 2]);
+        let body: Body = (&data).into();
+        assert!(matches!(body, Body::Bytes(_)));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+
+        let mut data = protocol::TypedData::new();
+        data.set_stream(vec![0, 1, 2]);
+        let body: Body = (&data).into();
+        assert!(matches!(body, Body::Bytes(_)));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_from_str() {
+        let body: Body = "test".into();
+        assert!(matches!(body, Body::String(Cow::Borrowed(_))));
+        assert_eq!(body.as_str().unwrap(), "test");
+    }
+
+    #[test]
+    fn it_converts_from_string() {
+        let body: Body = "test".to_string().into();
+        assert!(matches!(body, Body::String(Cow::Owned(_))));
+        assert_eq!(body.as_str().unwrap(), "test");
+    }
+
+    #[test]
+    fn it_converts_from_json() {
+        let body: Body = to_value("hello world").unwrap().into();
+        assert!(matches!(body, Body::Json(Cow::Owned(_))));
+        assert_eq!(body.as_str().unwrap(), r#""hello world""#);
+    }
+
+    #[test]
+    fn it_converts_from_u8_slice() {
+        let body: Body = [0, 1, 2][..].into();
+        assert!(matches!(body, Body::Bytes(Cow::Borrowed(_))));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_from_u8_vec() {
+        let body: Body = vec![0, 1, 2].into();
+        assert!(matches!(body, Body::Bytes(Cow::Owned(_))));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_to_typed_data() {
+        let body = Body::Empty;
+        let data: protocol::TypedData = body.into();
+        assert!(data.data.is_none());
+
+        let body: Body = "test".into();
+        let data: protocol::TypedData = body.into();
+        assert!(data.has_string());
+        assert_eq!(data.get_string(), "test");
+
+        let body: Body = to_value("test").unwrap().into();
+        let data: protocol::TypedData = body.into();
+        assert!(data.has_json());
+        assert_eq!(data.get_json(), r#""test""#);
+
+        let body: Body = vec![1, 2, 3].into();
+        let data: protocol::TypedData = body.into();
+        assert!(data.has_bytes());
+        assert_eq!(data.get_bytes(), [1, 2, 3]);
     }
 }

@@ -111,6 +111,9 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate chrono;
 extern crate tokio_threadpool;
+#[cfg(test)]
+#[macro_use(matches)]
+extern crate matches;
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;

@@ -2,9 +2,9 @@
 
 This package is an example of a simple HTTP-triggered Azure Function.
 
-## Example function implementation
+## Example function implementations
 
-The example HTTP-triggered Azure Function:
+An example HTTP-triggered Azure Function:
 
 ```rust
 use azure_functions::bindings::{HttpRequest, HttpResponse};
@@ -19,6 +19,41 @@ pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
         "Hello from Rust, {}!\n",
         req.query_params().get("name").map_or("stranger", |x| x)
     ).into()
+}
+```
+
+An example HTTP-triggered Azure Function using JSON for request and response:
+
+```rust
+use azure_functions::bindings::{HttpRequest, HttpResponse};
+use azure_functions::func;
+use azure_functions::http::Status;
+use serde_json::to_value;
+
+#[derive(Deserialize)]
+struct Request {
+    name: String,
+}
+
+#[derive(Serialize)]
+struct Response {
+    message: String,
+}
+
+#[func]
+#[binding(name = "req", auth_level = "anonymous")]
+pub fn greet_with_json(req: &HttpRequest) -> HttpResponse {
+    if let Ok(request) = req.body().from_json::<Request>() {
+        let response = Response {
+            message: format!("Hello from Rust, {}!", request.name),
+        };
+        return to_value(response).unwrap().into();
+    }
+
+    HttpResponse::build()
+        .status(Status::BadRequest)
+        .body("Invalid JSON request.")
+        .into()
 }
 ```
 
@@ -99,4 +134,20 @@ With any luck, you should see the following output:
 
 ```
 Hello from Rust, Peter!
+```
+
+## Invoke the `greet_with_json` function
+
+The easiest way to invoke the function is to use `curl`:
+
+```
+curl --header "Content-Type: application/json" -d '{"name": "Peter"}' http://localhost:5000/api/greet_with_json
+```
+
+With any luck, you should see the following output:
+
+```json
+{
+  "message": "Hello from Rust, Peter!"
+}
 ```
