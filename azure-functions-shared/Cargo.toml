@@ -1,13 +1,13 @@
 [package]
 name = "azure-functions-shared"
 license = "MIT"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Shared types between the azure-functions-codegen and azure-functions crates."
 repository = "https://github.com/peterhuene/azure-functions-rs/"
 
 [dependencies]
-azure-functions-shared-codegen = { version = "0.1.4", path = "../azure-functions-shared-codegen" }
+azure-functions-shared-codegen = { version = "0.1.5", path = "../azure-functions-shared-codegen" }
 protobuf = "2.0.0"
 grpcio = "0.3.0"
 futures = "0.1.16"
