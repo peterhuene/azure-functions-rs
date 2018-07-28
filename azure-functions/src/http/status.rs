@@ -109,3 +109,21 @@ impl From<u16> for Status {
         Status::from_code(code)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_converts_to_string() {
+        assert_eq!(Status::Ok.to_string(), "200");
+        assert_eq!(Status::NotFound.to_string(), "404");
+    }
+
+    #[test]
+    fn it_converts_from_code() {
+        let status: Status = 200.into();
+        assert_eq!(status, Status::Ok);
+        assert_eq!(Status::from_code(404), Status::NotFound);
+    }
+}

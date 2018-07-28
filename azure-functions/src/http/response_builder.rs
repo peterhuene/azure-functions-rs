@@ -25,7 +25,7 @@ impl ResponseBuilder {
     ///
     /// assert_eq!(response.status(), Status::InternalServerError);
     /// ```
-    pub fn status<S: Into<Status>>(&mut self, status: S) -> &mut Self {
+    pub fn status<S: Into<Status>>(mut self, status: S) -> Self {
         self.0.status = status.into();
         self
     }
@@ -51,7 +51,7 @@ impl ResponseBuilder {
     ///     value
     /// );
     /// ```
-    pub fn header<T: Into<String>, U: Into<String>>(&mut self, name: T, value: U) -> &mut Self {
+    pub fn header<T: Into<String>, U: Into<String>>(mut self, name: T, value: U) -> Self {
         self.0.data.mut_headers().insert(name.into(), value.into());
         self
     }
@@ -75,14 +75,11 @@ impl ResponseBuilder {
     ///
     /// assert_eq!(response.status(), Status::Created);
     /// assert_eq!(
-    ///     match response.body() {
-    ///         Body::String(s) => s,
-    ///         _ => panic!("unexpected body.")
-    ///     },
+    ///     response.body().as_str().unwrap(),
     ///     message
     /// );
     /// ```
-    pub fn body<B>(&mut self, body: B) -> &mut Self
+    pub fn body<B>(mut self, body: B) -> Self
     where
         B: Into<Body<'a>>,
     {
@@ -96,9 +93,48 @@ impl ResponseBuilder {
         };
 
         if !self.0.headers().contains_key("Content-Type") {
-            self.header("Content-Type", body.default_content_type());
+            self.0.data.mut_headers().insert(
+                "Content-Type".to_string(),
+                body.default_content_type().to_string(),
+            );
         }
         self.0.data.set_body(body.into());
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_creates_an_empty_response() {
+        let response: HttpResponse = ResponseBuilder::new().into();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(response.body().as_str().unwrap(), "");
+    }
+
+    #[test]
+    fn it_sets_a_status() {
+        let response: HttpResponse = ResponseBuilder::new().status(Status::BadRequest).into();
+        assert_eq!(response.status(), Status::BadRequest);
+        assert_eq!(response.body().as_str().unwrap(), "");
+    }
+
+    #[test]
+    fn it_sets_a_header() {
+        let response: HttpResponse = ResponseBuilder::new().header("foo", "bar").into();
+        assert_eq!(response.headers().get("foo").unwrap(), "bar");
+        assert_eq!(response.body().as_str().unwrap(), "");
+    }
+
+    #[test]
+    fn it_sets_a_body() {
+        let response: HttpResponse = ResponseBuilder::new().body("test").into();
+        assert_eq!(
+            response.headers().get("Content-Type").unwrap(),
+            "text/plain"
+        );
+        assert_eq!(response.body().as_str().unwrap(), "test");
     }
 }

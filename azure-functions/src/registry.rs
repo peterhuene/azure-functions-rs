@@ -7,7 +7,7 @@ pub struct Registry<'a> {
     registered: HashMap<String, &'a Function>,
 }
 
-impl Registry<'a> {
+impl<'a> Registry<'a> {
     pub fn new(functions: &[&'a Function]) -> Registry<'a> {
         Registry {
             functions: functions
@@ -39,5 +39,83 @@ impl Registry<'a> {
 
     pub fn iter(&self) -> Iter<String, &'a Function> {
         self.functions.iter()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::borrow::Cow;
+
+    #[test]
+    fn it_creates_an_emptry_registry_from_an_empty_slice() {
+        let registry = Registry::new(&[]);
+        assert_eq!(registry.iter().count(), 0);
+    }
+
+    #[test]
+    fn it_creates_a_registry_from_a_list_of_functions() {
+        let registry = Registry::new(&[
+            &Function {
+                name: Cow::Borrowed("function1"),
+                disabled: false,
+                bindings: Cow::Borrowed(&[]),
+                invoker_name: None,
+                invoker: None,
+            },
+            &Function {
+                name: Cow::Borrowed("function2"),
+                disabled: false,
+                bindings: Cow::Borrowed(&[]),
+                invoker_name: None,
+                invoker: None,
+            },
+            &Function {
+                name: Cow::Borrowed("function3"),
+                disabled: false,
+                bindings: Cow::Borrowed(&[]),
+                invoker_name: None,
+                invoker: None,
+            },
+        ]);
+        assert_eq!(registry.iter().count(), 3);
+        assert!(
+            registry
+                .iter()
+                .all(|(k, _)| *k == "function1" || *k == "function2" || *k == "function3")
+        );
+    }
+
+    #[test]
+    fn it_registers_a_function() {
+        let mut registry = Registry::new(&[&Function {
+            name: Cow::Borrowed("function1"),
+            disabled: false,
+            bindings: Cow::Borrowed(&[]),
+            invoker_name: None,
+            invoker: None,
+        }]);
+        assert_eq!(registry.iter().count(), 1);
+
+        let p1 = *registry.iter().nth(0).unwrap().1;
+
+        assert!(registry.register("id", "function1"));
+
+        let p2 = registry.get("id").unwrap();
+        assert_eq!(p1 as *const _, p2 as *const _);
+    }
+
+    #[test]
+    fn it_returns_false_if_function_is_not_present() {
+        let mut registry = Registry::new(&[&Function {
+            name: Cow::Borrowed("function1"),
+            disabled: false,
+            bindings: Cow::Borrowed(&[]),
+            invoker_name: None,
+            invoker: None,
+        }]);
+        assert_eq!(registry.iter().count(), 1);
+
+        assert_eq!(registry.register("id", "not_present"), false);
     }
 }

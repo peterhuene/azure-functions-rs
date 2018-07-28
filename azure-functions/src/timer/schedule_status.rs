@@ -34,3 +34,23 @@ where
         .map_err(|e| Error::custom(format!("{}", e)))
         .map(|dt| dt.with_timezone(&Utc))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::from_str;
+
+    #[test]
+    fn it_deserializes_from_json() {
+        const JSON: &'static str = r#"{"Last":"0001-01-01T00:00:00","Next":"2018-07-24T23:24:00-07:00","LastUpdated":"2018-07-28T02:00:32+00:00"}"#;
+
+        let status: ScheduleStatus =
+            from_str(JSON).expect("failed to parse schedule status JSON data");
+        assert_eq!(status.last.to_rfc3339(), "0001-01-01T00:00:00+00:00");
+        assert_eq!(status.next.to_rfc3339(), "2018-07-25T06:24:00+00:00");
+        assert_eq!(
+            status.last_updated.to_rfc3339(),
+            "2018-07-28T02:00:32+00:00"
+        );
+    }
+}

@@ -121,3 +121,144 @@ impl Into<protocol::TypedData> for MessageBody<'_> {
         data
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::to_value;
+    use std::fmt::Write;
+
+    #[test]
+    fn it_has_a_string_body() {
+        const BODY: &'static str = "test body";
+
+        let body: MessageBody = BODY.into();
+        assert_eq!(body.as_str().unwrap(), BODY);
+
+        let data: protocol::TypedData = body.into();
+        assert_eq!(data.get_string(), BODY);
+    }
+
+    #[test]
+    fn it_has_a_json_body() {
+        #[derive(Serialize, Deserialize)]
+        struct Data {
+            message: String,
+        };
+
+        const MESSAGE: &'static str = "test";
+
+        let data = Data {
+            message: MESSAGE.to_string(),
+        };
+
+        let body: MessageBody = ::serde_json::to_value(data).unwrap().into();
+        assert_eq!(body.from_json::<Data>().unwrap().message, MESSAGE);
+
+        let data: protocol::TypedData = body.into();
+        assert_eq!(data.get_json(), r#"{"message":"test"}"#);
+    }
+
+    #[test]
+    fn it_has_a_bytes_body() {
+        const BODY: &'static [u8] = &[1, 2, 3];
+
+        let body: MessageBody = BODY.into();
+        assert_eq!(body.as_bytes(), BODY);
+
+        let data: protocol::TypedData = body.into();
+        assert_eq!(data.get_bytes(), BODY);
+    }
+
+    #[test]
+    fn it_displays_as_a_string() {
+        const BODY: &'static str = "test";
+
+        let body: MessageBody = BODY.into();
+
+        let mut s = String::new();
+        write!(s, "{}", body);
+
+        assert_eq!(s, BODY);
+    }
+
+    #[test]
+    fn it_converts_from_typed_data() {
+        let mut data = protocol::TypedData::new();
+        data.set_string("test".to_string());
+        let body: MessageBody = (&data).into();
+        assert!(matches!(body, MessageBody::String(_)));
+        assert_eq!(body.as_str().unwrap(), "test");
+
+        let mut data = protocol::TypedData::new();
+        data.set_json("test".to_string());
+        let body: MessageBody = (&data).into();
+        assert!(matches!(body, MessageBody::Json(_)));
+        assert_eq!(body.as_str().unwrap(), "test");
+
+        let mut data = protocol::TypedData::new();
+        data.set_bytes(vec![0, 1, 2]);
+        let body: MessageBody = (&data).into();
+        assert!(matches!(body, MessageBody::Bytes(_)));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+
+        let mut data = protocol::TypedData::new();
+        data.set_stream(vec![0, 1, 2]);
+        let body: MessageBody = (&data).into();
+        assert!(matches!(body, MessageBody::Bytes(_)));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_from_str() {
+        let body: MessageBody = "test".into();
+        assert!(matches!(body, MessageBody::String(Cow::Borrowed(_))));
+        assert_eq!(body.as_str().unwrap(), "test");
+    }
+
+    #[test]
+    fn it_converts_from_string() {
+        let body: MessageBody = "test".to_string().into();
+        assert!(matches!(body, MessageBody::String(Cow::Owned(_))));
+        assert_eq!(body.as_str().unwrap(), "test");
+    }
+
+    #[test]
+    fn it_converts_from_json() {
+        let body: MessageBody = to_value("hello world").unwrap().into();
+        assert!(matches!(body, MessageBody::Json(Cow::Owned(_))));
+        assert_eq!(body.as_str().unwrap(), r#""hello world""#);
+    }
+
+    #[test]
+    fn it_converts_from_u8_slice() {
+        let body: MessageBody = [0, 1, 2][..].into();
+        assert!(matches!(body, MessageBody::Bytes(Cow::Borrowed(_))));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_from_u8_vec() {
+        let body: MessageBody = vec![0, 1, 2].into();
+        assert!(matches!(body, MessageBody::Bytes(Cow::Owned(_))));
+        assert_eq!(body.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_to_typed_data() {
+        let body: MessageBody = "test".into();
+        let data: protocol::TypedData = body.into();
+        assert!(data.has_string());
+        assert_eq!(data.get_string(), "test");
+
+        let body: MessageBody = to_value("test").unwrap().into();
+        let data: protocol::TypedData = body.into();
+        assert!(data.has_json());
+        assert_eq!(data.get_json(), r#""test""#);
+
+        let body: MessageBody = vec![1, 2, 3].into();
+        let data: protocol::TypedData = body.into();
+        assert!(data.has_bytes());
+        assert_eq!(data.get_bytes(), [1, 2, 3]);
+    }
+}
