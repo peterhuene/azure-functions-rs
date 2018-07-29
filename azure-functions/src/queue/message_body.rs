@@ -13,7 +13,7 @@ pub enum MessageBody<'a> {
     String(Cow<'a, str>),
     /// Represents a JSON message.
     Json(Cow<'a, str>),
-    /// Represents a byte message.
+    /// Represents a message of bytes.
     Bytes(Cow<'a, [u8]>),
 }
 

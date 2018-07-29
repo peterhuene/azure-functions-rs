@@ -56,6 +56,7 @@ The current list of supported bindings:
 
 | Rust Type                                 | Azure Functions Binding |
 |-------------------------------------------|-------------------------|
+| `azure_functions::bindings::BlobTrigger`  | Blob Trigger            |
 | `azure_functions::bindings::HttpRequest`  | HTTP Trigger            |
 | `azure_functions::bindings::HttpResponse` | Output HTTP Response    |
 | `azure_functions::bindings::QueueTrigger` | Queue Trigger           |

@@ -251,6 +251,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-blob"
+version = "0.1.0"
+dependencies = [
+ "azure-functions 0.1.5",
+ "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "example-http"
 version = "0.1.0"
 dependencies = [
