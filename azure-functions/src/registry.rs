@@ -15,7 +15,7 @@ impl<'a> Registry<'a> {
                 .by_ref()
                 .fold(HashMap::new(), |mut map, func| {
                     if map.insert(func.name.clone().into_owned(), func).is_some() {
-                        panic!("Duplicate function name present.");
+                        panic!("Azure Function '{}' has already been registered; make sure all functions have unique names.", func.name);
                     }
                     map
                 }),

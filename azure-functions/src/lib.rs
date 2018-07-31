@@ -97,6 +97,7 @@
 #![feature(proc_macro_gen)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
+#![cfg_attr(test, recursion_limit = "128")]
 
 extern crate azure_functions_codegen;
 extern crate azure_functions_shared;
@@ -106,6 +107,7 @@ extern crate grpcio;
 #[macro_use]
 extern crate log;
 extern crate serde;
+#[cfg_attr(test, macro_use)]
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
@@ -127,6 +129,7 @@ mod registry;
 mod util;
 
 pub mod bindings;
+pub mod blob;
 pub mod http;
 pub mod queue;
 #[doc(hidden)]
