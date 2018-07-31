@@ -1,6 +1,6 @@
 //! # Azure Functions for Rust
 //!
-//! The Azure Functions for Rust crate supports writting Azure Functions in Rust.
+//! The Azure Functions for Rust crate supports creating Azure Functions with Rust.
 //!
 //! The following Azure Functions trigger bindings are supported:
 //!
@@ -262,8 +262,7 @@ fn run_worker(
             );
 
             client.process_all_messages(registry)
-        })
-        .wait()
+        }).wait()
         .unwrap();
 }
 

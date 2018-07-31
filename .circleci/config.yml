@@ -13,8 +13,9 @@ jobs:
       - run:
           name: Check source formatting
           command: |
-            rustfmt --version
+            rustfmt --version || true
             cargo fmt -- --check
+            git diff
       - run:
           name: Build
           command: cargo build
@@ -48,7 +49,10 @@ workflows:
   version: 2
   commit:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              ignore: gh-pages
   nightly:
     triggers:
       - schedule:

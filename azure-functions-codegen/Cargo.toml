@@ -3,7 +3,7 @@ name = "azure-functions-codegen"
 license = "MIT"
 version = "0.1.5"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
-description = "Code generation for writing Azure Functions in Rust."
+description = "Azure Functions for Rust code generation support"
 repository = "https://github.com/peterhuene/azure-functions-rs/"
 
 [lib]

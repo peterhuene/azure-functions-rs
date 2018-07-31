@@ -34,8 +34,7 @@ pub fn attr_impl(input: TokenStream) -> TokenStream {
             }
 
             parse_str::<Expr>(&expr).unwrap()
-        })
-        .collect();
+        }).collect();
 
     let expanded = quote!{
         pub fn main() {
