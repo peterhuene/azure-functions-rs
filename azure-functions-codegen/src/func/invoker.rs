@@ -23,8 +23,7 @@ impl Invoker<'a> {
                 }
 
                 Some((name, arg_type))
-            })
-            .unzip()
+            }).unzip()
     }
 
     fn get_trigger_arg(&self) -> Option<(&'a Ident, &'a Type)> {

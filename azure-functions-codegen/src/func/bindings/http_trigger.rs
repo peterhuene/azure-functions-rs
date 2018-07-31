@@ -70,8 +70,7 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
                                         None
                                     }
                                 }
-                            })
-                            .collect();
+                            }).collect();
 
                         if !invalid.is_empty() {
                             return Err(value.span().unstable().error(format!(

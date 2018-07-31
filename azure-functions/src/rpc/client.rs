@@ -62,8 +62,7 @@ impl Client {
             .client
             .get_or_insert(protocol::FunctionRpcClient::new(
                 channel.connect(&format!("{}:{}", host, port)),
-            ))
-            .event_stream()
+            )).event_stream()
             .unwrap();
 
         let (tx, rx) = mpsc::channel(1);

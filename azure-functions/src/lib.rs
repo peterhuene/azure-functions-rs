@@ -262,8 +262,7 @@ fn run_worker(
             );
 
             client.process_all_messages(registry)
-        })
-        .wait()
+        }).wait()
         .unwrap();
 }
 
