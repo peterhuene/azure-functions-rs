@@ -3,7 +3,7 @@ name = "azure-functions-shared"
 license = "MIT"
 version = "0.1.5"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
-description = "Shared types between the azure-functions-codegen and azure-functions crates."
+description = "Implementations shared between the azure-functions-codegen and azure-functions crates."
 repository = "https://github.com/peterhuene/azure-functions-rs/"
 
 [dependencies]

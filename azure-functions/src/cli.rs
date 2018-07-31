@@ -1,17 +1,17 @@
 use clap::{App, Arg, SubCommand};
 
 pub fn create_app() -> App<'a, 'b> {
-    App::new("Azure Functions Language Worker for Rust")
+    App::new("Azure Functions for Rust worker")
         .version(env!("CARGO_PKG_VERSION"))
-        .about("Provides an Azure Functions Worker for functions written in Rust.")
+        .about("Implements the Azure Functions for Rust worker.")
         .subcommand(
             SubCommand::with_name("init")
-                .about("Initializes the Rust language worker and script root.")
+                .about("Initializes the worker executable and script root.")
                 .arg(
                     Arg::with_name("worker_path")
                         .long("worker-path")
                         .value_name("WORKER_PATH")
-                        .help("The path to place the Rust language worker.")
+                        .help("The path to place the worker executable.")
                         .required(true),
                 )
                 .arg(
