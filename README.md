@@ -11,6 +11,6 @@ Until that time, check out the [GitHub project page](https://github.com/peterhue
 
 ### Disclaimer
 
-Although the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product and is not an endorsement of any future product offering from Microsoft.
+Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.
 
 _Microsoft and Azure are registered trademarks of Microsoft Corporation._
