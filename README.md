@@ -8,3 +8,9 @@ The project is currently under heavy development as it marches towards a 1.0.0 s
 As the project matures, this site will be updated with the (hopefully) simple instructions on how to install and use Azure Functions for Rust using Rust's package manager `cargo`.
 
 Until that time, check out the [GitHub project page](https://github.com/peterhuene/azure-functions-rs) for more information.
+
+### Disclaimer
+
+Although the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product and is not an endorsement of any future product offering from Microsoft.
+
+_Microsoft and Azure are registered trademarks of Microsoft Corporation._
