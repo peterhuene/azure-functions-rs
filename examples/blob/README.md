@@ -18,6 +18,31 @@ pub fn print_blob(trigger: &BlobTrigger) {
 }
 ```
 
+An example HTTP-triggered Azure Function that copies the file specified
+in the JSON request body (e.g. `{"filename": "example"}`) in the
+`copy` Azure Storage blob container:
+
+```rust
+use azure_functions::bindings::{Blob, HttpRequest};
+use azure_functions::func;
+
+#[func]
+#[binding(
+    name = "_req",
+    auth_level = "anonymous",
+    web_hook_type = "generic"
+)]
+#[binding(name = "blob", path = "copy/{filename}")]
+#[binding(name = "$return", path = "copy/{filename}.copy")]
+pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> Blob {
+    let contents = blob.contents();
+
+    info!("Blob contents: {:?}", contents.as_str());
+
+    contents.into()
+}
+```
+
 # Running the example locally
 
 ## Prerequisites
@@ -87,8 +112,9 @@ _Note: the syntax above works on macOS and Linux; on Windows, set the environmen
 
 ## Invoke the `print_blob` function
 
-To invoke the `print_blob` function, upload a file containing the string `hello world` to blob container named `test` for the Azure Storage account
-that was used for the `$CONNECTION_STRING` variable above.
+To invoke the `print_blob` function, upload a file containing the string `hello world` to
+a blob container named `test` for the Azure Storage account that was used for the
+`$CONNECTION_STRING` variable above.
 
 With any luck, you should see the following output from the Azure Functions Host:
 
@@ -102,3 +128,22 @@ info: Function.print_blob[0]
       => System.Collections.Generic.Dictionary`2[System.String,System.Object]
       Executed 'Functions.print_blob' (Succeeded, Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
 ```
+
+## Invoke the `copy_blob` function
+
+The `copy_blob` function is HTTP-triggered and uses a generic web-hook,
+so the request body is expected to be JSON.  Azure Functions will parse the JSON request body
+and bind the `filename` field to the paths of the input and output blobs automatically.
+
+First, upload a file named `example` containing the string `hello world` to a blob container
+named `copy` for the Azure Storage account that was used for the `$CONNECTION_STRING` variable above.
+
+Use `curl` to invoke the function:
+
+```
+curl --header "Content-Type: application/json" -d '{"filename": "example"}' http://localhost:5000/api/copy_blob
+```
+
+With any luck, you should see `hello world` printed as a result.
+
+Check the `copy` blob container for a file named `example.copy`.  It should also have the contents `hello world`.

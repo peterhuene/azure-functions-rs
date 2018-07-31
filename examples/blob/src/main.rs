@@ -5,7 +5,9 @@ extern crate azure_functions;
 extern crate log;
 
 mod blob;
+mod copy_blob;
 
 azure_functions::main!{
     blob::print_blob,
+    copy_blob::copy_blob
 }

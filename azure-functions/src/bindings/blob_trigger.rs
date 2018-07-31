@@ -10,7 +10,7 @@ const URI_KEY: &'static str = "Uri";
 const PROPERTIES_KEY: &'static str = "Properties";
 const METADATA_KEY: &'static str = "Metadata";
 
-/// Represents a blob trigger binding.
+/// Represents an Azure Storage blob trigger binding.
 ///
 /// # Examples
 ///
