@@ -104,7 +104,6 @@ extern crate azure_functions_shared;
 extern crate clap;
 extern crate futures;
 extern crate grpcio;
-#[macro_use]
 extern crate log;
 extern crate serde;
 #[cfg_attr(test, macro_use)]
