@@ -10,10 +10,9 @@ in [Rust](https://www.rust-lang.org/en-US/).
 
 ## Disclaimer
 
-Although the maintainer of this repository is a Microsoft employee, this project is not an official Microsoft product
-and is not an endorsement of any future product offering from Microsoft.
+Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.
 
-This project is simply a labor of love by a developer who would like to see the Rust ecosystem flourish.
+_Microsoft and Azure are registered trademarks of Microsoft Corporation._
 
 ## Example
 
@@ -54,20 +53,82 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 
 The current list of supported bindings:
 
-| Rust Type                                 | Azure Functions Binding |
-|-------------------------------------------|-------------------------|
-| `azure_functions::bindings::Blob`         | Input and Ouput Blob    |
-| `azure_functions::bindings::BlobTrigger`  | Blob Trigger            |
-| `azure_functions::bindings::HttpRequest`  | HTTP Trigger            |
-| `azure_functions::bindings::HttpResponse` | Output HTTP Response    |
-| `azure_functions::bindings::QueueTrigger` | Queue Trigger           |
-| `azure_functions::bindings::QueueMessage` | Output Queue Message    |
-| `azure_functions::bindings::TimerInfo`    | Timer Trigger           |
-| `azure_functions::Context`*               | Invocation Context      |
+| Rust Type                                 | Azure Functions Binding | Direction      |
+|-------------------------------------------|-------------------------|----------------|
+| `azure_functions::bindings::Blob`         | Input and Ouput Blob    | in, inout, out |
+| `azure_functions::bindings::BlobTrigger`  | Blob Trigger            | in, inout      |
+| `azure_functions::bindings::HttpRequest`  | HTTP Trigger            | in             |
+| `azure_functions::bindings::HttpResponse` | Output HTTP Response    | out            |
+| `azure_functions::bindings::QueueTrigger` | Queue Trigger           | in             |
+| `azure_functions::bindings::QueueMessage` | Output Queue Message    | out            |
+| `azure_functions::bindings::TimerInfo`    | Timer Trigger           | in             |
+| `azure_functions::Context`*               | Invocation Context      | n/a            |
 
 \****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 
 More bindings will be implemented in the future, including support for retreiving data from custom bindings.
+
+## Bindings in Rust
+
+Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration:
+
+* Parameters passed by immutable reference `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
+  
+  ```rust
+  #[func]
+  ...
+  pub fn example(..., blob: &Blob) {
+      ...
+  }
+  ```
+
+* Parameters passed by mutable reference `&mut T`, where `T` is a trigger or input binding type that supports the `inout` direction, are inferred to be bindings with an `inout` direction.
+**Note: `inout` direction bindings are currently not implemented for languages other than C#.  See [this issue](https://github.com/Azure/azure-functions-host/issues/49) regarding this problem with the Azure Functions Host.**
+
+  ```rust
+  #[func]
+  ...
+  pub fn example(..., blob: &mut Blob) {
+      ...
+  }
+  ```
+
+* Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.
+  
+  ```rust
+  #[func]
+  ...
+  pub fn example(...) -> Blob {
+      ...
+  }
+  ```
+
+  ```rust
+  #[func]
+  ...
+  pub fn example(...) -> (HttpResponse, Blob) {
+      ...
+  }
+  ```
+
+  For functions that return a single output binding type, the binding has a special name of `$return`
+  and is treated as the "return value" of the function.
+
+  For functions that return a tuple of output binding types, the first value of the tuple has the binding name
+  of `$return` and is treated as the "return value" of the function.  The remaining values have binding names `output1`, `output2`, ..., `output(N-1)` where `N` is the number of types in the tuple, and are
+  treated as output bindings only.
+
+  Unit tuples `()` can be used in a tuple to "skip" a binding:
+
+  ```rust
+  #[func]
+  ...
+  pub fn example(...) -> ((), Blob) {
+      ...
+  }
+  ```
+
+  With the above, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
 
 # Development
 

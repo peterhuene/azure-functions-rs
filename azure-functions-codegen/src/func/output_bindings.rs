@@ -20,6 +20,26 @@ impl OutputBindings<'a> {
             .collect()
     }
 
+    pub fn iter_output_return_bindings(&self) -> Vec<::proc_macro2::TokenStream> {
+        match &self.0.decl.output {
+            ReturnType::Default => vec![],
+            ReturnType::Type(_, ty) => {
+                match &**ty {
+                    Type::Tuple(tuple) => tuple.elems.iter().enumerate().skip(1).map(|(i, _)| {
+                        let name = format!("{}{}", ::func::OUTPUT_BINDING_PREFIX, i);
+                        quote!(
+                            let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
+                            __output_binding.set_name(#name.to_string());
+                            __output_binding.set_data(__ret.#i.into());
+                            __output_data.push(__output_binding);
+                        )
+                    }).collect(),
+                    _ => vec![],
+                }
+            }
+        }
+    }
+
     fn iter_mut_args(&self) -> impl Iterator<Item = (&'a Ident, &'a TypeReference)> {
         self.0.decl.inputs.iter().filter_map(|x| match x {
             FnArg::Captured(arg) => {
@@ -47,23 +67,36 @@ impl OutputBindings<'a> {
 
 impl ToTokens for OutputBindings<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
-        // Set the output bindings
-        let output_bindings = self.get_output_bindings();
+        let mut output_bindings = self.get_output_bindings();
+        output_bindings.append(&mut self.iter_output_return_bindings());
 
-        quote!(
-            {
-                let mut __output_data = __res.mut_output_data();
-                #(#output_bindings;)*
-            }
-        ).to_tokens(tokens);
+        if !output_bindings.is_empty() {
+            quote!(
+                {
+                    let mut __output_data = __res.mut_output_data();
+                    #(#output_bindings;)*
+                }
+            ).to_tokens(tokens);
+        }
 
-        // TODO: support tuple return types
-        // First value (or last maybe?) will be $return, the other values will be output bindings
         match &self.0.decl.output {
             ReturnType::Default => {}
-            ReturnType::Type(_, _) => {
-                quote!(__res.set_return_value(__ret.into());).to_tokens(tokens);
-            }
+            ReturnType::Type(_, ty) => match &**ty {
+                Type::Tuple(tuple) => {
+                    if let Some(first) = tuple.elems.iter().nth(0) {
+                        match first {
+                            Type::Path(_) => {
+                                quote!(__res.set_return_value(__ret.0.into());).to_tokens(tokens);
+                            }
+                            _ => {}
+                        };
+                    }
+                }
+                Type::Path(_) => {
+                    quote!(__res.set_return_value(__ret.into());).to_tokens(tokens);
+                }
+                _ => {}
+            },
         };
     }
 }

@@ -1,45 +1,85 @@
 # Example Blob Triggered Azure Functions
 
-This package is an example of simple blob-triggered Azure Functions.
+This project is an example of simple blob-related Azure Functions.
 
 ## Example function implementations
 
 An example blob-triggered Azure Function that runs when a new blob is created 
-in the `test` Azure Storage blob container.
+in the `watching` Azure Storage blob container.
 
 ```rust
 use azure_functions::bindings::BlobTrigger;
 use azure_functions::func;
 
 #[func]
-#[binding(name = "trigger", path = "test/{name}")]
-pub fn print_blob(trigger: &BlobTrigger) {
-    info!("Blob (as string): {:?}", trigger.contents().as_str());
+#[binding(name = "trigger", path = "watching/{name}")]
+pub fn blob_watcher(trigger: &BlobTrigger) {
+    info!(
+        "A blob was created at '{}' with contents: {:?}.",
+        trigger.path, trigger.blob
+    );
 }
 ```
 
-An example HTTP-triggered Azure Function that copies the file specified
-in the JSON request body (e.g. `{"filename": "example"}`) in the
-`copy` Azure Storage blob container:
+An example HTTP-triggered Azure Function that creates a new blob at the specified path:
 
 ```rust
-use azure_functions::bindings::{Blob, HttpRequest};
+use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
+use azure_functions::func;
+use azure_functions::http::Status;
+
+#[func]
+#[binding(
+    name = "req",
+    auth_level = "anonymous",
+    route = "create/blob/{container}/{name}"
+)]
+#[binding(name = "output1", path = "{container}/{name}")]
+pub fn create_blob(req: &HttpRequest) -> (HttpResponse, Blob) {
+    (
+        HttpResponse::build()
+            .status(Status::Created)
+            .body("blob has been created.")
+            .into(),
+        req.body().as_bytes().into(),
+    )
+}
+```
+
+An example HTTP-triggered Azure Function that copies the specified blob:
+
+```rust
+use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
 use azure_functions::func;
 
 #[func]
 #[binding(
     name = "_req",
     auth_level = "anonymous",
-    web_hook_type = "generic"
+    route = "copy/blob/{container}/{name}"
 )]
-#[binding(name = "blob", path = "copy/{filename}")]
-#[binding(name = "$return", path = "copy/{filename}.copy")]
-pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> Blob {
-    let contents = blob.contents();
+#[binding(name = "blob", path = "{container}/{name}")]
+#[binding(name = "output1", path = "{container}/{name}.copy")]
+pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> (HttpResponse, Blob) {
+    ("blob has been copied.".into(), blob.clone())
+}
+```
 
-    info!("Blob contents: {:?}", contents.as_str());
+An HTTP-triggered function that responds with the contents of a blob:
 
-    contents.into()
+```rust
+use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
+use azure_functions::func;
+
+#[func]
+#[binding(
+    name = "_req",
+    auth_level = "anonymous",
+    route = "print/blob/{container}/{path}"
+)]
+#[binding(name = "blob", path = "{container}/{path}")]
+pub fn print_blob(_req: &HttpRequest, blob: &Blob) -> HttpResponse {
+    blob.as_bytes().into()
 }
 ```
 
@@ -110,40 +150,59 @@ Where `$CONNECTION_STRING` is the Azure Storage connection string the Azure Func
 
 _Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `dotnet run`._
 
-## Invoke the `print_blob` function
+## Invoke the `create_blob` function
 
-To invoke the `print_blob` function, upload a file containing the string `hello world` to
-a blob container named `test` for the Azure Storage account that was used for the
-`$CONNECTION_STRING` variable above.
-
-With any luck, you should see the following output from the Azure Functions Host:
+To create a blob called `hello` in the `test` container, use curl to invoke the `create_blob` function:
 
 ```
-info: Function.print_blob[0]
-      => System.Collections.Generic.Dictionary`2[System.String,System.Object]
-      Executing 'Functions.print_blob' (Reason='New blob detected: test/hello_world.txt', Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
-info: Worker.Rust.97626f24-4bbf-4895-a9d0-4362ea1e9498[0]
-      Blob contents: Some("hello world")
-info: Function.print_blob[0]
-      => System.Collections.Generic.Dictionary`2[System.String,System.Object]
-      Executed 'Functions.print_blob' (Succeeded, Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
+curl -d "hello world" http://localhost:5000/api/create/blob/test/hello
 ```
+
+A message should print that the blob has been created.
+
+With any luck, you should now see a `hello` blob in the `test` container with the contents `hello world`.
 
 ## Invoke the `copy_blob` function
 
-The `copy_blob` function is HTTP-triggered and uses a generic web-hook,
-so the request body is expected to be JSON.  Azure Functions will parse the JSON request body
-and bind the `filename` field to the paths of the input and output blobs automatically.
-
-First, upload a file named `example` containing the string `hello world` to a blob container
-named `copy` for the Azure Storage account that was used for the `$CONNECTION_STRING` variable above.
-
-Use `curl` to invoke the function:
+To copy a blob called `hello` in the `test` container, use curl to invoke the `copy_blob` function:
 
 ```
-curl --header "Content-Type: application/json" -d '{"filename": "example"}' http://localhost:5000/api/copy_blob
+curl -d "hello world" http://localhost:5000/api/copy/blob/test/hello
 ```
 
-With any luck, you should see `hello world` printed as a result.
+A message should print that the blob was copied.
 
-Check the `copy` blob container for a file named `example.copy`.  It should also have the contents `hello world`.
+With any luck, you should now see a `hello.copy` blob in the `test` container with the contents `hello world`.
+
+## Invoke the `print_blob` function
+
+To print a blob called `hello` in the `test` container, use curl to invoke the `print_blob` function:
+
+```
+curl -d "hello world" http://localhost:5000/api/print/blob/test/hello
+```
+
+With any luck, you should see `hello world` printed in your terminal.
+
+## Invoke the `blob_watcher` function
+
+To log a message when a blob is created, use curl to invoke the `create_blob` function to trigger the `blob_watcher` function:
+
+```
+curl -d "hello world" http://localhost:5000/api/create/blob/watching/hello
+```
+
+A message should be printed saying the blob was created.
+
+With any luck, something like the following should be logged by the Azure Functions Host:
+
+```
+info: Function.blob_watcher[0]
+      => System.Collections.Generic.Dictionary`2[System.String,System.Object]
+      Executing 'Functions.blob_watcher' (Reason='New blob detected: test/hello_world.txt', Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
+info: Worker.Rust.97626f24-4bbf-4895-a9d0-4362ea1e9498[0]
+      A blob was created at 'watching/hello' with contents: Some("hello world")
+info: Function.blob_watcher[0]
+      => System.Collections.Generic.Dictionary`2[System.String,System.Object]
+      Executed 'Functions.blob_watcher' (Succeeded, Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
+```

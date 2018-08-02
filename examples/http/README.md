@@ -1,6 +1,6 @@
 # Example HTTP Azure Function
 
-This package is an example of a simple HTTP-triggered Azure Function.
+This project is an example of a simple HTTP-triggered Azure Function.
 
 ## Example function implementations
 
