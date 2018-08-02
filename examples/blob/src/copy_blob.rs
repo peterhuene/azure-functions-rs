@@ -10,9 +10,7 @@ use azure_functions::func;
 #[binding(name = "blob", path = "copy/{filename}")]
 #[binding(name = "$return", path = "copy/{filename}.copy")]
 pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> Blob {
-    let contents = blob.contents();
+    info!("Blob (as string): {:?}", blob.as_str());
 
-    info!("Blob contents: {:?}", contents.as_str());
-
-    contents.into()
+    blob.clone()
 }

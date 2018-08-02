@@ -77,20 +77,22 @@ lazy_static! {
     pub static ref INPUT_BINDINGS: BindingMap = {
         let mut map: BindingMap = HashMap::new();
         map.insert("Blob", |args| {
-            let mut binding = Blob::try_from(args)?.0.into_owned();
-            binding.direction = Cow::Borrowed("in");
-            Ok(codegen::Binding::Blob(binding))
+            Ok(codegen::Binding::Blob(Blob::try_from(args)?.0.into_owned()))
         });
         map
     };
     pub static ref INPUT_OUTPUT_BINDINGS: BindingMap = {
-        let map: BindingMap = HashMap::new();
-        // TODO: properly implement inout bindings
-        // map.insert("Blob", |args| {
-        //     let mut binding = Blob::try_from(args)?.0.into_owned();
-        //     binding.direction = Cow::Borrowed("inout");
-        //     Ok(codegen::Binding::Blob(binding))
-        // });
+        let mut map: BindingMap = HashMap::new();
+        map.insert("BlobTrigger", |args| {
+            let mut binding = BlobTrigger::try_from(args)?.0.into_owned();
+            binding.direction = codegen::Direction::InOut;
+            Ok(codegen::Binding::BlobTrigger(binding))
+        });
+        map.insert("Blob", |args| {
+            let mut binding = Blob::try_from(args)?.0.into_owned();
+            binding.direction = codegen::Direction::InOut;
+            Ok(codegen::Binding::Blob(binding))
+        });
 
         map
     };
@@ -106,7 +108,7 @@ lazy_static! {
         });
         map.insert("Blob", |args| {
             let mut binding = Blob::try_from(args)?.0.into_owned();
-            binding.direction = Cow::Borrowed("out");
+            binding.direction = codegen::Direction::Out;
             Ok(codegen::Binding::Blob(binding))
         });
         map

@@ -1,6 +1,5 @@
-use bindings::Trigger;
+use bindings::{QueueMessage, Trigger};
 use chrono::{DateTime, Utc};
-use queue::MessageBody;
 use rpc::protocol;
 use std::collections::HashMap;
 use util::convert_from;
@@ -27,14 +26,15 @@ const POP_RECEIPT_KEY: &'static str = "PopReceipt";
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
 /// pub fn run_on_message(trigger: &QueueTrigger) {
-///     info!("Rust function ran due to queue message: {}", trigger.message());
+///     info!("Rust function ran due to queue message: {}", trigger.message);
 /// }
 /// ```
 #[derive(Debug)]
-pub struct QueueTrigger<'a> {
-    data: &'a protocol::TypedData,
+pub struct QueueTrigger {
+    /// The queue message that triggered the function.
+    pub message: QueueMessage,
     /// The queue message identifier.
-    pub id: &'a str,
+    pub id: String,
     /// The number of times this message has been dequeued.
     pub dequeue_count: u32,
     /// The time that the message expires.
@@ -44,49 +44,27 @@ pub struct QueueTrigger<'a> {
     /// The time that the message will next be visible.
     pub next_visible_time: Option<DateTime<Utc>>,
     /// The message's pop receipt.
-    pub pop_receipt: &'a str,
+    pub pop_receipt: String,
 }
 
-impl QueueTrigger<'_> {
-    /// Gets the message that triggered the function.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #![feature(use_extern_macros)] extern crate azure_functions;
-    /// # #[macro_use] extern crate log;
-    /// use azure_functions::bindings::QueueTrigger;
-    /// use azure_functions::func;
-    ///
-    /// #[func]
-    /// #[binding(name = "trigger", queue_name = "example")]
-    /// pub fn run_on_message(trigger: &QueueTrigger) {
-    ///     info!("Message: {}", trigger.message());
-    /// }
-    /// ```
-    pub fn message(&self) -> MessageBody {
-        self.data.into()
-    }
-}
-
-impl From<&'a protocol::TypedData> for QueueTrigger<'a> {
-    fn from(data: &'a protocol::TypedData) -> Self {
+impl From<protocol::TypedData> for QueueTrigger {
+    fn from(data: protocol::TypedData) -> Self {
         QueueTrigger {
-            data: data,
-            id: "",
+            message: data.into(),
+            id: String::new(),
             dequeue_count: 1,
             expiration_time: None,
             insertion_time: None,
             next_visible_time: None,
-            pop_receipt: "",
+            pop_receipt: String::new(),
         }
     }
 }
 
-impl Trigger<'a> for QueueTrigger<'a> {
-    fn read_metadata(&mut self, metadata: &'a HashMap<String, protocol::TypedData>) {
-        if let Some(id) = metadata.get(ID_KEY) {
-            self.id = id.get_string();
+impl Trigger for QueueTrigger {
+    fn read_metadata(&mut self, metadata: &mut HashMap<String, protocol::TypedData>) {
+        if let Some(id) = metadata.get_mut(ID_KEY) {
+            self.id = id.take_string();
         }
         if let Some(count) = metadata.get(DEQUEUE_COUNT_KEY) {
             self.dequeue_count = convert_from(count).expect(&format!(
@@ -112,8 +90,8 @@ impl Trigger<'a> for QueueTrigger<'a> {
                 NEXT_VISIBLE_TIME_KEY
             ));
         }
-        if let Some(receipt) = metadata.get(POP_RECEIPT_KEY) {
-            self.pop_receipt = receipt.get_string();
+        if let Some(receipt) = metadata.get_mut(POP_RECEIPT_KEY) {
+            self.pop_receipt = receipt.take_string();
         }
     }
 }
@@ -129,14 +107,14 @@ mod tests {
         let mut data = protocol::TypedData::new();
         data.set_string(MESSAGE.to_string());
 
-        let trigger: QueueTrigger = (&data).into();
+        let trigger: QueueTrigger = data.into();
         assert_eq!(trigger.id, "");
         assert_eq!(trigger.dequeue_count, 1);
         assert!(trigger.expiration_time.is_none());
         assert!(trigger.insertion_time.is_none());
         assert!(trigger.next_visible_time.is_none());
         assert_eq!(trigger.pop_receipt, "");
-        assert_eq!(trigger.message().as_str().unwrap(), MESSAGE);
+        assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
     }
 
     #[test]
@@ -176,8 +154,8 @@ mod tests {
         value.set_string(POP_RECEIPT.to_string());
         metadata.insert(POP_RECEIPT_KEY.to_string(), value);
 
-        let mut trigger: QueueTrigger = (&data).into();
-        trigger.read_metadata(&metadata);
+        let mut trigger: QueueTrigger = data.into();
+        trigger.read_metadata(&mut metadata);
         assert_eq!(trigger.id, ID);
         assert_eq!(trigger.dequeue_count, DEQUEUE_COUNT);
         assert_eq!(
@@ -193,6 +171,6 @@ mod tests {
             now.to_rfc3339()
         );
         assert_eq!(trigger.pop_receipt, POP_RECEIPT);
-        assert_eq!(trigger.message().as_str().unwrap(), MESSAGE);
+        assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
     }
 }

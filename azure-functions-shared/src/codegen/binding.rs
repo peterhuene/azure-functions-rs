@@ -1,6 +1,14 @@
 use codegen::bindings::{Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, TimerTrigger};
 
 #[derive(Serialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum Direction {
+    In,
+    InOut,
+    Out,
+}
+
+#[derive(Serialize, Debug, Clone)]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum Binding {
     Context,

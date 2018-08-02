@@ -5,7 +5,9 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::Lit;
-use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOption};
+use util::{
+    to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableDirection, QuotableOption,
+};
 
 pub struct Blob<'a>(pub Cow<'a, codegen::bindings::Blob>);
 
@@ -72,7 +74,7 @@ impl TryFrom<AttributeArguments> for Blob<'_> {
             name: name.expect("expected a name for the Blob binding"),
             path: path.expect("expected a path for Blob binding"),
             connection: connection,
-            direction: Cow::Borrowed(""),
+            direction: codegen::Direction::In,
         })))
     }
 }
@@ -82,13 +84,13 @@ impl ToTokens for Blob<'_> {
         let name = QuotableBorrowedStr(&self.0.name);
         let path = QuotableBorrowedStr(&self.0.path);
         let connection = QuotableOption(self.0.connection.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let direction = QuotableBorrowedStr(&self.0.direction);
+        let direction = QuotableDirection(self.0.direction.clone());
 
         quote!(::azure_functions::codegen::bindings::Blob {
             name: #name,
             path: #path,
             connection: #connection,
-            direction: #direction
+            direction: #direction,
         }).to_tokens(tokens)
     }
 }
