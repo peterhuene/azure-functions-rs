@@ -1,6 +1,4 @@
-//! Module for blob-storage types.
-mod contents;
+//! Module for blob storage types.
 mod properties;
 
-pub use self::contents::*;
 pub use self::properties::*;

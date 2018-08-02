@@ -2,12 +2,12 @@ mod binding;
 pub mod bindings;
 mod function;
 mod invoker;
-mod return_value_setter;
+mod output_bindings;
 
 pub use self::binding::*;
 pub use self::function::*;
 pub use self::invoker::*;
-pub use self::return_value_setter::*;
+pub use self::output_bindings::*;
 
 use azure_functions_shared::codegen;
 use proc_macro::{Diagnostic, TokenStream};
@@ -103,44 +103,33 @@ fn bind_argument(
                         return Ok(codegen::Binding::Context);
                     }
 
-                    let factory = match TRIGGERS.get(type_name.as_str()) {
-                        Some(factory) => {
-                            match r.mutability {
-                                Some(m) => Err(m.span().unstable().error(
-                                    "trigger bindings cannot be passed by mutable reference",
-                                )),
-                                None => {
-                                    if has_trigger {
-                                        Err(tp.span().unstable().error(
-                                            "Azure Functions can only have one trigger binding",
-                                        ))
-                                    } else {
-                                        Ok(factory)
-                                    }
-                                }
-                            }
-                        }
-                        None => match INPUT_BINDINGS.get(type_name.as_str()) {
-                            Some(factory) => match r.mutability {
-                                Some(m) => Err(m
-                                    .span()
-                                    .unstable()
-                                    .error("input bindings cannot be passed by mutable reference")),
-                                None => Ok(factory),
-                            },
-                            None => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
-                                Some(factory) => match r.mutability {
-                                    Some(_) => Ok(factory),
-                                    None => Err(r.span().unstable().error(
-                                        "input-output bindings must be passed by mutable reference",
-                                    )),
-                                },
+                    // Check for multiple triggers
+                    if has_trigger && TRIGGERS.contains_key(type_name.as_str()) {
+                        return Err(tp
+                            .span()
+                            .unstable()
+                            .error("Azure Functions can only have one trigger binding"));
+                    }
+
+                    // If the reference is mutable, only accept input-output bindings
+                    let factory = match r.mutability {
+                        Some(m) => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
+                            Some(factory) => Ok(factory),
+                            None => Err(m.span().unstable().error(
+                                "only Azure Functions binding types that support the 'inout' direction can be passed by mutable reference",
+                            )),
+                        },
+                        None => match TRIGGERS.get(type_name.as_str()) {
+                            Some(factory) => Ok(factory),
+                            None => match INPUT_BINDINGS.get(type_name.as_str()) {
+                                Some(factory) => Ok(factory),
                                 None => Err(tp.span().unstable().error(
                                     "expected an Azure Functions trigger or input binding type",
                                 )),
                             },
                         },
                     }?;
+
                     match &arg.pat {
                         Pat::Ident(name) => {
                             let name_str = name.ident.to_string();

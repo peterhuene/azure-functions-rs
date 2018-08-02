@@ -1,5 +1,5 @@
-use bindings::Trigger;
-use blob::{Contents, Properties};
+use bindings::{Blob, Trigger};
+use blob::Properties;
 use rpc::protocol;
 use serde_json::from_str;
 use std::collections::HashMap;
@@ -25,14 +25,15 @@ const METADATA_KEY: &'static str = "Metadata";
 /// #[func]
 /// #[binding(name = "trigger", path = "test/{name}")]
 /// pub fn print_blob(trigger: &BlobTrigger) {
-///     info!("Blob (as string): {:?}", trigger.blob().as_str());
+///     info!("Blob (as string): {:?}", trigger.blob.as_str());
 /// }
 /// ```
 #[derive(Debug)]
-pub struct BlobTrigger<'a> {
-    data: &'a protocol::TypedData,
+pub struct BlobTrigger {
+    /// The blob that triggered the function.
+    pub blob: Blob,
     /// The path of the blob.
-    pub path: &'a str,
+    pub path: String,
     /// The URI of the blob.
     pub uri: String,
     /// The properties of the blob.
@@ -41,18 +42,11 @@ pub struct BlobTrigger<'a> {
     pub metadata: HashMap<String, String>,
 }
 
-impl BlobTrigger<'_> {
-    /// Gets the contents of the blob that triggered the function.
-    pub fn blob(&self) -> Contents {
-        Contents::from(self.data)
-    }
-}
-
-impl From<&'a protocol::TypedData> for BlobTrigger<'a> {
-    fn from(data: &'a protocol::TypedData) -> Self {
+impl From<protocol::TypedData> for BlobTrigger {
+    fn from(data: protocol::TypedData) -> Self {
         BlobTrigger {
-            data: data,
-            path: "",
+            blob: data.into(),
+            path: String::new(),
             uri: String::new(),
             properties: Properties::default(),
             metadata: HashMap::new(),
@@ -60,10 +54,16 @@ impl From<&'a protocol::TypedData> for BlobTrigger<'a> {
     }
 }
 
-impl Trigger<'a> for BlobTrigger<'a> {
-    fn read_metadata(&mut self, metadata: &'a HashMap<String, protocol::TypedData>) {
-        if let Some(path) = metadata.get(PATH_KEY) {
-            self.path = path.get_string();
+impl Into<protocol::TypedData> for BlobTrigger {
+    fn into(self) -> protocol::TypedData {
+        self.blob.into()
+    }
+}
+
+impl Trigger for BlobTrigger {
+    fn read_metadata(&mut self, metadata: &mut HashMap<String, protocol::TypedData>) {
+        if let Some(path) = metadata.get_mut(PATH_KEY) {
+            self.path = path.take_string();
         }
         if let Some(uri) = metadata.get(URI_KEY) {
             self.uri =
@@ -94,8 +94,8 @@ mod tests {
         let mut data = protocol::TypedData::new();
         data.set_string(BLOB.to_string());
 
-        let trigger: BlobTrigger = (&data).into();
-        assert_eq!(trigger.data.get_string(), BLOB);
+        let trigger: BlobTrigger = data.into();
+        assert_eq!(trigger.blob.as_str().unwrap(), BLOB);
     }
 
     #[test]
@@ -170,8 +170,8 @@ mod tests {
         value.set_json(to_string(&user_metadata).unwrap());
         metadata.insert(METADATA_KEY.to_string(), value);
 
-        let mut trigger: BlobTrigger = (&data).into();
-        trigger.read_metadata(&metadata);
+        let mut trigger: BlobTrigger = data.into();
+        trigger.read_metadata(&mut metadata);
         assert_eq!(trigger.path, PATH);
         assert_eq!(trigger.uri, URI);
 

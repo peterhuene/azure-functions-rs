@@ -8,8 +8,13 @@
 //! * [Queue triggers](bindings/struct.QueueTrigger.html)
 //! * [Timer triggers](bindings/struct.TimerInfo.html)
 //!
+//! The following Azure Functions input bindings are supported:
+//!
+//! * [Blob input](bindings/struct.Blob.html)
+//!
 //! The following Azure Functions output bindings are supported:
 //!
+//! * [Blob output](bindings/struct.Blob.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue message output](bindings/struct.QueueMessage.html)
 //!
@@ -130,7 +135,6 @@ mod util;
 pub mod bindings;
 pub mod blob;
 pub mod http;
-pub mod queue;
 #[doc(hidden)]
 pub mod rpc;
 pub mod timer;

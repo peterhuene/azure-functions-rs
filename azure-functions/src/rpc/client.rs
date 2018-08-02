@@ -7,11 +7,10 @@ use log::{self, error, log};
 use logger;
 use registry::Registry;
 use std::cell::RefCell;
-use std::panic;
+use std::panic::{self, AssertUnwindSafe};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use tokio_threadpool;
-use Context;
 
 pub type Sender = mpsc::Sender<protocol::StreamingMessage>;
 type Receiver = ClientDuplexReceiver<protocol::StreamingMessage>;
@@ -209,7 +208,7 @@ impl Client {
             let reg = registry.clone();
 
             pool.spawn(lazy(move || {
-                Client::handle_request(reg, sender, &msg);
+                Client::handle_request(reg, sender, msg);
                 Ok(())
             }));
         }
@@ -260,7 +259,7 @@ impl Client {
     fn handle_invocation_request(
         registry: Arc<Mutex<Registry<'static>>>,
         sender: Sender,
-        req: &protocol::InvocationRequest,
+        req: &mut protocol::InvocationRequest,
     ) {
         let mut message = protocol::StreamingMessage::new();
         {
@@ -269,7 +268,7 @@ impl Client {
                 .unwrap()
                 .get(&req.function_id)
                 .and_then(|func| {
-                    Some(match panic::catch_unwind(|| {
+                    Some(match panic::catch_unwind(AssertUnwindSafe(|| {
                         // Set the function name in TLS
                         FUNCTION_NAME.with(|n| {
                             *n.borrow_mut() = &func.name;
@@ -279,10 +278,9 @@ impl Client {
                             .invoker
                             .as_ref()
                             .expect("function must have an invoker"))(
-                            req,
-                            &Context::new(&req.invocation_id, &req.function_id, &func.name),
+                            &func.name, req
                         )
-                    }) {
+                    })) {
                         Ok(res) => res,
                         Err(_) => {
                             let mut res = protocol::InvocationResponse::new();
@@ -335,36 +333,29 @@ impl Client {
     fn handle_request(
         registry: Arc<Mutex<Registry<'static>>>,
         sender: Sender,
-        msg: &protocol::StreamingMessage,
+        mut msg: protocol::StreamingMessage,
     ) {
-        match msg.content.as_ref() {
-            Some(content) => match content {
-                protocol::StreamingMessage_oneof_content::function_load_request(_) => {
-                    Client::handle_function_load_request(
-                        registry,
-                        sender,
-                        msg.get_function_load_request(),
-                    )
-                }
-                protocol::StreamingMessage_oneof_content::invocation_request(_) => {
-                    Client::handle_invocation_request(
-                        registry,
-                        sender,
-                        msg.get_invocation_request(),
-                    )
-                }
-                protocol::StreamingMessage_oneof_content::worker_status_request(_) => {
-                    Client::handle_worker_status_request(sender, msg.get_worker_status_request())
-                }
-                protocol::StreamingMessage_oneof_content::file_change_event_request(_) => {
-                    // Not supported (no-op)
-                }
-                protocol::StreamingMessage_oneof_content::invocation_cancel(_) => {
-                    // Not supported (no-op)
-                }
-                _ => panic!("Unexpected message from host: {:?}.", msg),
-            },
-            None => panic!("Host sent a message with no content: {:?}.", msg),
-        };
+        if msg.has_function_load_request() {
+            Client::handle_function_load_request(registry, sender, msg.get_function_load_request());
+            return;
+        }
+        if msg.has_invocation_request() {
+            Client::handle_invocation_request(registry, sender, msg.mut_invocation_request());
+            return;
+        }
+        if msg.has_worker_status_request() {
+            Client::handle_worker_status_request(sender, msg.get_worker_status_request());
+            return;
+        }
+        if msg.has_file_change_event_request() {
+            // Not supported (no-op)
+            return;
+        }
+        if msg.has_invocation_cancel() {
+            // Not supported (no-op)
+            return;
+        }
+
+        panic!("Unexpected message from host: {:?}.", msg);
     }
 }

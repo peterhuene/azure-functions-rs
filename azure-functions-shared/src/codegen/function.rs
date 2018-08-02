@@ -2,7 +2,6 @@ use codegen::Binding;
 use rpc::protocol;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
-use Context;
 
 #[doc(hidden)]
 #[derive(Clone)]
@@ -11,7 +10,7 @@ pub struct Function {
     pub disabled: bool,
     pub bindings: Cow<'static, [Binding]>,
     pub invoker_name: Option<Cow<'static, str>>,
-    pub invoker: Option<fn(&protocol::InvocationRequest, &Context) -> protocol::InvocationResponse>,
+    pub invoker: Option<fn(&str, &mut protocol::InvocationRequest) -> protocol::InvocationResponse>,
 }
 
 // TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive

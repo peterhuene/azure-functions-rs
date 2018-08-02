@@ -1,3 +1,4 @@
+use azure_functions_shared::codegen;
 use proc_macro::{Diagnostic, Span, TokenStream};
 use proc_macro2::Delimiter;
 use quote::ToTokens;
@@ -144,6 +145,24 @@ impl<T: ToTokens> ToTokens for QuotableOption<T> {
             Some(inner) => quote!(Some(#inner)),
             None => quote!(None),
         }.to_tokens(tokens);
+    }
+}
+
+pub struct QuotableDirection(pub codegen::Direction);
+
+impl ToTokens for QuotableDirection {
+    fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
+        match self.0 {
+            codegen::Direction::In => {
+                quote!(::azure_functions::codegen::Direction::In).to_tokens(tokens)
+            }
+            codegen::Direction::InOut => {
+                quote!(::azure_functions::codegen::Direction::InOut).to_tokens(tokens)
+            }
+            codegen::Direction::Out => {
+                quote!(::azure_functions::codegen::Direction::Out).to_tokens(tokens);
+            }
+        };
     }
 }
 

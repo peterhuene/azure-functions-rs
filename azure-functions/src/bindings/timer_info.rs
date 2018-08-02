@@ -33,8 +33,8 @@ pub struct TimerInfo {
     pub is_past_due: bool,
 }
 
-impl From<&'a protocol::TypedData> for TimerInfo {
-    fn from(data: &'a protocol::TypedData) -> Self {
+impl From<protocol::TypedData> for TimerInfo {
+    fn from(data: protocol::TypedData) -> Self {
         if !data.has_json() {
             panic!("expected JSON data for timer trigger binding");
         }
@@ -43,8 +43,8 @@ impl From<&'a protocol::TypedData> for TimerInfo {
     }
 }
 
-impl Trigger<'a> for TimerInfo {
-    fn read_metadata(&mut self, _: &'a HashMap<String, protocol::TypedData>) {}
+impl Trigger for TimerInfo {
+    fn read_metadata(&mut self, _: &mut HashMap<String, protocol::TypedData>) {}
 }
 
 #[cfg(test)]
@@ -58,7 +58,7 @@ mod tests {
         let mut data = protocol::TypedData::new();
         data.set_json(JSON.to_string());
 
-        let info: TimerInfo = (&data).into();
+        let info: TimerInfo = data.into();
 
         assert!(info.schedule_status.is_some());
         assert!(info.is_past_due);

@@ -9,5 +9,5 @@ mod copy_blob;
 
 azure_functions::main!{
     blob::print_blob,
-    copy_blob::copy_blob
+    copy_blob::copy_blob,
 }

@@ -20,6 +20,6 @@ pub use self::queue_trigger::*;
 pub use self::timer_info::*;
 
 #[doc(hidden)]
-pub trait Trigger<'a> {
-    fn read_metadata(&mut self, metadata: &'a HashMap<String, protocol::TypedData>);
+pub trait Trigger {
+    fn read_metadata(&mut self, metadata: &mut HashMap<String, protocol::TypedData>);
 }

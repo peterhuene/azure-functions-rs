@@ -1,3 +1,4 @@
+use codegen::Direction;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
@@ -6,7 +7,7 @@ pub struct Blob {
     pub name: Cow<'static, str>,
     pub path: Cow<'static, str>,
     pub connection: Option<Cow<'static, str>>,
-    pub direction: Cow<'static, str>,
+    pub direction: Direction,
 }
 
 // TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive
