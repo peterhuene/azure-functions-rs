@@ -16,9 +16,12 @@ use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
-use syn::{parse, Attribute, FnArg, Ident, ItemFn, Lit, Pat, ReturnType, Type, Visibility};
+use syn::{
+    parse, Attribute, FnArg, Ident, ItemFn, Lit, Pat, ReturnType, Type, TypePath, Visibility,
+};
 use util::{last_ident_in_path, path_to_string, AttributeArguments};
 
+pub const OUTPUT_BINDING_PREFIX: &'static str = "output";
 const RETURN_BINDING_NAME: &'static str = "$return";
 const CONTEXT_TYPE_NAME: &'static str = "Context";
 
@@ -173,32 +176,79 @@ fn bind_argument(
     }
 }
 
+fn bind_output_type(
+    tp: &TypePath,
+    name: &str,
+    binding_args: &mut HashMap<String, AttributeArguments>,
+) -> Result<codegen::Binding, Diagnostic> {
+    match OUTPUT_BINDINGS.get(last_ident_in_path(&tp.path).as_str()) {
+        Some(factory) => match binding_args.remove(name) {
+            Some(args) => (*factory)(args),
+            None => (*factory)(AttributeArguments::with_name(name, tp.span())),
+        },
+        None => Err(tp
+            .span()
+            .unstable()
+            .error("expected an Azure Functions output binding type")),
+    }
+}
+
 fn bind_return_type(
     ret: &ReturnType,
     binding_args: &mut HashMap<String, AttributeArguments>,
-) -> Result<Option<codegen::Binding>, Diagnostic> {
+) -> Result<Vec<codegen::Binding>, Diagnostic> {
+    let mut bindings = vec![];
     match ret {
-        ReturnType::Default => Ok(None),
+        ReturnType::Default => {}
         ReturnType::Type(_, ty) => match &**ty {
-            Type::Path(tp) => match OUTPUT_BINDINGS.get(last_ident_in_path(&tp.path).as_str()) {
-                Some(factory) => match binding_args.remove(RETURN_BINDING_NAME) {
-                    Some(args) => (*factory)(args),
-                    None => (*factory)(AttributeArguments::with_name(
-                        RETURN_BINDING_NAME,
-                        ty.span(),
-                    )),
-                }.map(|x| Some(x)),
-                None => Err(tp
-                    .span()
-                    .unstable()
-                    .error("expected an Azure Functions output binding type")),
-            },
-            _ => Err(ty
-                .span()
-                .unstable()
-                .error("expected an Azure Functions output binding type")),
+            Type::Tuple(tuple) => {
+                for (i, ty) in tuple.elems.iter().enumerate() {
+                    match ty {
+                        Type::Path(tp) => {
+                            if i == 0 {
+                                bindings.push(bind_output_type(
+                                    &tp,
+                                    RETURN_BINDING_NAME,
+                                    binding_args,
+                                )?);
+                            } else {
+                                bindings.push(bind_output_type(
+                                    &tp,
+                                    &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
+                                    binding_args,
+                                )?);
+                            }
+                        }
+                        Type::Tuple(inner) => {
+                            // Only unit tuples are allowed (ignore the binding)
+                            if !inner.elems.is_empty() {
+                                return Err(ty
+                                    .span()
+                                    .unstable()
+                                    .error("expected an Azure Functions output binding type"));
+                            }
+                        }
+                        _ => {
+                            return Err(ty
+                                .span()
+                                .unstable()
+                                .error("expected an Azure Functions output binding type"));
+                        }
+                    };
+                }
+            }
+            Type::Path(tp) => {
+                bindings.push(bind_output_type(&tp, RETURN_BINDING_NAME, binding_args)?);
+            }
+            _ => {
+                return Err(ty.span().unstable().error(
+                    "expected an Azure Functions output binding type or a tuple of binding types",
+                ));
+            }
         },
-    }
+    };
+
+    Ok(bindings)
 }
 
 fn drain_binding_attributes(
@@ -257,7 +307,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
             e.emit();
             return input;
         }
-    }
+    };
 
     let mut func = match Function::try_from(args) {
         Ok(f) => f.0.into_owned(),
@@ -313,10 +363,25 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     match bind_return_type(&target.decl.output, &mut binding_args) {
-        Ok(Some(binding)) => {
-            func.bindings.to_mut().push(binding);
+        Ok(bindings) => {
+            for binding in bindings.into_iter() {
+                match binding.name() {
+                    Some(name) => if !names.insert(name.to_string()) {
+                        if let ReturnType::Type(_, ty) = &target.decl.output {
+                            ty
+                                .span()
+                                .unstable()
+                                .error(format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name))
+                                .emit();
+                        }
+                        return input;
+                    },
+                    None => {}
+                };
+
+                func.bindings.to_mut().push(binding);
+            }
         }
-        Ok(None) => {}
         Err(e) => {
             e.emit();
             return input;

@@ -1,6 +1,6 @@
 # Example Timer Azure Function
 
-This package is an example of a simple timer-triggered Azure Function.
+This project is an example of a simple timer-triggered Azure Function.
 
 ## Example function implementation
 
