@@ -7,7 +7,7 @@ use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::synom::Synom;
-use syn::{parse, parse2, Attribute, Ident, Lit, LitStr, Path};
+use syn::{parse, parse2, Attribute, Ident, Lit, LitStr, Path, PathSegment};
 
 pub fn to_camel_case(input: &str) -> String {
     let mut result = String::new();
@@ -211,11 +211,9 @@ pub fn path_to_string(path: &Path) -> String {
     s
 }
 
-pub fn last_ident_in_path(path: &Path) -> String {
+pub fn last_segment_in_path(path: &Path) -> &PathSegment {
     path.segments
         .iter()
         .last()
         .expect("expected at least one segment in path")
-        .ident
-        .to_string()
 }

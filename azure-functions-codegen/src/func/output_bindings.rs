@@ -1,7 +1,7 @@
 use quote::ToTokens;
 use syn::ItemFn;
-use syn::{FnArg, Ident, Pat, ReturnType, Type, TypeReference};
-use util::to_camel_case;
+use syn::{FnArg, GenericArgument, Ident, Pat, PathArguments, ReturnType, Type, TypeReference};
+use util::{last_segment_in_path, to_camel_case};
 
 pub struct OutputBindings<'a>(pub &'a ItemFn);
 
@@ -25,14 +25,29 @@ impl OutputBindings<'a> {
             ReturnType::Default => vec![],
             ReturnType::Type(_, ty) => {
                 match &**ty {
-                    Type::Tuple(tuple) => tuple.elems.iter().enumerate().skip(1).map(|(i, _)| {
+                    Type::Tuple(tuple) => tuple.elems.iter().enumerate().skip(1).filter_map(|(i, ty)| {
+                        if OutputBindings::is_unit_tuple(ty) {
+                            return None;
+                        }
                         let name = format!("{}{}", ::func::OUTPUT_BINDING_PREFIX, i);
-                        quote!(
-                            let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
-                            __output_binding.set_name(#name.to_string());
-                            __output_binding.set_data(__ret.#i.into());
-                            __output_data.push(__output_binding);
-                        )
+
+                        if OutputBindings::is_option_type(ty) {
+                            Some(quote!(
+                                if let Some(__ret) = __ret.#i {
+                                    let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
+                                    __output_binding.set_name(#name.to_string());
+                                    __output_binding.set_data(__ret.into());
+                                    __output_data.push(__output_binding);
+                                }
+                            ))
+                        } else {
+                            Some(quote!(
+                                let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
+                                __output_binding.set_name(#name.to_string());
+                                __output_binding.set_data(__ret.#i.into());
+                                __output_data.push(__output_binding);
+                            ))
+                        }
                     }).collect(),
                     _ => vec![],
                 }
@@ -63,6 +78,39 @@ impl OutputBindings<'a> {
             _ => panic!("expected captured arguments"),
         })
     }
+
+    fn is_option_type(t: &Type) -> bool {
+        match t {
+            Type::Path(tp) => {
+                let last = last_segment_in_path(&tp.path);
+                if last.ident.to_string() != "Option" {
+                    return false;
+                }
+
+                match &last.arguments {
+                    PathArguments::AngleBracketed(gen_args) => {
+                        if gen_args.args.len() != 1 {
+                            return false;
+                        }
+                        match gen_args.args.iter().nth(0) {
+                            Some(GenericArgument::Type(_)) => true,
+                            _ => false,
+                        }
+                    }
+                    _ => false,
+                }
+            }
+            Type::Paren(tp) => OutputBindings::is_option_type(&tp.elem),
+            _ => false,
+        }
+    }
+
+    fn is_unit_tuple(t: &Type) -> bool {
+        match t {
+            Type::Tuple(tuple) => tuple.elems.len() == 0,
+            _ => false,
+        }
+    }
 }
 
 impl ToTokens for OutputBindings<'_> {
@@ -81,22 +129,27 @@ impl ToTokens for OutputBindings<'_> {
 
         match &self.0.decl.output {
             ReturnType::Default => {}
-            ReturnType::Type(_, ty) => match &**ty {
-                Type::Tuple(tuple) => {
-                    if let Some(first) = tuple.elems.iter().nth(0) {
-                        match first {
-                            Type::Path(_) => {
-                                quote!(__res.set_return_value(__ret.0.into());).to_tokens(tokens);
-                            }
-                            _ => {}
-                        };
+            ReturnType::Type(_, ty) => if let Type::Tuple(tuple) = &**ty {
+                if let Some(first) = tuple.elems.iter().nth(0) {
+                    if !OutputBindings::is_unit_tuple(first) {
+                        if OutputBindings::is_option_type(first) {
+                            quote!(if let Some(__ret) = __ret.0 {
+                                __res.set_return_value(__ret.into());
+                            }).to_tokens(tokens);
+                        } else {
+                            quote!(__res.set_return_value(__ret.0.into());).to_tokens(tokens);
+                        }
                     }
                 }
-                Type::Path(_) => {
+            } else if !OutputBindings::is_unit_tuple(ty) {
+                if OutputBindings::is_option_type(ty) {
+                    quote!(if let Some(__ret) = __ret {
+                        __res.set_return_value(__ret.into());
+                    }).to_tokens(tokens);
+                } else {
                     quote!(__res.set_return_value(__ret.into());).to_tokens(tokens);
                 }
-                _ => {}
             },
-        };
+        }
     }
 }
