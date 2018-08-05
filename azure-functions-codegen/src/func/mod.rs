@@ -17,9 +17,10 @@ use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::{
-    parse, Attribute, FnArg, Ident, ItemFn, Lit, Pat, ReturnType, Type, TypePath, Visibility,
+    parse, token::Mut, Attribute, FnArg, GenericArgument, Ident, ItemFn, Lit, Pat, PathArguments,
+    PathSegment, ReturnType, Type, Visibility,
 };
-use util::{last_ident_in_path, path_to_string, AttributeArguments};
+use util::{last_segment_in_path, path_to_string, AttributeArguments};
 
 pub const OUTPUT_BINDING_PREFIX: &'static str = "output";
 const RETURN_BINDING_NAME: &'static str = "$return";
@@ -91,6 +92,74 @@ fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
     Ok(())
 }
 
+fn bind_input_type(
+    pattern: &Pat,
+    ty: &Type,
+    mutability: &Option<Mut>,
+    has_trigger: bool,
+    binding_args: &mut HashMap<String, AttributeArguments>,
+) -> Result<codegen::Binding, Diagnostic> {
+    match ty {
+        Type::Path(tp) => {
+            let type_name = last_segment_in_path(&tp.path).ident.to_string();
+
+            if type_name == CONTEXT_TYPE_NAME {
+                return Ok(codegen::Binding::Context);
+            }
+
+            // Check for multiple triggers
+            if has_trigger && TRIGGERS.contains_key(type_name.as_str()) {
+                return Err(tp
+                    .span()
+                    .unstable()
+                    .error("Azure Functions can only have one trigger binding"));
+            }
+
+            // If the reference is mutable, only accept input-output bindings
+            let factory = match mutability {
+                Some(m) => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
+                    Some(factory) => Ok(factory),
+                    None => Err(m.span().unstable().error(
+                        "only Azure Functions binding types that support the 'inout' direction can be passed by mutable reference",
+                    )),
+                },
+                None => match TRIGGERS.get(type_name.as_str()) {
+                    Some(factory) => Ok(factory),
+                    None => match INPUT_BINDINGS.get(type_name.as_str()) {
+                        Some(factory) => Ok(factory),
+                        None => Err(tp.span().unstable().error(
+                            "expected an Azure Functions trigger or input binding type",
+                        )),
+                    },
+                },
+            }?;
+
+            match pattern {
+                Pat::Ident(name) => {
+                    let name_str = name.ident.to_string();
+                    match binding_args.remove(&name_str) {
+                        Some(args) => (*factory)(args),
+                        None => {
+                            (*factory)(AttributeArguments::with_name(&name_str, name.ident.span()))
+                        }
+                    }
+                }
+                _ => Err(pattern
+                    .span()
+                    .unstable()
+                    .error("bindings must have a named identifier")),
+            }
+        }
+        Type::Paren(tp) => {
+            bind_input_type(pattern, &tp.elem, mutability, has_trigger, binding_args)
+        }
+        _ => Err(ty
+            .span()
+            .unstable()
+            .error("expected an Azure Functions trigger or input binding type")),
+    }
+}
+
 fn bind_argument(
     arg: &FnArg,
     has_trigger: bool,
@@ -98,65 +167,9 @@ fn bind_argument(
 ) -> Result<codegen::Binding, Diagnostic> {
     match arg {
         FnArg::Captured(arg) => match &arg.ty {
-            Type::Reference(r) => match &*r.elem {
-                Type::Path(tp) => {
-                    let type_name = last_ident_in_path(&tp.path);
-
-                    if type_name == CONTEXT_TYPE_NAME {
-                        return Ok(codegen::Binding::Context);
-                    }
-
-                    // Check for multiple triggers
-                    if has_trigger && TRIGGERS.contains_key(type_name.as_str()) {
-                        return Err(tp
-                            .span()
-                            .unstable()
-                            .error("Azure Functions can only have one trigger binding"));
-                    }
-
-                    // If the reference is mutable, only accept input-output bindings
-                    let factory = match r.mutability {
-                        Some(m) => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
-                            Some(factory) => Ok(factory),
-                            None => Err(m.span().unstable().error(
-                                "only Azure Functions binding types that support the 'inout' direction can be passed by mutable reference",
-                            )),
-                        },
-                        None => match TRIGGERS.get(type_name.as_str()) {
-                            Some(factory) => Ok(factory),
-                            None => match INPUT_BINDINGS.get(type_name.as_str()) {
-                                Some(factory) => Ok(factory),
-                                None => Err(tp.span().unstable().error(
-                                    "expected an Azure Functions trigger or input binding type",
-                                )),
-                            },
-                        },
-                    }?;
-
-                    match &arg.pat {
-                        Pat::Ident(name) => {
-                            let name_str = name.ident.to_string();
-                            match binding_args.remove(&name_str) {
-                                Some(args) => (*factory)(args),
-                                None => (*factory)(AttributeArguments::with_name(
-                                    &name_str,
-                                    name.ident.span(),
-                                )),
-                            }
-                        }
-                        _ => Err(arg
-                            .pat
-                            .span()
-                            .unstable()
-                            .error("bindings must have a named identifier")),
-                    }
-                }
-                _ => Err(arg
-                    .ty
-                    .span()
-                    .unstable()
-                    .error("expected an Azure Functions trigger or input binding type")),
-            },
+            Type::Reference(r) => {
+                bind_input_type(&arg.pat, &r.elem, &r.mutability, has_trigger, binding_args)
+            }
             _ => Err(arg.ty.span().unstable().error(
                 "expected an Azure Functions trigger or input binding type passed by reference",
             )),
@@ -176,20 +189,62 @@ fn bind_argument(
     }
 }
 
+fn get_option_type(last: &PathSegment) -> Option<&Type> {
+    if last.ident.to_string() != "Option" {
+        return None;
+    }
+
+    match &last.arguments {
+        PathArguments::AngleBracketed(gen_args) => {
+            if gen_args.args.len() != 1 {
+                return None;
+            }
+            match gen_args.args.iter().nth(0) {
+                Some(GenericArgument::Type(t)) => Some(t),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
 fn bind_output_type(
-    tp: &TypePath,
+    ty: &Type,
     name: &str,
     binding_args: &mut HashMap<String, AttributeArguments>,
+    check_option: bool,
 ) -> Result<codegen::Binding, Diagnostic> {
-    match OUTPUT_BINDINGS.get(last_ident_in_path(&tp.path).as_str()) {
-        Some(factory) => match binding_args.remove(name) {
-            Some(args) => (*factory)(args),
-            None => (*factory)(AttributeArguments::with_name(name, tp.span())),
-        },
-        None => Err(tp
-            .span()
-            .unstable()
-            .error("expected an Azure Functions output binding type")),
+    match ty {
+        Type::Path(tp) => {
+            let last_segment = last_segment_in_path(&tp.path);
+
+            if check_option {
+                match get_option_type(last_segment) {
+                    Some(inner) => {
+                        return bind_output_type(inner, name, binding_args, false);
+                    }
+                    None => {}
+                };
+            }
+
+            match OUTPUT_BINDINGS.get(last_segment.ident.to_string().as_str()) {
+                Some(factory) => match binding_args.remove(name) {
+                    Some(args) => (*factory)(args),
+                    None => (*factory)(AttributeArguments::with_name(name, tp.span())),
+                },
+                None => Err(tp
+                    .span()
+                    .unstable()
+                    .error("expected an Azure Functions output binding type")),
+            }
+        }
+        Type::Paren(tp) => bind_output_type(&tp.elem, name, binding_args, check_option),
+        _ => {
+            return Err(ty
+                .span()
+                .unstable()
+                .error("expected an Azure Functions output binding type"))
+        }
     }
 }
 
@@ -197,58 +252,46 @@ fn bind_return_type(
     ret: &ReturnType,
     binding_args: &mut HashMap<String, AttributeArguments>,
 ) -> Result<Vec<codegen::Binding>, Diagnostic> {
-    let mut bindings = vec![];
     match ret {
-        ReturnType::Default => {}
-        ReturnType::Type(_, ty) => match &**ty {
-            Type::Tuple(tuple) => {
-                for (i, ty) in tuple.elems.iter().enumerate() {
-                    match ty {
-                        Type::Path(tp) => {
-                            if i == 0 {
-                                bindings.push(bind_output_type(
-                                    &tp,
-                                    RETURN_BINDING_NAME,
-                                    binding_args,
-                                )?);
-                            } else {
-                                bindings.push(bind_output_type(
-                                    &tp,
-                                    &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
-                                    binding_args,
-                                )?);
-                            }
-                        }
-                        Type::Tuple(inner) => {
-                            // Only unit tuples are allowed (ignore the binding)
-                            if !inner.elems.is_empty() {
-                                return Err(ty
-                                    .span()
-                                    .unstable()
-                                    .error("expected an Azure Functions output binding type"));
-                            }
-                        }
-                        _ => {
-                            return Err(ty
-                                .span()
-                                .unstable()
-                                .error("expected an Azure Functions output binding type"));
-                        }
-                    };
+        ReturnType::Default => Ok(vec![]),
+        ReturnType::Type(_, ty) => if let Type::Tuple(tuple) = &**ty {
+            let mut bindings = vec![];
+            for (i, ty) in tuple.elems.iter().enumerate() {
+                if let Type::Tuple(inner) = ty {
+                    if !inner.elems.is_empty() {
+                        return Err(ty
+                            .span()
+                            .unstable()
+                            .error("expected an Azure Functions output binding type"));
+                    }
+                    continue;
+                }
+                if i == 0 {
+                    bindings.push(bind_output_type(
+                        &ty,
+                        RETURN_BINDING_NAME,
+                        binding_args,
+                        true,
+                    )?);
+                } else {
+                    bindings.push(bind_output_type(
+                        &ty,
+                        &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
+                        binding_args,
+                        true,
+                    )?);
                 }
             }
-            Type::Path(tp) => {
-                bindings.push(bind_output_type(&tp, RETURN_BINDING_NAME, binding_args)?);
-            }
-            _ => {
-                return Err(ty.span().unstable().error(
-                    "expected an Azure Functions output binding type or a tuple of binding types",
-                ));
-            }
+            Ok(bindings)
+        } else {
+            Ok(vec![bind_output_type(
+                &ty,
+                RETURN_BINDING_NAME,
+                binding_args,
+                true,
+            )?])
         },
-    };
-
-    Ok(bindings)
+    }
 }
 
 fn drain_binding_attributes(

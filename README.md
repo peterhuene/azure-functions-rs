@@ -93,7 +93,7 @@ Azure Functions for Rust automatically infers the direction of bindings dependin
   }
   ```
 
-* Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.
+* Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.  Functions may also return `Option<T>` for any output binding type `T`; a `None` value will skip outputting a value.
   
   ```rust
   #[func]
@@ -106,7 +106,15 @@ Azure Functions for Rust automatically infers the direction of bindings dependin
   ```rust
   #[func]
   ...
-  pub fn example(...) -> (HttpResponse, Blob) {
+  pub fn example(...) -> Option<Blob> {
+      ...
+  }
+  ```
+
+  ```rust
+  #[func]
+  ...
+  pub fn example(...) -> (HttpResponse, Option<Blob>) {
       ...
   }
   ```
@@ -128,7 +136,7 @@ Azure Functions for Rust automatically infers the direction of bindings dependin
   }
   ```
 
-  With the above, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
+  For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
 
 # Development
 

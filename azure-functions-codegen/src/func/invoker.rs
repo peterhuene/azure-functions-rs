@@ -2,7 +2,7 @@ use func::TRIGGERS;
 use func::{OutputBindings, CONTEXT_TYPE_NAME};
 use quote::ToTokens;
 use syn::{FnArg, Ident, ItemFn, Pat, Type, TypeReference};
-use util::{last_ident_in_path, to_camel_case};
+use util::{last_segment_in_path, to_camel_case};
 
 const INVOKER_PREFIX: &'static str = "__invoke_";
 
@@ -16,10 +16,8 @@ impl Invoker<'a> {
     fn get_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
         self.iter_args()
             .filter_map(|(name, arg_type)| {
-                if let Type::Path(tp) = &*arg_type.elem {
-                    if last_ident_in_path(&tp.path) == CONTEXT_TYPE_NAME {
-                        return None;
-                    }
+                if Invoker::is_context_type(&arg_type.elem) {
+                    return None;
                 }
 
                 Some((name, &*arg_type.elem))
@@ -28,21 +26,15 @@ impl Invoker<'a> {
 
     fn get_trigger_arg(&self) -> Option<(&'a Ident, &'a Type)> {
         self.iter_args()
-            .find(|(_, arg_type)| {
-                if let Type::Path(tp) = &*arg_type.elem {
-                    return TRIGGERS.contains_key(last_ident_in_path(&tp.path).as_str());
-                }
-                false
-            }).map(|(name, arg_type)| (name, &*arg_type.elem))
+            .find(|(_, arg_type)| Invoker::is_trigger_type(&arg_type.elem))
+            .map(|(name, arg_type)| (name, &*arg_type.elem))
     }
 
     fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
         self.iter_args()
             .map(|(name, arg_type)| {
-                if let Type::Path(tp) = &*arg_type.elem {
-                    if last_ident_in_path(&tp.path) == CONTEXT_TYPE_NAME {
-                        return quote!(__ctx);
-                    }
+                if Invoker::is_context_type(&arg_type.elem) {
+                    return quote!(__ctx);
                 }
 
                 let name_str = name.to_string();
@@ -68,6 +60,24 @@ impl Invoker<'a> {
             ),
             _ => panic!("expected captured arguments"),
         })
+    }
+
+    fn is_context_type(ty: &Type) -> bool {
+        match ty {
+            Type::Path(tp) => last_segment_in_path(&tp.path).ident.to_string() == CONTEXT_TYPE_NAME,
+            Type::Paren(tp) => Invoker::is_context_type(&tp.elem),
+            _ => false,
+        }
+    }
+
+    fn is_trigger_type(ty: &Type) -> bool {
+        match ty {
+            Type::Path(tp) => {
+                TRIGGERS.contains_key(last_segment_in_path(&tp.path).ident.to_string().as_str())
+            }
+            Type::Paren(tp) => Invoker::is_trigger_type(&tp.elem),
+            _ => false,
+        }
     }
 }
 
