@@ -31,10 +31,10 @@ dependencies = [
 
 [[package]]
 name = "azure-functions"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
- "azure-functions-codegen 0.1.5",
- "azure-functions-shared 0.1.5",
+ "azure-functions-codegen 0.1.6",
+ "azure-functions-shared 0.1.6",
  "chrono 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -49,9 +49,9 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-codegen"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
- "azure-functions-shared 0.1.5",
+ "azure-functions-shared 0.1.6",
  "lazy_static 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -60,9 +60,9 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-shared"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
- "azure-functions-shared-codegen 0.1.5",
+ "azure-functions-shared-codegen 0.1.6",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "grpcio 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf 2.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -74,7 +74,7 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-shared-codegen"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "quote 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.14.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -254,7 +254,7 @@ dependencies = [
 name = "example-blob"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.1.5",
+ "azure-functions 0.1.6",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -262,7 +262,7 @@ dependencies = [
 name = "example-http"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.1.5",
+ "azure-functions 0.1.6",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -273,7 +273,7 @@ dependencies = [
 name = "example-queue"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.1.5",
+ "azure-functions 0.1.6",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -281,7 +281,7 @@ dependencies = [
 name = "example-timer"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.1.5",
+ "azure-functions 0.1.6",
  "log 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
