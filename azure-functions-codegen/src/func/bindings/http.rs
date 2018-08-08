@@ -41,7 +41,7 @@ impl TryFrom<AttributeArguments> for Http<'_> {
         }
 
         Ok(Http(Cow::Owned(codegen::bindings::Http {
-            name: name.expect("expected a name for the Http binding"),
+            name: name.expect("expected a name for a http binding"),
         })))
     }
 }

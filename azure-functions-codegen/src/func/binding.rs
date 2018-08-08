@@ -1,5 +1,7 @@
 use azure_functions_shared::codegen;
-use func::bindings::{Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, TimerTrigger};
+use func::bindings::{
+    Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table, TimerTrigger,
+};
 use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
@@ -42,6 +44,10 @@ impl ToTokens for Binding<'_> {
                 let b = Blob(Cow::Borrowed(b));
                 quote!(::azure_functions::codegen::Binding::Blob(#b)).to_tokens(tokens)
             }
+            codegen::Binding::Table(b) => {
+                let b = Table(Cow::Borrowed(b));
+                quote!(::azure_functions::codegen::Binding::Table(#b)).to_tokens(tokens)
+            }
         };
     }
 }
@@ -79,6 +85,11 @@ lazy_static! {
         map.insert("Blob", |args| {
             Ok(codegen::Binding::Blob(Blob::try_from(args)?.0.into_owned()))
         });
+        map.insert("Table", |args| {
+            Ok(codegen::Binding::Table(
+                Table::try_from(args)?.0.into_owned(),
+            ))
+        });
         map
     };
     pub static ref INPUT_OUTPUT_BINDINGS: BindingMap = {
@@ -93,7 +104,6 @@ lazy_static! {
             binding.direction = codegen::Direction::InOut;
             Ok(codegen::Binding::Blob(binding))
         });
-
         map
     };
     pub static ref OUTPUT_BINDINGS: BindingMap = {
@@ -110,6 +120,11 @@ lazy_static! {
             let mut binding = Blob::try_from(args)?.0.into_owned();
             binding.direction = codegen::Direction::Out;
             Ok(codegen::Binding::Blob(binding))
+        });
+        map.insert("Table", |args| {
+            let mut binding = Table::try_from(args)?.0.into_owned();
+            binding.direction = codegen::Direction::Out;
+            Ok(codegen::Binding::Table(binding))
         });
         map
     };

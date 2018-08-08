@@ -61,6 +61,7 @@ The current list of supported bindings:
 | `azure_functions::bindings::HttpResponse` | Output HTTP Response    | out            |
 | `azure_functions::bindings::QueueTrigger` | Queue Trigger           | in             |
 | `azure_functions::bindings::QueueMessage` | Output Queue Message    | out            |
+| `azure_functions::bindings::Table`        | Input and Ouput Table   | in, out        |
 | `azure_functions::bindings::TimerInfo`    | Timer Trigger           | in             |
 | `azure_functions::Context`*               | Invocation Context      | n/a            |
 
@@ -208,6 +209,8 @@ Copy this content to a `Dockerfile` at the root of your source:
 FROM peterhuene/azure-functions-rs-ci:latest AS build-env
 
 COPY . /src
+
+WORKDIR /src
 
 RUN cargo run --release -- init --worker-path /usr/local/bin/rust_worker --script-root /home/site/wwwroot
 

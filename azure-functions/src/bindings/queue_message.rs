@@ -117,6 +117,14 @@ impl From<String> for QueueMessage {
     }
 }
 
+impl From<&Value> for QueueMessage {
+    fn from(content: &Value) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(content.to_string());
+        QueueMessage(data)
+    }
+}
+
 impl From<Value> for QueueMessage {
     fn from(content: Value) -> Self {
         let mut data = protocol::TypedData::new();

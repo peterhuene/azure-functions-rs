@@ -1,4 +1,6 @@
-use codegen::bindings::{Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, TimerTrigger};
+use codegen::bindings::{
+    Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table, TimerTrigger,
+};
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -19,6 +21,7 @@ pub enum Binding {
     Queue(Queue),
     BlobTrigger(BlobTrigger),
     Blob(Blob),
+    Table(Table),
 }
 
 impl Binding {
@@ -32,6 +35,7 @@ impl Binding {
             Binding::Queue(b) => Some(&b.name),
             Binding::BlobTrigger(b) => Some(&b.name),
             Binding::Blob(b) => Some(&b.name),
+            Binding::Table(b) => Some(&b.name),
         }
     }
 
@@ -48,7 +52,11 @@ impl Binding {
             | Binding::TimerTrigger(_)
             | Binding::QueueTrigger(_)
             | Binding::BlobTrigger(_) => true,
-            Binding::Context | Binding::Http(_) | Binding::Queue(_) | Binding::Blob(_) => false,
+            Binding::Context
+            | Binding::Http(_)
+            | Binding::Queue(_)
+            | Binding::Blob(_)
+            | Binding::Table(_) => false,
         }
     }
 }

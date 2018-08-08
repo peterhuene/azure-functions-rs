@@ -9,4 +9,5 @@ members = [
     "examples/timer",
     "examples/queue",
     "examples/blob",
+    "examples/table",
 ]
