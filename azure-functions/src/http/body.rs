@@ -159,6 +159,12 @@ impl From<String> for Body<'_> {
     }
 }
 
+impl From<&Value> for Body<'_> {
+    fn from(data: &Value) -> Self {
+        Body::Json(Cow::Owned(data.to_string()))
+    }
+}
+
 impl From<Value> for Body<'_> {
     fn from(data: Value) -> Self {
         Body::Json(Cow::Owned(data.to_string()))

@@ -90,7 +90,8 @@ impl TryFrom<Attribute> for AttributeArguments {
             }
         };
 
-        let mut args = AttributeArguments::try_from(stream)?;
+        let mut args = AttributeArguments::try_from(stream)
+            .map_err(|_| span.unstable().error("failed to parse attribute"))?;
         args.span = span.unstable();
         Ok(args)
     }

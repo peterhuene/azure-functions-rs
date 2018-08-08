@@ -75,7 +75,7 @@ impl TryFrom<AttributeArguments> for TimerTrigger<'_> {
         }
 
         Ok(TimerTrigger(Cow::Owned(codegen::bindings::TimerTrigger {
-            name: name.expect("expected a name for the TimerTrigger binding"),
+            name: name.expect("expected a name for a timer trigger binding"),
             schedule: schedule,
             run_on_startup: run_on_startup,
             use_monitor: use_monitor,

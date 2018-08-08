@@ -117,6 +117,14 @@ impl From<String> for Blob {
     }
 }
 
+impl From<&Value> for Blob {
+    fn from(content: &Value) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(content.to_string());
+        Blob(data)
+    }
+}
+
 impl From<Value> for Blob {
     fn from(content: Value) -> Self {
         let mut data = protocol::TypedData::new();
@@ -241,6 +249,17 @@ mod tests {
     fn it_converts_from_u8_vec() {
         let blob: Blob = vec![0, 1, 2].into();
         assert_eq!(blob.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_from_typed_data() {
+        const BLOB: &'static str = "hello world!";
+
+        let mut data = protocol::TypedData::new();
+        data.set_string(BLOB.to_string());
+
+        let blob: Blob = data.into();
+        assert_eq!(blob.as_str().unwrap(), BLOB);
     }
 
     #[test]

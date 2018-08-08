@@ -4,6 +4,7 @@
 //!
 //! The following Azure Functions trigger bindings are supported:
 //!
+//! * [Blob triggers](bindings/struct.BlobTrigger.html)
 //! * [HTTP triggers](bindings/struct.HttpRequest.html)
 //! * [Queue triggers](bindings/struct.QueueTrigger.html)
 //! * [Timer triggers](bindings/struct.TimerInfo.html)
@@ -11,12 +12,14 @@
 //! The following Azure Functions input bindings are supported:
 //!
 //! * [Blob input](bindings/struct.Blob.html)
+//! * [Table input](bindings/struct.Table.html)
 //!
 //! The following Azure Functions output bindings are supported:
 //!
 //! * [Blob output](bindings/struct.Blob.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue message output](bindings/struct.QueueMessage.html)
+//! * [Table output](bindings/struct.Table.html)
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
 //!
@@ -111,7 +114,7 @@ extern crate futures;
 extern crate grpcio;
 extern crate log;
 extern crate serde;
-#[cfg_attr(test, macro_use)]
+#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;

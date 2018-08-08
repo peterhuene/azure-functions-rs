@@ -68,8 +68,8 @@ impl TryFrom<AttributeArguments> for Queue<'_> {
         }
 
         Ok(Queue(Cow::Owned(codegen::bindings::Queue {
-            name: name.expect("expected a name for the QueueMessage binding"),
-            queue_name: queue_name.expect("expected a queue name for QueueMessage binding"),
+            name: name.expect("expected a name for a queue binding"),
+            queue_name: queue_name.expect("expected a queue name for a queue binding"),
             connection: connection,
         })))
     }

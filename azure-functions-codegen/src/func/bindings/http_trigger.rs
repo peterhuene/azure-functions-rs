@@ -124,7 +124,7 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
         }
 
         Ok(HttpTrigger(Cow::Owned(codegen::bindings::HttpTrigger {
-            name: name.expect("expected a name for the HttpTrigger binding"),
+            name: name.expect("expected a name for a http trigger binding"),
             auth_level: auth_level,
             methods: Cow::Owned(methods),
             route: route,
