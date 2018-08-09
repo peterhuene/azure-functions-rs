@@ -52,9 +52,11 @@ impl Client {
         let mut channel = ChannelBuilder::new(Arc::new(EnvBuilder::new().build()));
 
         if let Some(len) = self.max_message_len {
-            channel = channel
-                .max_receive_message_len(len)
-                .max_send_message_len(len);
+            if len > 0 {
+                channel = channel
+                    .max_receive_message_len(len)
+                    .max_send_message_len(len);
+            }
         }
 
         let (rpc_tx, rpc_rx) = self
@@ -262,54 +264,65 @@ impl Client {
         req: &mut protocol::InvocationRequest,
     ) {
         let mut message = protocol::StreamingMessage::new();
-        {
-            let res = match registry
-                .lock()
-                .unwrap()
-                .get(&req.function_id)
-                .and_then(|func| {
-                    Some(match panic::catch_unwind(AssertUnwindSafe(|| {
-                        // Set the function name in TLS
-                        FUNCTION_NAME.with(|n| {
-                            *n.borrow_mut() = &func.name;
-                        });
+        let res = match registry
+            .lock()
+            .unwrap()
+            .get(&req.function_id)
+            .and_then(|func| {
+                Some(match panic::catch_unwind(AssertUnwindSafe(|| {
+                    // Set the function name in TLS
+                    FUNCTION_NAME.with(|n| {
+                        *n.borrow_mut() = &func.name;
+                    });
 
-                        (func
-                            .invoker
-                            .as_ref()
-                            .expect("function must have an invoker"))(
-                            &func.name, req
-                        )
-                    })) {
-                        Ok(res) => res,
-                        Err(_) => {
-                            let mut res = protocol::InvocationResponse::new();
-                            res.set_invocation_id(req.invocation_id.clone());
-                            let mut result = protocol::StatusResult::new();
-                            result.status = protocol::StatusResult_Status::Failure;
-                            result.result =
-                                "Azure Function panicked: see log for more information."
-                                    .to_string();
-                            res.set_result(result);
-                            res
-                        }
-                    })
-                }) {
-                Some(res) => res,
-                None => {
-                    let mut res = protocol::InvocationResponse::new();
-                    res.set_invocation_id(req.invocation_id.clone());
-                    let mut result = protocol::StatusResult::new();
-                    result.status = protocol::StatusResult_Status::Failure;
-                    result.result =
-                        format!("Function with id '{}' does not exist.", req.function_id);
-                    res.set_result(result);
-                    res
-                }
-            };
+                    // Set the invocation ID in TLS
+                    logger::INVOCATION_ID.with(|id| {
+                        id.borrow_mut().replace_range(.., &req.invocation_id);
+                    });
 
-            message.set_invocation_response(res);
-        }
+                    (func
+                        .invoker
+                        .as_ref()
+                        .expect("function must have an invoker"))(
+                        &func.name, req
+                    )
+                })) {
+                    Ok(res) => res,
+                    Err(_) => {
+                        let mut res = protocol::InvocationResponse::new();
+                        res.set_invocation_id(req.invocation_id.clone());
+                        let mut result = protocol::StatusResult::new();
+                        result.status = protocol::StatusResult_Status::Failure;
+                        result.result =
+                            "Azure Function panicked: see log for more information.".to_string();
+                        res.set_result(result);
+                        res
+                    }
+                })
+            }) {
+            Some(res) => res,
+            None => {
+                let mut res = protocol::InvocationResponse::new();
+                res.set_invocation_id(req.invocation_id.clone());
+                let mut result = protocol::StatusResult::new();
+                result.status = protocol::StatusResult_Status::Failure;
+                result.result = format!("Function with id '{}' does not exist.", req.function_id);
+                res.set_result(result);
+                res
+            }
+        };
+
+        // Clear the function name from TLS
+        FUNCTION_NAME.with(|n| {
+            *n.borrow_mut() = UNKNOWN;
+        });
+
+        // Clear the invocation ID from TLS
+        logger::INVOCATION_ID.with(|id| {
+            id.borrow_mut().clear();
+        });
+
+        message.set_invocation_response(res);
 
         sender
             .send(message)
