@@ -11,6 +11,8 @@ pub struct Function {
     pub bindings: Cow<'static, [Binding]>,
     pub invoker_name: Option<Cow<'static, str>>,
     pub invoker: Option<fn(&str, &mut protocol::InvocationRequest) -> protocol::InvocationResponse>,
+    pub manifest_dir: Option<Cow<'static, str>>,
+    pub file: Option<Cow<'static, str>>,
 }
 
 // TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive

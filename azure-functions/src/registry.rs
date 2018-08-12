@@ -15,7 +15,7 @@ impl<'a> Registry<'a> {
                 .by_ref()
                 .fold(HashMap::new(), |mut map, func| {
                     if map.insert(func.name.clone().into_owned(), func).is_some() {
-                        panic!("Azure Function '{}' has already been registered; make sure all functions have unique names.", func.name);
+                        panic!("Azure Function '{}' has already been registered; ensure all functions have unique names.", func.name);
                     }
                     map
                 }),
@@ -62,6 +62,8 @@ mod tests {
                 bindings: Cow::Borrowed(&[]),
                 invoker_name: None,
                 invoker: None,
+                manifest_dir: None,
+                file: None,
             },
             &Function {
                 name: Cow::Borrowed("function2"),
@@ -69,6 +71,8 @@ mod tests {
                 bindings: Cow::Borrowed(&[]),
                 invoker_name: None,
                 invoker: None,
+                manifest_dir: None,
+                file: None,
             },
             &Function {
                 name: Cow::Borrowed("function3"),
@@ -76,6 +80,8 @@ mod tests {
                 bindings: Cow::Borrowed(&[]),
                 invoker_name: None,
                 invoker: None,
+                manifest_dir: None,
+                file: None,
             },
         ]);
         assert_eq!(registry.iter().count(), 3);
@@ -94,6 +100,8 @@ mod tests {
             bindings: Cow::Borrowed(&[]),
             invoker_name: None,
             invoker: None,
+            manifest_dir: None,
+            file: None,
         }]);
         assert_eq!(registry.iter().count(), 1);
 
@@ -113,6 +121,8 @@ mod tests {
             bindings: Cow::Borrowed(&[]),
             invoker_name: None,
             invoker: None,
+            manifest_dir: None,
+            file: None,
         }]);
         assert_eq!(registry.iter().count(), 1);
 
