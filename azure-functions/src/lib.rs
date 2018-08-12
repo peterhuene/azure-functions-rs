@@ -151,12 +151,44 @@ use serde::Serialize;
 use serde_json::Serializer;
 use std::env::{current_dir, current_exe};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+
+// This is a workaround to the issue that `file!` expands to be workspace-relative
+// and cargo does not have an environment variable for the workspace directory.
+// Thus, this walks up the manifest directory until it hits "src" in the file's path.
+// This function is sensitive to cargo and rustc changes.
+fn get_source_file_path(manifest_dir: &Path, file: &Path) -> PathBuf {
+    let mut manifest_dir = Path::new(manifest_dir);
+    for component in file.components() {
+        if component.as_os_str() == "src" {
+            break;
+        }
+        manifest_dir = manifest_dir
+            .parent()
+            .expect("expected another parent for the manifest directory");
+    }
+
+    manifest_dir.join(file)
+}
+
+fn has_rust_files(directory: &Path) -> bool {
+    fs::read_dir(directory)
+        .expect(&format!(
+            "failed to read directory '{}'",
+            directory.display()
+        )).any(|p| {
+            if let Ok(p) = p {
+                let p = p.path();
+                p.is_file() && p.extension().map(|x| x == "rs").unwrap_or(false)
+            } else {
+                false
+            }
+        })
+}
 
 fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Registry<'static>>>) {
     const FUNCTION_FILE: &'static str = "function.json";
-    const RUST_SCRIPT_FILE: &'static str = "run.rs";
 
     let script_root = current_dir()
         .expect("failed to get current directory")
@@ -204,11 +236,14 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
 
     for entry in fs::read_dir(&script_root).expect("failed to read script root directory") {
         let path = script_root.join(entry.expect("failed to read script root entry").path());
-        if !path.is_dir() || !path.join(RUST_SCRIPT_FILE).exists() {
+        if !path.is_dir() || !has_rust_files(&path) {
             continue;
         }
 
-        println!("Deleting existing function directory '{}'.", path.display());
+        println!(
+            "Deleting existing Rust function directory '{}'.",
+            path.display()
+        );
 
         fs::remove_dir_all(&path).expect(&format!(
             "Failed to delete function directory '{}",
@@ -223,16 +258,50 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
             function_dir.display()
         ));
 
-        let script_file = function_dir.join(RUST_SCRIPT_FILE);
-        println!(
-            "Creating script file '{}' for Azure Function '{}'.",
-            script_file.display(),
-            name
+        let source_file = get_source_file_path(
+            Path::new(
+                info.manifest_dir
+                    .as_ref()
+                    .expect("Functions should have a manifest directory.")
+                    .as_ref(),
+            ),
+            Path::new(
+                info.file
+                    .as_ref()
+                    .expect("Functions should have a file.")
+                    .as_ref(),
+            ),
         );
-        fs::write(
-            &script_file,
-            "// This file is intentionally empty.\n// It is needed by the Azure Functions Host to register the Azure Function."
-        ).expect(&format!("Failed to create '{}'", script_file.display()));
+
+        let destination_file = function_dir.join(
+            source_file
+                .file_name()
+                .expect("expected the source file to have a file name"),
+        );
+
+        if source_file.is_file() {
+            println!(
+                "Copying source file '{}' to '{}' for Azure Function '{}'.",
+                source_file.display(),
+                destination_file.display(),
+                name
+            );
+            fs::copy(&source_file, destination_file).expect(&format!(
+                "Failed to copy source file '{}'",
+                source_file.display()
+            ));
+        } else {
+            println!(
+                "Creating empty source file '{}' for Azure Function '{}'.",
+                destination_file.display(),
+                name
+            );
+            fs::write(
+                &destination_file,
+                "// This file is intentionally empty.\n\
+                 // The original source file was not available when the Functions Application was initialized.\n"
+            ).expect(&format!("Failed to create '{}'", destination_file.display()));
+        }
 
         let function_json = function_dir.join(FUNCTION_FILE);
         println!(
@@ -243,6 +312,7 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
 
         let mut output = fs::File::create(&function_json)
             .expect(&format!("Failed to create '{}'", function_json.display()));
+
         info.serialize(&mut Serializer::pretty(&mut output))
             .expect(&format!(
                 "Failed to serialize metadata for function '{}'",

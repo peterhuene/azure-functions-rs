@@ -64,6 +64,8 @@ impl TryFrom<TokenStream> for Function<'_> {
             bindings: Cow::Owned(Vec::new()),
             invoker_name: None,
             invoker: None,
+            manifest_dir: None,
+            file: None,
         })))
     }
 }
@@ -96,6 +98,8 @@ impl ToTokens for Function<'_> {
             bindings: ::std::borrow::Cow::Borrowed(&[#(#bindings),*]),
             invoker_name: #invoker_name,
             invoker: Some(#invoker),
+            manifest_dir: Some(::std::borrow::Cow::Borrowed(env!("CARGO_MANIFEST_DIR"))),
+            file: Some(::std::borrow::Cow::Borrowed(file!())),
         }
         ).to_tokens(tokens)
     }
