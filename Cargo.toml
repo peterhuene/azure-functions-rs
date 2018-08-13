@@ -3,6 +3,7 @@
 members = [
     "azure-functions",
     "azure-functions-codegen",
+    "azure-functions-sdk",
     "azure-functions-shared",
     "azure-functions-shared-codegen",
     "examples/http",

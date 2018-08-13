@@ -5,6 +5,7 @@ version = "0.2.3"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Implementations shared between the azure-functions-codegen and azure-functions crates."
 repository = "https://github.com/peterhuene/azure-functions-rs/"
+homepage = "https://functions.rs"
 
 [dependencies]
 azure-functions-shared-codegen = { version = "0.2.3", path = "../azure-functions-shared-codegen" }
