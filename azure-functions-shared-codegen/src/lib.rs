@@ -2,7 +2,7 @@
 //!
 //! This crate supports code generation for the `azure-functions-shared` crate.
 
-#![deny(unused_extern_crates)]
+#![feature(rust_2018_preview)]
 
 extern crate proc_macro;
 extern crate syn;

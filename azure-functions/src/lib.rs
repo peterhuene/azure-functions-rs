@@ -100,7 +100,7 @@
 //!
 //! The expected response would be `Hello from Rust, John!`.
 #![feature(rust_2018_preview)]
-#![feature(use_extern_macros)]
+#![feature(in_band_lifetimes)]
 #![feature(proc_macro_mod)]
 #![feature(proc_macro_gen)]
 #![deny(missing_docs)]
