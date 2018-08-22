@@ -1,5 +1,3 @@
-#![feature(use_extern_macros)]
-
 extern crate azure_functions;
 extern crate serde_json;
 
