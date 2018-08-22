@@ -17,7 +17,7 @@ const METADATA_KEY: &'static str = "Metadata";
 /// A function that runs when a blob is created in the `test` container:
 ///
 /// ```rust
-/// # #![feature(use_extern_macros)] extern crate azure_functions;
+/// # extern crate azure_functions;
 /// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::BlobTrigger;
 /// use azure_functions::func;

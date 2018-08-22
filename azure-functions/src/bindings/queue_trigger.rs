@@ -18,7 +18,7 @@ const POP_RECEIPT_KEY: &'static str = "PopReceipt";
 /// A function that runs when a message is posted to a queue called `example`:
 ///
 /// ```rust
-/// # #![feature(use_extern_macros)] extern crate azure_functions;
+/// # extern crate azure_functions;
 /// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::QueueTrigger;
 /// use azure_functions::func;

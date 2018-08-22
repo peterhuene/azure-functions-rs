@@ -9,7 +9,7 @@ use std::fmt;
 /// Read a table storage row based on a key posted to the `example` queue:
 ///
 /// ```rust
-/// # #![feature(use_extern_macros)] extern crate azure_functions;
+/// # extern crate azure_functions;
 /// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::{QueueTrigger, Table};
 /// use azure_functions::func;
@@ -24,7 +24,7 @@ use std::fmt;
 /// Run an Azure Storage table query based on a HTTP request:
 ///
 /// ```rust
-/// # #![feature(use_extern_macros)] extern crate azure_functions;
+/// # extern crate azure_functions;
 /// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::{HttpRequest, Table};
 /// use azure_functions::func;

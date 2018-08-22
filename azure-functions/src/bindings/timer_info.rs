@@ -11,7 +11,7 @@ use timer::ScheduleStatus;
 /// A function that runs every 5 minutes:
 ///
 /// ```rust
-/// # #![feature(use_extern_macros)] extern crate azure_functions;
+/// # extern crate azure_functions;
 /// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::TimerInfo;
 /// use azure_functions::func;

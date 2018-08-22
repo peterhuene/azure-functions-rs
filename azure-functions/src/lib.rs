@@ -43,7 +43,7 @@
 //! For example, let's create `src/greet.rs` that implements a HTTP triggered function:
 //!
 //! ```rust
-//! # #![feature(use_extern_macros)] extern crate azure_functions;
+//! # extern crate azure_functions;
 //! # #[macro_use] extern crate log;
 //! use azure_functions::func;
 //! use azure_functions::bindings::{HttpRequest, HttpResponse};
@@ -66,8 +66,6 @@
 //! the Azure Functions Host:
 //!
 //! ```rust,ignore
-//! #![feature(use_extern_macros)]
-//!
 //! #[macro_use]
 //! extern crate log;
 //! extern crate azure_functions;
