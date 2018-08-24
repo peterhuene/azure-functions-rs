@@ -1,9 +1,9 @@
 {
-    "Description":{
-        "Language": "Rust",
-        "Extension": ".rs",
-        "DefaultExecutablePath": "rust_worker",
-        "DefaultWorkerPath": "worker.config.json",
-    	"Arguments": ["run"]
+    "description":{
+        "language": "Rust",
+        "extensions": [".rs"],
+        "defaultExecutablePath": "rust_worker",
+        "defaultWorkerPath": "worker.config.json",
+        "arguments": ["run"]
     }
 }
