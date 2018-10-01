@@ -95,6 +95,7 @@ impl ToTokens for TimerTrigger<'_> {
             schedule: #schedule,
             run_on_startup: #run_on_startup,
             use_monitor: #use_monitor
-        }).to_tokens(tokens)
+        })
+        .to_tokens(tokens)
     }
 }

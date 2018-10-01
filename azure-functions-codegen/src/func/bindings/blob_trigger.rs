@@ -91,6 +91,7 @@ impl ToTokens for BlobTrigger<'_> {
             path: #path,
             connection: #connection,
             direction: #direction,
-        }).to_tokens(tokens)
+        })
+        .to_tokens(tokens)
     }
 }

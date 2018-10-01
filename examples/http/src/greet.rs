@@ -9,5 +9,6 @@ pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
     format!(
         "Hello from Rust, {}!\n",
         req.query_params().get("name").map_or("stranger", |x| x)
-    ).into()
+    )
+    .into()
 }

@@ -85,6 +85,7 @@ impl ToTokens for QueueTrigger<'_> {
             name: #name,
             queue_name: #queue_name,
             connection: #connection,
-        }).to_tokens(tokens)
+        })
+        .to_tokens(tokens)
     }
 }

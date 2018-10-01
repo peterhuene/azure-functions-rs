@@ -9,7 +9,7 @@ extern crate serde_json;
 mod greet;
 mod greet_with_json;
 
-azure_functions::main!{
+azure_functions::register!{
     greet::greet,
     greet_with_json::greet_with_json
 }

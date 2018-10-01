@@ -4,6 +4,6 @@ extern crate log;
 
 mod timer;
 
-azure_functions::main!{
+azure_functions::register!{
     timer::timer,
 }

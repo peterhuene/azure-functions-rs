@@ -72,9 +72,9 @@
 //!
 //! mod greet;
 //!
-//! // The main! macro generates an entrypoint for the binary
+//! // The register! macro generates an entrypoint for the binary
 //! // Expects a list of Azure Functions to register with the Azure Functions host
-//! azure_functions::main!{
+//! azure_functions::register!{
 //!     greet::greet
 //! }
 //! ```
@@ -140,7 +140,7 @@ pub mod http;
 pub mod rpc;
 pub mod timer;
 #[doc(no_inline)]
-pub use azure_functions_codegen::main;
+pub use azure_functions_codegen::register;
 pub use azure_functions_shared::Context;
 
 use futures::Future;
@@ -175,13 +175,13 @@ fn has_rust_files(directory: &Path) -> bool {
         .expect(&format!(
             "failed to read directory '{}'",
             directory.display()
-        )).any(|p| {
-            if let Ok(p) = p {
+        ))
+        .any(|p| match p {
+            Ok(p) => {
                 let p = p.path();
                 p.is_file() && p.extension().map(|x| x == "rs").unwrap_or(false)
-            } else {
-                false
             }
+            _ => false,
         })
 }
 
@@ -230,7 +230,8 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
     fs::copy(
         current_exe().expect("Failed to determine the path to the current executable"),
         worker_path,
-    ).expect("Failed to copy worker executable");
+    )
+    .expect("Failed to copy worker executable");
 
     for entry in fs::read_dir(&script_root).expect("failed to read script root directory") {
         let path = script_root.join(entry.expect("failed to read script root entry").path());
@@ -339,7 +340,8 @@ fn run_worker(
             );
 
             client.process_all_messages(registry)
-        }).wait()
+        })
+        .wait()
         .unwrap();
 }
 

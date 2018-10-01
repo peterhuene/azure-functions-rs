@@ -7,7 +7,7 @@ mod copy_blob;
 mod create_blob;
 mod print_blob;
 
-azure_functions::main!{
+azure_functions::register!{
     blob_watcher::blob_watcher,
     copy_blob::copy_blob,
     create_blob::create_blob,

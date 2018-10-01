@@ -154,6 +154,7 @@ impl ToTokens for Table<'_> {
             take: #take,
             connection: #connection,
             direction: #direction,
-        }).to_tokens(tokens)
+        })
+        .to_tokens(tokens)
     }
 }

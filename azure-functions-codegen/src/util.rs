@@ -145,7 +145,8 @@ impl<T: ToTokens> ToTokens for QuotableOption<T> {
         match &self.0 {
             Some(inner) => quote!(Some(#inner)),
             None => quote!(None),
-        }.to_tokens(tokens);
+        }
+        .to_tokens(tokens);
     }
 }
 

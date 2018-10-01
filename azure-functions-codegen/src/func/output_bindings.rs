@@ -124,32 +124,37 @@ impl ToTokens for OutputBindings<'_> {
                     let mut __output_data = __res.mut_output_data();
                     #(#output_bindings;)*
                 }
-            ).to_tokens(tokens);
+            )
+            .to_tokens(tokens);
         }
 
         match &self.0.decl.output {
             ReturnType::Default => {}
-            ReturnType::Type(_, ty) => if let Type::Tuple(tuple) = &**ty {
-                if let Some(first) = tuple.elems.iter().nth(0) {
-                    if !OutputBindings::is_unit_tuple(first) {
-                        if OutputBindings::is_option_type(first) {
-                            quote!(if let Some(__ret) = __ret.0 {
-                                __res.set_return_value(__ret.into());
-                            }).to_tokens(tokens);
-                        } else {
-                            quote!(__res.set_return_value(__ret.0.into());).to_tokens(tokens);
+            ReturnType::Type(_, ty) => {
+                if let Type::Tuple(tuple) = &**ty {
+                    if let Some(first) = tuple.elems.iter().nth(0) {
+                        if !OutputBindings::is_unit_tuple(first) {
+                            if OutputBindings::is_option_type(first) {
+                                quote!(if let Some(__ret) = __ret.0 {
+                                    __res.set_return_value(__ret.into());
+                                })
+                                .to_tokens(tokens);
+                            } else {
+                                quote!(__res.set_return_value(__ret.0.into());).to_tokens(tokens);
+                            }
                         }
                     }
+                } else if !OutputBindings::is_unit_tuple(ty) {
+                    if OutputBindings::is_option_type(ty) {
+                        quote!(if let Some(__ret) = __ret {
+                            __res.set_return_value(__ret.into());
+                        })
+                        .to_tokens(tokens);
+                    } else {
+                        quote!(__res.set_return_value(__ret.into());).to_tokens(tokens);
+                    }
                 }
-            } else if !OutputBindings::is_unit_tuple(ty) {
-                if OutputBindings::is_option_type(ty) {
-                    quote!(if let Some(__ret) = __ret {
-                        __res.set_return_value(__ret.into());
-                    }).to_tokens(tokens);
-                } else {
-                    quote!(__res.set_return_value(__ret.into());).to_tokens(tokens);
-                }
-            },
+            }
         }
     }
 }

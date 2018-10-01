@@ -44,5 +44,6 @@ pub fn generated_mod(_: TokenStream, input: TokenStream) -> TokenStream {
     quote!(
         #[path = #path]
         mod #ident;
-    ).into()
+    )
+    .into()
 }
