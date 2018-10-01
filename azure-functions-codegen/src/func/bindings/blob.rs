@@ -91,6 +91,7 @@ impl ToTokens for Blob<'_> {
             path: #path,
             connection: #connection,
             direction: #direction,
-        }).to_tokens(tokens)
+        })
+        .to_tokens(tokens)
     }
 }

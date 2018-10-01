@@ -70,7 +70,8 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
                                         None
                                     }
                                 }
-                            }).collect();
+                            })
+                            .collect();
 
                         if !invalid.is_empty() {
                             return Err(value.span().unstable().error(format!(
@@ -152,6 +153,7 @@ impl ToTokens for HttpTrigger<'_> {
             methods: ::std::borrow::Cow::Borrowed(&[#(#methods),*]),
             route: #route,
             web_hook_type: #web_hook_type,
-        }).to_tokens(tokens)
+        })
+        .to_tokens(tokens)
     }
 }

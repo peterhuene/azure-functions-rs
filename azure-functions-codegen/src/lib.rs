@@ -20,14 +20,14 @@ extern crate syn;
 extern crate quote;
 
 mod func;
-mod main;
+mod register;
 mod util;
 
 use proc_macro::TokenStream;
 
-/// Implements the `main!` macro.
+/// Implements the `register!` macro.
 ///
-/// The `main!` macro is used to register a list of Azure Functions with
+/// The `register!` macro is used to register a list of Azure Functions with
 /// the Azure Functions host.
 ///
 /// This macro expects a comma-separated list of functions that have the
@@ -36,13 +36,13 @@ use proc_macro::TokenStream;
 /// # Examples
 ///
 /// ```rust,ignore
-/// azure_functions::main!{
+/// azure_functions::register!{
 ///     module::my_azure_function
 /// }
 /// ```
 #[proc_macro]
-pub fn main(input: TokenStream) -> TokenStream {
-    main::attr_impl(input)
+pub fn register(input: TokenStream) -> TokenStream {
+    register::attr_impl(input)
 }
 
 /// Implements the `func` attribute.

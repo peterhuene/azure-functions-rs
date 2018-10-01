@@ -63,7 +63,8 @@ impl Client {
             .client
             .get_or_insert(protocol::FunctionRpcClient::new(
                 channel.connect(&format!("{}:{}", host, port)),
-            )).event_stream()
+            ))
+            .event_stream()
             .unwrap();
 
         let (tx, rx) = mpsc::channel(1);
@@ -154,7 +155,8 @@ impl Client {
         log::set_boxed_logger(Box::new(logger::Logger::new(
             log::Level::Trace,
             self.sender.clone().unwrap(),
-        ))).expect("Failed to set the global logger instance");
+        )))
+        .expect("Failed to set the global logger instance");
 
         // At this point, translate any panics to error! macros to log with the host
         panic::set_hook(Box::new(|info| match info.location() {

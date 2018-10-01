@@ -74,7 +74,7 @@ More bindings will be implemented in the future, including support for retreivin
 Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration:
 
 * Parameters passed by immutable reference `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
-  
+
   ```rust
   #[func]
   ...
@@ -95,7 +95,7 @@ Azure Functions for Rust automatically infers the direction of bindings dependin
   ```
 
 * Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.  Functions may also return `Option<T>` for any output binding type `T`; a `None` value will skip outputting a value.
-  
+
   ```rust
   #[func]
   ...

@@ -101,6 +101,7 @@ impl ToTokens for Function<'_> {
             manifest_dir: Some(::std::borrow::Cow::Borrowed(env!("CARGO_MANIFEST_DIR"))),
             file: Some(::std::borrow::Cow::Borrowed(file!())),
         }
-        ).to_tokens(tokens)
+        )
+        .to_tokens(tokens)
     }
 }

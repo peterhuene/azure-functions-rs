@@ -29,12 +29,14 @@ pub fn attr_impl(input: TokenStream) -> TokenStream {
                         &mut expr,
                         "__{}_FUNCTION",
                         segment.ident.to_string().to_uppercase()
-                    ).unwrap();
+                    )
+                    .unwrap();
                 }
             }
 
             parse_str::<Expr>(&expr).unwrap()
-        }).collect();
+        })
+        .collect();
 
     let expanded = quote!{
         pub fn main() {

@@ -254,43 +254,45 @@ fn bind_return_type(
 ) -> Result<Vec<codegen::Binding>, Diagnostic> {
     match ret {
         ReturnType::Default => Ok(vec![]),
-        ReturnType::Type(_, ty) => if let Type::Tuple(tuple) = &**ty {
-            let mut bindings = vec![];
-            for (i, ty) in tuple.elems.iter().enumerate() {
-                if let Type::Tuple(inner) = ty {
-                    if !inner.elems.is_empty() {
-                        return Err(ty
-                            .span()
-                            .unstable()
-                            .error("expected an Azure Functions output binding type"));
+        ReturnType::Type(_, ty) => {
+            if let Type::Tuple(tuple) = &**ty {
+                let mut bindings = vec![];
+                for (i, ty) in tuple.elems.iter().enumerate() {
+                    if let Type::Tuple(inner) = ty {
+                        if !inner.elems.is_empty() {
+                            return Err(ty
+                                .span()
+                                .unstable()
+                                .error("expected an Azure Functions output binding type"));
+                        }
+                        continue;
                     }
-                    continue;
+                    if i == 0 {
+                        bindings.push(bind_output_type(
+                            &ty,
+                            RETURN_BINDING_NAME,
+                            binding_args,
+                            true,
+                        )?);
+                    } else {
+                        bindings.push(bind_output_type(
+                            &ty,
+                            &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
+                            binding_args,
+                            true,
+                        )?);
+                    }
                 }
-                if i == 0 {
-                    bindings.push(bind_output_type(
-                        &ty,
-                        RETURN_BINDING_NAME,
-                        binding_args,
-                        true,
-                    )?);
-                } else {
-                    bindings.push(bind_output_type(
-                        &ty,
-                        &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
-                        binding_args,
-                        true,
-                    )?);
-                }
+                Ok(bindings)
+            } else {
+                Ok(vec![bind_output_type(
+                    &ty,
+                    RETURN_BINDING_NAME,
+                    binding_args,
+                    true,
+                )?])
             }
-            Ok(bindings)
-        } else {
-            Ok(vec![bind_output_type(
-                &ty,
-                RETURN_BINDING_NAME,
-                binding_args,
-                true,
-            )?])
-        },
+        }
     }
 }
 
@@ -376,13 +378,15 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                 has_trigger |= binding.is_trigger();
 
                 match binding.name() {
-                    Some(name) => if !names.insert(name.to_string()) {
-                        arg.span()
+                    Some(name) => {
+                        if !names.insert(name.to_string()) {
+                            arg.span()
                             .unstable()
                             .error(format!("parameter has camel-cased binding name of '{}' that conflicts with a prior parameter.", name))
                             .emit();
-                        return input;
-                    },
+                            return input;
+                        }
+                    }
                     None => {}
                 };
 
@@ -409,16 +413,18 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
         Ok(bindings) => {
             for binding in bindings.into_iter() {
                 match binding.name() {
-                    Some(name) => if !names.insert(name.to_string()) {
-                        if let ReturnType::Type(_, ty) = &target.decl.output {
-                            ty
+                    Some(name) => {
+                        if !names.insert(name.to_string()) {
+                            if let ReturnType::Type(_, ty) = &target.decl.output {
+                                ty
                                 .span()
                                 .unstable()
                                 .error(format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name))
                                 .emit();
+                            }
+                            return input;
                         }
-                        return input;
-                    },
+                    }
                     None => {}
                 };
 

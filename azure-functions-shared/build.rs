@@ -54,7 +54,8 @@ fn compile_protobufs() {
     fs::copy(
         out_dir.join(RUST_PROTOBUF_FILE),
         cache_dir.join(RUST_PROTOBUF_FILE),
-    ).expect(&format!("can't update cache file '{}'", RUST_PROTOBUF_FILE));
+    )
+    .expect(&format!("can't update cache file '{}'", RUST_PROTOBUF_FILE));
     fs::copy(out_dir.join(RUST_GRPC_FILE), cache_dir.join(RUST_GRPC_FILE))
         .expect(&format!("can't update cache file '{}'", RUST_GRPC_FILE));
 }

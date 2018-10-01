@@ -5,7 +5,7 @@ extern crate log;
 mod queue;
 mod queue_with_output;
 
-azure_functions::main!{
+azure_functions::register!{
     queue::queue,
     queue_with_output::queue_with_output
 }
