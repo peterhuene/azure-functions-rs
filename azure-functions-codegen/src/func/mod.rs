@@ -55,7 +55,7 @@ fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
             .constness
             .as_ref()
             .unwrap()
-            .0
+            .span
             .unstable()
             .error("the 'func' attribute cannot be used on const functions"));
     }
@@ -65,7 +65,7 @@ fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
             .unsafety
             .as_ref()
             .unwrap()
-            .0
+            .span
             .unstable()
             .error("the 'func' attribute cannot be used on unsafe functions"));
     }

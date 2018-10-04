@@ -3,7 +3,7 @@ use futures::future::{lazy, ok};
 use futures::sync::mpsc;
 use futures::{Future, Sink, Stream};
 use grpcio::{ChannelBuilder, ClientDuplexReceiver, EnvBuilder, WriteFlags};
-use log::{self, error, log};
+use log::{self, error};
 use logger;
 use registry::Registry;
 use std::cell::RefCell;

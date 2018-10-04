@@ -6,21 +6,21 @@ authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Implementations shared between the azure-functions-codegen and azure-functions crates."
 repository = "https://github.com/peterhuene/azure-functions-rs/"
 
+[package.metadata.docs.rs]
+features = ["cached_protobufs"]
+
 [dependencies]
 azure-functions-shared-codegen = { version = "0.2.1", path = "../azure-functions-shared-codegen" }
-protobuf = "2.0.0"
-grpcio = "0.3.0"
-futures = "0.1.16"
-serde = "1.0.66"
-serde_derive = "1.0.66"
+protobuf = "2.0.5"
+grpcio = "0.4.0"
+futures = "0.1.24"
+serde = "1.0.79"
+serde_derive = "1.0.79"
 
 [build-dependencies]
-protoc-grpcio = "0.2.0"
-reqwest = "0.8.6"
+protoc-grpcio = "0.2.1"
+reqwest = "0.9.2"
 
 [features]
 default = []
 cached_protobufs = []
-
-[package.metadata.docs.rs]
-features = ["cached_protobufs"]

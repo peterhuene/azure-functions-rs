@@ -4,9 +4,9 @@ use proc_macro2::Delimiter;
 use quote::ToTokens;
 use std::convert::TryFrom;
 use syn::buffer::TokenBuffer;
+use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::synom::Synom;
 use syn::{parse, parse2, Attribute, Ident, Lit, LitStr, Path, PathSegment};
 
 pub fn to_camel_case(input: &str) -> String {
@@ -97,35 +97,30 @@ impl TryFrom<Attribute> for AttributeArguments {
     }
 }
 
-impl Synom for AttributeArguments {
-    named!(parse -> Self, map!(
-        Punctuated::<ArgumentAssignmentExpr, Token![,]>::parse_terminated_nonempty,
-        |exprs| AttributeArguments{
+impl parse::Parse for AttributeArguments {
+    fn parse(input: ParseStream) -> parse::Result<Self> {
+        let exprs = Punctuated::<ArgumentAssignmentExpr, Token![,]>::parse_terminated(input)?;
+
+        Ok(AttributeArguments {
             span: Span::call_site(),
             list: exprs.into_iter().fold(Vec::new(), |mut list, expr| {
                 let ArgumentAssignmentExpr(name, value) = expr;
                 list.push((name, value));
                 list
             }),
-        }));
-
-    fn description() -> Option<&'static str> {
-        Some("attribute arguments")
+        })
     }
 }
 
 struct ArgumentAssignmentExpr(Ident, Lit);
 
-impl Synom for ArgumentAssignmentExpr {
-    named!(parse -> Self, do_parse!(
-        name: syn!(Ident) >>
-        punct!(=) >>
-        value: syn!(Lit) >>
-        (ArgumentAssignmentExpr(name, value))
-    ));
+impl Parse for ArgumentAssignmentExpr {
+    fn parse(input: ParseStream) -> parse::Result<Self> {
+        let name = Ident::parse(input)?;
+        input.parse::<Token![=]>()?;
+        let value = Lit::parse(input)?;
 
-    fn description() -> Option<&'static str> {
-        Some("attribute assignment expression")
+        Ok(ArgumentAssignmentExpr(name, value))
     }
 }
 
@@ -171,11 +166,12 @@ impl ToTokens for QuotableDirection {
 #[derive(Default)]
 pub struct PathVec(Vec<Path>);
 
-impl Synom for PathVec {
-    named!(parse -> Self, map!(
-        call!(Punctuated::<Path, Token![,]>::parse_terminated_nonempty),
-        |paths| PathVec(paths.into_iter().collect())
-    ));
+impl Parse for PathVec {
+    fn parse(input: ParseStream) -> parse::Result<Self> {
+        let paths = Punctuated::<Path, Token![,]>::parse_terminated(input)?;
+
+        Ok(PathVec(paths.into_iter().collect()))
+    }
 }
 
 impl IntoIterator for PathVec {
