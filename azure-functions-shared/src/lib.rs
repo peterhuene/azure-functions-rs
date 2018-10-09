@@ -3,8 +3,7 @@
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
 #![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
-#![feature(proc_macro_mod)]
-#![feature(proc_macro_gen)]
+#![feature(proc_macro_hygiene)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 

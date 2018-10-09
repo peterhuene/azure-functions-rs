@@ -99,8 +99,7 @@
 //! The expected response would be `Hello from Rust, John!`.
 #![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
-#![feature(proc_macro_mod)]
-#![feature(proc_macro_gen)]
+#![feature(proc_macro_hygiene)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 #![cfg_attr(test, recursion_limit = "128")]
