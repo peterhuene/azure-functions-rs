@@ -17,9 +17,10 @@ pub fn to_camel_case(input: &str) -> String {
         if ch == '_' {
             capitalize = true;
         } else {
-            result.push(match capitalize && !first {
-                true => ch.to_ascii_uppercase(),
-                false => ch,
+            result.push(if capitalize && !first {
+                ch.to_ascii_uppercase()
+            } else {
+                ch
             });
             first = false;
             capitalize = false;
@@ -37,10 +38,7 @@ impl AttributeArguments {
     pub fn with_name(name: &str, span: ::proc_macro2::Span) -> Self {
         AttributeArguments {
             span: span.unstable(),
-            list: vec![(
-                Ident::new("name", span.clone()),
-                Lit::Str(LitStr::new(name, span)),
-            )],
+            list: vec![(Ident::new("name", span), Lit::Str(LitStr::new(name, span)))],
         }
     }
 }

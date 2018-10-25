@@ -31,7 +31,7 @@ use syn::{parse, ItemMod};
 /// ```
 #[proc_macro_attribute]
 pub fn generated_mod(_: TokenStream, input: TokenStream) -> TokenStream {
-    let m = parse::<ItemMod>(input.clone()).unwrap();
+    let m = parse::<ItemMod>(input).unwrap();
 
     let ident = &m.ident;
 

@@ -104,10 +104,10 @@ impl Body<'_> {
     /// }
     ///
     /// let body = Body::String(Cow::Borrowed(r#"{ "message": "hello" }"#));
-    /// let data = body.from_json::<Data>().unwrap();
+    /// let data = body.as_json::<Data>().unwrap();
     /// assert_eq!(data.message, "hello");
     /// ```
-    pub fn from_json<T>(&'b self) -> Result<T>
+    pub fn as_json<T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -244,7 +244,7 @@ mod tests {
         };
 
         let body: Body = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(body.from_json::<Data>().unwrap().message, MESSAGE);
+        assert_eq!(body.as_json::<Data>().unwrap().message, MESSAGE);
 
         let data: protocol::TypedData = body.into();
         assert_eq!(data.get_json(), r#"{"message":"test"}"#);

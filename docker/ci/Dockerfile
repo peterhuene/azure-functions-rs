@@ -2,6 +2,7 @@ FROM rustlang/rust:nightly-slim
 LABEL MAINTAINER Peter Huene <peterhuene@protonmail.com>
 
 RUN    rustup component add rustfmt-preview --toolchain nightly \
+    && rustup component add clippy-preview --toolchain nightly \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y wget unzip \

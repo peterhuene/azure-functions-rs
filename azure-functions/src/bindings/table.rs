@@ -37,7 +37,7 @@ use std::fmt;
 ///         info!("Row: {:?}", row);
 ///     }
 /// }
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Table(Value);
 
 /// Represents the data of an Azure Storage table row.
@@ -100,7 +100,7 @@ impl Table {
     }
 
     /// Converts the table binding to a JSON value.
-    pub fn to_value(self) -> Value {
+    pub fn into_value(self) -> Value {
         self.0
     }
 }
@@ -224,7 +224,7 @@ mod tests {
         table.add_row("partition1", "row1");
 
         assert_eq!(
-            table.to_value().to_string(),
+            table.into_value().to_string(),
             r#"[{"PartitionKey":"partition1","RowKey":"row1"}]"#
         );
     }

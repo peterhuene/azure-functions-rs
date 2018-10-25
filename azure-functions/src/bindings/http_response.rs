@@ -103,7 +103,7 @@ use std::collections::HashMap;
 ///     body
 /// );
 /// ```
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct HttpResponse {
     pub(crate) data: protocol::RpcHttp,
     pub(crate) status: Status,
@@ -266,10 +266,7 @@ mod tests {
             response.headers().get("Content-Type").unwrap(),
             "application/json"
         );
-        assert_eq!(
-            response.body().from_json::<Data>().unwrap().message,
-            MESSAGE
-        );
+        assert_eq!(response.body().as_json::<Data>().unwrap().message, MESSAGE);
     }
 
     #[test]

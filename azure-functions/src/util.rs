@@ -17,14 +17,14 @@ where
     }
 
     if data.has_bytes() {
-        if let Some(s) = from_utf8(data.get_bytes()).ok() {
+        if let Ok(s) = from_utf8(data.get_bytes()) {
             return s.parse::<T>().ok();
         }
         return None;
     }
 
     if data.has_stream() {
-        if let Some(s) = from_utf8(data.get_stream()).ok() {
+        if let Ok(s) = from_utf8(data.get_stream()) {
             return s.parse::<T>().ok();
         }
         return None;

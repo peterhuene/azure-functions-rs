@@ -43,7 +43,7 @@ struct Response {
 #[func]
 #[binding(name = "req", auth_level = "anonymous")]
 pub fn greet_with_json(req: &HttpRequest) -> HttpResponse {
-    if let Ok(request) = req.body().from_json::<Request>() {
+    if let Ok(request) = req.body().as_json::<Request>() {
         let response = Response {
             message: format!("Hello from Rust, {}!", request.name),
         };

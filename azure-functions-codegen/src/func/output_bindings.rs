@@ -65,9 +65,7 @@ impl OutputBindings<'a> {
 
                 let arg_type = match &arg.ty {
                     Type::Reference(tr) => {
-                        if tr.mutability.is_none() {
-                            return None;
-                        }
+                        tr.mutability?;
                         tr
                     }
                     _ => panic!("expected a type reference"),
@@ -83,7 +81,7 @@ impl OutputBindings<'a> {
         match t {
             Type::Path(tp) => {
                 let last = last_segment_in_path(&tp.path);
-                if last.ident.to_string() != "Option" {
+                if last.ident != "Option" {
                     return false;
                 }
 
@@ -107,7 +105,7 @@ impl OutputBindings<'a> {
 
     fn is_unit_tuple(t: &Type) -> bool {
         match t {
-            Type::Tuple(tuple) => tuple.elems.len() == 0,
+            Type::Tuple(tuple) => tuple.elems.is_empty(),
             _ => false,
         }
     }
