@@ -5,10 +5,11 @@ COPY . /src
 ARG EXAMPLE
 
 RUN if [ -z "$EXAMPLE" ]; then echo "The EXAMPLE argument is required."; exit 1; fi \
+    && rustc --version \
     && cd /src/examples/$EXAMPLE \
     && cargo run --release -- init --worker-path /usr/local/bin/rust_worker --script-root /home/site/wwwroot
 
-FROM microsoft/azure-functions-dotnet-core2.0:v2.0.11946-alpha
+FROM microsoft/azure-functions-dotnet-core2.0:2.0
 
 COPY --from=build-env ["/usr/local/bin/rust_worker", "/usr/local/bin/rust_worker"]
 COPY --from=build-env ["/home/site/wwwroot", "/home/site/wwwroot"]

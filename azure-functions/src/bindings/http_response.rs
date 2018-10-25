@@ -182,7 +182,7 @@ impl HttpResponse {
 
 impl<T> From<T> for HttpResponse
 where
-    T: Into<Body<'_>>,
+    T: Into<Body<'a>>,
 {
     fn from(data: T) -> Self {
         HttpResponse::build().body(data).into()

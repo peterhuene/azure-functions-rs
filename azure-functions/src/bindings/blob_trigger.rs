@@ -175,12 +175,10 @@ mod tests {
         assert_eq!(trigger.path, PATH);
         assert_eq!(trigger.uri, URI);
 
-        assert!(
-            trigger
-                .properties
-                .append_blob_committed_block_count
-                .is_none()
-        );
+        assert!(trigger
+            .properties
+            .append_blob_committed_block_count
+            .is_none());
         assert_eq!(
             *trigger.properties.blob_tier_inferred.as_ref().unwrap(),
             BLOB_TIER_INFERRED
@@ -241,12 +239,10 @@ mod tests {
         assert!(trigger.properties.page_blob_sequence_number.is_none());
         assert!(trigger.properties.premium_page_blob_tier.is_none());
         assert!(trigger.properties.rehydration_status.is_none());
-        assert!(
-            trigger
-                .properties
-                .remaining_days_before_permanent_delete
-                .is_none()
-        );
+        assert!(trigger
+            .properties
+            .remaining_days_before_permanent_delete
+            .is_none());
         assert!(matches!(
             trigger.properties.standard_blob_tier.as_ref().unwrap(),
             StandardBlobTier::Unknown

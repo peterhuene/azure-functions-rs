@@ -85,11 +85,9 @@ mod tests {
             },
         ]);
         assert_eq!(registry.iter().count(), 3);
-        assert!(
-            registry
-                .iter()
-                .all(|(k, _)| *k == "function1" || *k == "function2" || *k == "function3")
-        );
+        assert!(registry
+            .iter()
+            .all(|(k, _)| *k == "function1" || *k == "function2" || *k == "function3"));
     }
 
     #[test]
