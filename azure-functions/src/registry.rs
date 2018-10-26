@@ -34,7 +34,7 @@ impl<'a> Registry<'a> {
     }
 
     pub fn get(&self, id: &str) -> Option<&'a Function> {
-        self.registered.get(id).map(|x| *x)
+        self.registered.get(id).cloned()
     }
 
     pub fn iter(&self) -> Iter<String, &'a Function> {

@@ -73,7 +73,7 @@ impl TryFrom<AttributeArguments> for Blob<'_> {
         Ok(Blob(Cow::Owned(codegen::bindings::Blob {
             name: name.expect("expected a name for a blob binding"),
             path: path.expect("expected a path for a blob binding"),
-            connection: connection,
+            connection,
             direction: codegen::Direction::In,
         })))
     }

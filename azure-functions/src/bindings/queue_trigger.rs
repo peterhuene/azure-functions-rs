@@ -4,12 +4,12 @@ use rpc::protocol;
 use std::collections::HashMap;
 use util::convert_from;
 
-const ID_KEY: &'static str = "Id";
-const DEQUEUE_COUNT_KEY: &'static str = "DequeueCount";
-const EXPIRATION_TIME_KEY: &'static str = "ExpirationTime";
-const INSERTION_TIME_KEY: &'static str = "InsertionTime";
-const NEXT_VISIBLE_TIME_KEY: &'static str = "NextVisibleTime";
-const POP_RECEIPT_KEY: &'static str = "PopReceipt";
+const ID_KEY: &str = "Id";
+const DEQUEUE_COUNT_KEY: &str = "DequeueCount";
+const EXPIRATION_TIME_KEY: &str = "ExpirationTime";
+const INSERTION_TIME_KEY: &str = "InsertionTime";
+const NEXT_VISIBLE_TIME_KEY: &str = "NextVisibleTime";
+const POP_RECEIPT_KEY: &str = "PopReceipt";
 
 /// Represents a queue trigger binding.
 ///
@@ -67,28 +67,23 @@ impl Trigger for QueueTrigger {
             self.id = id.take_string();
         }
         if let Some(count) = metadata.get(DEQUEUE_COUNT_KEY) {
-            self.dequeue_count = convert_from(count).expect(&format!(
-                "failed to read '{}' from metadata",
-                DEQUEUE_COUNT_KEY
-            ));
+            self.dequeue_count = convert_from(count)
+                .unwrap_or_else(|| panic!("failed to read '{}' from metadata", DEQUEUE_COUNT_KEY));
         }
         if let Some(time) = metadata.get(EXPIRATION_TIME_KEY) {
-            self.expiration_time = convert_from(time).map(|t| Some(t)).expect(&format!(
-                "failed to read '{}' from metadata",
-                EXPIRATION_TIME_KEY
-            ));
+            self.expiration_time = Some(convert_from(time).unwrap_or_else(|| {
+                panic!("failed to read '{}' from metadata", EXPIRATION_TIME_KEY)
+            }));
         }
         if let Some(time) = metadata.get(INSERTION_TIME_KEY) {
-            self.insertion_time = convert_from(time).map(|t| Some(t)).expect(&format!(
-                "failed to read '{}' from metadata",
-                INSERTION_TIME_KEY
-            ));
+            self.insertion_time = Some(convert_from(time).unwrap_or_else(|| {
+                panic!("failed to read '{}' from metadata", INSERTION_TIME_KEY)
+            }));
         }
         if let Some(time) = metadata.get(NEXT_VISIBLE_TIME_KEY) {
-            self.next_visible_time = convert_from(time).map(|t| Some(t)).expect(&format!(
-                "failed to read '{}' from metadata",
-                NEXT_VISIBLE_TIME_KEY
-            ));
+            self.next_visible_time = Some(convert_from(time).unwrap_or_else(|| {
+                panic!("failed to read '{}' from metadata", NEXT_VISIBLE_TIME_KEY)
+            }));
         }
         if let Some(receipt) = metadata.get_mut(POP_RECEIPT_KEY) {
             self.pop_receipt = receipt.take_string();

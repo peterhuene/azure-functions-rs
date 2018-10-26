@@ -22,9 +22,9 @@ use syn::{
 };
 use util::{last_segment_in_path, path_to_string, AttributeArguments};
 
-pub const OUTPUT_BINDING_PREFIX: &'static str = "output";
-const RETURN_BINDING_NAME: &'static str = "$return";
-const CONTEXT_TYPE_NAME: &'static str = "Context";
+pub const OUTPUT_BINDING_PREFIX: &str = "output";
+const RETURN_BINDING_NAME: &str = "$return";
+const CONTEXT_TYPE_NAME: &str = "Context";
 
 fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
     match func.vis {
@@ -95,7 +95,7 @@ fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
 fn bind_input_type(
     pattern: &Pat,
     ty: &Type,
-    mutability: &Option<Mut>,
+    mutability: Option<Mut>,
     has_trigger: bool,
     binding_args: &mut HashMap<String, AttributeArguments>,
 ) -> Result<codegen::Binding, Diagnostic> {
@@ -168,7 +168,7 @@ fn bind_argument(
     match arg {
         FnArg::Captured(arg) => match &arg.ty {
             Type::Reference(r) => {
-                bind_input_type(&arg.pat, &r.elem, &r.mutability, has_trigger, binding_args)
+                bind_input_type(&arg.pat, &r.elem, r.mutability, has_trigger, binding_args)
             }
             _ => Err(arg.ty.span().unstable().error(
                 "expected an Azure Functions trigger or input binding type passed by reference",
@@ -190,7 +190,7 @@ fn bind_argument(
 }
 
 fn get_option_type(last: &PathSegment) -> Option<&Type> {
-    if last.ident.to_string() != "Option" {
+    if last.ident != "Option" {
         return None;
     }
 
@@ -219,12 +219,9 @@ fn bind_output_type(
             let last_segment = last_segment_in_path(&tp.path);
 
             if check_option {
-                match get_option_type(last_segment) {
-                    Some(inner) => {
-                        return bind_output_type(inner, name, binding_args, false);
-                    }
-                    None => {}
-                };
+                if let Some(inner) = get_option_type(last_segment) {
+                    return bind_output_type(inner, name, binding_args, false);
+                }
             }
 
             match OUTPUT_BINDINGS.get(last_segment.ident.to_string().as_str()) {
@@ -239,12 +236,10 @@ fn bind_output_type(
             }
         }
         Type::Paren(tp) => bind_output_type(&tp.elem, name, binding_args, check_option),
-        _ => {
-            return Err(ty
-                .span()
-                .unstable()
-                .error("expected an Azure Functions output binding type"))
-        }
+        _ => Err(ty
+            .span()
+            .unstable()
+            .error("expected an Azure Functions output binding type")),
     }
 }
 
@@ -304,7 +299,7 @@ fn drain_binding_attributes(
         let attr_span = attr.span();
         let args = AttributeArguments::try_from(attr)?;
 
-        let (name, name_span) = match args.list.iter().find(|(k, _)| k.to_string() == "name") {
+        let (name, name_span) = match args.list.iter().find(|(k, _)| k == "name") {
             Some((_, v)) => match v {
                 Lit::Str(s) => (s.value(), s.span()),
                 _ => {
@@ -321,14 +316,11 @@ fn drain_binding_attributes(
             }
         };
 
-        match map.insert(name, args) {
-            Some(_) => {
-                return Err(name_span
-                    .unstable()
-                    .error("a binding attribute with the same name already exists"));
-            }
-            None => {}
-        };
+        if map.insert(name, args).is_some() {
+            return Err(name_span
+                .unstable()
+                .error("a binding attribute with the same name already exists"));
+        }
     }
 
     Ok(map)
@@ -377,18 +369,15 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
             Ok(binding) => {
                 has_trigger |= binding.is_trigger();
 
-                match binding.name() {
-                    Some(name) => {
-                        if !names.insert(name.to_string()) {
-                            arg.span()
-                            .unstable()
-                            .error(format!("parameter has camel-cased binding name of '{}' that conflicts with a prior parameter.", name))
-                            .emit();
-                            return input;
-                        }
+                if let Some(name) = binding.name() {
+                    if !names.insert(name.to_string()) {
+                        arg.span()
+                        .unstable()
+                        .error(format!("parameter has camel-cased binding name of '{}' that conflicts with a prior parameter.", name))
+                        .emit();
+                        return input;
                     }
-                    None => {}
-                };
+                }
 
                 func.bindings.to_mut().push(binding);
             }
@@ -412,21 +401,18 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     match bind_return_type(&target.decl.output, &mut binding_args) {
         Ok(bindings) => {
             for binding in bindings.into_iter() {
-                match binding.name() {
-                    Some(name) => {
-                        if !names.insert(name.to_string()) {
-                            if let ReturnType::Type(_, ty) = &target.decl.output {
-                                ty
-                                .span()
-                                .unstable()
-                                .error(format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name))
-                                .emit();
-                            }
-                            return input;
+                if let Some(name) = binding.name() {
+                    if !names.insert(name.to_string()) {
+                        if let ReturnType::Type(_, ty) = &target.decl.output {
+                            ty
+                            .span()
+                            .unstable()
+                            .error(format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name))
+                            .emit();
                         }
+                        return input;
                     }
-                    None => {}
-                };
+                }
 
                 func.bindings.to_mut().push(binding);
             }
@@ -438,11 +424,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     };
 
     if let Some((_, args)) = binding_args.iter().nth(0) {
-        let (_, value) = args
-            .list
-            .iter()
-            .find(|(k, _)| k.to_string() == "name")
-            .unwrap();
+        let (_, value) = args.list.iter().find(|(k, _)| k == "name").unwrap();
         match value {
             Lit::Str(s) => {
                 value
@@ -452,7 +434,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                         RETURN_BINDING_NAME => {
                             "cannot bind to a function without a return value".to_string()
                         }
-                        v @ _ => format!(
+                        v => format!(
                             "cannot bind to '{}' because it is not a binding parameter of the function",
                             v
                         ),

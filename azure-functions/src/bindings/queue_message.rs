@@ -84,7 +84,7 @@ impl QueueMessage {
     }
 
     /// Deserializes the blob as JSON to the requested type.
-    pub fn from_json<T>(&'b self) -> Result<T>
+    pub fn as_json<T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -192,7 +192,7 @@ mod tests {
         };
 
         let message: QueueMessage = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(message.from_json::<Data>().unwrap().message, MESSAGE);
+        assert_eq!(message.as_json::<Data>().unwrap().message, MESSAGE);
 
         let data: protocol::TypedData = message.into();
         assert_eq!(data.get_json(), r#"{"message":"test"}"#);

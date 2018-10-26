@@ -171,10 +171,7 @@ fn get_source_file_path(manifest_dir: &Path, file: &Path) -> PathBuf {
 
 fn has_rust_files(directory: &Path) -> bool {
     fs::read_dir(directory)
-        .expect(&format!(
-            "failed to read directory '{}'",
-            directory.display()
-        ))
+        .unwrap_or_else(|_| panic!("failed to read directory '{}'", directory.display()))
         .any(|p| match p {
             Ok(p) => {
                 let p = p.path();
@@ -184,8 +181,8 @@ fn has_rust_files(directory: &Path) -> bool {
         })
 }
 
-fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Registry<'static>>>) {
-    const FUNCTION_FILE: &'static str = "function.json";
+fn initialize_app(worker_path: &str, script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) {
+    const FUNCTION_FILE: &str = "function.json";
 
     let script_root = current_dir()
         .expect("failed to get current directory")
@@ -202,10 +199,12 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
             script_root.display()
         );
 
-        fs::create_dir_all(&script_root).expect(&format!(
-            "Failed to create Azure Functions application directory '{}'",
-            script_root.display()
-        ));
+        fs::create_dir_all(&script_root).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create Azure Functions application directory '{}'",
+                script_root.display()
+            )
+        });
     }
 
     let host_json = script_root.join("host.json");
@@ -214,16 +213,19 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
             "Creating empty host configuration file '{}'.",
             host_json.display()
         );
-        fs::write(&host_json, "{}").expect(&format!("Failed to create '{}'", host_json.display()));
+        fs::write(&host_json, "{}")
+            .unwrap_or_else(|_| panic!("Failed to create '{}'", host_json.display()));
     }
 
     let worker_dir = Path::new(worker_path)
         .parent()
         .expect("expected to get a parent of the worker path");
-    fs::create_dir_all(&worker_dir).expect(&format!(
-        "Failed to create directory for worker executable '{}'",
-        worker_dir.display()
-    ));
+    fs::create_dir_all(&worker_dir).unwrap_or_else(|_| {
+        panic!(
+            "Failed to create directory for worker executable '{}'",
+            worker_dir.display()
+        )
+    });
 
     println!("Copying current worker executable to '{}'.", worker_path);
     fs::copy(
@@ -243,18 +245,18 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
             path.display()
         );
 
-        fs::remove_dir_all(&path).expect(&format!(
-            "Failed to delete function directory '{}",
-            path.display()
-        ));
+        fs::remove_dir_all(&path)
+            .unwrap_or_else(|_| panic!("Failed to delete function directory '{}", path.display()));
     }
 
     for (name, info) in registry.lock().unwrap().iter() {
         let function_dir = script_root.join(name);
-        fs::create_dir(&function_dir).expect(&format!(
-            "Failed to create function directory '{}'",
-            function_dir.display()
-        ));
+        fs::create_dir(&function_dir).unwrap_or_else(|_| {
+            panic!(
+                "Failed to create function directory '{}'",
+                function_dir.display()
+            )
+        });
 
         let source_file = get_source_file_path(
             Path::new(
@@ -284,10 +286,9 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
                 destination_file.display(),
                 name
             );
-            fs::copy(&source_file, destination_file).expect(&format!(
-                "Failed to copy source file '{}'",
-                source_file.display()
-            ));
+            fs::copy(&source_file, destination_file).unwrap_or_else(|_| {
+                panic!("Failed to copy source file '{}'", source_file.display())
+            });
         } else {
             println!(
                 "Creating empty source file '{}' for Azure Function '{}'.",
@@ -298,7 +299,7 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
                 &destination_file,
                 "// This file is intentionally empty.\n\
                  // The original source file was not available when the Functions Application was initialized.\n"
-            ).expect(&format!("Failed to create '{}'", destination_file.display()));
+            ).unwrap_or_else(|_| panic!("Failed to create '{}'", destination_file.display()));
         }
 
         let function_json = function_dir.join(FUNCTION_FILE);
@@ -309,13 +310,10 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: Arc<Mutex<Regi
         );
 
         let mut output = fs::File::create(&function_json)
-            .expect(&format!("Failed to create '{}'", function_json.display()));
+            .unwrap_or_else(|_| panic!("Failed to create '{}'", function_json.display()));
 
         info.serialize(&mut Serializer::pretty(&mut output))
-            .expect(&format!(
-                "Failed to serialize metadata for function '{}'",
-                name
-            ));
+            .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", name));
     }
 }
 
@@ -324,7 +322,7 @@ fn run_worker(
     host: &str,
     port: u32,
     max_message_length: Option<i32>,
-    registry: Arc<Mutex<Registry<'static>>>,
+    registry: &Arc<Mutex<Registry<'static>>>,
 ) {
     let client = rpc::Client::new(worker_id.to_string(), max_message_length);
 
@@ -338,7 +336,7 @@ fn run_worker(
                 client.host_version().unwrap()
             );
 
-            client.process_all_messages(registry)
+            client.process_all_messages(&registry)
         })
         .wait()
         .unwrap();
@@ -357,7 +355,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
-            registry,
+            &registry,
         );
         return;
     }
@@ -375,7 +373,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("max_message_length")
                 .map(|len| len.parse::<i32>().expect("Invalid maximum message length")),
-            registry,
+            &registry,
         );
         return;
     }

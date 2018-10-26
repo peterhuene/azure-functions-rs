@@ -84,7 +84,7 @@ impl Blob {
     }
 
     /// Deserializes the blob as JSON to the requested type.
-    pub fn from_json<T>(&'b self) -> Result<T>
+    pub fn as_json<T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -192,7 +192,7 @@ mod tests {
         };
 
         let blob: Blob = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(blob.from_json::<Data>().unwrap().message, MESSAGE);
+        assert_eq!(blob.as_json::<Data>().unwrap().message, MESSAGE);
 
         let data: protocol::TypedData = blob.into();
         assert_eq!(data.get_json(), r#"{"message":"test"}"#);

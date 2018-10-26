@@ -1,5 +1,5 @@
 /// Represents a HTTP status code.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Status(u16);
 
 macro_rules! statuses {

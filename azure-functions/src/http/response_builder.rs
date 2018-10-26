@@ -2,7 +2,7 @@ use bindings::HttpResponse;
 use http::{Body, Status};
 
 /// Represents a builder for HTTP responses.
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct ResponseBuilder(pub(crate) HttpResponse);
 
 impl ResponseBuilder {
@@ -84,13 +84,10 @@ impl ResponseBuilder {
         B: Into<Body<'a>>,
     {
         let body = body.into();
-        match &body {
-            Body::Empty => {
-                self.0.data.clear_body();
-                return self;
-            }
-            _ => {}
-        };
+        if let Body::Empty = &body {
+            self.0.data.clear_body();
+            return self;
+        }
 
         if !self.0.headers().contains_key("Content-Type") {
             self.0.data.mut_headers().insert(

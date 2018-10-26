@@ -15,7 +15,7 @@ use tokio_threadpool;
 pub type Sender = mpsc::Sender<protocol::StreamingMessage>;
 type Receiver = ClientDuplexReceiver<protocol::StreamingMessage>;
 
-const UNKNOWN: &'static str = "<unknown>";
+const UNKNOWN: &str = "<unknown>";
 
 thread_local!(static FUNCTION_NAME: RefCell<&'static str> = RefCell::new(UNKNOWN));
 
@@ -31,8 +31,8 @@ pub struct Client {
 impl Client {
     pub fn new(worker_id: String, max_message_len: Option<i32>) -> Client {
         Client {
-            worker_id: worker_id,
-            max_message_len: max_message_len,
+            worker_id,
+            max_message_len,
             client: None,
             sender: None,
             receiver: None,
@@ -76,17 +76,12 @@ impl Client {
             let mut rx = rx;
             let mut rpc_tx = rpc_tx;
 
-            loop {
-                match rx.into_future().wait().unwrap() {
-                    (Some(message), r) => {
-                        rpc_tx = rpc_tx
-                            .send((message, WriteFlags::default()))
-                            .wait()
-                            .expect("failed to send message to host");
-                        rx = r;
-                    }
-                    (None, _) => break,
-                };
+            while let (Some(message), r) = rx.into_future().wait().unwrap() {
+                rpc_tx = rpc_tx
+                    .send((message, WriteFlags::default()))
+                    .wait()
+                    .expect("failed to send message to host");
+                rx = r;
             }
         });
 
@@ -147,7 +142,7 @@ impl Client {
 
     pub fn process_all_messages(
         mut self,
-        registry: Arc<Mutex<Registry<'static>>>,
+        registry: &Arc<Mutex<Registry<'static>>>,
     ) -> impl Future<Item = Client, Error = ()> {
         let pool = tokio_threadpool::ThreadPool::new();
 
@@ -166,7 +161,7 @@ impl Client {
                     FUNCTION_NAME.with(|f| *f.borrow()),
                     info.payload()
                         .downcast_ref::<&str>()
-                        .map(|x| *x)
+                        .cloned()
                         .unwrap_or_else(|| info
                             .payload()
                             .downcast_ref::<String>()
@@ -183,7 +178,7 @@ impl Client {
                     FUNCTION_NAME.with(|f| *f.borrow()),
                     info.payload()
                         .downcast_ref::<&str>()
-                        .map(|x| *x)
+                        .cloned()
                         .unwrap_or_else(|| info
                             .payload()
                             .downcast_ref::<String>()
@@ -212,7 +207,7 @@ impl Client {
             let reg = registry.clone();
 
             pool.spawn(lazy(move || {
-                Client::handle_request(reg, sender, msg);
+                Client::handle_request(&reg, sender, msg);
                 Ok(())
             }));
         }
@@ -221,7 +216,7 @@ impl Client {
     }
 
     fn handle_function_load_request(
-        registry: Arc<Mutex<Registry<'static>>>,
+        registry: &Arc<Mutex<Registry<'static>>>,
         sender: Sender,
         req: &protocol::FunctionLoadRequest,
     ) {
@@ -261,7 +256,7 @@ impl Client {
     }
 
     fn handle_invocation_request(
-        registry: Arc<Mutex<Registry<'static>>>,
+        registry: &Arc<Mutex<Registry<'static>>>,
         sender: Sender,
         req: &mut protocol::InvocationRequest,
     ) {
@@ -349,16 +344,20 @@ impl Client {
     }
 
     fn handle_request(
-        registry: Arc<Mutex<Registry<'static>>>,
+        registry: &Arc<Mutex<Registry<'static>>>,
         sender: Sender,
         mut msg: protocol::StreamingMessage,
     ) {
         if msg.has_function_load_request() {
-            Client::handle_function_load_request(registry, sender, msg.get_function_load_request());
+            Client::handle_function_load_request(
+                &registry,
+                sender,
+                msg.get_function_load_request(),
+            );
             return;
         }
         if msg.has_invocation_request() {
-            Client::handle_invocation_request(registry, sender, msg.mut_invocation_request());
+            Client::handle_invocation_request(&registry, sender, msg.mut_invocation_request());
             return;
         }
         if msg.has_worker_status_request() {

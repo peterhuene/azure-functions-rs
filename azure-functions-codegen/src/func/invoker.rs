@@ -4,7 +4,7 @@ use quote::ToTokens;
 use syn::{FnArg, Ident, ItemFn, Pat, Type, TypeReference};
 use util::{last_segment_in_path, to_camel_case};
 
-const INVOKER_PREFIX: &'static str = "__invoke_";
+const INVOKER_PREFIX: &str = "__invoke_";
 
 pub struct Invoker<'a>(pub &'a ItemFn);
 
@@ -65,7 +65,7 @@ impl Invoker<'a> {
 
     fn is_context_type(ty: &Type) -> bool {
         match ty {
-            Type::Path(tp) => last_segment_in_path(&tp.path).ident.to_string() == CONTEXT_TYPE_NAME,
+            Type::Path(tp) => last_segment_in_path(&tp.path).ident == CONTEXT_TYPE_NAME,
             Type::Paren(tp) => Invoker::is_context_type(&tp.elem),
             _ => false,
         }

@@ -70,7 +70,7 @@ impl TryFrom<AttributeArguments> for QueueTrigger<'_> {
         Ok(QueueTrigger(Cow::Owned(codegen::bindings::QueueTrigger {
             name: name.expect("expected a name for a queue trigger binding"),
             queue_name: queue_name.expect("expected a queue name a queue trigger binding"),
-            connection: connection,
+            connection,
         })))
     }
 }

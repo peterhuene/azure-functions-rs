@@ -76,9 +76,9 @@ impl TryFrom<AttributeArguments> for TimerTrigger<'_> {
 
         Ok(TimerTrigger(Cow::Owned(codegen::bindings::TimerTrigger {
             name: name.expect("expected a name for a timer trigger binding"),
-            schedule: schedule,
-            run_on_startup: run_on_startup,
-            use_monitor: use_monitor,
+            schedule,
+            run_on_startup,
+            use_monitor,
         })))
     }
 }
@@ -87,8 +87,8 @@ impl ToTokens for TimerTrigger<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let name = QuotableBorrowedStr(&self.0.name);
         let schedule = QuotableOption(self.0.schedule.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let run_on_startup = QuotableOption(self.0.run_on_startup.clone());
-        let use_monitor = QuotableOption(self.0.use_monitor.clone());
+        let run_on_startup = QuotableOption(self.0.run_on_startup);
+        let use_monitor = QuotableOption(self.0.use_monitor);
 
         quote!(::azure_functions::codegen::bindings::TimerTrigger {
             name: #name,

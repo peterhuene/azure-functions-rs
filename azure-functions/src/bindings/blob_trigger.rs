@@ -5,10 +5,10 @@ use serde_json::from_str;
 use std::collections::HashMap;
 use util::convert_from;
 
-const PATH_KEY: &'static str = "BlobTrigger";
-const URI_KEY: &'static str = "Uri";
-const PROPERTIES_KEY: &'static str = "Properties";
-const METADATA_KEY: &'static str = "Metadata";
+const PATH_KEY: &str = "BlobTrigger";
+const URI_KEY: &str = "Uri";
+const PROPERTIES_KEY: &str = "Properties";
+const METADATA_KEY: &str = "Metadata";
 
 /// Represents an Azure Storage blob trigger binding.
 ///
@@ -66,8 +66,8 @@ impl Trigger for BlobTrigger {
             self.path = path.take_string();
         }
         if let Some(uri) = metadata.get(URI_KEY) {
-            self.uri =
-                convert_from(uri).expect(&format!("failed to read '{}' from metadata", URI_KEY));
+            self.uri = convert_from(uri)
+                .unwrap_or_else(|| panic!("failed to read '{}' from metadata", URI_KEY));
         }
         if let Some(properties) = metadata.get(PROPERTIES_KEY) {
             self.properties =

@@ -13,9 +13,9 @@ impl Context<'a> {
     /// Creates a new function invocation context.
     pub fn new(invocation_id: &'a str, function_id: &'a str, name: &'a str) -> Self {
         Context {
-            invocation_id: invocation_id,
-            function_id: function_id,
-            name: name,
+            invocation_id,
+            function_id,
+            name,
         }
     }
 

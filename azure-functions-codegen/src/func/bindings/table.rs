@@ -119,11 +119,11 @@ impl TryFrom<AttributeArguments> for Table<'_> {
         Ok(Table(Cow::Owned(codegen::bindings::Table {
             name: name.expect("expected a name for a table binding"),
             table_name: table_name.expect("expected a table name for a table binding"),
-            partition_key: partition_key,
-            row_key: row_key,
-            filter: filter,
-            take: take,
-            connection: connection,
+            partition_key,
+            row_key,
+            filter,
+            take,
+            connection,
             direction: codegen::Direction::In,
         })))
     }

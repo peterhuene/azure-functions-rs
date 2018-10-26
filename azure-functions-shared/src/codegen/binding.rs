@@ -12,6 +12,7 @@ pub enum Direction {
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(untagged, rename_all = "camelCase")]
+#[allow(clippy::large_enum_variant)]
 pub enum Binding {
     Context,
     HttpTrigger(HttpTrigger),

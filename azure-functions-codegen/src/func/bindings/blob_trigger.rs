@@ -73,7 +73,7 @@ impl TryFrom<AttributeArguments> for BlobTrigger<'_> {
         Ok(BlobTrigger(Cow::Owned(codegen::bindings::BlobTrigger {
             name: name.expect("expected a name for a blob trigger binding"),
             path: path.expect("expected a path for a blob trigger binding"),
-            connection: connection,
+            connection,
             direction: codegen::Direction::In,
         })))
     }
