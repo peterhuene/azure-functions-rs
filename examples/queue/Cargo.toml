@@ -5,4 +5,4 @@ authors = ["Peter Huene <peterhuene@protonmail.com>"]
 
 [dependencies]
 azure-functions = { version = "0.2.2", path = "../../azure-functions" }
-log = "0.4.5"
+log = "0.4.6"
