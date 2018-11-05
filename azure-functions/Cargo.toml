@@ -9,7 +9,7 @@ repository = "https://github.com/peterhuene/azure-functions-rs/"
 [dependencies]
 azure-functions-shared = { version = "0.2.2", path = "../azure-functions-shared" }
 azure-functions-codegen = { version = "0.2.2", path = "../azure-functions-codegen" }
-log = {version = "0.4.5", features = ["std"] }
+log = {version = "0.4.6", features = ["std"] }
 grpcio = "0.4.0"
 futures = "0.1.24"
 clap = "2.32.0"
