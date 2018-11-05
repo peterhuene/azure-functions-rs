@@ -34,7 +34,7 @@
 //! Edit `Cargo.toml` to include the following dependencies:
 //!
 //! ```toml
-//! azure-functions = "0.2.2"
+//! azure-functions = "0.2.3"
 //! log = "0.4.2"
 //! ```
 //!
