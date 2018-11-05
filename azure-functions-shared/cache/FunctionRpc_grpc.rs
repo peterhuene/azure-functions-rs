@@ -49,12 +49,12 @@ impl FunctionRpcClient {
 }
 
 pub trait FunctionRpc {
-    fn event_stream(&self, ctx: ::grpcio::RpcContext, stream: ::grpcio::RequestStream<super::FunctionRpc::StreamingMessage>, sink: ::grpcio::DuplexSink<super::FunctionRpc::StreamingMessage>);
+    fn event_stream(&mut self, ctx: ::grpcio::RpcContext, stream: ::grpcio::RequestStream<super::FunctionRpc::StreamingMessage>, sink: ::grpcio::DuplexSink<super::FunctionRpc::StreamingMessage>);
 }
 
 pub fn create_function_rpc<S: FunctionRpc + Send + Clone + 'static>(s: S) -> ::grpcio::Service {
     let mut builder = ::grpcio::ServiceBuilder::new();
-    let instance = s.clone();
+    let mut instance = s.clone();
     builder = builder.add_duplex_streaming_handler(&METHOD_FUNCTION_RPC_EVENT_STREAM, move |ctx, req, resp| {
         instance.event_stream(ctx, req, resp)
     });
