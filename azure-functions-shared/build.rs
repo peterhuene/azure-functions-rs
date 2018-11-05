@@ -1,7 +1,5 @@
-extern crate protoc;
 extern crate protoc_grpcio;
 
-use protoc::Protoc;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -53,7 +51,7 @@ fn main() {
 
     fs::create_dir_all(&cache_dir).expect("failed to create cache directory");
 
-    if Protoc::from_env_path().check().is_ok() {
+    if cfg!(feature = "compile_protobufs") {
         compile_protobufs(&out_dir, &cache_dir);
     } else {
         use_cached_files(&out_dir, &cache_dir);

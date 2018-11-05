@@ -17,4 +17,7 @@ serde_derive = "1.0.79"
 
 [build-dependencies]
 protoc-grpcio = "0.3.0"
-protoc = "2.1.4"
+
+[features]
+default = []
+compile_protobufs = []

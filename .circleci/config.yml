@@ -24,7 +24,10 @@ jobs:
             cargo clippy
       - run:
           name: Build
-          command: cargo build --release
+          command: cargo build --release --features compile_protobufs
+      - run:
+          name: Check for stale protobuf files
+          command: git diff-index --quiet HEAD
       - run:
           name: Test
           command: cargo test --release
