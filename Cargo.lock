@@ -66,7 +66,7 @@ dependencies = [
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "grpcio 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "protoc-grpcio 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "protoc-grpcio 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -373,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "grpcio-compiler"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "protobuf 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -805,11 +805,11 @@ dependencies = [
 
 [[package]]
 name = "protoc-grpcio"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "failure 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "grpcio-compiler 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "grpcio-compiler 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mktemp 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf-codegen 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1468,7 +1468,7 @@ dependencies = [
 "checksum futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)" = "49e7653e374fe0d0c12de4250f0bdb60680b8c80eed558c5c7538eec9c89e21b"
 "checksum futures-cpupool 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "ab90cde24b3319636588d0c35fe03b1333857621051837ed769faefb4c2162e4"
 "checksum grpcio 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6ceb617aadae035882ff0e96fc312e4c7f65abc26aad9336f1e5d199d588a702"
-"checksum grpcio-compiler 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a63ccc27b0099347d2bea2c3d0f1c79c018a13cfd08b814a1992e341b645d5e1"
+"checksum grpcio-compiler 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "af2c2cd5ab52273ee9fc1406fe3a0bca7a9dd203f550905badc003c0a85c25a6"
 "checksum grpcio-sys 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c01243bb555ae2ba819d428cffb7e93575ae047cf033f6242959a8a9ecc51ef6"
 "checksum h2 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "7dd33bafe2e6370e6c8eb0cf1b8c5f93390b90acde7e9b03723f166b28b648ed"
 "checksum http 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "24f58e8c2d8e886055c3ead7b28793e1455270b5fb39650984c224bc538ba581"
@@ -1516,7 +1516,7 @@ dependencies = [
 "checksum protobuf 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "c72f6663900752624f6b9b78d16abfc014caaa17d0002ff991274533cdc06c62"
 "checksum protobuf-codegen 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "3b3aabdbe464662cbdf305a7db531fa059aa4368e2dc3a80be3796fcc2f931a6"
 "checksum protoc 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "5ade0164b23a962eed8f4431bf62cf059587508399a3af643c50ca9330d8095e"
-"checksum protoc-grpcio 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b0292d93a536174ff6bafe8b5e8534aeeb2b039146bae59770c07f4d2c2458c9"
+"checksum protoc-grpcio 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "66109ceb0be8ea075f1966b231f5e72e19ce812dbb0f4d11efb1a39d8bcb40de"
 "checksum quote 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)" = "dd636425967c33af890042c483632d33fa7a18f19ad1d7ea72e8998c6ef8dea5"
 "checksum rand 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)" = "15a732abf9d20f0ad8eeb6f909bf6868722d9a06e1e50802b6a70351f40b4eb1"
 "checksum rand 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "8356f47b32624fef5b3301c1be97e5944ecdd595409cc5da11d05f211db6cfbd"
