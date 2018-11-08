@@ -1,6 +1,33 @@
+use codegen::bindings;
 use codegen::Function;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
+
+const STORAGE_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Storage";
+const STORAGE_PACKAGE_VERSION: &str = "3.0.0";
+
+lazy_static! {
+    static ref BINDING_EXTENSIONS: HashMap<&'static str, (&'static str, &'static str)> = {
+        let mut map = HashMap::new();
+        map.insert(
+            bindings::BLOB_TRIGGER_TYPE,
+            (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::BLOB_TYPE,
+            (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::QUEUE_TYPE,
+            (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::QUEUE_TRIGGER_TYPE,
+            (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
+        );
+        map
+    };
+}
 
 pub struct Registry<'a> {
     functions: HashMap<String, &'a Function>,
@@ -40,11 +67,39 @@ impl<'a> Registry<'a> {
     pub fn iter(&self) -> Iter<String, &'a Function> {
         self.functions.iter()
     }
+
+    pub fn has_binding_extensions(&self) -> bool {
+        for function in self.functions.iter() {
+            for binding in function.1.bindings.iter() {
+                if let Some(t) = binding.binding_type() {
+                    if BINDING_EXTENSIONS.get(t).is_some() {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn iter_binding_extensions(&self) -> impl Iterator<Item = (&'static str, &'static str)> {
+        let mut set = std::collections::HashSet::new();
+        for function in self.functions.iter() {
+            for binding in function.1.bindings.iter() {
+                if let Some(t) = binding.binding_type() {
+                    if let Some(extension) = BINDING_EXTENSIONS.get(t) {
+                        set.insert(extension.clone());
+                    }
+                }
+            }
+        }
+        set.into_iter()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use codegen::{Binding, Direction};
     use std::borrow::Cow;
 
     #[test]
@@ -125,5 +180,55 @@ mod tests {
         assert_eq!(registry.iter().count(), 1);
 
         assert_eq!(registry.register("id", "not_present"), false);
+    }
+
+    #[test]
+    fn it_iterates_binding_extensions() {
+        let registry = Registry::new(&[&Function {
+            name: Cow::Borrowed("function1"),
+            disabled: false,
+            bindings: Cow::Borrowed(&[
+                Binding::Http(bindings::Http {
+                    name: Cow::Borrowed("binding1"),
+                }),
+                Binding::Queue(bindings::Queue {
+                    name: Cow::Borrowed("binding2"),
+                    queue_name: Cow::Borrowed("some_queue"),
+                    connection: None,
+                }),
+                Binding::Blob(bindings::Blob {
+                    name: Cow::Borrowed("binding3"),
+                    path: Cow::Borrowed("some_path"),
+                    connection: None,
+                    direction: Direction::Out,
+                }),
+            ]),
+            invoker_name: None,
+            invoker: None,
+            manifest_dir: None,
+            file: None,
+        }]);
+        assert_eq!(registry.iter_binding_extensions().count(), 1);
+
+        let extensions = registry.iter_binding_extensions().nth(0).unwrap();
+
+        assert_eq!(extensions.0, STORAGE_PACKAGE_NAME);
+        assert_eq!(extensions.1, STORAGE_PACKAGE_VERSION);
+    }
+
+    #[test]
+    fn it_iterates_empty_binding_extensions() {
+        let registry = Registry::new(&[&Function {
+            name: Cow::Borrowed("function1"),
+            disabled: false,
+            bindings: Cow::Borrowed(&[Binding::Http(bindings::Http {
+                name: Cow::Borrowed("binding1"),
+            })]),
+            invoker_name: None,
+            invoker: None,
+            manifest_dir: None,
+            file: None,
+        }]);
+        assert_eq!(registry.iter_binding_extensions().count(), 0);
     }
 }

@@ -216,7 +216,7 @@ mod tests {
         let blob: Blob = BLOB.into();
 
         let mut s = String::new();
-        write!(s, "{}", blob);
+        write!(s, "{}", blob).unwrap();
 
         assert_eq!(s, BLOB);
     }

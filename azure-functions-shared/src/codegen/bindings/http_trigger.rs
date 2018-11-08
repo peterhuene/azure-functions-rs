@@ -1,6 +1,8 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const HTTP_TRIGGER_TYPE: &str = "httpTrigger";
+
 #[derive(Debug, Clone)]
 pub struct HttpTrigger {
     pub name: Cow<'static, str>,
@@ -20,7 +22,7 @@ impl Serialize for HttpTrigger {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "httpTrigger")?;
+        map.serialize_entry("type", HTTP_TRIGGER_TYPE)?;
         map.serialize_entry("direction", "in")?;
 
         if let Some(auth_level) = self.auth_level.as_ref() {

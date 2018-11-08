@@ -23,6 +23,17 @@ pub fn create_app() -> App<'a, 'b> {
                 )
         )
         .subcommand(
+            SubCommand::with_name("sync-extensions")
+                .about("Synchronizes the Azure Function binding extensions used by the worker.")
+                .arg(
+                    Arg::with_name("script_root")
+                        .long("script-root")
+                        .value_name("SCRIPT_ROOT")
+                        .help("The script root to synchronize the binding extensions for.")
+                        .required(true),
+                )
+        )
+        .subcommand(
             SubCommand::with_name("run")
                 .about("Runs the Rust language worker.")
                  .arg(

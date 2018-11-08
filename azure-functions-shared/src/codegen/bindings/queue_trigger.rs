@@ -1,6 +1,8 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const QUEUE_TRIGGER_TYPE: &str = "queueTrigger";
+
 #[derive(Debug, Clone)]
 pub struct QueueTrigger {
     pub name: Cow<'static, str>,
@@ -18,7 +20,7 @@ impl Serialize for QueueTrigger {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "queueTrigger")?;
+        map.serialize_entry("type", QUEUE_TRIGGER_TYPE)?;
         map.serialize_entry("direction", "in")?;
         map.serialize_entry("queueName", &self.queue_name)?;
 

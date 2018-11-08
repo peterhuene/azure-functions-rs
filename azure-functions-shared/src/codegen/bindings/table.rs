@@ -2,6 +2,8 @@ use codegen::Direction;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const TABLE_TYPE: &str = "table";
+
 #[derive(Debug, Clone)]
 pub struct Table {
     pub name: Cow<'static, str>,
@@ -24,7 +26,7 @@ impl Serialize for Table {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "table")?;
+        map.serialize_entry("type", TABLE_TYPE)?;
         map.serialize_entry("direction", &self.direction)?;
         map.serialize_entry("tableName", &self.table_name)?;
 

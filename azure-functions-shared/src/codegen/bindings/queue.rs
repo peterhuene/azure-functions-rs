@@ -1,6 +1,8 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const QUEUE_TYPE: &str = "queue";
+
 #[derive(Debug, Clone)]
 pub struct Queue {
     pub name: Cow<'static, str>,
@@ -18,7 +20,7 @@ impl Serialize for Queue {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "queue")?;
+        map.serialize_entry("type", QUEUE_TYPE)?;
         map.serialize_entry("direction", "out")?;
         map.serialize_entry("queueName", &self.queue_name)?;
 

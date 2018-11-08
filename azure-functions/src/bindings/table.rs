@@ -237,7 +237,7 @@ mod tests {
             row.insert("data".to_string(), Value::String("value".to_string()));
         }
         let mut s = String::new();
-        write!(s, "{}", table);
+        write!(s, "{}", table).unwrap();
 
         assert_eq!(
             s,

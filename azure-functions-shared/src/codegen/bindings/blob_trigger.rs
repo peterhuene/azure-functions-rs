@@ -2,6 +2,8 @@ use codegen::Direction;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const BLOB_TRIGGER_TYPE: &str = "blobTrigger";
+
 #[derive(Debug, Clone)]
 pub struct BlobTrigger {
     pub name: Cow<'static, str>,
@@ -20,7 +22,7 @@ impl Serialize for BlobTrigger {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "blobTrigger")?;
+        map.serialize_entry("type", BLOB_TRIGGER_TYPE)?;
         map.serialize_entry("direction", &self.direction)?;
         map.serialize_entry("path", &self.path)?;
 
