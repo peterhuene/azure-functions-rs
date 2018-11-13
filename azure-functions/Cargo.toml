@@ -1,15 +1,15 @@
 [package]
 name = "azure-functions"
 license = "MIT"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Azure Functions for Rust"
 repository = "https://github.com/peterhuene/azure-functions-rs/"
 homepage = "https://functions.rs"
 
 [dependencies]
-azure-functions-shared = { version = "0.2.3", path = "../azure-functions-shared" }
-azure-functions-codegen = { version = "0.2.3", path = "../azure-functions-codegen" }
+azure-functions-shared = { version = "0.2.4", path = "../azure-functions-shared" }
+azure-functions-codegen = { version = "0.2.4", path = "../azure-functions-codegen" }
 log = {version = "0.4.6", features = ["std"] }
 grpcio = "0.4.0"
 futures = "0.1.24"
