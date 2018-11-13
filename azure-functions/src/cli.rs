@@ -1,9 +1,11 @@
-use clap::{App, Arg, SubCommand};
+use clap::{App, AppSettings, Arg, SubCommand};
 
 pub fn create_app() -> App<'a, 'b> {
     App::new("Azure Functions for Rust worker")
         .version(env!("CARGO_PKG_VERSION"))
         .about("Implements the Azure Functions for Rust worker.")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .setting(AppSettings::VersionlessSubcommands)
         .subcommand(
             SubCommand::with_name("init")
                 .about("Initializes the worker executable and script root.")

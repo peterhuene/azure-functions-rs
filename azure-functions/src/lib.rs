@@ -473,6 +473,5 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
         return;
     }
 
-    cli::create_app().print_help().unwrap();
-    println!();
+    panic!("expected a subcommand.");
 }
