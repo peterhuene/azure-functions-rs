@@ -7,5 +7,5 @@ authors = ["Peter Huene <peterhuene@protonmail.com>"]
 azure-functions = { version = "0.2.3", path = "../../azure-functions" }
 log = "0.4.6"
 serde = "1.0.79"
-serde_json = "1.0.31"
+serde_json = "1.0.33"
 serde_derive = "1.0.79"
