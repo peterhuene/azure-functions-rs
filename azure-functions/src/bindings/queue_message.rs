@@ -216,7 +216,7 @@ mod tests {
         let message: QueueMessage = MESSAGE.into();
 
         let mut s = String::new();
-        write!(s, "{}", message);
+        write!(s, "{}", message).unwrap();
 
         assert_eq!(s, MESSAGE);
     }

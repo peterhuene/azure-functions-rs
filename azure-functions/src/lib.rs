@@ -120,6 +120,10 @@ extern crate tokio_threadpool;
 #[cfg(test)]
 #[macro_use(matches)]
 extern crate matches;
+extern crate xml;
+#[macro_use]
+extern crate lazy_static;
+extern crate tempfile;
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;
@@ -149,7 +153,11 @@ use serde_json::Serializer;
 use std::env::{current_dir, current_exe};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::{Arc, Mutex};
+use tempfile::TempDir;
+use xml::writer::XmlEvent;
+use xml::EmitterConfig;
 
 // This is a workaround to the issue that `file!` expands to be workspace-relative
 // and cargo does not have an environment variable for the workspace directory.
@@ -317,6 +325,83 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: &Arc<Mutex<Reg
     }
 }
 
+fn write_property(writer: &mut xml::EventWriter<&mut fs::File>, name: &str, value: &str) {
+    writer.write(XmlEvent::start_element(name)).unwrap();
+    writer.write(XmlEvent::characters(value)).unwrap();
+    writer.write(XmlEvent::end_element()).unwrap();
+}
+
+fn write_project_file(path: &Path, registry: &Registry<'static>) {
+    let mut project_file =
+        fs::File::create(path).expect("Failed to create extensions project file.");
+
+    let mut writer = EmitterConfig::new()
+        .perform_indent(true)
+        .create_writer(&mut project_file);
+
+    writer
+        .write(XmlEvent::start_element("Project").attr("Sdk", "Microsoft.NET.Sdk"))
+        .unwrap();
+
+    writer
+        .write(XmlEvent::start_element("PropertyGroup"))
+        .unwrap();
+
+    write_property(&mut writer, "TargetFramework", "netstandard2.0");
+    write_property(&mut writer, "CopyBuildOutputToPublishDirectory", "false");
+    write_property(&mut writer, "CopyOutputSymbolsToPublishDirectory", "false");
+    write_property(&mut writer, "GenerateDependencyFile", "false");
+
+    writer.write(XmlEvent::end_element()).unwrap();
+
+    writer.write(XmlEvent::start_element("ItemGroup")).unwrap();
+
+    for extension in registry.iter_binding_extensions() {
+        writer
+            .write(
+                XmlEvent::start_element("PackageReference")
+                    .attr("Include", extension.0)
+                    .attr("Version", extension.1),
+            )
+            .unwrap();
+        writer.write(XmlEvent::end_element()).unwrap();
+    }
+
+    writer.write(XmlEvent::end_element()).unwrap();
+    writer.write(XmlEvent::end_element()).unwrap();
+}
+
+fn sync_extensions(script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) {
+    let reg = registry.lock().unwrap();
+
+    if !reg.has_binding_extensions() {
+        println!("No binding extensions are needed.");
+        return;
+    }
+
+    let temp_dir = TempDir::new().expect("failed to create temporary directory");
+    let project_file_path = temp_dir.path().join("extensions.csproj");
+    let output_directory = std::env::current_dir()
+        .expect("failed to get current directory")
+        .join(script_root)
+        .join("bin");
+
+    write_project_file(&project_file_path, &reg);
+
+    Command::new("dotnet")
+        .args(&[
+            "publish",
+            "-c",
+            "Release",
+            "-o",
+            output_directory.to_str().unwrap(),
+        ])
+        .current_dir(temp_dir.path())
+        .status()
+        .map_err(|e| format!("failed to spawn dotnet: {}", e))
+        .unwrap_or_else(|e| panic!("failed to publish extensions project: {}", e));
+}
+
 fn run_worker(
     worker_id: &str,
     host: &str,
@@ -352,6 +437,16 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("worker_path")
                 .expect("A binary path is required."),
+            matches
+                .value_of("script_root")
+                .expect("A script root is required."),
+            &registry,
+        );
+        return;
+    }
+
+    if let Some(matches) = matches.subcommand_matches("sync-extensions") {
+        sync_extensions(
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),

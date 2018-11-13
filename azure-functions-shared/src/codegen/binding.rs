@@ -1,6 +1,4 @@
-use codegen::bindings::{
-    Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table, TimerTrigger,
-};
+use codegen::bindings;
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -15,14 +13,14 @@ pub enum Direction {
 #[allow(clippy::large_enum_variant)]
 pub enum Binding {
     Context,
-    HttpTrigger(HttpTrigger),
-    Http(Http),
-    TimerTrigger(TimerTrigger),
-    QueueTrigger(QueueTrigger),
-    Queue(Queue),
-    BlobTrigger(BlobTrigger),
-    Blob(Blob),
-    Table(Table),
+    HttpTrigger(bindings::HttpTrigger),
+    Http(bindings::Http),
+    TimerTrigger(bindings::TimerTrigger),
+    QueueTrigger(bindings::QueueTrigger),
+    Queue(bindings::Queue),
+    BlobTrigger(bindings::BlobTrigger),
+    Blob(bindings::Blob),
+    Table(bindings::Table),
 }
 
 impl Binding {
@@ -37,6 +35,20 @@ impl Binding {
             Binding::BlobTrigger(b) => Some(&b.name),
             Binding::Blob(b) => Some(&b.name),
             Binding::Table(b) => Some(&b.name),
+        }
+    }
+
+    pub fn binding_type(&self) -> Option<&str> {
+        match self {
+            Binding::Context => None,
+            Binding::HttpTrigger(_) => Some(bindings::HTTP_TRIGGER_TYPE),
+            Binding::Http(_) => Some(bindings::HTTP_TYPE),
+            Binding::TimerTrigger(_) => Some(bindings::TIMER_TRIGGER_TYPE),
+            Binding::QueueTrigger(_) => Some(bindings::QUEUE_TRIGGER_TYPE),
+            Binding::Queue(_) => Some(bindings::QUEUE_TYPE),
+            Binding::BlobTrigger(_) => Some(bindings::BLOB_TRIGGER_TYPE),
+            Binding::Blob(_) => Some(bindings::BLOB_TYPE),
+            Binding::Table(_) => Some(bindings::TABLE_TYPE),
         }
     }
 

@@ -268,7 +268,7 @@ mod tests {
         let body: Body = BODY.into();
 
         let mut s = String::new();
-        write!(s, "{}", body);
+        write!(s, "{}", body).unwrap();
 
         assert_eq!(s, BODY);
     }

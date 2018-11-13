@@ -1,6 +1,8 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const HTTP_TYPE: &str = "http";
+
 #[derive(Debug, Clone)]
 pub struct Http {
     pub name: Cow<'static, str>,
@@ -16,7 +18,7 @@ impl Serialize for Http {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "http")?;
+        map.serialize_entry("type", HTTP_TYPE)?;
         map.serialize_entry("direction", "out")?;
 
         map.end()

@@ -2,6 +2,8 @@ use codegen::Direction;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const BLOB_TYPE: &str = "blob";
+
 #[derive(Debug, Clone)]
 pub struct Blob {
     pub name: Cow<'static, str>,
@@ -20,7 +22,7 @@ impl Serialize for Blob {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "blob")?;
+        map.serialize_entry("type", BLOB_TYPE)?;
         map.serialize_entry("direction", &self.direction)?;
         map.serialize_entry("path", &self.path)?;
 

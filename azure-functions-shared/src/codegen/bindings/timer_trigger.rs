@@ -1,6 +1,8 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 
+pub const TIMER_TRIGGER_TYPE: &str = "timerTrigger";
+
 #[derive(Debug, Clone)]
 pub struct TimerTrigger {
     pub name: Cow<'static, str>,
@@ -19,7 +21,7 @@ impl Serialize for TimerTrigger {
         let mut map = serializer.serialize_map(None)?;
 
         map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", "timerTrigger")?;
+        map.serialize_entry("type", TIMER_TRIGGER_TYPE)?;
         map.serialize_entry("direction", "in")?;
 
         if let Some(schedule) = self.schedule.as_ref() {
