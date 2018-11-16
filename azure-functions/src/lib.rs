@@ -331,7 +331,7 @@ fn write_property(writer: &mut xml::EventWriter<&mut fs::File>, name: &str, valu
     writer.write(XmlEvent::end_element()).unwrap();
 }
 
-fn write_project_file(path: &Path, registry: &Registry<'static>) {
+fn write_extensions_project_file(path: &Path, registry: &Registry<'static>) {
     let mut project_file =
         fs::File::create(path).expect("Failed to create extensions project file.");
 
@@ -371,6 +371,45 @@ fn write_project_file(path: &Path, registry: &Registry<'static>) {
     writer.write(XmlEvent::end_element()).unwrap();
 }
 
+fn write_generator_project_file(path: &Path) {
+    let mut project_file =
+        fs::File::create(path).expect("Failed to create generator project file.");
+
+    let mut writer = EmitterConfig::new()
+        .perform_indent(true)
+        .create_writer(&mut project_file);
+
+    writer
+        .write(XmlEvent::start_element("Project").attr("Sdk", "Microsoft.NET.Sdk"))
+        .unwrap();
+
+    writer
+        .write(XmlEvent::start_element("PropertyGroup"))
+        .unwrap();
+
+    write_property(&mut writer, "TargetFramework", "netstandard2.0");
+
+    writer.write(XmlEvent::end_element()).unwrap();
+
+    writer.write(XmlEvent::start_element("ItemGroup")).unwrap();
+
+    writer
+        .write(
+            XmlEvent::start_element("PackageReference")
+                .attr(
+                    "Include",
+                    "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator",
+                )
+                .attr("Version", "1.0.1")
+                .attr("PrivateAssets", "all"),
+        )
+        .unwrap();
+
+    writer.write(XmlEvent::end_element()).unwrap();
+    writer.write(XmlEvent::end_element()).unwrap();
+    writer.write(XmlEvent::end_element()).unwrap();
+}
+
 fn sync_extensions(script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) {
     let reg = registry.lock().unwrap();
 
@@ -380,26 +419,58 @@ fn sync_extensions(script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) 
     }
 
     let temp_dir = TempDir::new().expect("failed to create temporary directory");
-    let project_file_path = temp_dir.path().join("extensions.csproj");
+    let extensions_project_path = temp_dir.path().join("extensions.csproj");
+    let metadata_project_path = temp_dir.path().join("metadata.csproj");
     let output_directory = std::env::current_dir()
         .expect("failed to get current directory")
-        .join(script_root)
-        .join("bin");
+        .join(script_root);
 
-    write_project_file(&project_file_path, &reg);
+    write_extensions_project_file(&extensions_project_path, &reg);
+    write_generator_project_file(&metadata_project_path);
 
-    Command::new("dotnet")
+    println!("Restoring extension assemblies...");
+
+    if !Command::new("dotnet")
         .args(&[
             "publish",
+            "/v:q",
+            "/nologo",
             "-c",
             "Release",
             "-o",
-            output_directory.to_str().unwrap(),
+            output_directory.join("bin").to_str().unwrap(),
+            extensions_project_path.to_str().unwrap(),
         ])
         .current_dir(temp_dir.path())
         .status()
         .map_err(|e| format!("failed to spawn dotnet: {}", e))
-        .unwrap_or_else(|e| panic!("failed to publish extensions project: {}", e));
+        .unwrap()
+        .success()
+    {
+        panic!("failed to restore extension assemblies.");
+    }
+
+    println!("Generating extension metadata...");
+
+    if !Command::new("dotnet")
+        .args(&[
+            "msbuild",
+            "/t:_GenerateFunctionsExtensionsMetadataPostPublish",
+            "/v:q",
+            "/nologo",
+            "/restore",
+            "-p:Configuration=Release",
+            &format!("-p:PublishDir={}/", output_directory.to_str().unwrap()),
+            metadata_project_path.to_str().unwrap(),
+        ])
+        .current_dir(temp_dir.path())
+        .status()
+        .map_err(|e| format!("failed to spawn dotnet: {}", e))
+        .unwrap()
+        .success()
+    {
+        panic!("failed to generate extension metadata.");
+    }
 }
 
 fn run_worker(

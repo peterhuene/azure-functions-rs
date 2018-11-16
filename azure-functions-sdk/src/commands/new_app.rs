@@ -87,25 +87,17 @@ impl NewApp<'a> {
         });
     }
 
-    fn create_templates(&self) -> Handlebars {
-        let mut reg = Handlebars::new();
-        reg.register_template_string("Dockerfile", include_str!("../templates/Dockerfile.hbs"))
-            .expect("failed to register Dockerfile template.");
-
-        reg.register_template_string(
-            ".dockerignore",
-            include_str!("../templates/dockerignore.hbs"),
-        )
-        .expect("failed to register Dockerfile template.");
-
-        reg.register_template_string("main.rs", include_str!("../templates/main.rs.hbs"))
-            .expect("failed to register Dockerfile template.");
-
-        reg
-    }
-
     pub fn execute(&self) -> Result<(), String> {
-        let reg = self.create_templates();
+        let templates = templates!(
+            "new-app" =>
+            [
+                "appsettings.json",
+                "Dockerfile",
+                "dockerignore",
+                "local.settings.json",
+                "main.rs"
+            ]
+        );
 
         self.set_colorization();
 
@@ -124,7 +116,7 @@ impl NewApp<'a> {
                 e
             })?;
 
-        self.create_from_template(&reg, "main.rs", "src/main.rs", &json!({}))
+        self.add_gitignore()
             .map(|_| {
                 if !self.quiet {
                     print_success();
@@ -137,36 +129,30 @@ impl NewApp<'a> {
                 e
             })?;
 
-        self.create_from_template(&reg, ".dockerignore", ".dockerignore", &json!({}))
-            .map(|_| {
-                if !self.quiet {
-                    print_success();
-                }
-            })
-            .map_err(|e| {
-                if !self.quiet {
-                    print_failure();
-                }
-                e
-            })?;
-
-        self.create_from_template(
-            &reg,
-            "Dockerfile",
-            "Dockerfile",
-            &json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
-        )
-        .map(|_| {
-            if !self.quiet {
-                print_success();
-            }
-        })
-        .map_err(|e| {
-            if !self.quiet {
-                print_failure();
-            }
-            e
-        })?;
+        for (template, path, data) in &[
+            ("main.rs", "src/main.rs", &json!({})),
+            ("dockerignore", ".dockerignore", &json!({})),
+            (
+                "Dockerfile",
+                "Dockerfile",
+                &json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
+            ),
+            ("local.settings.json", "local.settings.json", &json!({})),
+            ("appsettings.json", "appsettings.json", &json!({})),
+        ] {
+            self.create_from_template(&templates, template, path, data)
+                .map(|_| {
+                    if !self.quiet {
+                        print_success();
+                    }
+                })
+                .map_err(|e| {
+                    if !self.quiet {
+                        print_failure();
+                    }
+                    e
+                })?;
+        }
 
         if !self.quiet {
             println!();
@@ -285,9 +271,35 @@ impl NewApp<'a> {
         Ok(())
     }
 
+    fn add_gitignore(&self) -> Result<(), String> {
+        if let Some(vcs) = self.vcs {
+            if vcs != "git" {
+                return Ok(());
+            }
+        }
+
+        if !self.quiet {
+            print_running(&format!(
+                "adding {} to {}.",
+                "local.settings.json".cyan(),
+                ".gitignore".cyan()
+            ));
+        }
+
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(Path::new(self.path).join(".gitignore"))
+            .map_err(|e| format!("failed to open .gitignore: {}", e))?;
+
+        file.write_all(b"\n# Ignore sensitive files\nlocal.settings.json\n")
+            .map_err(|e| format!("failed to write .gitignore: {}", e))?;
+
+        Ok(())
+    }
+
     fn create_from_template(
         &self,
-        reg: &Handlebars,
+        templates: &Handlebars,
         template_name: &str,
         relative_path: &str,
         data: &Value,
@@ -303,7 +315,8 @@ impl NewApp<'a> {
             .map_err(|e| format!("failed to create '{}': {}", relative_path.cyan(), e))?;
 
         file.write_all(
-            reg.render(template_name, data)
+            templates
+                .render(template_name, data)
                 .map_err(|e| format!("failed to render '{}': {}", relative_path.cyan(), e))?
                 .as_bytes(),
         )
