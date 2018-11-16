@@ -9,7 +9,8 @@ RUN    apt-get update \
     && apt-get update \
     && apt-get install -y cmake g++ golang dotnet-sdk-2.1 \
     && apt-get remove -y --purge wget \
-    && apt-get autoremove -y;
+    && apt-get autoremove -y \
+    && dotnet --help;
 
 ENV PATH "$PATH:/root/.cargo/bin"
 
