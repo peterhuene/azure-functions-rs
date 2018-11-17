@@ -187,7 +187,12 @@ fn has_rust_files(directory: &Path) -> bool {
         })
 }
 
-fn initialize_app(worker_path: &str, script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) {
+fn initialize_app(
+    worker_path: &str,
+    script_root: &str,
+    sync: bool,
+    registry: &Arc<Mutex<Registry<'static>>>,
+) {
     const FUNCTION_FILE: &str = "function.json";
 
     let script_root = current_dir()
@@ -320,6 +325,10 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: &Arc<Mutex<Reg
 
         info.serialize(&mut Serializer::pretty(&mut output))
             .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", name));
+    }
+
+    if sync {
+        sync_extensions(script_root.to_str().unwrap(), &registry);
     }
 }
 
@@ -519,6 +528,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
+            matches.is_present("sync"),
             &registry,
         );
         return;

@@ -23,6 +23,12 @@ pub fn create_app() -> App<'a, 'b> {
                         .help("The directory to create the script root.")
                         .required(true),
                 )
+                .arg(
+                    Arg::with_name("sync")
+                        .long("sync")
+                        .short("s")
+                        .help("Synchronize the Azure Function binding extensions.")
+                )
         )
         .subcommand(
             SubCommand::with_name("sync-extensions")
