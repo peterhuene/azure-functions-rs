@@ -62,7 +62,7 @@
 //! }
 //! ```
 //!
-//! Replace the contents of `src/main.rs` with the following to register the function with
+//! Replace the contents of `src/main.rs` with the following to export the function to
 //! the Azure Functions Host:
 //!
 //! ```rust,ignore
@@ -72,10 +72,8 @@
 //!
 //! mod greet;
 //!
-//! // The register! macro generates an entrypoint for the binary
-//! // Expects a list of Azure Functions to register with the Azure Functions host
-//! azure_functions::register!{
-//!     greet::greet
+//! pub fn main() {
+//!    azure_functions::worker_main(::std::env::args(), azure_functions::export!{ greet::greet });
 //! }
 //! ```
 //!
@@ -143,7 +141,7 @@ pub mod http;
 pub mod rpc;
 pub mod timer;
 #[doc(no_inline)]
-pub use azure_functions_codegen::register;
+pub use azure_functions_codegen::export;
 pub use azure_functions_shared::Context;
 
 use futures::Future;
@@ -189,7 +187,12 @@ fn has_rust_files(directory: &Path) -> bool {
         })
 }
 
-fn initialize_app(worker_path: &str, script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) {
+fn initialize_app(
+    worker_path: &str,
+    script_root: &str,
+    sync: bool,
+    registry: &Arc<Mutex<Registry<'static>>>,
+) {
     const FUNCTION_FILE: &str = "function.json";
 
     let script_root = current_dir()
@@ -322,6 +325,10 @@ fn initialize_app(worker_path: &str, script_root: &str, registry: &Arc<Mutex<Reg
 
         info.serialize(&mut Serializer::pretty(&mut output))
             .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", name));
+    }
+
+    if sync {
+        sync_extensions(script_root.to_str().unwrap(), &registry);
     }
 }
 
@@ -498,7 +505,17 @@ fn run_worker(
         .unwrap();
 }
 
-#[doc(hidden)]
+/// The main entry point for the Azure Functions for Rust worker.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// pub fn main() {
+///     azure_functions::worker_main(::std::env::args(), export!{
+///         my_module::my_function
+///     });
+/// }
+/// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
     let matches = cli::create_app().get_matches_from(args);
     let registry = Arc::new(Mutex::new(Registry::new(functions)));
@@ -511,6 +528,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
+            matches.is_present("sync"),
             &registry,
         );
         return;

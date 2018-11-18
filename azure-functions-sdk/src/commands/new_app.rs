@@ -3,7 +3,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
 use handlebars::Handlebars;
 use serde_json::Value;
-use std::fs::OpenOptions;
+use std::fs::{create_dir_all, OpenOptions};
 use std::io::{stdout, Write};
 use std::path::Path;
 use std::process::Command;
@@ -94,7 +94,7 @@ impl NewApp<'a> {
                 "appsettings.json",
                 "Dockerfile",
                 "dockerignore",
-                "local.settings.json",
+                "functions_mod.rs",
                 "main.rs"
             ]
         );
@@ -116,28 +116,15 @@ impl NewApp<'a> {
                 e
             })?;
 
-        self.add_gitignore()
-            .map(|_| {
-                if !self.quiet {
-                    print_success();
-                }
-            })
-            .map_err(|e| {
-                if !self.quiet {
-                    print_failure();
-                }
-                e
-            })?;
-
         for (template, path, data) in &[
             ("main.rs", "src/main.rs", &json!({})),
+            ("functions_mod.rs", "src/functions/mod.rs", &json!({})),
             ("dockerignore", ".dockerignore", &json!({})),
             (
                 "Dockerfile",
                 "Dockerfile",
                 &json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
             ),
-            ("local.settings.json", "local.settings.json", &json!({})),
             ("appsettings.json", "appsettings.json", &json!({})),
         ] {
             self.create_from_template(&templates, template, path, data)
@@ -271,32 +258,6 @@ impl NewApp<'a> {
         Ok(())
     }
 
-    fn add_gitignore(&self) -> Result<(), String> {
-        if let Some(vcs) = self.vcs {
-            if vcs != "git" {
-                return Ok(());
-            }
-        }
-
-        if !self.quiet {
-            print_running(&format!(
-                "adding {} to {}.",
-                "local.settings.json".cyan(),
-                ".gitignore".cyan()
-            ));
-        }
-
-        let mut file = OpenOptions::new()
-            .append(true)
-            .open(Path::new(self.path).join(".gitignore"))
-            .map_err(|e| format!("failed to open .gitignore: {}", e))?;
-
-        file.write_all(b"\n# Ignore sensitive files\nlocal.settings.json\n")
-            .map_err(|e| format!("failed to write .gitignore: {}", e))?;
-
-        Ok(())
-    }
-
     fn create_from_template(
         &self,
         templates: &Handlebars,
@@ -306,6 +267,11 @@ impl NewApp<'a> {
     ) -> Result<(), String> {
         if !self.quiet {
             print_running(&format!("creating {}.", relative_path.cyan()));
+        }
+
+        if let Some(dir) = Path::new(self.path).join(relative_path).parent() {
+            create_dir_all(&dir)
+                .unwrap_or_else(|_| panic!("failed to create directory for '{}'", relative_path));
         }
 
         let mut file = OpenOptions::new()

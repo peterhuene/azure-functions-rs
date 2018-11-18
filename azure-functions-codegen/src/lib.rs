@@ -19,16 +19,16 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 
+mod export;
 mod func;
-mod register;
 mod util;
 
 use proc_macro::TokenStream;
 
-/// Implements the `register!` macro.
+/// Implements the `export!` macro.
 ///
-/// The `register!` macro is used to register a list of Azure Functions with
-/// the Azure Functions host.
+/// The `export!` macro is used to export a list of Azure Functions written
+/// in Rust to the Azure Functions host.
 ///
 /// This macro expects a comma-separated list of functions that have the
 /// #[func] attribute applied.
@@ -36,13 +36,15 @@ use proc_macro::TokenStream;
 /// # Examples
 ///
 /// ```rust,ignore
-/// azure_functions::register!{
-///     module::my_azure_function
+/// pub fn main() {
+///     azure_functions::worker_main(::std::env::args(), export!{
+///         my_module::my_function
+///     });
 /// }
 /// ```
 #[proc_macro]
-pub fn register(input: TokenStream) -> TokenStream {
-    register::attr_impl(input)
+pub fn export(input: TokenStream) -> TokenStream {
+    export::attr_impl(input)
 }
 
 /// Implements the `func` attribute.

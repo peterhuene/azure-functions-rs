@@ -39,12 +39,7 @@ pub fn attr_impl(input: TokenStream) -> TokenStream {
         .collect();
 
     let expanded = quote!{
-        pub fn main() {
-            azure_functions::worker_main(
-                ::std::env::args(),
-                &[#(&#funcs),*],
-            );
-        }
+        &[#(&#funcs),*]
     };
 
     expanded.into()
