@@ -67,17 +67,6 @@ impl NewApp<'a> {
             )
     }
 
-    pub fn from_args(args: &'a ArgMatches<'a>) -> NewApp<'a> {
-        NewApp {
-            path: args.value_of("path").unwrap(),
-            vcs: args.value_of("vcs"),
-            name: args.value_of("name"),
-            verbose: args.is_present("verbose"),
-            quiet: args.is_present("quiet"),
-            color: args.value_of("color"),
-        }
-    }
-
     fn set_colorization(&self) {
         ::colored::control::set_override(match self.color {
             Some("auto") | None => ::atty::is(Stream::Stdout),
@@ -289,5 +278,18 @@ impl NewApp<'a> {
         .map_err(|e| format!("failed to write {}: {}", relative_path.cyan(), e))?;
 
         Ok(())
+    }
+}
+
+impl From<&'a ArgMatches<'a>> for NewApp<'a> {
+    fn from(args: &'a ArgMatches<'a>) -> Self {
+        NewApp {
+            path: args.value_of("path").unwrap(),
+            vcs: args.value_of("vcs"),
+            name: args.value_of("name"),
+            verbose: args.is_present("verbose"),
+            quiet: args.is_present("quiet"),
+            color: args.value_of("color"),
+        }
     }
 }
