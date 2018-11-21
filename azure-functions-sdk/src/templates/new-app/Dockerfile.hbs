@@ -22,4 +22,3 @@ ADD ["https://raw.githubusercontent.com/peterhuene/azure-functions-rs/v{{crate_v
 
 # Copy the script root contents from the build image
 COPY --from=builder ["/home/site/wwwroot", "/home/site/wwwroot"]
-COPY --from=builder ["/src/local.settings.json", "/home/site/wwwroot/local.settings.json"]
