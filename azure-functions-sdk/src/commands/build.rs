@@ -59,7 +59,7 @@ impl Build<'a> {
 
     fn build_image(&self) -> Result<(), String> {
         let tag = match self.tag {
-            Some(_) => {
+            None => {
                 if !self.quiet {
                     print_running(&format!(
                         "reading {} to determine default Docker image tag name",
@@ -82,7 +82,7 @@ impl Build<'a> {
                         })?,
                 )
             }
-            None => None,
+            Some(_) => None,
         };
 
         let mut args = vec!["build", "--progress", "plain"];
