@@ -9,12 +9,13 @@ extern crate colored;
 extern crate handlebars;
 #[macro_use]
 extern crate serde_json;
+extern crate toml;
 
 mod commands;
 
 use clap::{App, AppSettings};
 use colored::Colorize;
-use commands::NewApp;
+use commands::{Build, NewApp};
 use std::env;
 use std::process;
 
@@ -27,6 +28,7 @@ pub fn create_app() -> App<'a, 'b> {
         .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::NoBinaryName)
         .subcommand(NewApp::create_subcommand())
+        .subcommand(Build::create_subcommand())
 }
 
 pub fn print_running(message: &str) {
@@ -56,15 +58,14 @@ fn main() {
         }
     }
 
-    let matches = matches.get_or_insert_with(|| create_app().get_matches_from(env::args().skip(1)));
-
-    if let Some(args) = matches.subcommand_matches("new-app") {
-        let command = NewApp::from_args(args);
-        if let Err(e) = command.execute() {
-            print_error_and_exit(&e);
-        }
-        return;
+    if let Err(e) = match matches
+        .get_or_insert_with(|| create_app().get_matches_from(env::args().skip(1)))
+        .subcommand()
+    {
+        ("new-app", Some(args)) => NewApp::from(args).execute(),
+        ("build", Some(args)) => Build::from(args).execute(),
+        _ => panic!("expected a subcommand."),
+    } {
+        print_error_and_exit(&e);
     }
-
-    panic!("expected a subcommand.");
 }
