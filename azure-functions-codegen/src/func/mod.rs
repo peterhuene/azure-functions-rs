@@ -462,7 +462,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let func = Function(Cow::Borrowed(&func));
 
-    let expanded = quote!{
+    let expanded = quote! {
         #target
 
         #invoker

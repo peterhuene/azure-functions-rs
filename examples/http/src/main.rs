@@ -14,7 +14,7 @@ mod greet_with_json;
 pub fn main() {
     azure_functions::worker_main(
         ::std::env::args(),
-        azure_functions::export!{
+        azure_functions::export! {
             greet::greet,
             greet_with_json::greet_with_json
         },

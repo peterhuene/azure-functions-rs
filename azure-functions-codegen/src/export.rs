@@ -38,7 +38,7 @@ pub fn attr_impl(input: TokenStream) -> TokenStream {
         })
         .collect();
 
-    let expanded = quote!{
+    let expanded = quote! {
         &[#(&#funcs),*]
     };
 
