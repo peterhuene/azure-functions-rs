@@ -9,7 +9,7 @@ mod read_row;
 pub fn main() {
     azure_functions::worker_main(
         ::std::env::args(),
-        azure_functions::export!{
+        azure_functions::export! {
             create_row::create_row,
             read_row::read_row,
         },

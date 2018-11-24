@@ -12,7 +12,7 @@ mod print_blob;
 pub fn main() {
     azure_functions::worker_main(
         ::std::env::args(),
-        azure_functions::export!{
+        azure_functions::export! {
             blob_watcher::blob_watcher,
             copy_blob::copy_blob,
             create_blob::create_blob,

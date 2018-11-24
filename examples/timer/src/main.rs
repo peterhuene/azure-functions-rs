@@ -9,7 +9,7 @@ mod timer;
 pub fn main() {
     azure_functions::worker_main(
         ::std::env::args(),
-        azure_functions::export!{
+        azure_functions::export! {
             timer::timer,
         },
     );
