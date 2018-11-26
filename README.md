@@ -6,7 +6,7 @@
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
 [![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
 
-This is an early-stage prototype for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
+This is an early-stage framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/en-US/).
 
 ## Disclaimer
@@ -41,6 +41,98 @@ See the [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/
 # Documentation
 
 Documentation for the [latest published version](https://docs.rs/azure-functions).
+
+# Getting Started
+
+## Nightly Rust Compiler
+
+The Azure Functions for Rust SDK requires the use of a nightly Rust compiler due the use of the experimental Rust features.
+
+Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
+
+```
+rustup install nightly
+rustup default nightly
+```
+
+## Installing the Azure Functions for Rust SDK
+
+Install the Azure Functions for Rust SDK using `cargo install`:
+
+
+```bash
+$ cargo install azure-functions-sdk
+```
+
+This installs a new cargo command named `func` that can be used to create new Azure Functions
+applications, build, and easily run them locally inside of a Docker container.
+
+## Creating a new Azure Functions application
+
+Use the `cargo func new-app` command to create a new Azure Functions application:
+
+```bash
+$ cargo func new-app hello
+```
+
+This will create a new application in the `./hello` directory with a module named `functions` where the exported Azure Functions are expected to be placed.
+
+Inside of `src/functions/mod.rs` is a declaration of all exported functions.  A function **will not be loaded by the Azure Functions Host** if it is not declared in the list of exported functions.
+
+## Building the Azure Functions application
+
+To build your Azure Functions application, use `cargo func build`:
+
+```
+$ cargo func build
+```
+
+**Note: this requires [Docker](https://www.docker.com/get-started) that is at least *18.06* for the experimental BuildKit support.**
+
+The `cargo func build` command is responsible for building a Docker image that can be used to run the Azure Functions application locally.
+
+It will download a Docker image that contains a recent nightly Rust toolset and any dependencies that
+Azure Functions for Rust needs to build and then builds the application inside an intermediary image
+where the `target/` directory is cached to enable incremental builds.
+
+**Note: the very first build will take a long time to download the base build image and then compile Azure Functions for Rust with its dependencies; after the first build, the built dependencies will be cached and thus it should build much faster.**
+
+## Running the Azure Functions application
+
+To build and run your Azure Functions application, use `cargo func run`:
+
+```
+$ cargo func run
+```
+
+The `cargo func run` command is responsible for building a Docker image and then running it inside a Docker container.
+
+By default, it exposes port `8080` as the port for the Azure Functions Host running inside the container.
+
+After the Azure Functions application starts, `http://localhost:8080` should load the welcome page for
+an Azure Functions application.  The HTTP Azure Functions can then be triggered, by default, with
+`http://localhost:8080/api/$NAME` (where `$NAME` is the name of the exported Azure Function).
+
+## Deploying the Azure Functions application
+
+In the future, there will be a `cargo func deploy` command to deploy the Azure Functions application directly to Azure.
+
+Until that time, you must manually push the Docker image to a repository that can be accessed by Azure.
+
+Use `docker push` to push the image that was previously built with `cargo func build`:
+
+```
+docker push $IMAGE
+```
+
+Create the Function App in [Azure](https://portal.azure.com) using the Docker "OS", specifying the image that was pushed:
+
+![Azure Portal](docs/images/create-function-app.png)
+
+Add a new setting for `WEBSITES_ENABLE_APP_SERVICE_STORAGE` under `Application Settings` and set it to `false`.
+This will enable the Docker image itself to provide the service storage (i.e. script root and worker).
+
+Finally, restart the Function App.  After the application has initialized again, your Rust Azure Functions should be displayed in the Azure Portal.
 
 # Azure Functions Bindings
 
@@ -158,100 +250,24 @@ This repository is split into multiple Rust crates:
 
 * [azure-functions](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions) - The `azure-functions` crate that defines the types and functions that are used when writing Azure Functions with Rust.
 * [azure-functions-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-codegen) - The `azure-functions-codegen` crate that defines the procedural macros that are used when writing Azure Functions with Rust.
+* [azure-functions-sdk](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-sdk) - The `azure-functions-sdk` crate that implements the `cargo func` command.
 * [azure-functions-shared](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared) - The `azure-functions-shared` crate that defines types and functions that are shared between the `azure-functions-codegen` and `azure-functions` crates.
     * Note: the `azure-functions-shared/protobuf` directory is the git submodule for [Azure Functions Language Worker Protocol](https://github.com/Azure/azure-functions-language-worker-protobuf).
 * [azure-functions-shared-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared-codegen) - The `azure-functions-shared-codegen` crate that defines the procedural macros used by the shared `azure-functions-shared` crate.
 * [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) - The directory containing example Azure Functions.
 
-## Prerequisites
-
-### Nightly Rust Compiler
-
-This repository requires the use of a nightly Rust compiler due the use of the experimental procedural macros feature.
-
-Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
-
-```
-rustup install nightly
-rustup default nightly
-```
-
-### Google Protocol Buffers Compiler
-
-The `azure-functions` crate depends on the [protoc-grpcio](https://github.com/mtp401/protoc-grpcio) crate to generate Rust code for the Azure Functions Language Worker protocol definitions.
-
-Therefore, Google's Protocol Buffers compiler (`protoc`) must be installed and on the PATH to build `azure-functions`.  See the [Protocol Buffer repository](https://github.com/google/protobuf) for information on how to install the compiler.
-
 ## Building
 
-Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo`:
+Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo build`:
 
 ```
-cargo build
+$ cargo build
 ```
 
 ## Running tests
 
-Use `cargo` to run the tests:
+Use `cargo test` to run the tests:
 
 ```
-cargo test
+$ cargo test
 ```
-
-Right now there are only doc tests, but more tests are coming soon.
-
-## Deploying to Azure Functions
-
-Deploying to Azure Functions is best accomplished with a Docker image for your Rust Azure Functions application.
-
-Copy this content to a `Dockerfile` at the root of your source:
-
-```docker
-FROM peterhuene/azure-functions-rs-ci:latest AS build-env
-
-COPY . /src
-
-WORKDIR /src
-
-RUN cargo run --release -- init --worker-path /usr/local/bin/rust_worker --script-root /home/site/wwwroot
-
-FROM microsoft/azure-functions-dotnet-core2.0:dev-nightly
-
-COPY --from=build-env ["/usr/local/bin/rust_worker", "/usr/local/bin/rust_worker"]
-COPY --from=build-env ["/home/site/wwwroot", "/home/site/wwwroot"]
-
-RUN    mkdir /azure-functions-host/workers/rust \
-    && curl https://gist.githubusercontent.com/peterhuene/00ba85ed18bb42437355f63829f2471e/raw/9d29d3b8eaf01e1d2d44e7df2a569a9730fbafa3/worker.config.json > /azure-functions-host/workers/rust/worker.config.json
-```
-
-Add a `.dockerignore` at the root of your source with the following contents:
-
-```
-target/
-Cargo.lock
-.vscode/
-.git/
-```
-
-Build the Docker image:
-
-```
-docker build -t $IMAGE:latest .
-```
-
-Where `$IMAGE` is the name of the tag for the image (e.g. `peterhuene/azure-functions-rs-example`).
-
-Push the image to a repository:
-
-```
-docker push $IMAGE
-```
-
-Create the Function App in [Azure](https://portal.azure.com) using the Docker "OS", specifying the image that was pushed:
-
-![Azure Portal](docs/images/create-function-app.png)
-
-Add a new setting for `WEBSITES_ENABLE_APP_SERVICE_STORAGE` under `Application Settings` and set it to `false`.
-This will enable the Docker image itself to provide the service storage (i.e. script root and worker).
-
-Finally, restart the Function App.  After the application has initialized again, your Rust Azure Functions should be displayed in the Azure Portal.
