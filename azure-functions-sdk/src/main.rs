@@ -1,6 +1,66 @@
+//! # Azure Functions for Rust SDK
+//!
+//! The Azure Functions for Rust SDK is a cargo extension for creating Azure Functions applications
+//!
+//! Start by installing the Azure Functions for Rust SDK
+//!
+//! ```bash
+//! $ cargo install azure-functions-sdk
+//! ```
+//!
+//! Next, create a new Azure Functions application:
+//!
+//! ```bash
+//! $ cargo func new-app hello
+//! ```
+//!
+//! Azure Functions are implemented by applying a `#[func]` attribute to a Rust function.
+//!
+//! For example, let's create `src/functions/hello.rs` that implements a HTTP triggered function:
+//!
+//! ```rust,ignore
+//! use azure_functions::func;
+//! use azure_functions::bindings::{HttpRequest, HttpResponse};
+//!
+//! #[func]
+//! #[binding(name = "request", auth_level = "anonymous")]
+//! pub fn hello(request: &HttpRequest) -> HttpResponse {
+//!     // Log the request on the Azure Functions Host
+//!     info!("Request: {:?}", request);
+//!
+//!     // Return a formatted string as the response
+//!     format!(
+//!         "Hello from Rust, {}!",
+//!         request.query_params().get("name").map_or("stranger", |x| x)
+//!     ).into()
+//! }
+//! ```
+//!
+//! Export the function in `src/functions/mod.rs`:
+//!
+//! ```rust,ignore
+//! mod hello;
+//!
+//! pub const FUNCTIONS: &[&azure_functions::codegen::Function] = azure_functions::export!{
+//!   hello::hello
+//! };
+//! ```
+//!
+//! Run the application:
+//!
+//! ```bash
+//! $ cargo func run
+//! ```
+//!
+//! Now invoke the function using cURL from a different terminal session:
+//!
+//! ```bash
+//! $ curl http://localhost:8080/api/hello\?name\=John
+//! Hello from Rust, John!
+//! ```
 #![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
-//#![deny(missing_docs)]
+#![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 
 extern crate atty;
