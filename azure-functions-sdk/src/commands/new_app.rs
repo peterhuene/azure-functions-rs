@@ -7,7 +7,7 @@ use std::fs::{create_dir_all, OpenOptions};
 use std::io::{stdout, Write};
 use std::path::Path;
 use std::process::Command;
-use {print_failure, print_running, print_success};
+use util::{print_failure, print_running, print_success};
 
 pub struct NewApp<'a> {
     path: &'a str,
@@ -21,7 +21,7 @@ pub struct NewApp<'a> {
 impl NewApp<'a> {
     pub fn create_subcommand() -> App<'a, 'b> {
         SubCommand::with_name("new-app")
-            .about("Create a new Azure Functions application at the specified path.")
+            .about("Creates a new Azure Functions application at the specified path.")
             .arg(
                 Arg::with_name("vcs")
                     .long("vcs")

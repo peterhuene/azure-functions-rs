@@ -4,16 +4,17 @@ use colored::Colorize;
 use std::process::Command;
 use util::{print_failure, print_running, print_success, read_crate_name};
 
-pub struct Build<'a> {
+pub struct Run<'a> {
     quiet: bool,
     color: Option<&'a str>,
-    tag: Option<&'a str>,
+    port: Option<&'a str>,
+    image: Option<&'a str>,
 }
 
-impl Build<'a> {
+impl Run<'a> {
     pub fn create_subcommand() -> App<'a, 'b> {
-        SubCommand::with_name("build")
-            .about("Builds a Docker image for the Azure Functions application.")
+        SubCommand::with_name("run")
+            .about("Runs an Azure Functions application in a Docker container.")
             .arg(
                 Arg::with_name("quiet")
                     .long("quiet")
@@ -29,11 +30,16 @@ impl Build<'a> {
                     .default_value("auto"),
             )
             .arg(
-                Arg::with_name("tag")
-                    .long("tag")
-                    .short("t")
-                    .value_name("TAG")
-                    .help("The tag to use for the image. Default is based off the crate name."),
+                Arg::with_name("port")
+                    .long("port")
+                    .short("p")
+                    .value_name("PORT")
+                    .help("The port to forward to the Azure Functions Host for HTTP requests. Default is 8080."),
+            )
+            .arg(
+                Arg::with_name("image")
+                    .help("The image of the Azure Function application to run. Default is based off the crate name.")
+                    .index(1),
             )
     }
 
@@ -49,13 +55,13 @@ impl Build<'a> {
     pub fn execute(&self) -> Result<(), String> {
         self.set_colorization();
 
-        self.build_image()?;
+        self.run_image()?;
 
         Ok(())
     }
 
-    fn build_image(&self) -> Result<(), String> {
-        let tag = match self.tag {
+    fn run_image(&self) -> Result<(), String> {
+        let image = match self.image {
             None => {
                 if !self.quiet {
                     print_running(&format!(
@@ -82,21 +88,24 @@ impl Build<'a> {
             Some(_) => None,
         };
 
-        let mut args = vec!["build", "--progress", "plain"];
-        args.push("-t");
-        args.push(tag.as_ref().map_or_else(|| self.tag.unwrap(), |t| t));
-        args.push(".");
+        let port = format!("{}:80", self.port.unwrap_or("8080"));
+
+        let mut args = vec!["run", "-it", "-p", &port];
+        args.push(
+            image
+                .as_ref()
+                .map_or_else(|| self.image.unwrap(), |img| img),
+        );
 
         if !self.quiet {
             print_running(&format!(
-                "spawning docker to build image: {}",
+                "spawning docker to run image: {}",
                 format!("docker {}", args.join(" ")).cyan()
             ));
         }
 
         let mut child = Command::new("docker")
             .args(args)
-            .env("DOCKER_BUILDKIT", "1")
             .spawn()
             .map_err(|e| format!("failed to spawn docker: {}", e))?;
 
@@ -119,12 +128,13 @@ impl Build<'a> {
     }
 }
 
-impl From<&'a ArgMatches<'a>> for Build<'a> {
+impl From<&'a ArgMatches<'a>> for Run<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
-        Build {
+        Run {
             quiet: args.is_present("quiet"),
             color: args.value_of("color"),
-            tag: args.value_of("tag"),
+            port: args.value_of("port"),
+            image: args.value_of("image"),
         }
     }
 }

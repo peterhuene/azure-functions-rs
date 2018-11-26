@@ -12,14 +12,15 @@ extern crate serde_json;
 extern crate toml;
 
 mod commands;
+mod util;
 
 use clap::{App, AppSettings};
 use colored::Colorize;
-use commands::{Build, NewApp};
+use commands::{Build, NewApp, Run};
 use std::env;
 use std::process;
 
-pub fn create_app() -> App<'a, 'b> {
+fn create_app() -> App<'a, 'b> {
     App::new("Azure Functions for Rust")
         .bin_name("cargo func")
         .version(env!("CARGO_PKG_VERSION"))
@@ -27,20 +28,9 @@ pub fn create_app() -> App<'a, 'b> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::NoBinaryName)
-        .subcommand(NewApp::create_subcommand())
         .subcommand(Build::create_subcommand())
-}
-
-pub fn print_running(message: &str) {
-    print!("{} {}", "️🚀".cyan(), message);
-}
-
-pub fn print_success() {
-    println!(" {}", "✓".green());
-}
-
-pub fn print_failure() {
-    println!(" {}", "✗".red());
+        .subcommand(NewApp::create_subcommand())
+        .subcommand(Run::create_subcommand())
 }
 
 fn print_error_and_exit(message: &str) {
@@ -64,6 +54,7 @@ fn main() {
     {
         ("new-app", Some(args)) => NewApp::from(args).execute(),
         ("build", Some(args)) => Build::from(args).execute(),
+        ("run", Some(args)) => Run::from(args).execute(),
         _ => panic!("expected a subcommand."),
     } {
         print_error_and_exit(&e);
