@@ -14,6 +14,8 @@ macro_rules! templates {
 
 mod build;
 mod new_app;
+mod run;
 
 pub use self::build::*;
 pub use self::new_app::*;
+pub use self::run::*;
