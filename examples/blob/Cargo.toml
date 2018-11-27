@@ -1,8 +1,8 @@
 [package]
-name = "example-blob"
+name = "blob-example"
 version = "0.1.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 
 [dependencies]
-azure-functions = { path = "../../azure-functions" }
+azure-functions = "0.2.6"
 log = "0.4.6"

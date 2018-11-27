@@ -2,6 +2,8 @@
 
 This project is an example of simple blob-related Azure Functions.
 
+**Note: this example is not secure; please do not expose blob storage via `anonymous` access in a production environment.**
+
 ## Example function implementations
 
 An example blob-triggered Azure Function that runs when a new blob is created 
@@ -85,77 +87,26 @@ pub fn print_blob(_req: &HttpRequest, blob: &Blob) -> HttpResponse {
 
 # Running the example locally
 
-## Prerequisites
+Because this example relies on Azure Storage to function, the `AzureWebJobsStorage` environment
+variable must be set to a connection string that the Azure Functions Host will use for the default
+storage connection.
 
-### Nightly Rust compiler
+To run with the `AzureWebJobsStorage` environment variable set:
 
-This example requires the use of a nightly Rust compiler due the use of the experimental procedural macros feature.
-
-Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
-
-```
-rustup install nightly
-rustup default nightly
+```bash
+$ AzureWebJobsStorage="<insert connection string here>" cargo func run
 ```
 
-### .NET Core SDK
+_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `cargo func run`._
 
-The Azure Functions Host is implemented with .NET Core, so download and install a [.NET Core SDK](https://www.microsoft.com/net/download).
-
-### Azure Functions Host
-
-Clone the Azure Functions Host from GitHub:
-
-```
-git clone git@github.com:azure/azure-functions-host.git
-```
-
-Use `dotnet` to build the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-dotnet build
-```
-
-## Register the Rust language worker
-
-The Azure Functions Host uses JSON configuration files to register language workers.
-
-Create the configuration file to register the Rust language worker:
-
-```
-mkdir azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-cp azure-functions-rs/azure-functions/worker.config.json azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-```
-
-## Initialize the example application
-
-Run the following command to build and initialize the Rust Azure Functions application:
-
-```
-cd azure-functions-rs/examples/blob
-cargo run --release -- init --worker-path /tmp/blob-example/rust_worker --script-root /tmp/blob-example/root
-```
-
-## Start the Azure Functions Host
-
-Run the following commands to start the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-PATH=/tmp/blob-example:$PATH AzureWebJobsScriptRoot=/tmp/blob-example/root AzureWebJobsStorage=$CONNECTION_STRING dotnet run
-```
-
-Where `$CONNECTION_STRING` is the Azure Storage connection string the Azure Functions host should use.
-
-_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `dotnet run`._
+# Invoking the functions
 
 ## Invoke the `create_blob` function
 
 To create a blob called `hello` in the `test` container, use curl to invoke the `create_blob` function:
 
 ```
-curl -d "hello world" http://localhost:5000/api/create/blob/test/hello
+curl -d "hello world" http://localhost:8080/api/create/blob/test/hello
 ```
 
 A message should print that the blob has been created.
@@ -167,7 +118,7 @@ With any luck, you should now see a `hello` blob in the `test` container with th
 To copy a blob called `hello` in the `test` container, use curl to invoke the `copy_blob` function:
 
 ```
-curl -d "hello world" http://localhost:5000/api/copy/blob/test/hello
+curl http://localhost:8080/api/copy/blob/test/hello
 ```
 
 A message should print that the blob was copied.
@@ -179,7 +130,7 @@ With any luck, you should now see a `hello.copy` blob in the `test` container wi
 To print a blob called `hello` in the `test` container, use curl to invoke the `print_blob` function:
 
 ```
-curl -d "hello world" http://localhost:5000/api/print/blob/test/hello
+curl http://localhost:8080/api/print/blob/test/hello
 ```
 
 With any luck, you should see `hello world` printed in your terminal.
@@ -189,7 +140,7 @@ With any luck, you should see `hello world` printed in your terminal.
 To log a message when a blob is created, use curl to invoke the `create_blob` function to trigger the `blob_watcher` function:
 
 ```
-curl -d "hello world" http://localhost:5000/api/create/blob/watching/hello
+curl -d "hello world" http://localhost:8080/api/create/blob/watching/hello
 ```
 
 A message should be printed saying the blob was created.
@@ -199,7 +150,7 @@ With any luck, something like the following should be logged by the Azure Functi
 ```
 info: Function.blob_watcher[0]
       => System.Collections.Generic.Dictionary`2[System.String,System.Object]
-      Executing 'Functions.blob_watcher' (Reason='New blob detected: test/hello_world.txt', Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
+      Executing 'Functions.blob_watcher' (Reason='New blob detected: watching/hello', Id=38848d35-01cc-4854-a3cb-3e0fb74b6704)
 info: Worker.Rust.97626f24-4bbf-4895-a9d0-4362ea1e9498[0]
       A blob was created at 'watching/hello' with contents: Some("hello world")
 info: Function.blob_watcher[0]

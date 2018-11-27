@@ -1,17 +1,13 @@
 #![feature(proc_macro_hygiene)]
 
 extern crate azure_functions;
+#[allow(unused_imports)]
+#[macro_use]
+extern crate log;
 extern crate serde_json;
 
-mod create_row;
-mod read_row;
+mod functions;
 
 pub fn main() {
-    azure_functions::worker_main(
-        ::std::env::args(),
-        azure_functions::export! {
-            create_row::create_row,
-            read_row::read_row,
-        },
-    );
+    azure_functions::worker_main(::std::env::args(), functions::FUNCTIONS);
 }

@@ -2,6 +2,8 @@
 
 This project is an example of simple table-related Azure Functions.
 
+**Note: this example is not secure; please do not expose table storage via `anonymous` access in a production environment.**
+
 ## Example function implementations
 
 An example function that creates a row in an Azure Storage using an output table binding:
@@ -61,70 +63,19 @@ pub fn read_row(_req: &HttpRequest, table: &Table) -> HttpResponse {
 
 # Running the example locally
 
-## Prerequisites
+Because this example relies on Azure Storage to function, the `AzureWebJobsStorage` environment
+variable must be set to a connection string that the Azure Functions Host will use for the default
+storage connection.
 
-### Nightly Rust compiler
+To run with the `AzureWebJobsStorage` environment variable set:
 
-This example requires the use of a nightly Rust compiler due the use of the experimental procedural macros feature.
-
-Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
-
-```
-rustup install nightly
-rustup default nightly
+```bash
+$ AzureWebJobsStorage="<insert connection string here>" cargo func run
 ```
 
-### .NET Core SDK
+_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `cargo func run`._
 
-The Azure Functions Host is implemented with .NET Core, so download and install a [.NET Core SDK](https://www.microsoft.com/net/download).
-
-### Azure Functions Host
-
-Clone the Azure Functions Host from GitHub:
-
-```
-git clone git@github.com:azure/azure-functions-host.git
-```
-
-Use `dotnet` to build the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-dotnet build
-```
-
-## Register the Rust language worker
-
-The Azure Functions Host uses JSON configuration files to register language workers.
-
-Create the configuration file to register the Rust language worker:
-
-```
-mkdir azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-cp azure-functions-rs/azure-functions/worker.config.json azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-```
-
-## Initialize the example application
-
-Run the following command to build and initialize the Rust Azure Functions application:
-
-```
-cd azure-functions-rs/examples/table
-cargo run --release -- init --worker-path /tmp/table-example/rust_worker --script-root /tmp/table-example/root
-```
-
-## Start the Azure Functions Host
-
-Run the following commands to start the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-PATH=/tmp/table-example:$PATH AzureWebJobsScriptRoot=/tmp/table-example/root AzureWebJobsStorage=$CONNECTION_STRING dotnet run
-```
-
-Where `$CONNECTION_STRING` is the Azure Storage connection string the Azure Functions host should use.
-
-_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `dotnet run`._
+# Invoking the functions
 
 ## Invoke the `create_row` function
 
@@ -132,7 +83,7 @@ To create a row in a table named `test` with partition key `partition1` and row 
 use curl to invoke the `create_row` function:
 
 ```
-curl -d "hello world!" http://localhost:5000/api/create/test/partition1/row1 -v
+curl -d "hello world!" http://localhost:8080/api/create/test/partition1/row1 -v
 ```
 
 With any luck, this should return a `204 No Content` response.
@@ -142,7 +93,7 @@ With any luck, this should return a `204 No Content` response.
 To read a row from a table named `test` with partition key `partition1` and row key `row1`:
 
 ```
-curl http://localhost:5000/api/read/test/partition1/row1
+curl http://localhost:8080/api/read/test/partition1/row1
 ```
 
 With any luck, the entity should be printed by `curl`.

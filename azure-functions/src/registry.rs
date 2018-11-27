@@ -7,6 +7,7 @@ const STORAGE_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Storage";
 const STORAGE_PACKAGE_VERSION: &str = "3.0.0";
 
 lazy_static! {
+    // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
     static ref BINDING_EXTENSIONS: HashMap<&'static str, (&'static str, &'static str)> = {
         let mut map = HashMap::new();
         map.insert(
@@ -23,6 +24,10 @@ lazy_static! {
         );
         map.insert(
             bindings::QUEUE_TRIGGER_TYPE,
+            (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::TABLE_TYPE,
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map

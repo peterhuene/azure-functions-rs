@@ -61,6 +61,7 @@ impl NewApp<'a> {
             )
             .arg(
                 Arg::with_name("path")
+                    .value_name("PATH")
                     .help("The path where the application should be created.")
                     .index(1)
                     .required(true),

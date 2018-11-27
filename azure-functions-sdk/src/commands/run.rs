@@ -6,6 +6,7 @@ use util::{print_failure, print_running, print_success, read_crate_name};
 
 pub struct Run<'a> {
     quiet: bool,
+    no_build: bool,
     color: Option<&'a str>,
     port: Option<&'a str>,
     image: Option<&'a str>,
@@ -20,6 +21,11 @@ impl Run<'a> {
                     .long("quiet")
                     .short("q")
                     .help("No output printed to stdout."),
+            )
+            .arg(
+                Arg::with_name("no-build")
+                    .long("no-build")
+                    .help("Skips building the Azure Functions application prior to running."),
             )
             .arg(
                 Arg::with_name("color")
@@ -38,6 +44,7 @@ impl Run<'a> {
             )
             .arg(
                 Arg::with_name("image")
+                    .value_name("IMAGE")
                     .help("The image of the Azure Function application to run. Default is based off the crate name.")
                     .index(1),
             )
@@ -55,12 +62,6 @@ impl Run<'a> {
     pub fn execute(&self) -> Result<(), String> {
         self.set_colorization();
 
-        self.run_image()?;
-
-        Ok(())
-    }
-
-    fn run_image(&self) -> Result<(), String> {
         let image = match self.image {
             None => {
                 if !self.quiet {
@@ -88,14 +89,30 @@ impl Run<'a> {
             Some(_) => None,
         };
 
-        let port = format!("{}:80", self.port.unwrap_or("8080"));
+        let image = image
+            .as_ref()
+            .map_or_else(|| self.image.unwrap(), |img| img);
 
-        let mut args = vec!["run", "-it", "-p", &port];
-        args.push(
-            image
-                .as_ref()
-                .map_or_else(|| self.image.unwrap(), |img| img),
-        );
+        if !self.no_build {
+            ::commands::Build::new(self.quiet, self.color, Some(image)).execute()?;
+        }
+
+        self.run_image(image)?;
+
+        Ok(())
+    }
+
+    fn run_image(&self, image: &str) -> Result<(), String> {
+        let port = format!("{}:80", self.port.unwrap_or("8080"));
+        let args = &[
+            "run",
+            "-it",
+            "-p",
+            &port,
+            "-e",
+            "AzureWebJobsStorage",
+            image,
+        ];
 
         if !self.quiet {
             print_running(&format!(
@@ -132,6 +149,7 @@ impl From<&'a ArgMatches<'a>> for Run<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Run {
             quiet: args.is_present("quiet"),
+            no_build: args.is_present("no-build"),
             color: args.value_of("color"),
             port: args.value_of("port"),
             image: args.value_of("image"),

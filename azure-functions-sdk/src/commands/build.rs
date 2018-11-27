@@ -37,6 +37,10 @@ impl Build<'a> {
             )
     }
 
+    pub fn new(quiet: bool, color: Option<&'a str>, tag: Option<&'a str>) -> Build<'a> {
+        Build { quiet, color, tag }
+    }
+
     fn set_colorization(&self) {
         ::colored::control::set_override(match self.color {
             Some("auto") | None => ::atty::is(Stream::Stdout),
@@ -121,10 +125,10 @@ impl Build<'a> {
 
 impl From<&'a ArgMatches<'a>> for Build<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
-        Build {
-            quiet: args.is_present("quiet"),
-            color: args.value_of("color"),
-            tag: args.value_of("tag"),
-        }
+        Build::new(
+            args.is_present("quiet"),
+            args.value_of("color"),
+            args.value_of("tag"),
+        )
     }
 }
