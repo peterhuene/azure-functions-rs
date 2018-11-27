@@ -39,10 +39,10 @@ dependencies = [
 
 [[package]]
 name = "azure-functions"
-version = "0.2.6"
+version = "0.3.0"
 dependencies = [
- "azure-functions-codegen 0.2.6",
- "azure-functions-shared 0.2.6",
+ "azure-functions-codegen 0.3.0",
+ "azure-functions-shared 0.3.0",
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -60,11 +60,11 @@ dependencies = [
 
 [[package]]
 name = "azure-functions"
-version = "0.2.6"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "azure-functions-codegen 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "azure-functions-shared 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions-codegen 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions-shared 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -81,9 +81,9 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-codegen"
-version = "0.2.6"
+version = "0.3.0"
 dependencies = [
- "azure-functions-shared 0.2.6",
+ "azure-functions-shared 0.3.0",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -92,10 +92,10 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-codegen"
-version = "0.2.6"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "azure-functions-shared 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions-shared 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-sdk"
-version = "0.2.6"
+version = "0.3.0"
 dependencies = [
  "atty 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -116,9 +116,9 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-shared"
-version = "0.2.6"
+version = "0.3.0"
 dependencies = [
- "azure-functions-shared-codegen 0.2.6",
+ "azure-functions-shared-codegen 0.3.0",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "grpcio 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -129,10 +129,10 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-shared"
-version = "0.2.6"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "azure-functions-shared-codegen 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions-shared-codegen 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "grpcio 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -143,7 +143,7 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-shared-codegen"
-version = "0.2.6"
+version = "0.3.0"
 dependencies = [
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.22 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -151,7 +151,7 @@ dependencies = [
 
 [[package]]
 name = "azure-functions-shared-codegen"
-version = "0.2.6"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -188,7 +188,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "blob-example"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -407,7 +407,7 @@ dependencies = [
 name = "http-example"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -578,7 +578,7 @@ dependencies = [
 name = "queue-example"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -841,7 +841,7 @@ dependencies = [
 name = "table-example"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -899,7 +899,7 @@ dependencies = [
 name = "timer-example"
 version = "0.1.0"
 dependencies = [
- "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "azure-functions 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1021,10 +1021,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum arrayref 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "0d382e583f07208808f6b1249e60848879ba3543f57c32277bf52d69c2f0f0ee"
 "checksum arrayvec 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)" = "a1e964f9e24d588183fcb43503abda40d288c8657dfc27311516ce2f05675aef"
 "checksum atty 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)" = "9a7d5b8723950951411ee34d271d99dddcc2035a16ab25310ea2c8cfd4369652"
-"checksum azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "92e3598dfc03667e64924bbf050a286b688e71a47a75d52cf2750afc4db9f48a"
-"checksum azure-functions-codegen 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "cf3d0768c71eb7387d7d133211222fdfad9210fd0ba132100d4b25798486d1d0"
-"checksum azure-functions-shared 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "1b972cabc597579dafe2abe30df9e3c931f587d00f4067b5f24971706cfbd26e"
-"checksum azure-functions-shared-codegen 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "04b8ff6e00910117ecb11426221867089f243072d940d1c030975807d55c2131"
+"checksum azure-functions 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "10c02dec5ab2385e4bfb46e0e2cf7fc76ffc8feb3625fb1a126a3169ff510ab0"
+"checksum azure-functions-codegen 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "340b7b3135c3f92ad2e0c5caff191def4f841344c758f0cae7ab8f468a565778"
+"checksum azure-functions-shared 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dd06d9ff0472a334d91fdce05c4e2a46a1d492d40ee4d736387886b8cba63290"
+"checksum azure-functions-shared-codegen 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ebde2684d5f1d1ad511c9b29caeb80640f5633bfebc1b95fd66d636093e627c3"
 "checksum backtrace 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)" = "89a47830402e9981c5c41223151efcced65a0510c13097c769cede7efb34782a"
 "checksum backtrace-sys 0.1.24 (registry+https://github.com/rust-lang/crates.io-index)" = "c66d56ac8dabd07f6aacdaf633f4b8262f5b3601a810a0dcddffd5c22c69daa0"
 "checksum bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "228047a76f468627ca71776ecdebd732a3423081fcf5125585bcd7c49886ce12"

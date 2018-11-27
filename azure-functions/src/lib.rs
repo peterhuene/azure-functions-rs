@@ -23,34 +23,31 @@
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
 //!
-//! # Examples
+//! # Example
 //!
-//! Start by creating a new binary package:
+//! Start by installing the Azure Functions for Rust SDK:
 //!
 //! ```bash
-//! $ cargo new --bin example
+//! $ cargo install azure-functions-sdk
 //! ```
 //!
-//! Edit `Cargo.toml` to include the following dependencies:
+//! Create a new Azure Functions for Rust application:
 //!
-//! ```toml
-//! azure-functions = "0.2.6"
-//! log = "0.4.2"
+//! ```bash
+//! $ cargo func new-app hello && cd hello
 //! ```
 //!
 //! Azure Functions are implemented by applying a `#[func]` attribute to a Rust function.
 //!
-//! For example, let's create `src/greet.rs` that implements a HTTP triggered function:
+//! For example, let's create `src/functions/hello.rs` that implements a HTTP triggered function:
 //!
-//! ```rust
-//! # extern crate azure_functions;
-//! # #[macro_use] extern crate log;
+//! ```rust,ignore
 //! use azure_functions::func;
 //! use azure_functions::bindings::{HttpRequest, HttpResponse};
 //!
 //! #[func]
 //! #[binding(name = "request", auth_level = "anonymous")]
-//! pub fn greet(request: &HttpRequest) -> HttpResponse {
+//! pub fn hello(request: &HttpRequest) -> HttpResponse {
 //!     // Log the request on the Azure Functions Host
 //!     info!("Request: {:?}", request);
 //!
@@ -61,40 +58,25 @@
 //!     ).into()
 //! }
 //! ```
-//!
-//! Replace the contents of `src/main.rs` with the following to export the function to
-//! the Azure Functions Host:
+//! Export the Azure Function by changing `src/functions/mod.rs` to:
 //!
 //! ```rust,ignore
-//! #[macro_use]
-//! extern crate log;
-//! extern crate azure_functions;
+//! mod hello;
 //!
-//! mod greet;
-//!
-//! pub fn main() {
-//!    azure_functions::worker_main(::std::env::args(), azure_functions::export!{ greet::greet });
-//! }
+//! pub const FUNCTIONS: &[&azure_functions::codegen::Function] = azure_functions::export! {
+//!     hello::hello,
+//! };
 //! ```
 //!
-//! Initialize the application with the `init` command, where `$AzureWebJobsScriptRoot` is
-//! the desired Azure Functions script root directory:
+//! Run the application with `cargo func run`:
 //!
 //! ```bash
-//! $ export AzureWebJobsScriptRoot=path-to-root
-//! $ cargo run -q -- init --worker-path /tmp/example/rust_worker --script-root /tmp/example/root
+//! $ cargo func run
 //! ```
 //!
-//! Run the [Azure Functions Host](https://github.com/azure/azure-functions-host):
+//! The above Azure Function can be invoked with `http://localhost:8080/api/hello?name=Peter`.
 //!
-//! ```bash
-//! $ cd azure-functions-host/src/WebJobs.Script.WebHost
-//! $ PATH=/tmp/example:$PATH AzureWebJobsScriptRoot=/tmp/example/root dotnet run
-//! ```
-//!
-//! The above Azure Function can be invoked with `http://localhost:5000/api/greet?name=John`.
-//!
-//! The expected response would be `Hello from Rust, John!`.
+//! The expected response would be `Hello from Rust, Peter!`.
 #![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
 #![feature(proc_macro_hygiene)]

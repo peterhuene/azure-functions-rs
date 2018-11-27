@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 
 [dependencies]
-azure-functions = "0.2.6"
+azure-functions = "0.3.0"
 log = "0.4.6"
