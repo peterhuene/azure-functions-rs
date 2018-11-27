@@ -304,14 +304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "example-table"
-version = "0.1.0"
-dependencies = [
- "azure-functions 0.2.6",
- "serde_json 1.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "example-timer"
 version = "0.1.0"
 dependencies = [
@@ -851,6 +843,15 @@ dependencies = [
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "table-example"
+version = "0.1.0"
+dependencies = [
+ "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
