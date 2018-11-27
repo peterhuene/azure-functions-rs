@@ -1,6 +1,7 @@
 #![feature(proc_macro_hygiene)]
 
 extern crate azure_functions;
+#[allow(unused_imports)]
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -8,15 +9,8 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-mod greet;
-mod greet_with_json;
+mod functions;
 
 pub fn main() {
-    azure_functions::worker_main(
-        ::std::env::args(),
-        azure_functions::export! {
-            greet::greet,
-            greet_with_json::greet_with_json
-        },
-    );
+    azure_functions::worker_main(::std::env::args(), functions::FUNCTIONS);
 }

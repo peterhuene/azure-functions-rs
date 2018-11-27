@@ -59,75 +59,20 @@ pub fn greet_with_json(req: &HttpRequest) -> HttpResponse {
 
 # Running the example locally
 
-## Prerequisites
+Run the example application with `cargo func run`:
 
-### Nightly Rust compiler
-
-This example requires the use of a nightly Rust compiler due the use of the experimental procedural macros feature.
-
-Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
-
-```
-rustup install nightly
-rustup default nightly
+```bash
+$ cargo func run
 ```
 
-### .NET Core SDK
-
-The Azure Functions Host is implemented with .NET Core, so download and install a [.NET Core SDK](https://www.microsoft.com/net/download).
-
-### Azure Functions Host
-
-Clone the Azure Functions Host from GitHub:
-
-```
-git clone git@github.com:azure/azure-functions-host.git
-```
-
-Use `dotnet` to build the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-dotnet build
-```
-
-## Register the Rust language worker
-
-The Azure Functions Host uses JSON configuration files to register language workers.
-
-Create the configuration file to register the Rust language worker:
-
-```
-mkdir azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-cp azure-functions-rs/azure-functions/worker.config.json azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-```
-
-## Initialize the example application
-
-Run the following command to build and initialize the Rust Azure Functions application:
-
-```
-cd azure-functions-rs/examples/http
-cargo run --release -- init --worker-path /tmp/http-example/rust_worker --script-root /tmp/http-example/root
-```
-
-## Start the Azure Functions Host
-
-Run the following commands to start the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-PATH=/tmp/http-example:$PATH AzureWebJobsScriptRoot=/tmp/http-example/root dotnet run
-```
-
-_Note: the syntax above works on macOS and Linux; on Windows, set the `AzureWebJobsScriptRoot` environment variable before running `dotnet run`._
+# Invoking the functions
 
 ## Invoke the `greet` function
 
 The easiest way to invoke the function is to use `curl`:
 
 ```
-curl localhost:5000/api/greet\?name=Peter
+$ curl localhost:8080/api/greet\?name=Peter
 ```
 
 With any luck, you should see the following output:
@@ -141,7 +86,7 @@ Hello from Rust, Peter!
 The easiest way to invoke the function is to use `curl`:
 
 ```
-curl --header "Content-Type: application/json" -d '{"name": "Peter"}' http://localhost:5000/api/greet_with_json
+$ curl --header "Content-Type: application/json" -d '{"name": "Peter"}' http://localhost:8080/api/greet_with_json
 ```
 
 With any luck, you should see the following output:
