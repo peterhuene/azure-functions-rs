@@ -104,7 +104,15 @@ impl Run<'a> {
 
     fn run_image(&self, image: &str) -> Result<(), String> {
         let port = format!("{}:80", self.port.unwrap_or("8080"));
-        let args = &["run", "-it", "-p", &port, image];
+        let args = &[
+            "run",
+            "-it",
+            "-p",
+            &port,
+            "-e",
+            "AzureWebJobsStorage",
+            image,
+        ];
 
         if !self.quiet {
             print_running(&format!(
