@@ -304,14 +304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "example-queue"
-version = "0.1.0"
-dependencies = [
- "azure-functions 0.2.6",
- "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "example-table"
 version = "0.1.0"
 dependencies = [
@@ -596,6 +588,14 @@ dependencies = [
  "protobuf-codegen 2.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "protoc 2.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "queue-example"
+version = "0.1.0"
+dependencies = [
+ "azure-functions 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

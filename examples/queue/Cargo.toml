@@ -1,8 +1,9 @@
 [package]
-name = "example-queue"
+name = "queue-example"
 version = "0.1.0"
-authors = ["Peter Huene <peterhuene@protonmail.com>"]
+authors = ["Peter Huene <peterehuene@protonmail.com>"]
+edition = "2018"
 
 [dependencies]
-azure-functions = { path = "../../azure-functions" }
+azure-functions = "0.2.6"
 log = "0.4.6"

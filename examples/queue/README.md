@@ -38,77 +38,26 @@ pub fn queue_with_output(trigger: &QueueTrigger) -> QueueMessage {
 
 # Running the example locally
 
-## Prerequisites
+Because this example relies on Azure Storage to function, the `AzureWebJobsStorage` environment
+variable must be set to a connection string that the Azure Functions Host will use for the default
+storage connection.
 
-### Nightly Rust compiler
+To run with the `AzureWebJobsStorage` environment variable set:
 
-This example requires the use of a nightly Rust compiler due the use of the experimental procedural macros feature.
-
-Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
-
-```
-rustup install nightly
-rustup default nightly
+```bash
+$ AzureWebJobsStorage="<insert connection string here>" cargo func run
 ```
 
-### .NET Core SDK
+_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `cargo func run`._
 
-The Azure Functions Host is implemented with .NET Core, so download and install a [.NET Core SDK](https://www.microsoft.com/net/download).
-
-### Azure Functions Host
-
-Clone the Azure Functions Host from GitHub:
-
-```
-git clone git@github.com:azure/azure-functions-host.git
-```
-
-Use `dotnet` to build the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-dotnet build
-```
-
-## Register the Rust language worker
-
-The Azure Functions Host uses JSON configuration files to register language workers.
-
-Create the configuration file to register the Rust language worker:
-
-```
-mkdir azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-cp azure-functions-rs/azure-functions/worker.config.json azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-```
-
-## Initialize the example application
-
-Run the following command to build and initialize the Rust Azure Functions application:
-
-```
-cd azure-functions-rs/examples/queue
-cargo run --release -- init --worker-path /tmp/queue-example/rust_worker --script-root /tmp/queue-example/root
-```
-
-## Start the Azure Functions Host
-
-Run the following commands to start the Azure Functions Host:
-
-```
-cd azure-functions-host/src/WebJobs.Script.WebHost
-PATH=/tmp/queue-example:$PATH AzureWebJobsScriptRoot=/tmp/queue-example/root AzureWebJobsStorage=$CONNECTION_STRING dotnet run
-```
-
-Where `$CONNECTION_STRING` is the Azure Storage connection string the Azure Functions host should use.
-
-_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `dotnet run`._
+# Invoking the functions
 
 ## Invoke the `queue` function
 
 To invoke the queue function from this example, create an Azure Storage Queue named `test` for the Azure Storage account
-that was used for the `$CONNECTION_STRING` variable above.
+that was used when running the application.
 
-Post a `hello world!` message to the queue.
+Post a `hello world!` message to the queue using the Azure Portal.
 
 With any luck, you should see the following output from the Azure Functions Host:
 
@@ -125,6 +74,6 @@ info: Function.queue[0]
 
 ## Invoke the `queue_with_output` function
 
-To invoke the `queue_with_output` function, post a message to the `echo-in` queue.
+To invoke the `queue_with_output` function, post a message to the `echo-in` queue using the Azure Portal.
 
 After the function invokes, you should see the same message posted back to the `echo-out` queue.
