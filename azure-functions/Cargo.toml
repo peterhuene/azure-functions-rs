@@ -21,7 +21,7 @@ serde_derive = "1.0.79"
 chrono = { version = "0.4.6", features = ["serde"] }
 xml-rs = "0.8.0"
 lazy_static = "1.2.0"
-tempfile = "3.0.4"
+tempfile = "3.0.5"
 
 [dev-dependencies]
 matches = "0.1.8"
