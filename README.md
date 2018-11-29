@@ -284,3 +284,88 @@ Use `cargo test` to run the tests:
 ```
 $ cargo test
 ```
+
+## Running with a native Azure Functions Host
+
+The `cargo func run` command builds and runs the Azure Functions application with Docker and runs the Azure Functions Host in a Linux container.
+
+It is possible to instead run the Rust application natively using a locally running Azure Functions Host.
+
+### Clone the Azure Functions Host repository
+
+Clone the [Azure Functions Host](https://github.com/Azure/azure-functions-host) repository to a local directory:
+
+```
+$ git clone git@github.com:Azure/azure-functions-host.git
+```
+
+### Install a .NET Core SDK
+
+The Azure Functions Host is implemented with .NET Core.
+
+Install the latest [.NET Core SDK](https://dotnet.microsoft.com/download) so you can build and run the Azure Functions Host.
+
+### Build the Azure Functions for Rust application
+
+Build your test Azure Functions for Rust application using `cargo run` instead of `cargo func build`:
+
+```
+$ cargo run --release -- init --script-root ./root --worker-path ./root/rust_worker --sync
+```
+
+This command will create your Azure Functions App in `./root`.  The Azure Functions Host will be
+configured to use this location for the application later.
+
+### Configure the Azure Funtions Host
+
+Start by building the Azure Functions Host:
+
+```
+$ cd azure-functions-host/src/WebJobs.Script.WebHost
+$ dotnet build
+```
+
+For the Azure Functions Host to support Rust, we need to copy the worker configuration file to the appropriate location:
+
+```
+$ mkdir azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
+$ cp azure-functions-rs/azure-functions/worker.config.json azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust/
+```
+
+If you want to change the default logging level of the host, add the following to `azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/appsettings.json`:
+
+```json
+{
+    "AzureFunctionsJobHost": {
+        "Logging": {
+            "Console": {
+                "IsEnabled": true
+            },
+            "LogLevel": {
+                "Default": "Information"
+            }
+        }
+    }
+}
+```
+
+### Start the Azure Functions Host
+
+There are three thigns the Azure Funcions Host needs to know to run the Rust application:
+
+* The path to the "script root" (e.g. `./root` above in the "Building the Azure Functions for Rust application" section).
+* The location of the Rust worker (built by `cargo run` above).
+* The default connection string to use for Azure Storage services (needed for most bindings).  This can be found under the "Access Keys" settings for your Azure Storage account.
+
+
+Run the Azure Functions Host with the necessary environment:
+
+```
+$ export AzureWebJobsScriptRoot=<full_path_to_script_root>
+$ export AzureWebJobsStorage=<storage_connection_string>
+$ export PATH=$PATH:$AzureWebJobsScriptRoot
+$ cd azure-functions-host/src/WebJobs.Script.WebHost
+$ dotnet run
+```
+
+The Azure Functions Host should start and can now access your Azure Functions application via `http://localhost:5000`.
