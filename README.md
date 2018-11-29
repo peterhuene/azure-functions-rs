@@ -51,8 +51,8 @@ The Azure Functions for Rust SDK requires the use of a nightly Rust compiler due
 Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
 
 ```
-rustup install nightly
-rustup default nightly
+$ rustup install nightly
+$ rustup default nightly
 ```
 
 ## Installing the Azure Functions for Rust SDK
@@ -119,20 +119,33 @@ In the future, there will be a `cargo func deploy` command to deploy the Azure F
 
 Until that time, you must manually push the Docker image to a repository that can be accessed by Azure.
 
+Start by building your image with `cargo func build`:
+
+```
+$ cargo func build
+```
+
+This creates a tag named `azure-functions/<name>` where `<name>` is the name of your Rust crate.
+
+While this is a useful tag for running the Azure Functions application locally, it's not useful for pushing the image to a remote repository.
+
+Create a new tag that is for the proper user for your repository:
+
+```
+$ docker tag azure-functions/<name> <user>/<name>
+```
+
 Use `docker push` to push the image that was previously built with `cargo func build`:
 
 ```
-docker push $IMAGE
+$ docker push <new-tag-name>
 ```
 
-Create the Function App in [Azure](https://portal.azure.com) using the Docker "OS", specifying the image that was pushed:
+Create the Function App in [Azure](https://portal.azure.com) using the "Linux (Preview)" OS.  Under the "Publish" setting, select "Docker Image".
 
-![Azure Portal](docs/images/create-function-app.png)
+From the "Configure Container" section, select the repository and enter the image you pushed.
 
-Add a new setting for `WEBSITES_ENABLE_APP_SERVICE_STORAGE` under `Application Settings` and set it to `false`.
-This will enable the Docker image itself to provide the service storage (i.e. script root and worker).
-
-Finally, restart the Function App.  After the application has initialized again, your Rust Azure Functions should be displayed in the Azure Portal.
+That's it! Once the Functions App starts in Azure, you should be able to view the functions and run them.
 
 # Azure Functions Bindings
 
@@ -241,7 +254,7 @@ This repository uses a git submodule for defining the [Azure Functions Language 
 Use `--recurse-submodules` when cloning this repository:
 
 ```
-git clone --recurse-submodules git@github.com:peterhuene/azure-functions-rs.git
+$ git clone --recurse-submodules git@github.com:peterhuene/azure-functions-rs.git
 ```
 
 ## Repository Layout
