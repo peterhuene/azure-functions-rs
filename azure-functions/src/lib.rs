@@ -61,10 +61,8 @@
 //! Export the Azure Function by changing `src/functions/mod.rs` to:
 //!
 //! ```rust,ignore
-//! mod hello;
-//!
-//! pub const FUNCTIONS: &[&azure_functions::codegen::Function] = azure_functions::export! {
-//!     hello::hello,
+//! azure_functions::export! {
+//!     hello,
 //! };
 //! ```
 //!
@@ -90,8 +88,6 @@ extern crate matches;
 #[macro_use]
 extern crate lazy_static;
 
-use proc_macro_hack::proc_macro_hack;
-
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;
 
@@ -109,7 +105,6 @@ pub mod http;
 #[doc(hidden)]
 pub mod rpc;
 pub mod timer;
-#[proc_macro_hack]
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;
 pub use azure_functions_shared::Context;
@@ -626,7 +621,7 @@ fn run_worker(
 /// # Examples
 ///
 /// ```rust,ignore
-/// pub fn main() {
+/// fn main() {
 ///     azure_functions::worker_main(::std::env::args(), export!{
 ///         my_module::my_function
 ///     });

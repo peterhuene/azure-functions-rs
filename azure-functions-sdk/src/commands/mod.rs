@@ -12,8 +12,10 @@ macro_rules! templates {
     };
 }
 
+mod new;
 mod new_app;
 mod run;
 
+pub use self::new::*;
 pub use self::new_app::*;
 pub use self::run::*;

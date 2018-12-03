@@ -2,8 +2,6 @@
 //!
 //! This crate supports code generation for the `azure-functions-shared` crate.
 #![deny(unused_extern_crates)]
-//#![deny(missing_docs)]
-
 extern crate proc_macro;
 
 use proc_macro::TokenStream;

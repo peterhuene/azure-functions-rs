@@ -12,6 +12,7 @@ pub mod codegen;
 mod context;
 
 #[doc(hidden)]
+#[allow(renamed_and_removed_lints)]
 pub mod rpc {
     pub mod protocol {
         use azure_functions_shared_codegen::generated_mod;

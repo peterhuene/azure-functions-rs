@@ -1,0 +1,10 @@
+use azure_functions::{
+    bindings::TimerInfo,
+    func,
+};
+
+#[func]
+#[binding(name = "trigger", schedule = "{{schedule}}")]
+pub fn {{name}}(trigger: &TimerInfo) {
+    // function will execute at the scheduled interval
+}
