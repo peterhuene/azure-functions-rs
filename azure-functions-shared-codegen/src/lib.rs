@@ -1,11 +1,10 @@
 //! # Azure Functions for Rust
 //!
 //! This crate supports code generation for the `azure-functions-shared` crate.
-
-#![feature(rust_2018_preview)]
+#![deny(unused_extern_crates)]
+//#![deny(missing_docs)]
 
 extern crate proc_macro;
-extern crate syn;
 #[macro_use]
 extern crate quote;
 

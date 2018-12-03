@@ -1,6 +1,6 @@
-use bindings::Trigger;
-use http::Body;
-use rpc::protocol;
+use crate::bindings::Trigger;
+use crate::http::Body;
+use crate::rpc::protocol;
 use std::collections::HashMap;
 
 /// Represents a HTTP trigger binding.

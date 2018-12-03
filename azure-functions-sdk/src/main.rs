@@ -58,25 +58,19 @@
 //! $ curl http://localhost:8080/api/hello\?name\=John
 //! Hello from Rust, John!
 //! ```
-#![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 
-extern crate atty;
-extern crate clap;
-extern crate colored;
-extern crate handlebars;
 #[macro_use]
 extern crate serde_json;
-extern crate toml;
 
 mod commands;
 mod util;
 
+use crate::commands::{Build, NewApp, Run};
 use clap::{App, AppSettings};
 use colored::Colorize;
-use commands::{Build, NewApp, Run};
 use std::env;
 use std::process;
 

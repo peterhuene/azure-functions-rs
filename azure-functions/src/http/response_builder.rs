@@ -1,5 +1,5 @@
-use bindings::HttpResponse;
-use http::{Body, Status};
+use crate::bindings::HttpResponse;
+use crate::http::{Body, Status};
 
 /// Represents a builder for HTTP responses.
 #[derive(Default, Debug)]

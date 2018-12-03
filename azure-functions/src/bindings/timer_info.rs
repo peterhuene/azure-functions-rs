@@ -1,8 +1,8 @@
-use bindings::Trigger;
-use rpc::protocol;
+use crate::bindings::Trigger;
+use crate::rpc::protocol;
+use crate::timer::ScheduleStatus;
 use serde_json::from_str;
 use std::collections::HashMap;
-use timer::ScheduleStatus;
 
 /// Represents the timer information from a timer trigger binding.
 ///

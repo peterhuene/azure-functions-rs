@@ -1,8 +1,8 @@
-use func::TRIGGERS;
-use func::{OutputBindings, CONTEXT_TYPE_NAME};
+use crate::func::TRIGGERS;
+use crate::func::{OutputBindings, CONTEXT_TYPE_NAME};
+use crate::util::{last_segment_in_path, to_camel_case};
 use quote::ToTokens;
 use syn::{FnArg, Ident, ItemFn, Pat, Type, TypeReference};
-use util::{last_segment_in_path, to_camel_case};
 
 const INVOKER_PREFIX: &str = "__invoke_";
 

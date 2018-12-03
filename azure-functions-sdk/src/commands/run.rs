@@ -1,8 +1,8 @@
+use crate::util::{print_failure, print_running, print_success, read_crate_name};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
 use std::process::Command;
-use util::{print_failure, print_running, print_success, read_crate_name};
 
 pub struct Run<'a> {
     quiet: bool,
@@ -94,7 +94,7 @@ impl Run<'a> {
             .map_or_else(|| self.image.unwrap(), |img| img);
 
         if !self.no_build {
-            ::commands::Build::new(self.quiet, self.color, Some(image)).execute()?;
+            crate::commands::Build::new(self.quiet, self.color, Some(image)).execute()?;
         }
 
         self.run_image(image)?;

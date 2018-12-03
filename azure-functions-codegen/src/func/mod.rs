@@ -9,6 +9,7 @@ pub use self::function::*;
 pub use self::invoker::*;
 pub use self::output_bindings::*;
 
+use crate::util::{last_segment_in_path, path_to_string, AttributeArguments};
 use azure_functions_shared::codegen;
 use proc_macro::{Diagnostic, TokenStream};
 use proc_macro2::Span;
@@ -20,7 +21,6 @@ use syn::{
     parse, token::Mut, Attribute, FnArg, GenericArgument, Ident, ItemFn, Lit, Pat, PathArguments,
     PathSegment, ReturnType, Type, Visibility,
 };
-use util::{last_segment_in_path, path_to_string, AttributeArguments};
 
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
@@ -35,7 +35,7 @@ fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
                 .fn_token
                 .span()
                 .unstable()
-                .error("the 'func' attribute can only be used on public functions"))
+                .error("the 'func' attribute can only be used on public functions"));
         }
     };
 

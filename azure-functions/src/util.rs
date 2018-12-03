@@ -1,4 +1,4 @@
-use rpc::protocol;
+use crate::rpc::protocol;
 use serde::de::IntoDeserializer;
 use serde::Deserialize;
 use serde_json::from_str;

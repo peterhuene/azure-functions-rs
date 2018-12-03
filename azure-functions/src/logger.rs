@@ -1,6 +1,6 @@
+use crate::rpc::{protocol, Sender};
 use futures::{Future, Sink};
 use log::{Level, Log, Metadata, Record};
-use rpc::{protocol, Sender};
 use std::cell::RefCell;
 
 thread_local!(pub static INVOCATION_ID: RefCell<String> = RefCell::new(String::new()));

@@ -1,7 +1,7 @@
+use crate::util::{last_segment_in_path, to_camel_case};
 use quote::ToTokens;
 use syn::ItemFn;
 use syn::{FnArg, GenericArgument, Ident, Pat, PathArguments, ReturnType, Type, TypeReference};
-use util::{last_segment_in_path, to_camel_case};
 
 pub struct OutputBindings<'a>(pub &'a ItemFn);
 
@@ -29,7 +29,7 @@ impl OutputBindings<'a> {
                         if OutputBindings::is_unit_tuple(ty) {
                             return None;
                         }
-                        let name = format!("{}{}", ::func::OUTPUT_BINDING_PREFIX, i);
+                        let name = format!("{}{}", crate::func::OUTPUT_BINDING_PREFIX, i);
 
                         if OutputBindings::is_option_type(ty) {
                             Some(quote!(

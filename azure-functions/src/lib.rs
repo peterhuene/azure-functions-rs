@@ -77,33 +77,21 @@
 //! The above Azure Function can be invoked with `http://localhost:8080/api/hello?name=Peter`.
 //!
 //! The expected response would be `Hello from Rust, Peter!`.
-#![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
 #![feature(proc_macro_hygiene)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 #![cfg_attr(test, recursion_limit = "128")]
 
-extern crate azure_functions_codegen;
-extern crate azure_functions_shared;
-extern crate clap;
-extern crate futures;
-extern crate grpcio;
-extern crate log;
-extern crate serde;
 #[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-extern crate chrono;
-extern crate tokio_threadpool;
 #[cfg(test)]
 #[macro_use(matches)]
 extern crate matches;
-extern crate xml;
 #[macro_use]
 extern crate lazy_static;
-extern crate tempfile;
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;
@@ -126,8 +114,8 @@ pub mod timer;
 pub use azure_functions_codegen::export;
 pub use azure_functions_shared::Context;
 
+use crate::registry::Registry;
 use futures::Future;
-use registry::Registry;
 use serde::Serialize;
 use serde_json::Serializer;
 use std::env::{current_dir, current_exe};

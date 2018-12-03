@@ -1,7 +1,6 @@
 //! # Azure Functions for Rust
 //!
 //! This crate supports the code generation for the `azure-functions` crate.
-#![feature(rust_2018_preview)]
 #![feature(in_band_lifetimes)]
 #![feature(proc_macro_diagnostic)]
 #![feature(drain_filter)]
@@ -9,11 +8,9 @@
 #![recursion_limit = "128"]
 #![deny(unused_extern_crates)]
 
-extern crate azure_functions_shared;
 #[macro_use]
 extern crate lazy_static;
 extern crate proc_macro;
-extern crate proc_macro2;
 #[macro_use]
 extern crate syn;
 #[macro_use]
