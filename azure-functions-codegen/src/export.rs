@@ -1,8 +1,8 @@
+use crate::util::PathVec;
 use proc_macro::TokenStream;
 use std::convert::TryFrom;
 use std::fmt::Write;
 use syn::{parse_str, Expr};
-use util::PathVec;
 
 pub fn attr_impl(input: TokenStream) -> TokenStream {
     let funcs = match PathVec::try_from(input.clone()) {

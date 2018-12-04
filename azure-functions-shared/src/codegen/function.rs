@@ -1,5 +1,5 @@
-use codegen::Binding;
-use rpc::protocol;
+use crate::codegen::Binding;
+use crate::rpc::protocol;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 

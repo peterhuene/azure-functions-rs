@@ -1,9 +1,9 @@
-use bindings::{Blob, Trigger};
-use blob::Properties;
-use rpc::protocol;
+use crate::bindings::{Blob, Trigger};
+use crate::blob::Properties;
+use crate::rpc::protocol;
+use crate::util::convert_from;
 use serde_json::from_str;
 use std::collections::HashMap;
-use util::convert_from;
 
 const PATH_KEY: &str = "BlobTrigger";
 const URI_KEY: &str = "Uri";
@@ -83,7 +83,7 @@ impl Trigger for BlobTrigger {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use blob::*;
+    use crate::blob::*;
     use chrono::Utc;
     use serde_json::to_string;
 

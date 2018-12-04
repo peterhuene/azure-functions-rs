@@ -1,4 +1,4 @@
-use codegen::Direction;
+use crate::codegen::Direction;
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
 

@@ -1,3 +1,4 @@
+use crate::util::{print_failure, print_running, print_success};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
@@ -7,7 +8,6 @@ use std::fs::{create_dir_all, OpenOptions};
 use std::io::{stdout, Write};
 use std::path::Path;
 use std::process::Command;
-use util::{print_failure, print_running, print_success};
 
 pub struct NewApp<'a> {
     path: &'a str,

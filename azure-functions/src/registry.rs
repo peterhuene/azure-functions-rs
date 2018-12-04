@@ -1,5 +1,4 @@
-use codegen::bindings;
-use codegen::Function;
+use crate::codegen::{bindings, Function};
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
@@ -104,7 +103,7 @@ impl<'a> Registry<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codegen::{Binding, Direction};
+    use crate::codegen::{Binding, Direction};
     use std::borrow::Cow;
 
     #[test]

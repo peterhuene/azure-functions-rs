@@ -1,8 +1,8 @@
+use crate::util::{print_failure, print_running, print_success, read_crate_name};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
 use std::process::Command;
-use util::{print_failure, print_running, print_success, read_crate_name};
 
 pub struct Build<'a> {
     quiet: bool,

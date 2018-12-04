@@ -1,4 +1,4 @@
-use rpc::protocol;
+use crate::rpc::protocol;
 use serde_json::{from_str, Map, Value};
 use std::fmt;
 

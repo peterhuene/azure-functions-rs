@@ -1,6 +1,6 @@
 //! Module for Azure Functions bindings.
 
-use rpc::protocol;
+use crate::rpc::protocol;
 use std::collections::HashMap;
 
 mod blob;

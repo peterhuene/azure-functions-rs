@@ -1,5 +1,6 @@
+use crate::func::Binding;
+use crate::util::{AttributeArguments, QuotableBorrowedStr, QuotableOption};
 use azure_functions_shared::codegen;
-use func::Binding;
 use proc_macro::{Diagnostic, TokenStream};
 use proc_macro2::Span;
 use quote::ToTokens;
@@ -7,7 +8,6 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::{Ident, Lit};
-use util::{AttributeArguments, QuotableBorrowedStr, QuotableOption};
 
 pub struct Function<'a>(pub Cow<'a, codegen::Function>);
 

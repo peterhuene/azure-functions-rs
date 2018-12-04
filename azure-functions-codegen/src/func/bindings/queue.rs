@@ -1,3 +1,4 @@
+use crate::util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOption};
 use azure_functions_shared::codegen;
 use proc_macro::Diagnostic;
 use quote::ToTokens;
@@ -5,7 +6,6 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::Lit;
-use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOption};
 
 pub struct Queue<'a>(pub Cow<'a, codegen::bindings::Queue>);
 

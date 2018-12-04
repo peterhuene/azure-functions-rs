@@ -1,5 +1,5 @@
-use http::{Body, ResponseBuilder, Status};
-use rpc::protocol;
+use crate::http::{Body, ResponseBuilder, Status};
+use crate::rpc::protocol;
 use std::collections::HashMap;
 
 /// Represents a HTTP output binding.

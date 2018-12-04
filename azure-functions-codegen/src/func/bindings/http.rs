@@ -1,3 +1,4 @@
+use crate::util::{to_camel_case, AttributeArguments, QuotableBorrowedStr};
 use azure_functions_shared::codegen;
 use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
@@ -6,7 +7,6 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::Lit;
-use util::{to_camel_case, AttributeArguments, QuotableBorrowedStr};
 
 pub struct Http<'a>(pub Cow<'a, codegen::bindings::Http>);
 

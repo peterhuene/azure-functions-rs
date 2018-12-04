@@ -1,14 +1,14 @@
-use azure_functions_shared::codegen;
-use func::bindings::{
+use crate::func::bindings::{
     Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table, TimerTrigger,
 };
+use crate::util::AttributeArguments;
+use azure_functions_shared::codegen;
 use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::convert::TryFrom;
-use util::AttributeArguments;
 
 pub struct Binding<'a>(pub &'a codegen::Binding);
 

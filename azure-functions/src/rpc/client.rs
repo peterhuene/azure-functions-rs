@@ -1,11 +1,11 @@
+use crate::logger;
+use crate::registry::Registry;
 use azure_functions_shared::rpc::protocol;
 use futures::future::{lazy, ok};
 use futures::sync::mpsc;
 use futures::{Future, Sink, Stream};
 use grpcio::{ChannelBuilder, ClientDuplexReceiver, EnvBuilder, WriteFlags};
 use log::{self, error};
-use logger;
-use registry::Registry;
 use std::cell::RefCell;
 use std::panic::{self, AssertUnwindSafe};
 use std::sync::{Arc, Mutex};

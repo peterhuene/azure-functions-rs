@@ -1,4 +1,4 @@
-use codegen::bindings;
+use crate::codegen::bindings;
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
