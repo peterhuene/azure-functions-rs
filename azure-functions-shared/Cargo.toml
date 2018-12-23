@@ -13,7 +13,7 @@ azure-functions-shared-codegen = { version = "0.3.0", path = "../azure-functions
 protobuf = "2.0.5"
 grpcio = "0.4.1"
 futures = "0.1.24"
-serde = "1.0.79"
+serde = "1.0.82"
 serde_derive = "1.0.82"
 
 [build-dependencies]
