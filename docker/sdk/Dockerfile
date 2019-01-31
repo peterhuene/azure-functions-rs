@@ -9,7 +9,7 @@ RUN    apt-get update \
     && wget -q https://packages.microsoft.com/config/debian/9/prod.list \
     && mv prod.list /etc/apt/sources.list.d/microsoft-prod.list \
     && apt-get update \
-    && apt-get install -y cmake g++ golang dotnet-sdk-2.1 \
+    && apt-get install -y cmake g++ libssl-dev dotnet-sdk-2.1 \
     && apt-get remove -y --purge wget \
     && apt-get autoremove -y
 

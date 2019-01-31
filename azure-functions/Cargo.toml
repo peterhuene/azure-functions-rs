@@ -11,8 +11,8 @@ edition = "2018"
 [dependencies]
 azure-functions-shared = { version = "0.3.0", path = "../azure-functions-shared" }
 azure-functions-codegen = { version = "0.3.0", path = "../azure-functions-codegen" }
-log = {version = "0.4.6", features = ["std"] }
-grpcio = "0.4.1"
+log = { version = "0.4.6", features = ["std"] }
+grpcio = { version = "0.4.1", features = ["openssl"] }
 futures = "0.1.24"
 clap = "2.32.0"
 tokio-threadpool = "0.1.10"

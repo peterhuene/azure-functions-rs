@@ -269,6 +269,29 @@ This repository is split into multiple Rust crates:
 * [azure-functions-shared-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared-codegen) - The `azure-functions-shared-codegen` crate that defines the procedural macros used by the shared `azure-functions-shared` crate.
 * [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) - The directory containing example Azure Functions.
 
+## Installing development dependencies
+
+An OpenSSL library is required to build the `grpcio` dependency of Azure Functions for Rust.
+
+### Installing OpenSSL on macOS
+
+Use Homebrew to install the `openssl` package:
+
+```
+$ brew install openssl
+$ export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+```
+
+Note that the `OPENSSL_ROOT_DIR` variable is only required when having to build the dependencies of Azure Functions for Rust.
+
+### Installing OpenSSL on Ubuntu / Debian
+
+Use `apt-get` to install the OpenSSL development package:
+
+```
+$ sudo apt-get install libssl-dev
+```
+
 ## Building
 
 Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo build`:
