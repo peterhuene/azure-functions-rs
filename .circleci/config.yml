@@ -16,12 +16,13 @@ jobs:
             cargo fmt --version || true
             cargo fmt -- --check
             git diff
-      - run:
-          name: Check for linter errors
-          command: |
-            cargo clippy --version || true
-            # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
-            cargo clippy
+      # Disabling lint check until the component shows up again in nightly
+      # - run:
+      #     name: Check for linter errors
+      #     command: |
+      #       cargo clippy --version || true
+      #       # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
+      #       cargo clippy
       - run:
           name: Build
           command: cargo build --release --features compile_protobufs

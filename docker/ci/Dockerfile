@@ -2,14 +2,13 @@ FROM rustlang/rust:nightly-slim
 LABEL MAINTAINER Peter Huene <peterhuene@protonmail.com>
 
 RUN    rustup component add rustfmt-preview --toolchain nightly \
-    && rustup component add clippy-preview --toolchain nightly \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y wget unzip \
     && wget https://github.com/google/protobuf/releases/download/v3.6.0/protoc-3.6.0-linux-x86_64.zip \
     && unzip protoc-3.6.0-linux-x86_64.zip -d /usr \
     && rm protoc-3.6.0-linux-x86_64.zip \
-    && apt-get install -y g++ cmake libssl-dev pkg-config golang git \
+    && apt-get install -y g++ cmake libssl-dev git \
     && apt-get remove -y --purge wget unzip \
     && apt-get autoremove -y;
 
