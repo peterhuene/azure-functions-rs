@@ -77,8 +77,6 @@
 //! The above Azure Function can be invoked with `http://localhost:8080/api/hello?name=Peter`.
 //!
 //! The expected response would be `Hello from Rust, Peter!`.
-#![feature(in_band_lifetimes)]
-#![feature(proc_macro_hygiene)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 #![cfg_attr(test, recursion_limit = "128")]

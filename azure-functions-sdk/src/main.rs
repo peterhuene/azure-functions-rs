@@ -58,7 +58,6 @@
 //! $ curl http://localhost:8080/api/hello\?name\=John
 //! Hello from Rust, John!
 //! ```
-#![feature(in_band_lifetimes)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 
@@ -74,7 +73,7 @@ use colored::Colorize;
 use std::env;
 use std::process;
 
-fn create_app() -> App<'a, 'b> {
+fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Azure Functions for Rust")
         .bin_name("cargo func")
         .version(env!("CARGO_PKG_VERSION"))

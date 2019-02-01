@@ -1,10 +1,6 @@
 //! # Azure Functions for Rust
 //!
 //! This crate supports the code generation for the `azure-functions` crate.
-#![feature(in_band_lifetimes)]
-#![feature(proc_macro_diagnostic)]
-#![feature(drain_filter)]
-#![feature(try_from)]
 #![recursion_limit = "128"]
 #![deny(unused_extern_crates)]
 

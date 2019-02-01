@@ -1,8 +1,6 @@
 //! # Azure Functions for Rust
 //!
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
-#![feature(in_band_lifetimes)]
-#![feature(proc_macro_hygiene)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 

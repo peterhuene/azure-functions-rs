@@ -10,8 +10,8 @@ pub struct Build<'a> {
     tag: Option<&'a str>,
 }
 
-impl Build<'a> {
-    pub fn create_subcommand() -> App<'a, 'b> {
+impl<'a> Build<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("build")
             .about("Builds a Docker image for the Azure Functions application.")
             .arg(
@@ -123,7 +123,7 @@ impl Build<'a> {
     }
 }
 
-impl From<&'a ArgMatches<'a>> for Build<'a> {
+impl<'a> From<&'a ArgMatches<'a>> for Build<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Build::new(
             args.is_present("quiet"),

@@ -12,8 +12,8 @@ pub struct Run<'a> {
     image: Option<&'a str>,
 }
 
-impl Run<'a> {
-    pub fn create_subcommand() -> App<'a, 'b> {
+impl<'a> Run<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("run")
             .about("Runs an Azure Functions application in a Docker container.")
             .arg(
@@ -145,7 +145,7 @@ impl Run<'a> {
     }
 }
 
-impl From<&'a ArgMatches<'a>> for Run<'a> {
+impl<'a> From<&'a ArgMatches<'a>> for Run<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Run {
             quiet: args.is_present("quiet"),
