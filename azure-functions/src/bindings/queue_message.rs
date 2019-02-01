@@ -84,7 +84,7 @@ impl QueueMessage {
     }
 
     /// Deserializes the blob as JSON to the requested type.
-    pub fn as_json<T>(&'b self) -> Result<T>
+    pub fn as_json<'b, T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -101,7 +101,7 @@ impl fmt::Display for QueueMessage {
     }
 }
 
-impl From<&'a str> for QueueMessage {
+impl<'a> From<&'a str> for QueueMessage {
     fn from(content: &'a str) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_string(content.to_owned());
@@ -133,7 +133,7 @@ impl From<Value> for QueueMessage {
     }
 }
 
-impl From<&'a [u8]> for QueueMessage {
+impl<'a> From<&'a [u8]> for QueueMessage {
     fn from(content: &'a [u8]) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_bytes(content.to_owned());

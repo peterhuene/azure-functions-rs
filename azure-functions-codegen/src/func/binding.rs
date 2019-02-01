@@ -1,14 +1,12 @@
 use crate::func::bindings::{
     Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table, TimerTrigger,
 };
-use crate::util::AttributeArguments;
+use crate::util::{AttributeArguments, MacroError, TryFrom};
 use azure_functions_shared::codegen;
-use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::convert::TryFrom;
 
 pub struct Binding<'a>(pub &'a codegen::Binding);
 
@@ -52,7 +50,7 @@ impl ToTokens for Binding<'_> {
     }
 }
 
-pub type BindingFactory = fn(AttributeArguments) -> Result<codegen::Binding, Diagnostic>;
+pub type BindingFactory = fn(AttributeArguments) -> Result<codegen::Binding, MacroError>;
 type BindingMap = HashMap<&'static str, BindingFactory>;
 
 lazy_static! {

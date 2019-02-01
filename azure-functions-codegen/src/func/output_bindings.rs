@@ -1,11 +1,12 @@
 use crate::util::{last_segment_in_path, to_camel_case};
+use quote::quote;
 use quote::ToTokens;
 use syn::ItemFn;
 use syn::{FnArg, GenericArgument, Ident, Pat, PathArguments, ReturnType, Type, TypeReference};
 
 pub struct OutputBindings<'a>(pub &'a ItemFn);
 
-impl OutputBindings<'a> {
+impl<'a> OutputBindings<'a> {
     fn get_output_bindings(&self) -> Vec<::proc_macro2::TokenStream> {
         self.iter_mut_args()
             .map(|(name, _)| {

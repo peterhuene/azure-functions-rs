@@ -1,9 +1,8 @@
-use azure_functions::bindings::TimerInfo;
-use azure_functions::func;
+use azure_functions::{bindings::TimerInfo, func};
 
 #[func]
 #[binding(name = "info", schedule = "0 */1 * * * *")]
 pub fn timer(info: &TimerInfo) {
-    info!("Hello from Rust!");
-    info!("Timer information: {:?}", info);
+    log::info!("Hello from Rust!");
+    log::info!("Timer information: {:?}", info);
 }

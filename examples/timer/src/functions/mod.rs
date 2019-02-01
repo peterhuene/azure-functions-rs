@@ -1,5 +1,7 @@
 mod timer;
 
-pub const FUNCTIONS: &[&azure_functions::codegen::Function] = azure_functions::export! {
+use azure_functions::{codegen::Function, export};
+
+pub const FUNCTIONS: &[&Function] = export! {
     timer::timer,
 };

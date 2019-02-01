@@ -180,7 +180,7 @@ impl HttpResponse {
     }
 }
 
-impl<T> From<T> for HttpResponse
+impl<'a, T> From<T> for HttpResponse
 where
     T: Into<Body<'a>>,
 {

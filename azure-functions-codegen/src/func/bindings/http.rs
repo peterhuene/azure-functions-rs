@@ -1,17 +1,15 @@
-use crate::util::{to_camel_case, AttributeArguments, QuotableBorrowedStr};
+use crate::util::{to_camel_case, AttributeArguments, MacroError, QuotableBorrowedStr, TryFrom};
 use azure_functions_shared::codegen;
-use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::borrow::Cow;
-use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::Lit;
 
 pub struct Http<'a>(pub Cow<'a, codegen::bindings::Http>);
 
 impl TryFrom<AttributeArguments> for Http<'_> {
-    type Error = Diagnostic;
+    type Error = MacroError;
 
     fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
@@ -25,17 +23,19 @@ impl TryFrom<AttributeArguments> for Http<'_> {
                         name = Some(Cow::Owned(to_camel_case(&s.value())));
                     }
                     _ => {
-                        return Err(value
-                            .span()
-                            .unstable()
-                            .error("expected a literal string value for the 'name' argument"));
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'name' argument",
+                        )
+                            .into());
                     }
                 },
                 _ => {
-                    return Err(key
-                        .span()
-                        .unstable()
-                        .error(format!("unsupported attribute argument '{}'", key_str)));
+                    return Err((
+                        key.span(),
+                        format!("unsupported attribute argument '{}'", key_str).as_ref(),
+                    )
+                        .into());
                 }
             };
         }

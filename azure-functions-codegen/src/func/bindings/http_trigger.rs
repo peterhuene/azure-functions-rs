@@ -1,17 +1,17 @@
-use crate::util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOption};
+use crate::util::{
+    to_camel_case, AttributeArguments, MacroError, QuotableBorrowedStr, QuotableOption, TryFrom,
+};
 use azure_functions_shared::codegen;
-use proc_macro::Diagnostic;
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::borrow::Cow;
-use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::Lit;
 
 pub struct HttpTrigger<'a>(pub Cow<'a, codegen::bindings::HttpTrigger>);
 
 impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
-    type Error = Diagnostic;
+    type Error = MacroError;
 
     fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
@@ -29,10 +29,11 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
                         name = Some(Cow::Owned(to_camel_case(&s.value())));
                     }
                     _ => {
-                        return Err(value
-                            .span()
-                            .unstable()
-                            .error("expected a literal string value for the 'name' argument"));
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'name' argument",
+                        )
+                            .into());
                     }
                 },
                 "auth_level" => match value {
@@ -41,17 +42,18 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
                         auth_level = match v.as_str() {
                             "anonymous" | "function" | "admin" => Some(Cow::Owned(v)),
                             _ => {
-                                return Err(value
-                                    .span()
-                                    .unstable()
-                                    .error("expected 'anonymous', 'function', or 'admin' for the 'auth_level' attribute argument"));
+                                return Err((value
+                                    .span(),
+                                    "expected 'anonymous', 'function', or 'admin' for the 'auth_level' attribute argument").into());
                             }
                         };
                     }
                     _ => {
-                        return Err(value.span().unstable().error(
+                        return Err((
+                            value.span(),
                             "expected a literal string value for the 'auth_level' argument",
-                        ));
+                        )
+                            .into());
                     }
                 },
                 "methods" => match value {
@@ -74,26 +76,28 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
                             .collect();
 
                         if !invalid.is_empty() {
-                            return Err(value.span().unstable().error(format!(
-                                "unsupported HTTP methods: {}",
-                                invalid.join(", ")
-                            )));
+                            return Err((
+                                value.span(),
+                                format!("unsupported HTTP methods: {}", invalid.join(", "))
+                                    .as_ref(),
+                            )
+                                .into());
                         }
                     }
                     _ => {
-                        return Err(value
-                                .span()
-                                .unstable()
-                                .error("expected a comma-delimited literal string value for the 'methods' argument"));
+                        return Err((value
+                                .span(),
+                                "expected a comma-delimited literal string value for the 'methods' argument").into());
                     }
                 },
                 "route" => match value {
                     Lit::Str(s) => route = Some(Cow::Owned(s.value())),
                     _ => {
-                        return Err(value
-                            .span()
-                            .unstable()
-                            .error("expected a literal string value for the 'route' argument"));
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'route' argument",
+                        )
+                            .into());
                     }
                 },
                 "web_hook_type" => match value {
@@ -102,24 +106,26 @@ impl TryFrom<AttributeArguments> for HttpTrigger<'_> {
                         web_hook_type = match s.trim() {
                             "generic" | "github" | "slack" => Some(Cow::Owned(s)),
                             _ => {
-                                return Err(value
-                                    .span()
-                                    .unstable()
-                                    .error("expected 'generic', 'github', or 'slack' for the 'web_hook_type' attribute argument"));
+                                return Err((value
+                                    .span(),
+                                    "expected 'generic', 'github', or 'slack' for the 'web_hook_type' attribute argument").into());
                             }
                         };
                     }
                     _ => {
-                        return Err(value.span().unstable().error(
+                        return Err((
+                            value.span(),
                             "expected a literal string value for the 'web_hook_type' argument",
-                        ));
+                        )
+                            .into());
                     }
                 },
                 _ => {
-                    return Err(key.span().unstable().error(format!(
-                        "unsupported binding attribute argument '{}'",
-                        key_str
-                    )));
+                    return Err((
+                        key.span(),
+                        format!("unsupported binding attribute argument '{}'", key_str).as_ref(),
+                    )
+                        .into());
                 }
             };
         }

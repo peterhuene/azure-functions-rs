@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde_json::from_str;
 use std::str::{from_utf8, FromStr};
 
-pub fn convert_from<T>(data: &'a protocol::TypedData) -> Option<T>
+pub fn convert_from<'a, T>(data: &'a protocol::TypedData) -> Option<T>
 where
     T: FromStr + Deserialize<'a>,
 {
