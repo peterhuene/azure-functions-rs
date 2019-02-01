@@ -9,7 +9,7 @@ pub struct Context<'a> {
     name: &'a str,
 }
 
-impl Context<'a> {
+impl<'a> Context<'a> {
     /// Creates a new function invocation context.
     pub fn new(invocation_id: &'a str, function_id: &'a str, name: &'a str) -> Self {
         Context {
