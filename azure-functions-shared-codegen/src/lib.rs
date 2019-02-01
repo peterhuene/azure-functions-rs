@@ -5,13 +5,12 @@
 //#![deny(missing_docs)]
 
 extern crate proc_macro;
-#[macro_use]
-extern crate quote;
 
 use proc_macro::TokenStream;
+use quote::quote;
 use std::env;
 use std::path::Path;
-use syn::{parse, ItemMod};
+use syn::{parse, Ident};
 
 /// A macro to generate a module from code created in the output directory.
 ///
@@ -28,11 +27,9 @@ use syn::{parse, ItemMod};
 /// #[generated_mod]
 /// mod MyModule {}
 /// ```
-#[proc_macro_attribute]
-pub fn generated_mod(_: TokenStream, input: TokenStream) -> TokenStream {
-    let m = parse::<ItemMod>(input).unwrap();
-
-    let ident = &m.ident;
+#[proc_macro]
+pub fn generated_mod(item: TokenStream) -> TokenStream {
+    let ident = parse::<Ident>(item).unwrap();
 
     let mut path = Path::new(&env::var("OUT_DIR").unwrap()).join(ident.to_string());
 
