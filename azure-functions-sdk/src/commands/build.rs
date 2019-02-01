@@ -1,8 +1,10 @@
-use crate::util::{print_failure, print_running, print_success, read_crate_name};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
+
 use std::process::Command;
+
+use crate::util::{print_failure, print_running, print_success, read_crate_name};
 
 pub struct Build<'a> {
     quiet: bool,
@@ -10,8 +12,8 @@ pub struct Build<'a> {
     tag: Option<&'a str>,
 }
 
-impl Build<'a> {
-    pub fn create_subcommand() -> App<'a, 'b> {
+impl<'a> Build<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("build")
             .about("Builds a Docker image for the Azure Functions application.")
             .arg(
@@ -42,8 +44,8 @@ impl Build<'a> {
     }
 
     fn set_colorization(&self) {
-        ::colored::control::set_override(match self.color {
-            Some("auto") | None => ::atty::is(Stream::Stdout),
+        colored::control::set_override(match self.color {
+            Some("auto") | None => atty::is(Stream::Stdout),
             Some("always") => true,
             Some("never") => false,
             _ => panic!("unsupported color option"),
@@ -123,7 +125,7 @@ impl Build<'a> {
     }
 }
 
-impl From<&'a ArgMatches<'a>> for Build<'a> {
+impl<'a> From<&'a ArgMatches<'a>> for Build<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Build::new(
             args.is_present("quiet"),

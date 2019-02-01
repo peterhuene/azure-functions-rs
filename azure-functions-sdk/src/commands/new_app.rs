@@ -3,11 +3,15 @@ use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
 use handlebars::Handlebars;
+use serde_json::json;
 use serde_json::Value;
-use std::fs::{create_dir_all, OpenOptions};
-use std::io::{stdout, Write};
-use std::path::Path;
-use std::process::Command;
+
+use std::{
+    fs::{create_dir_all, OpenOptions},
+    io::{stdout, Write},
+    path::Path,
+    process::Command,
+};
 
 pub struct NewApp<'a> {
     path: &'a str,
@@ -18,8 +22,8 @@ pub struct NewApp<'a> {
     color: Option<&'a str>,
 }
 
-impl NewApp<'a> {
-    pub fn create_subcommand() -> App<'a, 'b> {
+impl<'a> NewApp<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("new-app")
             .about("Creates a new Azure Functions application at the specified path.")
             .arg(
@@ -282,7 +286,7 @@ impl NewApp<'a> {
     }
 }
 
-impl From<&'a ArgMatches<'a>> for NewApp<'a> {
+impl<'a> From<&'a ArgMatches<'a>> for NewApp<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         NewApp {
             path: args.value_of("path").unwrap(),

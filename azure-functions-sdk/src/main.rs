@@ -58,23 +58,20 @@
 //! $ curl http://localhost:8080/api/hello\?name\=John
 //! Hello from Rust, John!
 //! ```
-#![feature(in_band_lifetimes)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
-
-#[macro_use]
-extern crate serde_json;
 
 mod commands;
 mod util;
 
-use crate::commands::{Build, NewApp, Run};
 use clap::{App, AppSettings};
 use colored::Colorize;
-use std::env;
-use std::process;
 
-fn create_app() -> App<'a, 'b> {
+use std::{env, process};
+
+use crate::commands::{Build, NewApp, Run};
+
+fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Azure Functions for Rust")
         .bin_name("cargo func")
         .version(env!("CARGO_PKG_VERSION"))
