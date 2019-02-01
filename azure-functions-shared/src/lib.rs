@@ -1,10 +1,10 @@
 //! # Azure Functions for Rust
 //!
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
-#![feature(in_band_lifetimes)]
-#![feature(proc_macro_hygiene)]
+// #![feature(proc_macro_hygiene)]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
+#![feature(proc_macro_hygiene)]
 
 #[macro_use]
 extern crate serde_derive;
