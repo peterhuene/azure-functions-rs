@@ -3,11 +3,15 @@ use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
 use handlebars::Handlebars;
+use serde_json::json;
 use serde_json::Value;
-use std::fs::{create_dir_all, OpenOptions};
-use std::io::{stdout, Write};
-use std::path::Path;
-use std::process::Command;
+
+use std::{
+    fs::{create_dir_all, OpenOptions},
+    io::{stdout, Write},
+    path::Path,
+    process::Command,
+};
 
 pub struct NewApp<'a> {
     path: &'a str,

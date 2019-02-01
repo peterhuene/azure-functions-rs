@@ -1,8 +1,10 @@
-use crate::util::{print_failure, print_running, print_success, read_crate_name};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
+
 use std::process::Command;
+
+use crate::util::{print_failure, print_running, print_success, read_crate_name};
 
 pub struct Run<'a> {
     quiet: bool,
@@ -51,8 +53,8 @@ impl<'a> Run<'a> {
     }
 
     fn set_colorization(&self) {
-        ::colored::control::set_override(match self.color {
-            Some("auto") | None => ::atty::is(Stream::Stdout),
+        colored::control::set_override(match self.color {
+            Some("auto") | None => atty::is(Stream::Stdout),
             Some("always") => true,
             Some("never") => false,
             _ => panic!("unsupported color option"),
