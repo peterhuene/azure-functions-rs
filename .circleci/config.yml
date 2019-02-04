@@ -1,8 +1,16 @@
-version: 2
+version: 2.1
 jobs:
   build:
+    parameters:
+      image:
+        description: "The CI image to use."
+        type: string
+      cargo-features:
+        description: "The additional cargo features to enable for the build."
+        type: string
+        default: ""
     docker:
-      - image: peterhuene/azure-functions-rs-ci
+      - image: "<< parameters.image >>"
     steps:
       - checkout
       - restore_cache:
@@ -16,16 +24,15 @@ jobs:
             cargo fmt --version || true
             cargo fmt -- --check
             git diff
-      # Disabling lint check until the component shows up again in nightly
-      # - run:
-      #     name: Check for linter errors
-      #     command: |
-      #       cargo clippy --version || true
-      #       # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
-      #       cargo clippy
+      - run:
+          name: Check for linter errors
+          command: |
+            cargo clippy --version || true
+            # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
+            cargo clippy
       - run:
           name: Build
-          command: cargo build --release --features compile_protobufs
+          command: "cargo build --release --features 'compile_protobufs << parameters.cargo-features >>'"
       - run:
           name: Check for stale protobuf files
           command: git diff --exit-code -- azure-functions-shared/cache
@@ -38,6 +45,13 @@ jobs:
             - "~/.cargo"
             - "./target"
   build-ci-image:
+    parameters:
+      image:
+        description: "The CI image to build."
+        type: string
+      directory:
+        description: "The directory containing the Dockerfile."
+        type: string
     docker:
       - image: docker:stable-git
     steps:
@@ -50,20 +64,28 @@ jobs:
       - run:
           name: Build CI Docker image
           command: |
-            cd docker/ci
-            docker build -t peterhuene/azure-functions-rs-ci:latest .
+            "cd << parameters.directory >>"
+            "docker build --pull -t << parameters.image >> ."
       - run:
           name: Push CI Docker image
-          command: docker push peterhuene/azure-functions-rs-ci:latest
+          command: "docker push << parameters.image >>"
 workflows:
-  version: 2
-  commit:
+  commit-stable:
     jobs:
       - build:
+          image: peterhuene/azure-functions-rs-ci:stable
           filters:
             branches:
               ignore: gh-pages
-  nightly:
+  commit-nightly:
+    jobs:
+      - build:
+          image: peterhuene/azure-functions-rs-ci:nightly
+          cargo-features: unstable
+          filters:
+            branches:
+              ignore: gh-pages
+  build-stable:
     triggers:
       - schedule:
           cron: "0 0 * * *"
@@ -72,5 +94,27 @@ workflows:
               only:
                 - master
     jobs:
-      - build-ci-image
-      - build
+      - build-ci-image:
+          directory: docker/ci-stable
+          image: peterhuene/azure-functions-rs-ci:stable
+      - build:
+          requires:
+            - build-ci-image
+          image: peterhuene/azure-functions-rs-ci:stable
+  build-nightly:
+      triggers:
+        - schedule:
+            cron: "0 0 * * *"
+            filters:
+              branches:
+                only:
+                  - master
+      jobs:
+        - build-ci-image:
+            directory: docker/ci-nightly
+            image: peterhuene/azure-functions-rs-ci:nightly
+        - build:
+            requires:
+              - build-ci-image
+            image: peterhuene/azure-functions-rs-ci:nightly
+            cargo-features: unstable
