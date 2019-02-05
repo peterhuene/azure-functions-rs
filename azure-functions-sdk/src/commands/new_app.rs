@@ -240,12 +240,7 @@ impl<'a> NewApp<'a> {
             .map_err(|e| format!("failed to open Cargo manifest: {}", e))?;
 
         file.write_all(
-            concat!(
-                "azure-functions = \"",
-                env!("CARGO_PKG_VERSION"),
-                "\"\n"
-            )
-            .as_bytes(),
+            concat!("azure-functions = \"", env!("CARGO_PKG_VERSION"), "\"\n").as_bytes(),
         )
         .map_err(|e| format!("failed to write dependencies to Cargo manifest: {}", e))?;
 
