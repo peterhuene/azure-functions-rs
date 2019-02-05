@@ -63,7 +63,7 @@
 //! ```rust,ignore
 //! mod hello;
 //!
-//! pub const FUNCTIONS: &[&azure_functions::codegen::Function] = azure_functions::export! {
+//! pub const FUNCTIONS: &[&azure_functions::Function] = azure_functions::export! {
 //!     hello::hello,
 //! };
 //! ```
@@ -97,7 +97,10 @@ extern crate lazy_static;
 pub use azure_functions_codegen::func;
 
 #[doc(hidden)]
+#[deprecated(since="0.4.0")]
 pub use azure_functions_shared::codegen;
+
+pub use azure_functions_shared::codegen::Function;
 
 mod cli;
 mod logger;
@@ -486,7 +489,7 @@ fn run_worker(
 ///     });
 /// }
 /// ```
-pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
+pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static Function]) {
     let matches = cli::create_app().get_matches_from(args);
     let registry = Arc::new(Mutex::new(Registry::new(functions)));
 
