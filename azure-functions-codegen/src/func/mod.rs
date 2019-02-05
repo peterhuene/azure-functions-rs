@@ -418,7 +418,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
         let (_, value) = args.list.iter().find(|(k, _)| k == "name").unwrap();
         match value {
             Lit::Str(s) => {
-                let foo = match s.value().as_ref() {
+                let message = match s.value().as_ref() {
                     RETURN_BINDING_NAME => {
                         "cannot bind to a function without a return value".into()
                     }
@@ -427,7 +427,7 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                         v
                     ),
                 };
-                let error: MacroError = (value.span(), foo.as_ref()).into();
+                let error: MacroError = (value.span(), message.as_ref()).into();
                 error.emit();
                 return input;
             }

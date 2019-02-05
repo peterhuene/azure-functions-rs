@@ -58,7 +58,6 @@ cfg_if::cfg_if! {
         }
         impl MacroError {
             pub fn emit(self) {
-                println!("A");
                 self.inner.emit()
             }
         }
@@ -89,7 +88,6 @@ cfg_if::cfg_if! {
         }
         impl MacroError {
             pub fn emit(self) {
-                println!("B");
                 panic!("{}", &self.message)
             }
         }
