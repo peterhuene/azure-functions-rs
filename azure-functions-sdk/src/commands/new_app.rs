@@ -243,7 +243,7 @@ impl<'a> NewApp<'a> {
             concat!(
                 "azure-functions = \"",
                 env!("CARGO_PKG_VERSION"),
-                "\"\nlog = \"0.4.6\"\n"
+                "\"\n"
             )
             .as_bytes(),
         )
