@@ -1,4 +1,5 @@
 FROM rustlang/rust:nightly-slim AS builder
+LABEL MAINTAINER Peter Huene <peterhuene@protonmail.com>
 
 ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
