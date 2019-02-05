@@ -1,3 +1,3 @@
 [submodule "azure-functions-shared/protobuf"]
     path = azure-functions-shared/protobuf
-    url = git@github.com:Azure/azure-functions-language-worker-protobuf.git
+    url = https://github.com/Azure/azure-functions-language-worker-protobuf
