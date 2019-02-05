@@ -28,7 +28,7 @@ jobs:
           command: cargo build --release --features compile_protobufs
       - run:
           name: Check for stale protobuf files
-          command: git diff-index --quiet HEAD
+          command: git diff --exit-code -- azure-functions-shared/cache
       - run:
           name: Test
           command: cargo test --release
