@@ -1,18 +1,18 @@
 use crate::func::Binding;
 use crate::util::{AttributeArguments, QuotableBorrowedStr, QuotableOption};
+use crate::util::{MacroError, TryFrom};
 use azure_functions_shared::codegen;
-use proc_macro::{Diagnostic, TokenStream};
+use proc_macro::TokenStream;
 use proc_macro2::Span;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::borrow::Cow;
-use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::{Ident, Lit};
 
 pub struct Function<'a>(pub Cow<'a, codegen::Function>);
 
 impl TryFrom<TokenStream> for Function<'_> {
-    type Error = Diagnostic;
+    type Error = MacroError;
 
     fn try_from(stream: TokenStream) -> Result<Self, Self::Error> {
         let mut name = None;
@@ -28,32 +28,35 @@ impl TryFrom<TokenStream> for Function<'_> {
                             .parse::<Ident>()
                             .map(|x| Some(Cow::Owned(x.to_string())))
                             .map_err(|_| {
-                                value.span().unstable().error(
+                                (value.span(),
                                 "a legal function identifier is required for the 'name' argument",
-                            )
+                            ).into()
                             })?;
                     }
                     _ => {
-                        return Err(value
-                            .span()
-                            .unstable()
-                            .error("expected a literal string value for the 'name' argument"));
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'name' argument",
+                        )
+                            .into());
                     }
                 },
                 "disabled" => match value {
                     Lit::Bool(b) => disabled = Some(b.value),
                     _ => {
-                        return Err(value
-                            .span()
-                            .unstable()
-                            .error("expected a literal boolean value for the 'disabled' argument"));
+                        return Err((
+                            value.span(),
+                            "expected a literal boolean value for the 'disabled' argument",
+                        )
+                            .into());
                     }
                 },
                 _ => {
-                    return Err(key
-                        .span()
-                        .unstable()
-                        .error(format!("unsupported argument '{}'", key_str)));
+                    return Err((
+                        key.span(),
+                        format!("unsupported argument '{}'", key_str).as_ref(),
+                    )
+                        .into());
                 }
             };
         }

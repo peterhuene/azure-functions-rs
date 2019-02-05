@@ -2,7 +2,8 @@
 name = "blob-example"
 version = "0.1.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
+edition = "2018"
 
 [dependencies]
-azure-functions = "0.3.0"
+azure-functions = { path = "../../azure-functions" }
 log = "0.4.6"

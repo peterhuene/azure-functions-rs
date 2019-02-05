@@ -1,14 +1,14 @@
 use crate::func::TRIGGERS;
 use crate::func::{OutputBindings, CONTEXT_TYPE_NAME};
 use crate::util::{last_segment_in_path, to_camel_case};
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::{FnArg, Ident, ItemFn, Pat, Type, TypeReference};
 
 const INVOKER_PREFIX: &str = "__invoke_";
 
 pub struct Invoker<'a>(pub &'a ItemFn);
 
-impl Invoker<'a> {
+impl<'a> Invoker<'a> {
     pub fn name(&self) -> String {
         format!("{}{}", INVOKER_PREFIX, self.0.ident)
     }

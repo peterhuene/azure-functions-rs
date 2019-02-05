@@ -44,17 +44,6 @@ Documentation for the [latest published version](https://docs.rs/azure-functions
 
 # Getting Started
 
-## Nightly Rust Compiler
-
-The Azure Functions for Rust SDK requires the use of a nightly Rust compiler due the use of the experimental Rust features.
-
-Use [rustup](https://github.com/rust-lang-nursery/rustup.rs) to install a nightly compiler:
-
-```
-$ rustup install nightly
-$ rustup default nightly
-```
-
 ## Installing the Azure Functions for Rust SDK
 
 Install the Azure Functions for Rust SDK using `cargo install`:

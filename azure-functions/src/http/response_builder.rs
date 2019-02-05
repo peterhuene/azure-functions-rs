@@ -79,7 +79,7 @@ impl ResponseBuilder {
     ///     message
     /// );
     /// ```
-    pub fn body<B>(mut self, body: B) -> Self
+    pub fn body<'a, B>(mut self, body: B) -> Self
     where
         B: Into<Body<'a>>,
     {

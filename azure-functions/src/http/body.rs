@@ -107,7 +107,7 @@ impl Body<'_> {
     /// let data = body.as_json::<Data>().unwrap();
     /// assert_eq!(data.message, "hello");
     /// ```
-    pub fn as_json<T>(&'b self) -> Result<T>
+    pub fn as_json<'b, T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
@@ -128,7 +128,7 @@ impl fmt::Display for Body<'_> {
     }
 }
 
-impl From<&'a protocol::TypedData> for Body<'a> {
+impl<'a> From<&'a protocol::TypedData> for Body<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         if data.has_string() {
             return Body::String(Cow::Borrowed(data.get_string()));
@@ -147,7 +147,7 @@ impl From<&'a protocol::TypedData> for Body<'a> {
     }
 }
 
-impl From<&'a str> for Body<'a> {
+impl<'a> From<&'a str> for Body<'a> {
     fn from(data: &'a str) -> Self {
         Body::String(Cow::Borrowed(data))
     }
@@ -171,7 +171,7 @@ impl From<Value> for Body<'_> {
     }
 }
 
-impl From<&'a [u8]> for Body<'a> {
+impl<'a> From<&'a [u8]> for Body<'a> {
     fn from(data: &'a [u8]) -> Self {
         Body::Bytes(Cow::Borrowed(data))
     }

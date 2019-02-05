@@ -1,5 +1,7 @@
-use azure_functions::bindings::{HttpRequest, Table};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{HttpRequest, Table},
+    func,
+};
 use serde_json::Value;
 
 #[func]

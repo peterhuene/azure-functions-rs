@@ -1,16 +1,16 @@
-use crate::util::{to_camel_case, AttributeArguments, QuotableBorrowedStr, QuotableOption};
+use crate::util::{
+    to_camel_case, AttributeArguments, MacroError, QuotableBorrowedStr, QuotableOption, TryFrom,
+};
 use azure_functions_shared::codegen;
-use proc_macro::Diagnostic;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::borrow::Cow;
-use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::Lit;
 
 pub struct QueueTrigger<'a>(pub Cow<'a, codegen::bindings::QueueTrigger>);
 
 impl TryFrom<AttributeArguments> for QueueTrigger<'_> {
-    type Error = Diagnostic;
+    type Error = MacroError;
 
     fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
         let mut name = None;
@@ -26,10 +26,11 @@ impl TryFrom<AttributeArguments> for QueueTrigger<'_> {
                         name = Some(Cow::Owned(to_camel_case(&s.value())));
                     }
                     _ => {
-                        return Err(value
-                            .span()
-                            .unstable()
-                            .error("expected a literal string value for the 'name' argument"));
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'name' argument",
+                        )
+                            .into());
                     }
                 },
                 "queue_name" => match value {
@@ -37,9 +38,11 @@ impl TryFrom<AttributeArguments> for QueueTrigger<'_> {
                         queue_name = Some(Cow::Owned(s.value()));
                     }
                     _ => {
-                        return Err(value.span().unstable().error(
+                        return Err((
+                            value.span(),
                             "expected a literal string value for the 'queue_name' argument",
-                        ));
+                        )
+                            .into());
                     }
                 },
                 "connection" => match value {
@@ -47,24 +50,29 @@ impl TryFrom<AttributeArguments> for QueueTrigger<'_> {
                         connection = Some(Cow::Owned(s.value()));
                     }
                     _ => {
-                        return Err(value.span().unstable().error(
+                        return Err((
+                            value.span(),
                             "expected a literal string value for the 'connection' argument",
-                        ));
+                        )
+                            .into());
                     }
                 },
                 _ => {
-                    return Err(key.span().unstable().error(format!(
-                        "unsupported binding attribute argument '{}'",
-                        key_str
-                    )));
+                    return Err((
+                        key.span(),
+                        format!("unsupported binding attribute argument '{}'", key_str).as_ref(),
+                    )
+                        .into());
                 }
             };
         }
 
         if queue_name.is_none() {
-            return Err(args
-                .span
-                .error("the 'queue_name' argument is required for queue trigger bindings."));
+            return Err((
+                args.span,
+                "the 'queue_name' argument is required for queue trigger bindings.",
+            )
+                .into());
         }
 
         Ok(QueueTrigger(Cow::Owned(codegen::bindings::QueueTrigger {

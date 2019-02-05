@@ -1,6 +1,6 @@
-use crate::util::PathVec;
+use crate::util::{PathVec, TryFrom};
 use proc_macro::TokenStream;
-use std::convert::TryFrom;
+use quote::quote;
 use std::fmt::Write;
 use syn::{parse_str, Expr};
 

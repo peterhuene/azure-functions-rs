@@ -10,7 +10,6 @@ edition = "2018"
 
 [dependencies]
 azure-functions-shared = { version = "0.3.0", path = "../azure-functions-shared" }
-azure-functions-codegen = { version = "0.3.0", path = "../azure-functions-codegen" }
 log = { version = "0.4.6", features = ["std"] }
 grpcio = { version = "0.4.3", features = ["openssl"] }
 futures = "0.1.24"
@@ -23,6 +22,14 @@ chrono = { version = "0.4.6", features = ["serde"] }
 xml-rs = "0.8.0"
 lazy_static = "1.2.0"
 tempfile = "3.0.5"
+proc-macro-hack = "0.5.4"
+
+[dependencies.azure-functions-codegen] 
+version = "0.3.0"
+path = "../azure-functions-codegen" 
+
+[features]
+unstable = ["azure-functions-codegen/unstable"]
 
 [dev-dependencies]
 matches = "0.1.8"

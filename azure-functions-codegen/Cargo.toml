@@ -15,5 +15,11 @@ proc-macro = true
 azure-functions-shared = { version = "0.3.0", path = "../azure-functions-shared" }
 quote = "0.6.11"
 syn = { version = "0.15.26", features = ["full"] }
-proc-macro2 = { version = "0.4.27", features = ["nightly"] }
+proc-macro2 = { version = "0.4.27" }
 lazy_static = "1.2.0"
+proc-macro-hack = "0.5.4"
+cfg-if = "0.1.6"
+
+
+[features]
+unstable = []

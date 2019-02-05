@@ -9,13 +9,13 @@ pub use self::function::*;
 pub use self::invoker::*;
 pub use self::output_bindings::*;
 
-use crate::util::{last_segment_in_path, path_to_string, AttributeArguments};
+use crate::util::{last_segment_in_path, path_to_string, AttributeArguments, MacroError, TryFrom};
 use azure_functions_shared::codegen;
-use proc_macro::{Diagnostic, TokenStream};
+use proc_macro::TokenStream;
 use proc_macro2::Span;
+use quote::quote;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
-use std::convert::TryFrom;
 use syn::spanned::Spanned;
 use syn::{
     parse, token::Mut, Attribute, FnArg, GenericArgument, Ident, ItemFn, Lit, Pat, PathArguments,
@@ -26,67 +26,56 @@ pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
 const CONTEXT_TYPE_NAME: &str = "Context";
 
-fn validate_function(func: &ItemFn) -> Result<(), Diagnostic> {
+fn validate_function(func: &ItemFn) -> Result<(), MacroError> {
     match func.vis {
         Visibility::Public(_) => {}
         _ => {
-            return Err(func
-                .decl
-                .fn_token
-                .span()
-                .unstable()
-                .error("the 'func' attribute can only be used on public functions"));
+            return Err((
+                func.decl.fn_token.span(),
+                "the 'func' attribute can only be used on public functions",
+            )
+                .into());
         }
     };
 
     if func.abi.is_some() {
-        return Err(func
-            .abi
-            .as_ref()
-            .unwrap()
-            .extern_token
-            .span()
-            .unstable()
-            .error("the 'func' attribute cannot be used on extern \"C\" functions"));
+        return Err((
+            func.abi.as_ref().unwrap().extern_token.span(),
+            "the 'func' attribute cannot be used on extern \"C\" functions",
+        )
+            .into());
     }
 
     if func.constness.is_some() {
-        return Err(func
-            .constness
-            .as_ref()
-            .unwrap()
-            .span
-            .unstable()
-            .error("the 'func' attribute cannot be used on const functions"));
+        return Err((
+            func.constness.as_ref().unwrap().span,
+            "the 'func' attribute cannot be used on const functions",
+        )
+            .into());
     }
 
     if func.unsafety.is_some() {
-        return Err(func
-            .unsafety
-            .as_ref()
-            .unwrap()
-            .span
-            .unstable()
-            .error("the 'func' attribute cannot be used on unsafe functions"));
+        return Err((
+            func.unsafety.as_ref().unwrap().span,
+            "the 'func' attribute cannot be used on unsafe functions",
+        )
+            .into());
     }
 
     if !func.decl.generics.params.is_empty() {
-        return Err(func
-            .decl
-            .generics
-            .params
-            .span()
-            .unstable()
-            .error("the 'func' attribute cannot be used on generic functions"));
+        return Err((
+            func.decl.generics.params.span(),
+            "the 'func' attribute cannot be used on generic functions",
+        )
+            .into());
     }
 
     if func.decl.variadic.is_some() {
-        return Err(func
-            .decl
-            .variadic
-            .span()
-            .unstable()
-            .error("the 'func' attribute cannot be used on variadic functions"));
+        return Err((
+            func.decl.variadic.span(),
+            "the 'func' attribute cannot be used on variadic functions",
+        )
+            .into());
     }
 
     Ok(())
@@ -98,7 +87,7 @@ fn bind_input_type(
     mutability: Option<Mut>,
     has_trigger: bool,
     binding_args: &mut HashMap<String, AttributeArguments>,
-) -> Result<codegen::Binding, Diagnostic> {
+) -> Result<codegen::Binding, MacroError> {
     match ty {
         Type::Path(tp) => {
             let type_name = last_segment_in_path(&tp.path).ident.to_string();
@@ -109,27 +98,28 @@ fn bind_input_type(
 
             // Check for multiple triggers
             if has_trigger && TRIGGERS.contains_key(type_name.as_str()) {
-                return Err(tp
-                    .span()
-                    .unstable()
-                    .error("Azure Functions can only have one trigger binding"));
+                return Err((
+                    tp.span(),
+                    "Azure Functions can only have one trigger binding",
+                )
+                    .into());
             }
 
             // If the reference is mutable, only accept input-output bindings
             let factory = match mutability {
                 Some(m) => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
                     Some(factory) => Ok(factory),
-                    None => Err(m.span().unstable().error(
+                    None => Err((m.span(),
                         "only Azure Functions binding types that support the 'inout' direction can be passed by mutable reference",
-                    )),
+                    ).into()),
                 },
                 None => match TRIGGERS.get(type_name.as_str()) {
                     Some(factory) => Ok(factory),
                     None => match INPUT_BINDINGS.get(type_name.as_str()) {
                         Some(factory) => Ok(factory),
-                        None => Err(tp.span().unstable().error(
+                        None => Err((tp.span(),
                             "expected an Azure Functions trigger or input binding type",
-                        )),
+                        ).into()),
                     },
                 },
             }?;
@@ -144,19 +134,17 @@ fn bind_input_type(
                         }
                     }
                 }
-                _ => Err(pattern
-                    .span()
-                    .unstable()
-                    .error("bindings must have a named identifier")),
+                _ => Err((pattern.span(), "bindings must have a named identifier").into()),
             }
         }
         Type::Paren(tp) => {
             bind_input_type(pattern, &tp.elem, mutability, has_trigger, binding_args)
         }
-        _ => Err(ty
-            .span()
-            .unstable()
-            .error("expected an Azure Functions trigger or input binding type")),
+        _ => Err((
+            ty.span(),
+            "expected an Azure Functions trigger or input binding type",
+        )
+            .into()),
     }
 }
 
@@ -164,28 +152,29 @@ fn bind_argument(
     arg: &FnArg,
     has_trigger: bool,
     binding_args: &mut HashMap<String, AttributeArguments>,
-) -> Result<codegen::Binding, Diagnostic> {
+) -> Result<codegen::Binding, MacroError> {
     match arg {
         FnArg::Captured(arg) => match &arg.ty {
             Type::Reference(r) => {
                 bind_input_type(&arg.pat, &r.elem, r.mutability, has_trigger, binding_args)
             }
-            _ => Err(arg.ty.span().unstable().error(
+            _ => Err((
+                arg.ty.span(),
                 "expected an Azure Functions trigger or input binding type passed by reference",
-            )),
+            )
+                .into()),
         },
-        FnArg::SelfRef(_) | FnArg::SelfValue(_) => Err(arg
-            .span()
-            .unstable()
-            .error("Azure Functions cannot have self parameters")),
-        FnArg::Inferred(_) => Err(arg
-            .span()
-            .unstable()
-            .error("Azure Functions cannot have inferred parameters")),
-        FnArg::Ignored(_) => Err(arg
-            .span()
-            .unstable()
-            .error("Azure Functions cannot have ignored parameters")),
+        FnArg::SelfRef(_) | FnArg::SelfValue(_) => {
+            Err((arg.span(), "Azure Functions cannot have self parameters").into())
+        }
+        FnArg::Inferred(_) => Err((
+            arg.span(),
+            "Azure Functions cannot have inferred parameters",
+        )
+            .into()),
+        FnArg::Ignored(_) => {
+            Err((arg.span(), "Azure Functions cannot have ignored parameters").into())
+        }
     }
 }
 
@@ -213,7 +202,7 @@ fn bind_output_type(
     name: &str,
     binding_args: &mut HashMap<String, AttributeArguments>,
     check_option: bool,
-) -> Result<codegen::Binding, Diagnostic> {
+) -> Result<codegen::Binding, MacroError> {
     match ty {
         Type::Path(tp) => {
             let last_segment = last_segment_in_path(&tp.path);
@@ -229,24 +218,18 @@ fn bind_output_type(
                     Some(args) => (*factory)(args),
                     None => (*factory)(AttributeArguments::with_name(name, tp.span())),
                 },
-                None => Err(tp
-                    .span()
-                    .unstable()
-                    .error("expected an Azure Functions output binding type")),
+                None => Err((tp.span(), "expected an Azure Functions output binding type").into()),
             }
         }
         Type::Paren(tp) => bind_output_type(&tp.elem, name, binding_args, check_option),
-        _ => Err(ty
-            .span()
-            .unstable()
-            .error("expected an Azure Functions output binding type")),
+        _ => Err((ty.span(), "expected an Azure Functions output binding type").into()),
     }
 }
 
 fn bind_return_type(
     ret: &ReturnType,
     binding_args: &mut HashMap<String, AttributeArguments>,
-) -> Result<Vec<codegen::Binding>, Diagnostic> {
+) -> Result<Vec<codegen::Binding>, MacroError> {
     match ret {
         ReturnType::Default => Ok(vec![]),
         ReturnType::Type(_, ty) => {
@@ -255,10 +238,11 @@ fn bind_return_type(
                 for (i, ty) in tuple.elems.iter().enumerate() {
                     if let Type::Tuple(inner) = ty {
                         if !inner.elems.is_empty() {
-                            return Err(ty
-                                .span()
-                                .unstable()
-                                .error("expected an Azure Functions output binding type"));
+                            return Err((
+                                ty.span(),
+                                "expected an Azure Functions output binding type",
+                            )
+                                .into());
                         }
                         continue;
                     }
@@ -293,35 +277,42 @@ fn bind_return_type(
 
 fn drain_binding_attributes(
     attrs: &mut Vec<Attribute>,
-) -> Result<HashMap<String, AttributeArguments>, Diagnostic> {
+) -> Result<HashMap<String, AttributeArguments>, MacroError> {
     let mut map = HashMap::new();
-    for attr in attrs.drain_filter(|a| path_to_string(&a.path) == "binding") {
+    // TODO: use drain_filter when stable https://github.com/rust-lang/rust/issues/43244
+    for attr in attrs
+        .iter()
+        .filter(|a| path_to_string(&a.path) == "binding")
+    {
         let attr_span = attr.span();
-        let args = AttributeArguments::try_from(attr)?;
+        let args = AttributeArguments::try_from(attr.clone())?;
 
         let (name, name_span) = match args.list.iter().find(|(k, _)| k == "name") {
             Some((_, v)) => match v {
                 Lit::Str(s) => (s.value(), s.span()),
                 _ => {
-                    return Err(v
-                        .span()
-                        .unstable()
-                        .error("expected a literal string value for the 'name' argument"));
+                    return Err((
+                        v.span(),
+                        "expected a literal string value for the 'name' argument",
+                    )
+                        .into());
                 }
             },
             None => {
-                return Err(attr_span
-                    .unstable()
-                    .error("binding attributes must have a 'name' argument"));
+                return Err((attr_span, "binding attributes must have a 'name' argument").into());
             }
         };
 
         if map.insert(name, args).is_some() {
-            return Err(name_span
-                .unstable()
-                .error("a binding attribute with the same name already exists"));
+            return Err((
+                name_span,
+                "a binding attribute with the same name already exists",
+            )
+                .into());
         }
     }
+
+    attrs.retain(|a| path_to_string(&a.path) != "binding");
 
     Ok(map)
 }
@@ -330,10 +321,12 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut target: ItemFn = match parse(input.clone()) {
         Ok(f) => f,
         _ => {
-            Span::call_site()
-                .unstable()
-                .error("the 'func' attribute can only be used on functions")
-                .emit();
+            let error: MacroError = (
+                Span::call_site(),
+                "the 'func' attribute can only be used on functions",
+            )
+                .into();
+            error.emit();
             return input;
         }
     };
@@ -371,10 +364,9 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
 
                 if let Some(name) = binding.name() {
                     if !names.insert(name.to_string()) {
-                        arg.span()
-                        .unstable()
-                        .error(format!("parameter has camel-cased binding name of '{}' that conflicts with a prior parameter.", name))
-                        .emit();
+                        let error: MacroError = (arg.span(),
+                            format!("parameter has camel-cased binding name of '{}' that conflicts with a prior parameter.", name).as_ref()).into();
+                        error.emit();
                         return input;
                     }
                 }
@@ -389,12 +381,12 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     if !has_trigger {
-        target
-            .ident
-            .span()
-            .unstable()
-            .error("Azure Functions must have exactly one trigger input binding")
-            .emit();
+        let error: MacroError = (
+            target.ident.span(),
+            "Azure Functions must have exactly one trigger input binding",
+        )
+            .into();
+        error.emit();
         return input;
     }
 
@@ -404,11 +396,10 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
                 if let Some(name) = binding.name() {
                     if !names.insert(name.to_string()) {
                         if let ReturnType::Type(_, ty) = &target.decl.output {
-                            ty
-                            .span()
-                            .unstable()
-                            .error(format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name))
-                            .emit();
+                            let error: MacroError = (ty
+                            .span(),
+                            format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name).as_ref()).into();
+                            error.emit();
                         }
                         return input;
                     }
@@ -427,19 +418,17 @@ pub fn attr_impl(args: TokenStream, input: TokenStream) -> TokenStream {
         let (_, value) = args.list.iter().find(|(k, _)| k == "name").unwrap();
         match value {
             Lit::Str(s) => {
-                value
-                    .span()
-                    .unstable()
-                    .error(match s.value().as_ref() {
-                        RETURN_BINDING_NAME => {
-                            "cannot bind to a function without a return value".to_string()
-                        }
-                        v => format!(
-                            "cannot bind to '{}' because it is not a binding parameter of the function",
-                            v
-                        ),
-                    })
-                    .emit();
+                let message = match s.value().as_ref() {
+                    RETURN_BINDING_NAME => {
+                        "cannot bind to a function without a return value".into()
+                    }
+                    v => format!(
+                        "cannot bind to '{}' because it is not a binding parameter of the function",
+                        v
+                    ),
+                };
+                let error: MacroError = (value.span(), message.as_ref()).into();
+                error.emit();
                 return input;
             }
             _ => panic!("expected a string literal for the 'name' argument"),

@@ -77,9 +77,6 @@
 //! The above Azure Function can be invoked with `http://localhost:8080/api/hello?name=Peter`.
 //!
 //! The expected response would be `Hello from Rust, Peter!`.
-#![feature(in_band_lifetimes)]
-#![feature(proc_macro_hygiene)]
-#![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 #![cfg_attr(test, recursion_limit = "128")]
 
@@ -92,6 +89,8 @@ extern crate serde_derive;
 extern crate matches;
 #[macro_use]
 extern crate lazy_static;
+
+use proc_macro_hack::proc_macro_hack;
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;
@@ -110,6 +109,7 @@ pub mod http;
 #[doc(hidden)]
 pub mod rpc;
 pub mod timer;
+#[proc_macro_hack]
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;
 pub use azure_functions_shared::Context;

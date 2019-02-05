@@ -1,20 +1,14 @@
 //! # Azure Functions for Rust
 //!
 //! This crate supports the code generation for the `azure-functions` crate.
-#![feature(in_band_lifetimes)]
-#![feature(proc_macro_diagnostic)]
-#![feature(drain_filter)]
-#![feature(try_from)]
 #![recursion_limit = "128"]
 #![deny(unused_extern_crates)]
-
+#![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 #[macro_use]
 extern crate lazy_static;
 extern crate proc_macro;
-#[macro_use]
-extern crate syn;
-#[macro_use]
-extern crate quote;
+
+use proc_macro_hack::proc_macro_hack;
 
 mod export;
 mod func;
@@ -39,7 +33,7 @@ use proc_macro::TokenStream;
 ///     });
 /// }
 /// ```
-#[proc_macro]
+#[proc_macro_hack]
 pub fn export(input: TokenStream) -> TokenStream {
     export::attr_impl(input)
 }
