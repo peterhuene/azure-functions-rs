@@ -1,4 +1,4 @@
-FROM rust:latest
+FROM rust:slim
 LABEL MAINTAINER Peter Huene <peterhuene@protonmail.com>
 
 RUN    rustup component add rustfmt-preview \
