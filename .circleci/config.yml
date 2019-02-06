@@ -64,8 +64,8 @@ jobs:
       - run:
           name: Build CI Docker image
           command: |
-            "cd << parameters.directory >>"
-            "docker build --pull -t << parameters.image >> ."
+            cd << parameters.directory >>
+            docker build --pull -t << parameters.image >> .
       - run:
           name: Push CI Docker image
           command: "docker push << parameters.image >>"
