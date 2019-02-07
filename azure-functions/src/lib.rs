@@ -117,7 +117,7 @@ pub use azure_functions_shared::Context;
 use crate::registry::Registry;
 use futures::Future;
 use serde::Serialize;
-use serde_json::Serializer;
+use serde_json::{to_string_pretty, Serializer};
 use std::env::{current_dir, current_exe};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -157,28 +157,21 @@ fn has_rust_files(directory: &Path) -> bool {
         })
 }
 
-fn initialize_app(
-    worker_path: &str,
-    script_root: &str,
-    sync: bool,
-    registry: &Arc<Mutex<Registry<'static>>>,
-) {
-    const FUNCTION_FILE: &str = "function.json";
-
-    let script_root = current_dir()
-        .expect("failed to get current directory")
-        .join(script_root);
-
+fn create_script_root(script_root: &Path, verbose: bool) {
     if script_root.exists() {
-        println!(
-            "Using existing Azure Functions application at '{}'.",
-            script_root.display()
-        );
+        if verbose {
+            println!(
+                "Using existing Azure Functions application at '{}'.",
+                script_root.display()
+            );
+        }
     } else {
-        println!(
-            "Creating Azure Functions application at '{}'.",
-            script_root.display()
-        );
+        if verbose {
+            println!(
+                "Creating Azure Functions application at '{}'.",
+                script_root.display()
+            );
+        }
 
         fs::create_dir_all(&script_root).unwrap_or_else(|_| {
             panic!(
@@ -187,20 +180,71 @@ fn initialize_app(
             )
         });
     }
+}
 
+fn create_host_file(script_root: &Path, verbose: bool) {
     let host_json = script_root.join("host.json");
-    if !host_json.exists() {
-        println!(
-            "Creating empty host configuration file '{}'.",
-            host_json.display()
-        );
-        fs::write(&host_json, "{}")
-            .unwrap_or_else(|_| panic!("Failed to create '{}'", host_json.display()));
+    if host_json.exists() {
+        return;
     }
 
-    let worker_dir = Path::new(worker_path)
-        .parent()
-        .expect("expected to get a parent of the worker path");
+    if verbose {
+        println!(
+            "Creating host configuration file '{}'.",
+            host_json.display()
+        );
+    }
+
+    fs::write(
+        &host_json,
+        to_string_pretty(&json!(
+        {
+            "version": "2.0",
+            "logging": {
+                "logLevel": {
+                    "default": "Warning"
+                }
+            }
+        }))
+        .unwrap(),
+    )
+    .unwrap_or_else(|_| panic!("Failed to create '{}'", host_json.display()));
+}
+
+fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bool) {
+    let settings = script_root.join("local.settings.json");
+    if settings.exists() {
+        return;
+    }
+
+    if verbose {
+        println!("Creating local settings file '{}'.", settings.display());
+    }
+
+    fs::write(
+        &settings,
+        to_string_pretty(&json!(
+        {
+            "IsEncrypted": false,
+            "Values": {
+                "FUNCTIONS_WORKER_RUNTIME": "Rust",
+                "languageWorkers:workersDirectory": worker_dir.parent().unwrap()
+            },
+            "ConnectionStrings": {
+            }
+        }))
+        .unwrap(),
+    )
+    .unwrap_or_else(|_| panic!("Failed to create '{}'", settings.display()));
+}
+
+fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
+    let worker_dir = script_root.join("workers").join("rust");
+
+    if verbose {
+        println!("Creating worker directory '{}'.", worker_dir.display());
+    }
+
     fs::create_dir_all(&worker_dir).unwrap_or_else(|_| {
         panic!(
             "Failed to create directory for worker executable '{}'",
@@ -208,36 +252,170 @@ fn initialize_app(
         )
     });
 
-    println!("Copying current worker executable to '{}'.", worker_path);
+    worker_dir
+}
+
+fn copy_worker_executable(worker_dir: &Path, verbose: bool) {
+    if verbose {
+        println!(
+            "Copying current worker executable to '{}'.",
+            worker_dir.display()
+        );
+    }
+
     fs::copy(
         current_exe().expect("Failed to determine the path to the current executable"),
-        worker_path,
+        worker_dir.join("rust_worker"),
     )
     .expect("Failed to copy worker executable");
+}
 
+fn create_worker_config_file(worker_dir: &Path, verbose: bool) {
+    let config = worker_dir.join("worker.config.json");
+    if config.exists() {
+        return;
+    }
+
+    if verbose {
+        println!("Creating worker config file '{}'.", config.display());
+    }
+
+    fs::write(
+        &config,
+        to_string_pretty(&json!(
+        {
+            "description":{
+                "language": "Rust",
+                "extensions": [".rs"],
+                "defaultExecutablePath": "workers/rust/rust_worker",
+                "arguments": ["run"]
+            }
+        }))
+        .unwrap(),
+    )
+    .unwrap_or_else(|_| panic!("Failed to create '{}'", config.display()));
+}
+
+fn delete_existing_function_directories(script_root: &Path, verbose: bool) {
     for entry in fs::read_dir(&script_root).expect("failed to read script root directory") {
         let path = script_root.join(entry.expect("failed to read script root entry").path());
         if !path.is_dir() || !has_rust_files(&path) {
             continue;
         }
 
-        println!(
-            "Deleting existing Rust function directory '{}'.",
-            path.display()
-        );
+        if verbose {
+            println!(
+                "Deleting existing Rust function directory '{}'.",
+                path.display()
+            );
+        }
 
         fs::remove_dir_all(&path)
             .unwrap_or_else(|_| panic!("Failed to delete function directory '{}", path.display()));
     }
+}
+
+fn create_function_directory(script_root: &Path, function_name: &str, verbose: bool) -> PathBuf {
+    let function_dir = script_root.join(function_name);
+
+    if verbose {
+        println!("Creating function directory '{}'.", function_dir.display());
+    }
+
+    fs::create_dir(&function_dir).unwrap_or_else(|_| {
+        panic!(
+            "Failed to create function directory '{}'",
+            function_dir.display()
+        )
+    });
+
+    function_dir
+}
+
+fn copy_source_file(function_dir: &Path, source_file: &Path, function_name: &str, verbose: bool) {
+    let destination_file = function_dir.join(
+        source_file
+            .file_name()
+            .expect("expected the source file to have a file name"),
+    );
+
+    if source_file.is_file() {
+        if verbose {
+            println!(
+                "Copying source file '{}' to '{}' for Azure Function '{}'.",
+                source_file.display(),
+                destination_file.display(),
+                function_name
+            );
+        }
+
+        fs::copy(&source_file, destination_file)
+            .unwrap_or_else(|_| panic!("Failed to copy source file '{}'", source_file.display()));
+    } else {
+        if verbose {
+            println!(
+                "Creating empty source file '{}' for Azure Function '{}'.",
+                destination_file.display(),
+                function_name
+            );
+        }
+
+        fs::write(
+                &destination_file,
+                "// This file is intentionally empty.\n\
+                 // The original source file was not available when the Functions Application was initialized.\n"
+            ).unwrap_or_else(|_| panic!("Failed to create '{}'", destination_file.display()));
+    }
+}
+
+fn create_function_config_file(
+    function_dir: &Path,
+    info: &'static codegen::Function,
+    verbose: bool,
+) {
+    let function_json = function_dir.join("function.json");
+
+    if verbose {
+        println!(
+            "Creating function configuration file '{}' for Azure Function '{}'.",
+            function_json.display(),
+            info.name
+        );
+    }
+
+    let mut output = fs::File::create(&function_json)
+        .unwrap_or_else(|_| panic!("Failed to create '{}'", function_json.display()));
+
+    info.serialize(&mut Serializer::pretty(&mut output))
+        .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", info.name));
+}
+
+fn initialize_script_root(
+    script_root: &str,
+    sync: bool,
+    verbose: bool,
+    registry: &Arc<Mutex<Registry<'static>>>,
+) {
+    let script_root = current_dir()
+        .expect("failed to get current directory")
+        .join(script_root);
+
+    create_script_root(&script_root, verbose);
+
+    create_host_file(&script_root, verbose);
+
+    let worker_dir = create_worker_dir(&script_root, verbose);
+
+    create_local_settings_file(&script_root, &worker_dir, verbose);
+
+    copy_worker_executable(&worker_dir, verbose);
+
+    create_worker_config_file(&worker_dir, verbose);
+
+    delete_existing_function_directories(&script_root, verbose);
 
     for (name, info) in registry.lock().unwrap().iter() {
-        let function_dir = script_root.join(name);
-        fs::create_dir(&function_dir).unwrap_or_else(|_| {
-            panic!(
-                "Failed to create function directory '{}'",
-                function_dir.display()
-            )
-        });
+        let function_dir = create_function_directory(&script_root, name, verbose);
 
         let source_file = get_source_file_path(
             Path::new(
@@ -254,51 +432,13 @@ fn initialize_app(
             ),
         );
 
-        let destination_file = function_dir.join(
-            source_file
-                .file_name()
-                .expect("expected the source file to have a file name"),
-        );
+        copy_source_file(&function_dir, &source_file, name, verbose);
 
-        if source_file.is_file() {
-            println!(
-                "Copying source file '{}' to '{}' for Azure Function '{}'.",
-                source_file.display(),
-                destination_file.display(),
-                name
-            );
-            fs::copy(&source_file, destination_file).unwrap_or_else(|_| {
-                panic!("Failed to copy source file '{}'", source_file.display())
-            });
-        } else {
-            println!(
-                "Creating empty source file '{}' for Azure Function '{}'.",
-                destination_file.display(),
-                name
-            );
-            fs::write(
-                &destination_file,
-                "// This file is intentionally empty.\n\
-                 // The original source file was not available when the Functions Application was initialized.\n"
-            ).unwrap_or_else(|_| panic!("Failed to create '{}'", destination_file.display()));
-        }
-
-        let function_json = function_dir.join(FUNCTION_FILE);
-        println!(
-            "Creating function configuration file '{}' for Azure Function '{}'.",
-            function_json.display(),
-            name
-        );
-
-        let mut output = fs::File::create(&function_json)
-            .unwrap_or_else(|_| panic!("Failed to create '{}'", function_json.display()));
-
-        info.serialize(&mut Serializer::pretty(&mut output))
-            .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", name));
+        create_function_config_file(&function_dir, info, verbose);
     }
 
     if sync {
-        sync_extensions(script_root.to_str().unwrap(), &registry);
+        sync_extensions(script_root.to_str().unwrap(), verbose, &registry);
     }
 }
 
@@ -387,25 +527,29 @@ fn write_generator_project_file(path: &Path) {
     writer.write(XmlEvent::end_element()).unwrap();
 }
 
-fn sync_extensions(script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) {
+fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Registry<'static>>>) {
     let reg = registry.lock().unwrap();
 
     if !reg.has_binding_extensions() {
-        println!("No binding extensions are needed.");
+        if verbose {
+            println!("No binding extensions are needed.");
+        }
         return;
     }
 
     let temp_dir = TempDir::new().expect("failed to create temporary directory");
     let extensions_project_path = temp_dir.path().join("extensions.csproj");
     let metadata_project_path = temp_dir.path().join("metadata.csproj");
-    let output_directory = std::env::current_dir()
+    let output_directory = current_dir()
         .expect("failed to get current directory")
         .join(script_root);
 
     write_extensions_project_file(&extensions_project_path, &reg);
     write_generator_project_file(&metadata_project_path);
 
-    println!("Restoring extension assemblies...");
+    if verbose {
+        println!("Restoring extension assemblies...");
+    }
 
     if !Command::new("dotnet")
         .args(&[
@@ -427,7 +571,9 @@ fn sync_extensions(script_root: &str, registry: &Arc<Mutex<Registry<'static>>>) 
         panic!("failed to restore extension assemblies.");
     }
 
-    println!("Generating extension metadata...");
+    if verbose {
+        println!("Generating extension metadata...");
+    }
 
     if !Command::new("dotnet")
         .args(&[
@@ -491,14 +637,12 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
     let registry = Arc::new(Mutex::new(Registry::new(functions)));
 
     if let Some(matches) = matches.subcommand_matches("init") {
-        initialize_app(
-            matches
-                .value_of("worker_path")
-                .expect("A binary path is required."),
+        initialize_script_root(
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
             matches.is_present("sync"),
+            matches.is_present("verbose"),
             &registry,
         );
         return;
@@ -509,6 +653,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
+            matches.is_present("verbose"),
             &registry,
         );
         return;

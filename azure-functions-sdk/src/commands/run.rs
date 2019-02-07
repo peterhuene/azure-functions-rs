@@ -1,33 +1,32 @@
 use atty::Stream;
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand, Values};
 use colored::Colorize;
-
+use std::env::current_dir;
+use std::path::Path;
 use std::process::Command;
+use tempdir::TempDir;
 
-use crate::util::{print_failure, print_running, print_success, read_crate_name};
+use crate::util::{print_failure, print_running, print_success};
 
 pub struct Run<'a> {
     quiet: bool,
-    no_build: bool,
     color: Option<&'a str>,
     port: Option<&'a str>,
-    image: Option<&'a str>,
+    script_root: Option<&'a str>,
+    cargo_options: Option<Values<'a>>,
 }
 
 impl<'a> Run<'a> {
     pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("run")
-            .about("Runs an Azure Functions application in a Docker container.")
+            .setting(AppSettings::TrailingVarArg)
+            .usage("cargo func run [FLAGS] [OPTIONS] -- [CARGO_OPTION]...")
+            .about("Runs an Azure Functions application using a local Azure Functions Host.")
             .arg(
                 Arg::with_name("quiet")
                     .long("quiet")
                     .short("q")
                     .help("No output printed to stdout."),
-            )
-            .arg(
-                Arg::with_name("no-build")
-                    .long("no-build")
-                    .help("Skips building the Azure Functions application prior to running."),
             )
             .arg(
                 Arg::with_name("color")
@@ -45,10 +44,16 @@ impl<'a> Run<'a> {
                     .help("The port to forward to the Azure Functions Host for HTTP requests. Default is 8080."),
             )
             .arg(
-                Arg::with_name("image")
-                    .value_name("IMAGE")
-                    .help("The image of the Azure Function application to run. Default is based off the crate name.")
-                    .index(1),
+                Arg::with_name("script_root")
+                    .long("script-root")
+                    .short("r")
+                    .value_name("ROOT")
+                    .help("The directory to use for the Azure Functions application script root. Default is a temporary directory."),
+            )
+            .arg(Arg::with_name("cargo_option")
+                .multiple(true)
+                .value_name("CARGO_OPTION")
+                .help("Additional options to pass to 'cargo run'."),
             )
     }
 
@@ -64,69 +69,61 @@ impl<'a> Run<'a> {
     pub fn execute(&self) -> Result<(), String> {
         self.set_colorization();
 
-        let image = match self.image {
-            None => {
-                if !self.quiet {
-                    print_running(&format!(
-                        "reading {} to determine default Docker image name",
-                        "Cargo.toml".cyan()
-                    ));
-                }
-                Some(
-                    read_crate_name("Cargo.toml")
-                        .map(|s| {
-                            if !self.quiet {
-                                print_success();
-                            }
-                            format!("azure-functions/{}:latest", s)
-                        })
-                        .map_err(|e| {
-                            if !self.quiet {
-                                print_failure();
-                            }
-                            e
-                        })?,
-                )
+        let (_temp_dir, script_root) = match self.script_root {
+            Some(dir) => {
+                let script_root = current_dir()
+                    .expect("failed to get current directory")
+                    .join(dir);
+                (None, script_root)
             }
-            Some(_) => None,
+            None => {
+                let temp_dir = TempDir::new("script-root")
+                    .map_err(|e| format!("failed to create temp directory: {}", e))?;
+                let script_root = temp_dir.path().to_owned();
+                (Some(temp_dir), script_root)
+            }
         };
 
-        let image = image
-            .as_ref()
-            .map_or_else(|| self.image.unwrap(), |img| img);
+        self.init_script_root(&script_root)?;
 
-        if !self.no_build {
-            // TODO: re-implement
-        }
-
-        self.run_image(image)?;
+        self.run_host(&script_root)?;
 
         Ok(())
     }
 
-    fn run_image(&self, image: &str) -> Result<(), String> {
-        let port = format!("{}:80", self.port.unwrap_or("8080"));
-        let args = &[
-            "run",
-            "-it",
-            "-p",
-            &port,
-            "-e",
-            "AzureWebJobsStorage",
-            image,
-        ];
+    fn init_script_root(&self, script_root: &Path) -> Result<(), String> {
+        let mut args = vec!["run"];
+
+        match self.cargo_options.as_ref() {
+            Some(values) => {
+                for value in values.clone() {
+                    args.push(value);
+                }
+            }
+            _ => {}
+        };
+
+        args.extend_from_slice(&[
+            "--",
+            "init",
+            "--script-root",
+            script_root.to_str().unwrap(),
+            "--sync",
+        ]);
 
         if !self.quiet {
             print_running(&format!(
-                "spawning docker to run image: {}",
-                format!("docker {}", args.join(" ")).cyan()
+                "spawning 'cargo' to initialize script root: {}",
+                format!("cargo {}", args.join(" ")).cyan()
             ));
         }
 
-        let mut child = Command::new("docker")
-            .args(args)
-            .spawn()
-            .map_err(|e| format!("failed to spawn docker: {}", e))?;
+        let mut child = Command::new("cargo").args(&args).spawn().map_err(|e| {
+            if !self.quiet {
+                print_failure();
+            }
+            format!("failed to spawn cargo: {}", e)
+        })?;
 
         if !self.quiet {
             print_success();
@@ -134,11 +131,50 @@ impl<'a> Run<'a> {
 
         let status = child
             .wait()
-            .map_err(|e| format!("failed to wait for docker: {}", e))?;
+            .map_err(|e| format!("failed to wait for cargo: {}", e))?;
 
         if !status.success() {
             return Err(format!(
-                "docker failed with exit code {}.",
+                "cargo failed with exit code {}.",
+                status.code().unwrap()
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn run_host(&self, script_root: &Path) -> Result<(), String> {
+        let args = ["host", "start", "--port", self.port.unwrap_or("8080")];
+
+        if !self.quiet {
+            print_running(&format!(
+                "spawning 'func' to start the Azure Functions Host: {}",
+                format!("func {}", args.join(" ")).cyan()
+            ));
+        }
+
+        let mut child = Command::new("func")
+            .args(&args)
+            .current_dir(script_root)
+            .spawn()
+            .map_err(|e| {
+                if !self.quiet {
+                    print_failure();
+                }
+                format!("failed to spawn func: {}\nensure the Azure Functions Core Tools are installed.", e)
+            })?;
+
+        if !self.quiet {
+            print_success();
+        }
+
+        let status = child
+            .wait()
+            .map_err(|e| format!("failed to wait for func: {}", e))?;
+
+        if !status.success() {
+            return Err(format!(
+                "func failed with exit code {}.",
                 status.code().unwrap()
             ));
         }
@@ -151,10 +187,10 @@ impl<'a> From<&'a ArgMatches<'a>> for Run<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Run {
             quiet: args.is_present("quiet"),
-            no_build: args.is_present("no-build"),
             color: args.value_of("color"),
             port: args.value_of("port"),
-            image: args.value_of("image"),
+            script_root: args.value_of("script_root"),
+            cargo_options: args.values_of("cargo_option"),
         }
     }
 }
