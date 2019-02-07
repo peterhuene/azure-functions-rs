@@ -96,7 +96,7 @@ impl<'a> Run<'a> {
             .map_or_else(|| self.image.unwrap(), |img| img);
 
         if !self.no_build {
-            crate::commands::Build::new(self.quiet, self.color, Some(image)).execute()?;
+            // TODO: re-implement
         }
 
         self.run_image(image)?;
