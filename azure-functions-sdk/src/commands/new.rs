@@ -1,10 +1,10 @@
-use crate::util::{
-    create_from_template, path_to_string, print_failure, print_running, print_success,
+use crate::{
+    commands::TEMPLATES,
+    util::{create_from_template, path_to_string, print_failure, print_running, print_success},
 };
 use atty::Stream;
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
-use handlebars::Handlebars;
 use regex::Regex;
 use serde_json::{json, Value};
 use std::{
@@ -38,20 +38,14 @@ fn get_path_for_function(name: &str) -> Result<String, String> {
     Ok(path)
 }
 
-fn create_function(
-    name: &str,
-    templates: &Handlebars,
-    template: &str,
-    data: &Value,
-    quiet: bool,
-) -> Result<(), String> {
+fn create_function(name: &str, template: &str, data: &Value, quiet: bool) -> Result<(), String> {
     let path = get_path_for_function(name)?;
 
     if !quiet {
         print_running(&format!("creating {}.", path.cyan()));
     }
 
-    create_from_template(templates, template, "", &path, data)
+    create_from_template(&TEMPLATES, template, "", &path, data)
         .map(|_| {
             if !quiet {
                 print_success();
@@ -116,12 +110,7 @@ fn export_function(name: &str) -> Result<(), String> {
                     modules.sort();
 
                     create_from_template(
-                        &templates!(
-                            "new-app" =>
-                            [
-                                "functions_mod.rs"
-                            ]
-                        ),
+                        &TEMPLATES,
                         "functions_mod.rs",
                         "",
                         "src/functions/mod.rs",
@@ -236,19 +225,12 @@ impl<'a> Http<'a> {
     }
 
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
-        let templates = templates!(
-            "new" =>
-            [
-                "http.rs"
-            ]
-        );
-
         let data = json!({
             "name": self.name,
             "auth_level": self.auth_level
         });
 
-        create_function(self.name, &templates, "http.rs", &data, quiet)
+        create_function(self.name, "http.rs", &data, quiet)
     }
 }
 
@@ -298,18 +280,12 @@ impl<'a> Blob<'a> {
     }
 
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
-        let templates = templates!(
-        "new" =>
-        [
-            "blob.rs"
-        ]);
-
         let data = json!({
             "name": self.name,
             "path": self.path
         });
 
-        create_function(self.name, &templates, "blob.rs", &data, quiet)
+        create_function(self.name, "blob.rs", &data, quiet)
     }
 }
 
@@ -352,18 +328,12 @@ impl<'a> Queue<'a> {
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
         Queue::validate_queue_name(self.queue_name)?;
 
-        let templates = templates!(
-        "new" =>
-        [
-            "queue.rs"
-        ]);
-
         let data = json!({
             "name": self.name,
             "queue_name": self.queue_name
         });
 
-        create_function(self.name, &templates, "queue.rs", &data, quiet)
+        create_function(self.name, "queue.rs", &data, quiet)
     }
 
     fn validate_queue_name(name: &str) -> Result<(), String> {
@@ -429,18 +399,12 @@ impl<'a> Timer<'a> {
     }
 
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
-        let templates = templates!(
-        "new" =>
-        [
-            "timer.rs"
-        ]);
-
         let data = json!({
             "name": self.name,
             "schedule": self.schedule,
         });
 
-        create_function(self.name, &templates, "timer.rs", &data, quiet)
+        create_function(self.name, "timer.rs", &data, quiet)
     }
 }
 

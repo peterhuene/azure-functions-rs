@@ -1,4 +1,7 @@
-use crate::util::{create_from_template, print_failure, print_running, print_success};
+use crate::{
+    commands::TEMPLATES,
+    util::{create_from_template, print_failure, print_running, print_success},
+};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
@@ -97,17 +100,6 @@ impl<'a> NewApp<'a> {
                 e
             })?;
 
-        let templates = templates!(
-            "new-app" =>
-            [
-                "appsettings.json",
-                "Dockerfile",
-                "dockerignore",
-                "functions_mod.rs",
-                "main.rs"
-            ]
-        );
-
         for (template, relative_path, data) in &[
             ("main.rs", "src/main.rs", &json!({})),
             ("functions_mod.rs", "src/functions/mod.rs", &json!({})),
@@ -123,7 +115,7 @@ impl<'a> NewApp<'a> {
                 print_running(&format!("creating {}.", relative_path.cyan()));
             }
 
-            create_from_template(&templates, template, self.path, relative_path, data)
+            create_from_template(&TEMPLATES, template, self.path, relative_path, data)
                 .map(|_| {
                     if !self.quiet {
                         print_success();
