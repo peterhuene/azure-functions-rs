@@ -20,7 +20,7 @@ impl<'a> Run<'a> {
     pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("run")
             .setting(AppSettings::TrailingVarArg)
-            .usage("cargo func run [FLAGS] [OPTIONS] -- [CARGO_OPTION]...")
+            .usage("cargo func run [FLAGS] [OPTIONS] -- [CARGO_OPTIONS]...")
             .about("Runs an Azure Functions application using a local Azure Functions Host.")
             .arg(
                 Arg::with_name("quiet")
@@ -50,9 +50,9 @@ impl<'a> Run<'a> {
                     .value_name("ROOT")
                     .help("The directory to use for the Azure Functions application script root. Default is a temporary directory."),
             )
-            .arg(Arg::with_name("cargo_option")
+            .arg(Arg::with_name("cargo_options")
                 .multiple(true)
-                .value_name("CARGO_OPTION")
+                .value_name("CARGO_OPTIONS")
                 .help("Additional options to pass to 'cargo run'."),
             )
     }
@@ -190,7 +190,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Run<'a> {
             color: args.value_of("color"),
             port: args.value_of("port"),
             script_root: args.value_of("script_root"),
-            cargo_options: args.values_of("cargo_option"),
+            cargo_options: args.values_of("cargo_options"),
         }
     }
 }

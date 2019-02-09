@@ -51,6 +51,7 @@ pub fn export(input: TokenStream) -> TokenStream {
 /// #[func]
 /// pub fn example(req: &HttpRequest) {
 /// }
+/// ```
 #[proc_macro_attribute]
 pub fn func(args: TokenStream, input: TokenStream) -> TokenStream {
     func::attr_impl(args, input)
