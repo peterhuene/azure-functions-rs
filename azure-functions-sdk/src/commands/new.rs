@@ -236,20 +236,19 @@ impl<'a> Http<'a> {
     }
 
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
-        create_function(
-            self.name,
-            &templates!(
+        let templates = templates!(
             "new" =>
             [
                 "http.rs"
-            ]),
-            "http.rs",
-            &json!({
-                "name": self.name,
-                "auth_level": self.auth_level
-            }),
-            quiet,
-        )
+            ]
+        );
+
+        let data = json!({
+            "name": self.name,
+            "auth_level": self.auth_level
+        });
+
+        create_function(self.name, &templates, "http.rs", &data, quiet)
     }
 }
 
@@ -299,20 +298,18 @@ impl<'a> Blob<'a> {
     }
 
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
-        create_function(
-            self.name,
-            &templates!(
-            "new" =>
-            [
-                "blob.rs"
-            ]),
-            "blob.rs",
-            &json!({
-                "name": self.name,
-                "path": self.path
-            }),
-            quiet,
-        )
+        let templates = templates!(
+        "new" =>
+        [
+            "blob.rs"
+        ]);
+
+        let data = json!({
+            "name": self.name,
+            "path": self.path
+        });
+
+        create_function(self.name, &templates, "blob.rs", &data, quiet)
     }
 }
 
@@ -355,20 +352,18 @@ impl<'a> Queue<'a> {
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
         Queue::validate_queue_name(self.queue_name)?;
 
-        create_function(
-            self.name,
-            &templates!(
-            "new" =>
-            [
-                "queue.rs"
-            ]),
-            "queue.rs",
-            &json!({
-                "name": self.name,
-                "queue_name": self.queue_name
-            }),
-            quiet,
-        )
+        let templates = templates!(
+        "new" =>
+        [
+            "queue.rs"
+        ]);
+
+        let data = json!({
+            "name": self.name,
+            "queue_name": self.queue_name
+        });
+
+        create_function(self.name, &templates, "queue.rs", &data, quiet)
     }
 
     fn validate_queue_name(name: &str) -> Result<(), String> {
@@ -434,20 +429,18 @@ impl<'a> Timer<'a> {
     }
 
     pub fn execute(&self, quiet: bool) -> Result<(), String> {
-        create_function(
-            self.name,
-            &templates!(
-            "new" =>
-            [
-                "timer.rs"
-            ]),
-            "timer.rs",
-            &json!({
-                "name": self.name,
-                "schedule": self.schedule,
-            }),
-            quiet,
-        )
+        let templates = templates!(
+        "new" =>
+        [
+            "timer.rs"
+        ]);
+
+        let data = json!({
+            "name": self.name,
+            "schedule": self.schedule,
+        });
+
+        create_function(self.name, &templates, "timer.rs", &data, quiet)
     }
 }
 
