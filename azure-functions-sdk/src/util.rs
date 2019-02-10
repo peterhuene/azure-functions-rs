@@ -5,15 +5,19 @@ use std::io::Write;
 use std::path::Path;
 
 pub fn print_running(message: &str) {
-    print!("{} {}", "️🚀".cyan(), message);
+    print!(
+        "{} {}",
+        if cfg!(windows) { "->" } else { "️🚀" }.cyan(),
+        message
+    );
 }
 
 pub fn print_success() {
-    println!(" {}", "✓".green());
+    println!(" {}", if cfg!(windows) { "OK" } else { "️✓" }.green());
 }
 
 pub fn print_failure() {
-    println!(" {}", "✗".red());
+    println!(" {}", if cfg!(windows) { "FAIL" } else { "✗" }.red());
 }
 
 pub fn create_from_template(
