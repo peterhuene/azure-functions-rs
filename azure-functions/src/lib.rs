@@ -260,7 +260,11 @@ fn copy_worker_executable(worker_dir: &Path, verbose: bool) {
 
     fs::copy(
         current_exe().expect("Failed to determine the path to the current executable"),
-        worker_dir.join("rust_worker"),
+        worker_dir.join(if cfg!(windows) {
+            "rust_worker.exe"
+        } else {
+            "rust_worker"
+        }),
     )
     .expect("Failed to copy worker executable");
 }

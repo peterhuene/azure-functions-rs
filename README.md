@@ -24,7 +24,6 @@ use azure_functions::bindings::{HttpRequest, HttpResponse};
 use azure_functions::func;
 
 #[func]
-#[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(req: &HttpRequest) -> HttpResponse {
     // Log the message with the Azure Functions Host
     info!("Request: {:?}", req);
@@ -44,17 +43,49 @@ Documentation for the [latest published version](https://docs.rs/azure-functions
 
 # Getting Started
 
+## Install CMake
+
+The `azure-functions` crate has a dependency on the `grpcio` crate that uses [CMake](https://cmake.org) to build and link against the gRPC native library.
+
+CMake must be installed and on the `PATH` to be able to use Azure Functions for Rust.
+
+### Windows
+
+Install CMake from the [Windows installer](https://cmake.org/download/).
+
+### macOS
+
+The easiest way to install CMake on macOS is with [Homebrew](https://brew.sh/):
+
+```
+$ brew install cmake
+```
+
+### Linux
+
+Use your distro's package manager to install a `cmake` (or similar) package.
+
+For example on Debian/Ubuntu:
+
+```
+$ apt-get install cmake
+```
+
+## Install the Azure Functions Core Tools
+
+Install version 2 or higher of the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
+
+If you are on Windows, you must add `%ProgramFiles%\nodejs\node_modules\azure-functions-core-tools\bin` (where `func.exe` is located) to the `PATH` environment variable.
+
 ## Installing the Azure Functions for Rust SDK
 
 Install the Azure Functions for Rust SDK using `cargo install`:
-
 
 ```bash
 $ cargo install azure-functions-sdk
 ```
 
-This installs a new cargo command named `func` that can be used to create new Azure Functions
-applications and run them locally using the Azure Functions Core Tools.
+This installs a new cargo command named `func` that can be used to create and run new Azure Functions applications.
 
 ## Creating a new Azure Functions application
 
@@ -66,7 +97,15 @@ $ cargo func new-app hello
 
 This will create a new application in the `./hello` directory with a module named `functions` where the exported Azure Functions are expected to be placed.
 
-Inside of `src/functions/mod.rs` is a declaration of all exported functions.  A function **will not be loaded by the Azure Functions Host** if it is not declared in the list of exported functions.
+## Adding a simple HTTP-triggered application
+
+Use the `cargo func new` command to create a new HTTP-triggered Azure Function named `hello`:
+
+```bash
+$ cargo func new http -n hello
+```
+
+The source for the function will be in `src/functions/hello.rs`.
 
 ## Building the Azure Functions application
 
@@ -78,8 +117,6 @@ $ cargo build
 
 ## Running the Azure Functions application
 
-Running the Azure Functions application locally requires version 2 or higher of the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
-
 To build and run your Azure Functions application, use `cargo func run`:
 
 ```
@@ -87,9 +124,11 @@ $ cargo func run
 ```
 
 The `cargo func run` command builds and runs your application locally using the Azure Function Host that was
-installed by the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
+installed by the Azure Functions Core Tools.
 
 By default, the host will be configured to listen on `0.0.0.0:8080`.
+
+For the `hello` function added previously, it can be invoked from `http://localhost:8080/api/hello`.
 
 ## Deploying the Azure Functions application
 
@@ -240,29 +279,6 @@ This repository is split into multiple Rust crates:
     * Note: the `azure-functions-shared/protobuf` directory is the git submodule for [Azure Functions Language Worker Protocol](https://github.com/Azure/azure-functions-language-worker-protobuf).
 * [azure-functions-shared-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared-codegen) - The `azure-functions-shared-codegen` crate that defines the procedural macros used by the shared `azure-functions-shared` crate.
 * [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) - The directory containing example Azure Functions.
-
-## Installing development dependencies
-
-An OpenSSL library is required to build the `grpcio` dependency of Azure Functions for Rust.
-
-### Installing OpenSSL on macOS
-
-Use Homebrew to install the `openssl` package:
-
-```
-$ brew install openssl
-$ export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
-```
-
-Note that the `OPENSSL_ROOT_DIR` variable is only required when having to build the dependencies of Azure Functions for Rust.
-
-### Installing OpenSSL on Ubuntu / Debian
-
-Use `apt-get` to install the OpenSSL development package:
-
-```
-$ sudo apt-get install libssl-dev
-```
 
 ## Building
 
