@@ -39,11 +39,11 @@
 //! Export the function in `src/functions/mod.rs`:
 //!
 //! ```rust,ignore
-//! mod hello;
+//! use azure_functions::export;
 //!
-//! pub const FUNCTIONS: &[&azure_functions::codegen::Function] = azure_functions::export!{
-//!   hello::hello
-//! };
+//! export!{
+//!   hello
+//! }
 //! ```
 //!
 //! Run the application:
@@ -69,7 +69,7 @@ use colored::Colorize;
 
 use std::{env, process};
 
-use crate::commands::{NewApp, Run};
+use crate::commands::{New, NewApp, Run};
 
 fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Azure Functions for Rust")
@@ -81,6 +81,7 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::NoBinaryName)
         .subcommand(NewApp::create_subcommand())
         .subcommand(Run::create_subcommand())
+        .subcommand(New::create_subcommand())
 }
 
 fn print_error_and_exit(message: &str) {
@@ -104,6 +105,7 @@ fn main() {
     {
         ("new-app", Some(args)) => NewApp::from(args).execute(),
         ("run", Some(args)) => Run::from(args).execute(),
+        ("new", Some(args)) => New::from(args).execute(),
         _ => panic!("expected a subcommand."),
     } {
         print_error_and_exit(&e);

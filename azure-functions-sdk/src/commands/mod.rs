@@ -1,19 +1,43 @@
-macro_rules! templates {
-    ( $dir:expr => [$( $x:expr ),*] ) => {
-        {
-            let mut templates = handlebars::Handlebars::new();
-            $(
-                templates.register_template_string($x, include_str!(concat!("../templates/", $dir, "/", $x, ".hbs")))
-                    .expect(concat!("failed to register ", $x, " template."));
-            )*
-
-            templates
-        }
+macro_rules! template {
+    ( $templates:expr, $dir:expr, $file:expr ) => {
+        $templates
+            .register_template_string(
+                $file,
+                include_str!(concat!("../templates/", $dir, "/", $file, ".hbs")),
+            )
+            .expect(concat!(
+                "failed to register ",
+                $dir,
+                "/",
+                $file,
+                " template."
+            ));
     };
 }
 
+lazy_static::lazy_static! {
+    static ref TEMPLATES: handlebars::Handlebars = {
+        let mut templates = handlebars::Handlebars::new();
+
+        template!(templates, "new-app", "appsettings.json");
+        template!(templates, "new-app", "Dockerfile");
+        template!(templates, "new-app", "dockerignore");
+        template!(templates, "new-app", "functions_mod.rs");
+        template!(templates, "new-app", "main.rs");
+
+        template!(templates, "new", "http.rs");
+        template!(templates, "new", "blob.rs");
+        template!(templates, "new", "queue.rs");
+        template!(templates, "new", "timer.rs");
+
+        templates
+    };
+}
+
+mod new;
 mod new_app;
 mod run;
 
+pub use self::new::*;
 pub use self::new_app::*;
 pub use self::run::*;

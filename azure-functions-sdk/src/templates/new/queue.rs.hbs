@@ -1,0 +1,10 @@
+use azure_functions::{
+    bindings::QueueTrigger,
+    func,
+};
+
+#[func]
+#[binding(name = "trigger", queue_name = "{{queue_name}}")]
+pub fn {{name}}(trigger: &QueueTrigger) {
+    // trigger.message contains the message posted to the queue
+}

@@ -1,13 +1,14 @@
-use crate::util::{print_failure, print_running, print_success};
+use crate::{
+    commands::TEMPLATES,
+    util::{create_from_template, print_failure, print_running, print_success},
+};
 use atty::Stream;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
-use handlebars::Handlebars;
 use serde_json::json;
-use serde_json::Value;
 
 use std::{
-    fs::{create_dir_all, OpenOptions},
+    fs::OpenOptions,
     io::{stdout, Write},
     path::Path,
     process::Command,
@@ -82,17 +83,6 @@ impl<'a> NewApp<'a> {
     }
 
     pub fn execute(&self) -> Result<(), String> {
-        let templates = templates!(
-            "new-app" =>
-            [
-                "appsettings.json",
-                "Dockerfile",
-                "dockerignore",
-                "functions_mod.rs",
-                "main.rs"
-            ]
-        );
-
         self.set_colorization();
 
         self.create_crate()?;
@@ -110,7 +100,7 @@ impl<'a> NewApp<'a> {
                 e
             })?;
 
-        for (template, path, data) in &[
+        for (template, relative_path, data) in &[
             ("main.rs", "src/main.rs", &json!({})),
             ("functions_mod.rs", "src/functions/mod.rs", &json!({})),
             ("dockerignore", ".dockerignore", &json!({})),
@@ -121,7 +111,11 @@ impl<'a> NewApp<'a> {
             ),
             ("appsettings.json", "appsettings.json", &json!({})),
         ] {
-            self.create_from_template(&templates, template, path, data)
+            if !self.quiet {
+                print_running(&format!("creating {}.", relative_path.cyan()));
+            }
+
+            create_from_template(&TEMPLATES, template, self.path, relative_path, data)
                 .map(|_| {
                     if !self.quiet {
                         print_success();
@@ -243,39 +237,6 @@ impl<'a> NewApp<'a> {
             concat!("azure-functions = \"", env!("CARGO_PKG_VERSION"), "\"\n").as_bytes(),
         )
         .map_err(|e| format!("failed to write dependencies to Cargo manifest: {}", e))?;
-
-        Ok(())
-    }
-
-    fn create_from_template(
-        &self,
-        templates: &Handlebars,
-        template_name: &str,
-        relative_path: &str,
-        data: &Value,
-    ) -> Result<(), String> {
-        if !self.quiet {
-            print_running(&format!("creating {}.", relative_path.cyan()));
-        }
-
-        if let Some(dir) = Path::new(self.path).join(relative_path).parent() {
-            create_dir_all(&dir)
-                .unwrap_or_else(|_| panic!("failed to create directory for '{}'", relative_path));
-        }
-
-        let mut file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(Path::new(self.path).join(relative_path))
-            .map_err(|e| format!("failed to create '{}': {}", relative_path.cyan(), e))?;
-
-        file.write_all(
-            templates
-                .render(template_name, data)
-                .map_err(|e| format!("failed to render '{}': {}", relative_path.cyan(), e))?
-                .as_bytes(),
-        )
-        .map_err(|e| format!("failed to write {}: {}", relative_path.cyan(), e))?;
 
         Ok(())
     }

@@ -8,8 +8,6 @@
 extern crate lazy_static;
 extern crate proc_macro;
 
-use proc_macro_hack::proc_macro_hack;
-
 mod export;
 mod func;
 mod util;
@@ -18,22 +16,25 @@ use proc_macro::TokenStream;
 
 /// Implements the `export!` macro.
 ///
-/// The `export!` macro is used to export a list of Azure Functions written
-/// in Rust to the Azure Functions host.
+/// The `export!` macro is used to export a list of modules as Azure Functions.
 ///
-/// This macro expects a comma-separated list of functions that have the
-/// #[func] attribute applied.
+/// This macro expects a comma-separated list of module names that implement a
+/// function of the same name with the #[func] attribute applied.
+///
+/// A `FUNCTIONS` constant is declared by the macro.
 ///
 /// # Examples
 ///
 /// ```rust,ignore
-/// pub fn main() {
-///     azure_functions::worker_main(::std::env::args(), export!{
-///         my_module::my_function
-///     });
+/// azure_functions::export! {
+///     example
+/// }
+///
+/// fn main() {
+///     azure_functions::worker_main(::std::env::args(), FUNCTIONS);
 /// }
 /// ```
-#[proc_macro_hack]
+#[proc_macro]
 pub fn export(input: TokenStream) -> TokenStream {
     export::attr_impl(input)
 }
