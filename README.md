@@ -45,9 +45,31 @@ Documentation for the [latest published version](https://docs.rs/azure-functions
 
 ## Install CMake
 
-Install [CMake](https://cmake.org/download/) and ensure the install location is added to the `PATH` environment variable.
+The `azure-functions` crate has a dependency on the `grpcio` crate that uses [CMake](https://cmake.org) to build and link against the gRPC native library.
 
-The `azure-functions` create has a dependency on the `grpcio` crate that uses CMake to build and link against the gRPC native library.
+CMake must be installed and on the `PATH` to be able to use Azure Functions for Rust.
+
+### Windows
+
+Install CMake from the [Windows installer](https://cmake.org/download/).
+
+### macOS
+
+The easiest way to install CMake on macOS is with [Homebrew](https://brew.sh/):
+
+```
+$ brew install cmake
+```
+
+### Linux
+
+Use your distro's package manager to install a `cmake` (or similar) package.
+
+For example on Debian/Ubuntu:
+
+```
+$ apt-get install cmake
+```
 
 ## Install the Azure Functions Core Tools
 
