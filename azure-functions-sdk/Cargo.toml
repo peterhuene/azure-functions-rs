@@ -1,7 +1,7 @@
 [package]
 name = "azure-functions-sdk"
 license = "MIT"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Azure Functions for Rust Developer Tools"
 repository = "https://github.com/peterhuene/azure-functions-rs/"

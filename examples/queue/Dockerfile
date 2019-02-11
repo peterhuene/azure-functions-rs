@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile-upstream:experimental
 
-FROM peterhuene/azure-functions-rs-build:0.3.0 AS builder
+FROM peterhuene/azure-functions-rs-build:0.4.0 AS builder
 
 WORKDIR /src
 COPY . /src
@@ -18,7 +18,7 @@ COPY --from=builder ["/usr/local/bin/rust_worker", "/usr/local/bin/rust_worker"]
 
 # Copy configuration to the Azure Functions Host
 COPY --from=builder ["/src/appsettings.json", "/azure-functions-host/appsettings.json"]
-ADD ["https://raw.githubusercontent.com/peterhuene/azure-functions-rs/v0.3.0/azure-functions/worker.config.json", "/azure-functions-host/workers/rust/worker.config.json"]
+ADD ["https://raw.githubusercontent.com/peterhuene/azure-functions-rs/v0.4.0/azure-functions/worker.config.json", "/azure-functions-host/workers/rust/worker.config.json"]
 
 # Copy the script root contents from the build image
 COPY --from=builder ["/home/site/wwwroot", "/home/site/wwwroot"]
