@@ -54,7 +54,7 @@ $ cargo install azure-functions-sdk
 ```
 
 This installs a new cargo command named `func` that can be used to create new Azure Functions
-applications, build, and easily run them locally inside of a Docker container.
+applications and run them locally using the Azure Functions Core Tools.
 
 ## Creating a new Azure Functions application
 
@@ -70,23 +70,15 @@ Inside of `src/functions/mod.rs` is a declaration of all exported functions.  A 
 
 ## Building the Azure Functions application
 
-To build your Azure Functions application, use `cargo func build`:
+To build your Azure Functions application, just use `cargo build`:
 
 ```
-$ cargo func build
+$ cargo build
 ```
-
-**Note: this requires [Docker](https://www.docker.com/get-started) that is at least *18.06* for the experimental BuildKit support.**
-
-The `cargo func build` command is responsible for building a Docker image that can be used to run the Azure Functions application locally.
-
-It will download a Docker image that contains a recent nightly Rust toolset and any dependencies that
-Azure Functions for Rust needs to build and then builds the application inside an intermediary image
-where the `target/` directory is cached to enable incremental builds.
-
-**Note: the very first build will take a long time to download the base build image and then compile Azure Functions for Rust with its dependencies; after the first build, the built dependencies will be cached and thus it should build much faster.**
 
 ## Running the Azure Functions application
+
+Running the Azure Functions application locally requires version 2 or higher of the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
 
 To build and run your Azure Functions application, use `cargo func run`:
 
@@ -94,40 +86,31 @@ To build and run your Azure Functions application, use `cargo func run`:
 $ cargo func run
 ```
 
-The `cargo func run` command is responsible for building a Docker image and then running it inside a Docker container.
+The `cargo func run` command builds and runs your application locally using the Azure Function Host that was
+installed by the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
 
-By default, it exposes port `8080` as the port for the Azure Functions Host running inside the container.
-
-After the Azure Functions application starts, `http://localhost:8080` should load the welcome page for
-an Azure Functions application.  The HTTP Azure Functions can then be triggered, by default, with
-`http://localhost:8080/api/$NAME` (where `$NAME` is the name of the exported Azure Function).
+By default, the host will be configured to listen on `0.0.0.0:8080`.
 
 ## Deploying the Azure Functions application
 
 In the future, there will be a `cargo func deploy` command to deploy the Azure Functions application directly to Azure.
 
-Until that time, you must manually push the Docker image to a repository that can be accessed by Azure.
+Until that time, you must manually build and push the Docker image to a repository that can be accessed by Azure.
 
-Start by building your image with `cargo func build`:
+**Note: this requires [Docker](https://www.docker.com/get-started) that is at least *18.06* for the experimental BuildKit support.**
 
-```
-$ cargo func build
-```
-
-This creates a tag named `azure-functions/<name>` where `<name>` is the name of your Rust crate.
-
-While this is a useful tag for running the Azure Functions application locally, it's not useful for pushing the image to a remote repository.
-
-Create a new tag that is for the proper user for your repository:
+Start by building your image with `docker build -t $TAG_NAME .`:
 
 ```
-$ docker tag azure-functions/<name> <user>/<name>
+$ docker build -t $TAG_NAME .
 ```
 
-Use `docker push` to push the image that was previously built with `cargo func build`:
+Where `$TAG_NAME` is the tag name to use (e.g. `username/my-functions-app`).
+
+Use `docker push` to push the image to a repository that is accessible to Azure Functions.
 
 ```
-$ docker push <new-tag-name>
+$ docker push $TAG_NAME
 ```
 
 Create the Function App in [Azure](https://portal.azure.com) using the "Linux (Preview)" OS.  Under the "Publish" setting, select "Docker Image".
@@ -296,88 +279,3 @@ Use `cargo test` to run the tests:
 ```
 $ cargo test
 ```
-
-## Running with a native Azure Functions Host
-
-The `cargo func run` command builds and runs the Azure Functions application with Docker and runs the Azure Functions Host in a Linux container.
-
-It is possible to instead run the Rust application natively using a locally running Azure Functions Host.
-
-### Clone the Azure Functions Host repository
-
-Clone the [Azure Functions Host](https://github.com/Azure/azure-functions-host) repository to a local directory:
-
-```
-$ git clone git@github.com:Azure/azure-functions-host.git
-```
-
-### Install a .NET Core SDK
-
-The Azure Functions Host is implemented with .NET Core.
-
-Install the latest [.NET Core SDK](https://dotnet.microsoft.com/download) so you can build and run the Azure Functions Host.
-
-### Build the Azure Functions for Rust application
-
-Build your test Azure Functions for Rust application using `cargo run` instead of `cargo func build`:
-
-```
-$ cargo run --release -- init --script-root ./root --worker-path ./root/rust_worker --sync
-```
-
-This command will create your Azure Functions App in `./root`.  The Azure Functions Host will be
-configured to use this location for the application later.
-
-### Configure the Azure Funtions Host
-
-Start by building the Azure Functions Host:
-
-```
-$ cd azure-functions-host/src/WebJobs.Script.WebHost
-$ dotnet build
-```
-
-For the Azure Functions Host to support Rust, we need to copy the worker configuration file to the appropriate location:
-
-```
-$ mkdir azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust
-$ cp azure-functions-rs/azure-functions/worker.config.json azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/workers/rust/
-```
-
-If you want to change the default logging level of the host, add the following to `azure-functions-host/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp2.1/appsettings.json`:
-
-```json
-{
-    "AzureFunctionsJobHost": {
-        "Logging": {
-            "Console": {
-                "IsEnabled": true
-            },
-            "LogLevel": {
-                "Default": "Information"
-            }
-        }
-    }
-}
-```
-
-### Start the Azure Functions Host
-
-There are three thigns the Azure Funcions Host needs to know to run the Rust application:
-
-* The path to the "script root" (e.g. `./root` above in the "Building the Azure Functions for Rust application" section).
-* The location of the Rust worker (built by `cargo run` above).
-* The default connection string to use for Azure Storage services (needed for most bindings).  This can be found under the "Access Keys" settings for your Azure Storage account.
-
-
-Run the Azure Functions Host with the necessary environment:
-
-```
-$ export AzureWebJobsScriptRoot=<full_path_to_script_root>
-$ export AzureWebJobsStorage=<storage_connection_string>
-$ export PATH=$PATH:$AzureWebJobsScriptRoot
-$ cd azure-functions-host/src/WebJobs.Script.WebHost
-$ dotnet run
-```
-
-The Azure Functions Host should start and can now access your Azure Functions application via `http://localhost:5000`.

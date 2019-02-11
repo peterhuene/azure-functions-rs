@@ -8,14 +8,7 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::VersionlessSubcommands)
         .subcommand(
             SubCommand::with_name("init")
-                .about("Initializes the worker executable and script root.")
-                .arg(
-                    Arg::with_name("worker_path")
-                        .long("worker-path")
-                        .value_name("WORKER_PATH")
-                        .help("The path to place the worker executable.")
-                        .required(true),
-                )
+                .about("Initializes the Azure Functions application script root.")
                 .arg(
                     Arg::with_name("script_root")
                         .long("script-root")
@@ -29,6 +22,12 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                         .short("s")
                         .help("Synchronize the Azure Function binding extensions.")
                 )
+                .arg(
+                    Arg::with_name("verbose")
+                        .long("verbose")
+                        .short("v")
+                        .help("Use verbose output.")
+                )
         )
         .subcommand(
             SubCommand::with_name("sync-extensions")
@@ -40,17 +39,16 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                         .help("The script root to synchronize the binding extensions for.")
                         .required(true),
                 )
+                .arg(
+                    Arg::with_name("verbose")
+                        .long("verbose")
+                        .short("v")
+                        .help("Use verbose output.")
+                )
         )
         .subcommand(
             SubCommand::with_name("run")
                 .about("Runs the Rust language worker.")
-                 .arg(
-                    Arg::with_name("worker_config")
-                        .value_name("WORKER_CONFIG")
-                        .help("The path to the Rust worker configuration file.")
-                        .required(false)
-                        .index(1)
-                )
                 .arg(
                     Arg::with_name("host")
                         .long("host")

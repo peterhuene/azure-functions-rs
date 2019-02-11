@@ -69,7 +69,7 @@ use colored::Colorize;
 
 use std::{env, process};
 
-use crate::commands::{Build, NewApp, Run};
+use crate::commands::{NewApp, Run};
 
 fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Azure Functions for Rust")
@@ -79,7 +79,6 @@ fn create_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::NoBinaryName)
-        .subcommand(Build::create_subcommand())
         .subcommand(NewApp::create_subcommand())
         .subcommand(Run::create_subcommand())
 }
@@ -104,7 +103,6 @@ fn main() {
         .subcommand()
     {
         ("new-app", Some(args)) => NewApp::from(args).execute(),
-        ("build", Some(args)) => Build::from(args).execute(),
         ("run", Some(args)) => Run::from(args).execute(),
         _ => panic!("expected a subcommand."),
     } {

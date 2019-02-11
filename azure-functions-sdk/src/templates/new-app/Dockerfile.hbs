@@ -9,7 +9,7 @@ COPY . /src
 RUN --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/usr/local/cargo/registry \
-    ["cargo", "run", "--release", "--", "init", "--worker-path", "/usr/local/bin/rust_worker", "--script-root", "/home/site/wwwroot", "--sync"]
+    ["cargo", "run", "--release", "--", "init", "--script-root", "/home/site/wwwroot", "--sync"]
 
 FROM mcr.microsoft.com/azure-functions/base:2.0 as runtime-image
 
@@ -21,12 +21,6 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
 
 # Copy the Azure Functions host from the runtime image
 COPY --from=runtime-image [ "/azure-functions-host", "/azure-functions-host" ]
-
-# Create the Rust worker config
-ADD ["https://raw.githubusercontent.com/peterhuene/azure-functions-rs/v{{crate_version}}/azure-functions/worker.config.json", "/azure-functions-host/workers/rust/worker.config.json"]
-
-# Copy the worker from the build image
-COPY --from=build-image [ "/usr/local/bin/rust_worker", "/usr/local/bin/rust_worker" ]
 
 # Copy configuration to the Azure Functions Host
 COPY --from=build-image ["/src/appsettings.json", "/azure-functions-host/appsettings.json"]
