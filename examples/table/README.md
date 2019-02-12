@@ -2,23 +2,19 @@
 
 This project is an example of simple table-related Azure Functions.
 
-**Note: this example is not secure; please do not expose table storage via `anonymous` access in a production environment.**
-
 ## Example function implementations
 
 An example function that creates a row in an Azure Storage using an output table binding:
 
 ```rust
-use azure_functions::bindings::{HttpRequest, Table};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{HttpRequest, Table},
+    func,
+};
 use serde_json::Value;
 
 #[func]
-#[binding(
-    name = "req",
-    auth_level = "anonymous",
-    route = "create/{table}/{partition}/{row}"
-)]
+#[binding(name = "req", route = "create/{table}/{partition}/{row}")]
 #[binding(name = "output1", table_name = "{table}")]
 pub fn create_row(req: &HttpRequest) -> ((), Table) {
     let mut table = Table::new();
@@ -40,16 +36,14 @@ pub fn create_row(req: &HttpRequest) -> ((), Table) {
 An example function that reads a row using an input table binding:
 
 ```rust
-use azure_functions::bindings::{HttpRequest, HttpResponse, Table};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{HttpRequest, HttpResponse, Table},
+    func,
+};
 use serde_json::Value;
 
 #[func]
-#[binding(
-    name = "_req",
-    auth_level = "anonymous",
-    route = "read/{table}/{partition}/{row}"
-)]
+#[binding(name = "_req", route = "read/{table}/{partition}/{row}")]
 #[binding(
     name = "table",
     table_name = "{table}",

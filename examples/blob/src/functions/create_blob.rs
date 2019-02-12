@@ -1,13 +1,11 @@
-use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
-use azure_functions::func;
-use azure_functions::http::Status;
+use azure_functions::{
+    bindings::{Blob, HttpRequest, HttpResponse},
+    func,
+    http::Status,
+};
 
 #[func]
-#[binding(
-    name = "req",
-    auth_level = "anonymous",
-    route = "create/blob/{container}/{name}"
-)]
+#[binding(name = "req", route = "create/blob/{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}")]
 pub fn create_blob(req: &HttpRequest) -> (HttpResponse, Blob) {
     (

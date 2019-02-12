@@ -30,7 +30,6 @@ use std::fmt;
 /// use azure_functions::func;
 ///
 /// #[func]
-/// #[binding(name = "req", auth_level = "anonymous", web_hook_type="generic")]
 /// #[binding(name = "table", table_name = "MyTable", filter = "{filter}")]
 /// pub fn log_rows(req: &HttpRequest, table: &Table) {
 ///     for row in table.rows() {

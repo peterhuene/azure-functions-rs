@@ -8,31 +8,30 @@ An example queue-triggered Azure Function that runs when a new message is posted
 to the `test` Azure Storage Queue.
 
 ```rust
-use azure_functions::bindings::QueueTrigger;
-use azure_functions::func;
+use azure_functions::{bindings::QueueTrigger, func};
 
 #[func]
 #[binding(name = "trigger", queue_name = "test")]
 pub fn queue(trigger: &QueueTrigger) {
-    info!("Message: {}", trigger.message());
+    log::info!("Message: {}", trigger.message);
 }
 ```
 
 An example queue-triggered Azure Function that outputs a message to another storage queue:
 
 ```rust
-use azure_functions::bindings::{QueueMessage, QueueTrigger};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{QueueMessage, QueueTrigger},
+    func,
+};
 
 #[func]
 #[binding(name = "trigger", queue_name = "echo-in")]
 #[binding(name = "$return", queue_name = "echo-out")]
 pub fn queue_with_output(trigger: &QueueTrigger) -> QueueMessage {
-    let message = trigger.message();
+    log::info!("Message: {}", trigger.message);
 
-    info!("Message: {}", message);
-
-    message.into()
+    trigger.message.clone()
 }
 ```
 

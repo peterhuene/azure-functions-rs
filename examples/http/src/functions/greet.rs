@@ -4,7 +4,6 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
     log::info!("Context: {:?}, Request: {:?}", context, req);
 
