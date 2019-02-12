@@ -138,6 +138,8 @@ Until that time, you must manually build and push the Docker image to a reposito
 
 **Note: this requires [Docker](https://www.docker.com/get-started) that is at least *18.06* for the experimental BuildKit support.**
 
+**To enable the BuildKit support, set the `DOCKER_BUILDKIT` environment variable to `1` before running `docker build`.**
+
 Start by building your image with `docker build -t $TAG_NAME .`:
 
 ```
