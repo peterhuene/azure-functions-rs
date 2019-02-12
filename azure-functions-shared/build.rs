@@ -11,8 +11,13 @@ const RUST_PROTOBUF_FILE: &'static str = "FunctionRpc.rs";
 const RUST_GRPC_FILE: &'static str = "FunctionRpc_grpc.rs";
 
 fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    protoc_grpcio::compile_grpc_protos(&[PROTOBUF_INPUT_FILE], &["protobuf/src/proto"], &out_dir)
-        .expect("Failed to compile gRPC definitions.");
+    protoc_grpcio::compile_grpc_protos(
+        &[PROTOBUF_INPUT_FILE],
+        &["protobuf/src/proto"],
+        &out_dir,
+        None,
+    )
+    .expect("Failed to compile gRPC definitions.");
 
     fs::copy(
         out_dir.join(RUST_PROTOBUF_FILE),
