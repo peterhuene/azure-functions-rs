@@ -130,6 +130,15 @@ By default, the host will be configured to listen on `0.0.0.0:8080`.
 
 For the `hello` function added previously, it can be invoked from `http://localhost:8080/api/hello`.
 
+## Debugging the Azure Functions application
+
+The easiest way to debug the Azure Functions application is to use [Visual Studio Code](https://code.visualstudio.com/) with the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension.
+
+Copy the example [launch.json](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/launch.json) and
+[tasks.json](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/tasks.json) files to the `.vscode` directory inside the root of your project.
+
+This will enable a `Debug` launch configuration that will build and run your application locally before attaching the `lldb` debugger to the Rust worker process.
+
 ## Deploying the Azure Functions application
 
 In the future, there will be a `cargo func deploy` command to deploy the Azure Functions application directly to Azure.
