@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile-upstream:experimental
 
-FROM peterhuene/azure-functions-rs-build:0.4.0 AS builder
+FROM peterhuene/azure-functions-rs-build:0.4.0 AS build-image
 
 WORKDIR /src
 COPY . /src
@@ -9,16 +9,25 @@ COPY . /src
 RUN --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/usr/local/cargo/registry \
-    ["cargo", "run", "--release", "--", "init", "--worker-path", "/usr/local/bin/rust_worker", "--script-root", "/home/site/wwwroot", "--sync"]
+    ["cargo", "run", "--release", "--", "init", "--script-root", "/home/site/wwwroot", "--sync"]
 
-FROM microsoft/azure-functions-dotnet-core2.0:2.0
+FROM mcr.microsoft.com/azure-functions/base:2.0 as runtime-image
 
-# Copy the worker from the build image
-COPY --from=builder ["/usr/local/bin/rust_worker", "/usr/local/bin/rust_worker"]
+FROM microsoft/dotnet:2.2-aspnetcore-runtime
+
+ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
+    HOME=/home \
+    FUNCTIONS_WORKER_RUNTIME=Rust \
+    languageWorkers__workersDirectory=/home/site/wwwroot/workers
+
+# Copy the Azure Functions host from the runtime image
+COPY --from=runtime-image [ "/azure-functions-host", "/azure-functions-host" ]
 
 # Copy configuration to the Azure Functions Host
-COPY --from=builder ["/src/appsettings.json", "/azure-functions-host/appsettings.json"]
-ADD ["https://raw.githubusercontent.com/peterhuene/azure-functions-rs/v0.4.0/azure-functions/worker.config.json", "/azure-functions-host/workers/rust/worker.config.json"]
+COPY --from=build-image ["/src/appsettings.json", "/azure-functions-host/appsettings.json"]
 
 # Copy the script root contents from the build image
-COPY --from=builder ["/home/site/wwwroot", "/home/site/wwwroot"]
+COPY --from=build-image ["/home/site/wwwroot", "/home/site/wwwroot"]
+
+WORKDIR /home/site/wwwroot
+CMD [ "dotnet", "/azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost.dll" ]

@@ -35,36 +35,28 @@
 //!
 //! ```bash
 //! $ cargo func new-app hello && cd hello
+//!
+//! Create a HTTP-triggered function:
+//!
+//! ```bash
+//! $ cargo func new http -n hello
+//! ```
+//!
+//! This generates `src/functions/hello.rs` with the following contents:
+//!
+//! ```rust,ignore
+//! use azure_functions::{
+//!     bindings::{HttpRequest, HttpResponse},
+//!     func,
+//! };
+//!
+//! #[func]
+//! pub fn hello(req: &HttpRequest) -> HttpResponse {
+//!     "Hello from Rust!".into()
+//! }
 //! ```
 //!
 //! Azure Functions are implemented by applying a `#[func]` attribute to a Rust function.
-//!
-//! For example, let's create `src/functions/hello.rs` that implements a HTTP triggered function:
-//!
-//! ```rust,ignore
-//! use azure_functions::func;
-//! use azure_functions::bindings::{HttpRequest, HttpResponse};
-//!
-//! #[func]
-//! #[binding(name = "request", auth_level = "anonymous")]
-//! pub fn hello(request: &HttpRequest) -> HttpResponse {
-//!     // Log the request on the Azure Functions Host
-//!     info!("Request: {:?}", request);
-//!
-//!     // Return a formatted string as the response
-//!     format!(
-//!         "Hello from Rust, {}!",
-//!         request.query_params().get("name").map_or("stranger", |x| x)
-//!     ).into()
-//! }
-//! ```
-//! Export the Azure Function by changing `src/functions/mod.rs` to:
-//!
-//! ```rust,ignore
-//! azure_functions::export! {
-//!     hello,
-//! };
-//! ```
 //!
 //! Run the application with `cargo func run`:
 //!

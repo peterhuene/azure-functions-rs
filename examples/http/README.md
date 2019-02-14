@@ -7,27 +7,32 @@ This project is an example of a simple HTTP-triggered Azure Function.
 An example HTTP-triggered Azure Function:
 
 ```rust
-use azure_functions::bindings::{HttpRequest, HttpResponse};
-use azure_functions::{func, Context};
+use azure_functions::{
+    bindings::{HttpRequest, HttpResponse},
+    func, Context,
+};
 
 #[func]
-#[binding(name = "req", auth_level = "anonymous")]
 pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
-    info!("Context: {:?}, Request: {:?}", context, req);
+    log::info!("Context: {:?}, Request: {:?}", context, req);
 
     format!(
         "Hello from Rust, {}!\n",
         req.query_params().get("name").map_or("stranger", |x| x)
-    ).into()
+    )
+    .into()
 }
 ```
 
 An example HTTP-triggered Azure Function using JSON for request and response:
 
 ```rust
-use azure_functions::bindings::{HttpRequest, HttpResponse};
-use azure_functions::func;
-use azure_functions::http::Status;
+use azure_functions::{
+    bindings::{HttpRequest, HttpResponse},
+    func,
+    http::Status,
+};
+use serde::{Deserialize, Serialize};
 use serde_json::to_value;
 
 #[derive(Deserialize)]
@@ -41,7 +46,6 @@ struct Response {
 }
 
 #[func]
-#[binding(name = "req", auth_level = "anonymous")]
 pub fn greet_with_json(req: &HttpRequest) -> HttpResponse {
     if let Ok(request) = req.body().as_json::<Request>() {
         let response = Response {

@@ -2,23 +2,21 @@
 
 This project is an example of simple blob-related Azure Functions.
 
-**Note: this example is not secure; please do not expose blob storage via `anonymous` access in a production environment.**
-
 ## Example function implementations
 
 An example blob-triggered Azure Function that runs when a new blob is created 
 in the `watching` Azure Storage blob container.
 
 ```rust
-use azure_functions::bindings::BlobTrigger;
-use azure_functions::func;
+use azure_functions::{bindings::BlobTrigger, func};
 
 #[func]
 #[binding(name = "trigger", path = "watching/{name}")]
 pub fn blob_watcher(trigger: &BlobTrigger) {
-    info!(
+    log::info!(
         "A blob was created at '{}' with contents: {:?}.",
-        trigger.path, trigger.blob
+        trigger.path,
+        trigger.blob
     );
 }
 ```
@@ -26,16 +24,14 @@ pub fn blob_watcher(trigger: &BlobTrigger) {
 An example HTTP-triggered Azure Function that creates a new blob at the specified path:
 
 ```rust
-use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
-use azure_functions::func;
-use azure_functions::http::Status;
+use azure_functions::{
+    bindings::{Blob, HttpRequest, HttpResponse},
+    func,
+    http::Status,
+};
 
 #[func]
-#[binding(
-    name = "req",
-    auth_level = "anonymous",
-    route = "create/blob/{container}/{name}"
-)]
+#[binding(name = "req", route = "create/blob/{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}")]
 pub fn create_blob(req: &HttpRequest) -> (HttpResponse, Blob) {
     (
@@ -51,15 +47,13 @@ pub fn create_blob(req: &HttpRequest) -> (HttpResponse, Blob) {
 An example HTTP-triggered Azure Function that copies the specified blob:
 
 ```rust
-use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{Blob, HttpRequest, HttpResponse},
+    func,
+};
 
 #[func]
-#[binding(
-    name = "_req",
-    auth_level = "anonymous",
-    route = "copy/blob/{container}/{name}"
-)]
+#[binding(name = "_req", route = "copy/blob/{container}/{name}")]
 #[binding(name = "blob", path = "{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}.copy")]
 pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> (HttpResponse, Blob) {
@@ -70,15 +64,13 @@ pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> (HttpResponse, Blob) {
 An HTTP-triggered function that responds with the contents of a blob:
 
 ```rust
-use azure_functions::bindings::{Blob, HttpRequest, HttpResponse};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{Blob, HttpRequest, HttpResponse},
+    func,
+};
 
 #[func]
-#[binding(
-    name = "_req",
-    auth_level = "anonymous",
-    route = "print/blob/{container}/{path}"
-)]
+#[binding(name = "_req", route = "print/blob/{container}/{path}")]
 #[binding(name = "blob", path = "{container}/{path}")]
 pub fn print_blob(_req: &HttpRequest, blob: &Blob) -> HttpResponse {
     blob.as_bytes().into()

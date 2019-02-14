@@ -11,11 +11,12 @@ use std::collections::HashMap;
 ///
 /// ```rust
 /// # extern crate azure_functions;
-/// use azure_functions::func;
-/// use azure_functions::bindings::{HttpRequest, HttpResponse};
+/// use azure_functions::{
+///     bindings::{HttpRequest, HttpResponse},
+///     func,
+/// };
 ///
 /// #[func]
-/// #[binding(name = "request", auth_level = "anonymous")]
 /// pub fn greet(request: &HttpRequest) -> HttpResponse {
 ///     format!(
 ///         "Hello, {}!",
