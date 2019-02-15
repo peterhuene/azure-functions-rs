@@ -594,6 +594,8 @@ fn run_worker(
     max_message_length: Option<i32>,
     registry: &Arc<Mutex<Registry<'static>>>,
 ) {
+    ctrlc::set_handler(|| {}).expect("failed setting SIGINT handler");
+
     let client = rpc::Client::new(worker_id.to_string(), max_message_length);
 
     println!("Connecting to Azure Functions host at {}:{}.", host, port);
