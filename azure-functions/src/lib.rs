@@ -620,10 +620,12 @@ fn run_worker(
 /// # Examples
 ///
 /// ```rust,ignore
+/// azure_functions::export! {
+///     example
+/// }
+///
 /// fn main() {
-///     azure_functions::worker_main(::std::env::args(), export!{
-///         my_module::my_function
-///     });
+///     azure_functions::worker_main(::std::env::args(), FUNCTIONS);
 /// }
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
