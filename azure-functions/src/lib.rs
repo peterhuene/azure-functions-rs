@@ -35,6 +35,7 @@
 //!
 //! ```bash
 //! $ cargo func new-app hello && cd hello
+//! ```
 //!
 //! Create a HTTP-triggered function:
 //!
