@@ -1,5 +1,6 @@
 mod blob;
 mod blob_trigger;
+mod event_grid_trigger;
 mod http;
 mod http_trigger;
 mod queue;
@@ -9,6 +10,7 @@ mod timer_trigger;
 
 pub use self::blob::*;
 pub use self::blob_trigger::*;
+pub use self::event_grid_trigger::*;
 pub use self::http::*;
 pub use self::http_trigger::*;
 pub use self::queue::*;

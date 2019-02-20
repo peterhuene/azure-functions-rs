@@ -5,6 +5,7 @@
 //! The following Azure Functions trigger bindings are supported:
 //!
 //! * [Blob triggers](bindings/struct.BlobTrigger.html)
+//! * [Event Grid triggers](bindings/struct.EventGridEvent.html)
 //! * [HTTP triggers](bindings/struct.HttpRequest.html)
 //! * [Queue triggers](bindings/struct.QueueTrigger.html)
 //! * [Timer triggers](bindings/struct.TimerInfo.html)
@@ -69,6 +70,7 @@
 //!
 //! The expected response would be `Hello from Rust, Peter!`.
 #![deny(unused_extern_crates)]
+#![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]
 
 #[macro_use]

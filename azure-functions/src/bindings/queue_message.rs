@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn it_conveerts_from_str() {
+    fn it_converts_from_str() {
         let message: QueueMessage = "test".into();
         assert_eq!(message.as_str().unwrap(), "test");
     }
@@ -240,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn it_cogenverts_from_u8_slice() {
+    fn it_converts_from_u8_slice() {
         let message: QueueMessage = [0, 1, 2][..].into();
         assert_eq!(message.as_bytes(), [0, 1, 2]);
     }

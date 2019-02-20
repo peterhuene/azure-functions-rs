@@ -3,7 +3,9 @@ use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
 const STORAGE_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Storage";
-const STORAGE_PACKAGE_VERSION: &str = "3.0.0";
+const STORAGE_PACKAGE_VERSION: &str = "3.0.3";
+const EVENT_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventGrid";
+const EVENT_GRID_PACKAGE_VERSION: &str = "2.0.0";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -28,6 +30,10 @@ lazy_static! {
         map.insert(
             bindings::TABLE_TYPE,
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::EVENT_GRID_TRIGGER_TYPE,
+            (EVENT_GRID_PACKAGE_NAME, EVENT_GRID_PACKAGE_VERSION),
         );
         map
     };
