@@ -164,6 +164,7 @@ impl<'a> New<'a> {
             .subcommand(Http::create_subcommand())
             .subcommand(Queue::create_subcommand())
             .subcommand(Timer::create_subcommand())
+            .subcommand(EventGrid::create_subcommand())
     }
 
     fn set_colorization(&self) {
@@ -183,6 +184,7 @@ impl<'a> New<'a> {
             ("http", Some(args)) => Http::from(args).execute(self.quiet),
             ("queue", Some(args)) => Queue::from(args).execute(self.quiet),
             ("timer", Some(args)) => Timer::from(args).execute(self.quiet),
+            ("event-grid", Some(args)) => EventGrid::from(args).execute(self.quiet),
             _ => panic!("expected a subcommand for the 'new' command."),
         }
     }
@@ -379,7 +381,7 @@ struct Timer<'a> {
 impl<'a> Timer<'a> {
     pub fn create_subcommand<'b>() -> App<'a, 'b> {
         SubCommand::with_name("timer")
-            .about("Creates a new trimer triggered Azure Function.")
+            .about("Creates a new timer triggered Azure Function.")
             .arg(
                 Arg::with_name("name")
                     .long("name")
@@ -413,6 +415,41 @@ impl<'a> From<&'a ArgMatches<'a>> for Timer<'a> {
         Timer {
             name: args.value_of("name").unwrap(),
             schedule: args.value_of("schedule").unwrap(),
+        }
+    }
+}
+
+struct EventGrid<'a> {
+    name: &'a str,
+}
+
+impl<'a> EventGrid<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
+        SubCommand::with_name("event-grid")
+            .about("Creates a new Event Grid triggered Azure Function.")
+            .arg(
+                Arg::with_name("name")
+                    .long("name")
+                    .short("n")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function.")
+                    .required(true),
+            )
+    }
+
+    pub fn execute(&self, quiet: bool) -> Result<(), String> {
+        let data = json!({
+            "name": self.name,
+        });
+
+        create_function(self.name, "eventgrid.rs", &data, quiet)
+    }
+}
+
+impl<'a> From<&'a ArgMatches<'a>> for EventGrid<'a> {
+    fn from(args: &'a ArgMatches<'a>) -> Self {
+        EventGrid {
+            name: args.value_of("name").unwrap(),
         }
     }
 }
