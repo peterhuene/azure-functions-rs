@@ -95,36 +95,33 @@ fn export_function(name: &str) -> Result<(), String> {
 
     let mut found = false;
     for item in ast.items {
-        match item {
-            Item::Macro(m) => {
-                if path_to_string(&m.mac.path) == "azure_functions::export" {
-                    let mut modules: Vec<String> = Punctuated::<Ident, Token![,]>::parse_terminated
-                        .parse2(m.mac.tts)
-                        .map_err(|_| "failed to parse 'azure_functions::export' macro.")?
-                        .into_iter()
-                        .map(|i| i.to_string())
-                        .collect();
+        if let Item::Macro(m) = item {
+            if path_to_string(&m.mac.path) == "azure_functions::export" {
+                let mut modules: Vec<String> = Punctuated::<Ident, Token![,]>::parse_terminated
+                    .parse2(m.mac.tts)
+                    .map_err(|_| "failed to parse 'azure_functions::export' macro.")?
+                    .into_iter()
+                    .map(|i| i.to_string())
+                    .collect();
 
-                    modules.push(name.to_string());
+                modules.push(name.to_string());
 
-                    modules.sort();
+                modules.sort();
 
-                    create_from_template(
-                        &TEMPLATES,
-                        "functions_mod.rs",
-                        "",
-                        "src/functions/mod.rs",
-                        &json!({ "modules": if modules.len() == 0 {
-                            String::new()
-                        } else {
-                            format!("    {}", modules.join(",\n    "))
-                        }}),
-                    )?;
+                create_from_template(
+                    &TEMPLATES,
+                    "functions_mod.rs",
+                    "",
+                    "src/functions/mod.rs",
+                    &json!({ "modules": if modules.is_empty() {
+                        String::new()
+                    } else {
+                        format!("    {}", modules.join(",\n    "))
+                    }}),
+                )?;
 
-                    found = true;
-                }
+                found = true;
             }
-            _ => {}
         }
     }
 
@@ -165,6 +162,7 @@ impl<'a> New<'a> {
             .subcommand(Queue::create_subcommand())
             .subcommand(Timer::create_subcommand())
             .subcommand(EventGrid::create_subcommand())
+            .subcommand(EventHub::create_subcommand())
     }
 
     fn set_colorization(&self) {
@@ -185,6 +183,7 @@ impl<'a> New<'a> {
             ("queue", Some(args)) => Queue::from(args).execute(self.quiet),
             ("timer", Some(args)) => Timer::from(args).execute(self.quiet),
             ("event-grid", Some(args)) => EventGrid::from(args).execute(self.quiet),
+            ("event-hub", Some(args)) => EventHub::from(args).execute(self.quiet),
             _ => panic!("expected a subcommand for the 'new' command."),
         }
     }
@@ -450,6 +449,62 @@ impl<'a> From<&'a ArgMatches<'a>> for EventGrid<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         EventGrid {
             name: args.value_of("name").unwrap(),
+        }
+    }
+}
+
+struct EventHub<'a> {
+    name: &'a str,
+    connection: &'a str,
+    hub_name: &'a str,
+}
+
+impl<'a> EventHub<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
+        SubCommand::with_name("event-hub")
+            .about("Creates a new Event Hub triggered Azure Function.")
+            .arg(
+                Arg::with_name("name")
+                    .long("name")
+                    .short("n")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function.")
+                    .required(true),
+            )
+            .arg(
+                Arg::with_name("connection")
+                    .long("connection")
+                    .short("c")
+                    .value_name("CONNECTION")
+                    .help("The name of the connection setting to use for the Event Hub trigger.")
+                    .required(true),
+            )
+            .arg(
+                Arg::with_name("hub_name")
+                    .long("hub-name")
+                    .short("h")
+                    .value_name("HUBNAME")
+                    .help("The name of the event hub."),
+            )
+    }
+
+    pub fn execute(&self, quiet: bool) -> Result<(), String> {
+        let data = json!({
+            "name": self.name,
+            "connection": self.connection,
+            "hub_name": self.hub_name,
+        });
+
+        create_function(self.name, "eventhub.rs", &data, quiet)
+    }
+}
+
+impl<'a> From<&'a ArgMatches<'a>> for EventHub<'a> {
+    fn from(args: &'a ArgMatches<'a>) -> Self {
+        EventHub {
+            name: args.value_of("name").unwrap(),
+            connection: args.value_of("connection").unwrap(),
+            hub_name: args.value_of("hub_name").unwrap_or(""),
         }
     }
 }

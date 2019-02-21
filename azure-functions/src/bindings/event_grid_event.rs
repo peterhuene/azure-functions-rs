@@ -1,4 +1,5 @@
 use crate::rpc::protocol;
+use crate::util::deserialize_datetime;
 use chrono::{DateTime, Utc};
 use serde_json::from_str;
 use std::collections::HashMap;
@@ -30,6 +31,7 @@ pub struct EventGridEvent {
     /// One of the registered event types for this event source.
     pub event_type: String,
     /// The time the event is generated based on the provider's UTC time.
+    #[serde(deserialize_with = "deserialize_datetime")]
     pub event_time: DateTime<Utc>,
     /// Unique identifier for the event.
     pub id: String,

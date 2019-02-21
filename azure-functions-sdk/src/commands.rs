@@ -30,6 +30,7 @@ lazy_static::lazy_static! {
         template!(templates, "new", "queue.rs");
         template!(templates, "new", "timer.rs");
         template!(templates, "new", "eventgrid.rs");
+        template!(templates, "new", "eventhub.rs");
 
         templates
     };

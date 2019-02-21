@@ -6,6 +6,7 @@
 //!
 //! * [Blob triggers](bindings/struct.BlobTrigger.html)
 //! * [Event Grid triggers](bindings/struct.EventGridEvent.html)
+//! * [Event Hub triggers](bindings/struct.EventHubTrigger.html)
 //! * [HTTP triggers](bindings/struct.HttpRequest.html)
 //! * [Queue triggers](bindings/struct.QueueTrigger.html)
 //! * [Timer triggers](bindings/struct.TimerInfo.html)
@@ -18,8 +19,9 @@
 //! The following Azure Functions output bindings are supported:
 //!
 //! * [Blob output](bindings/struct.Blob.html)
+//! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
-//! * [Queue message output](bindings/struct.QueueMessage.html)
+//! * [Queue output](bindings/struct.QueueMessage.html)
 //! * [Table output](bindings/struct.Table.html)
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
@@ -96,6 +98,7 @@ mod util;
 
 pub mod bindings;
 pub mod blob;
+pub mod event_hub;
 pub mod http;
 #[doc(hidden)]
 pub mod rpc;
