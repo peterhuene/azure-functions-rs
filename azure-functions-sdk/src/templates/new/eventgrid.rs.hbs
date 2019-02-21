@@ -1,0 +1,9 @@
+use azure_functions::{
+    bindings::EventGridEvent,
+    func,
+};
+
+#[func]
+pub fn {{name}}(event: &EventGridEvent) {
+    // event.data has the event data JSON
+}

@@ -1,5 +1,6 @@
 use crate::func::bindings::{
-    Blob, BlobTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table, TimerTrigger,
+    Blob, BlobTrigger, EventGridTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table,
+    TimerTrigger,
 };
 use crate::util::{AttributeArguments, MacroError, TryFrom};
 use azure_functions_shared::codegen;
@@ -46,6 +47,10 @@ impl ToTokens for Binding<'_> {
                 let b = Table(Cow::Borrowed(b));
                 quote!(::azure_functions::codegen::Binding::Table(#b)).to_tokens(tokens)
             }
+            codegen::Binding::EventGridTrigger(b) => {
+                let b = EventGridTrigger(Cow::Borrowed(b));
+                quote!(::azure_functions::codegen::Binding::EventGridTrigger(#b)).to_tokens(tokens)
+            }
         };
     }
 }
@@ -74,6 +79,11 @@ lazy_static! {
         map.insert("BlobTrigger", |args| {
             Ok(codegen::Binding::BlobTrigger(
                 BlobTrigger::try_from(args)?.0.into_owned(),
+            ))
+        });
+        map.insert("EventGridEvent", |args| {
+            Ok(codegen::Binding::EventGridTrigger(
+                EventGridTrigger::try_from(args)?.0.into_owned(),
             ))
         });
         map
