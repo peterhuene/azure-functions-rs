@@ -149,12 +149,14 @@ impl From<Vec<u8>> for QueueMessage {
     }
 }
 
+#[doc(hidden)]
 impl From<protocol::TypedData> for QueueMessage {
     fn from(data: protocol::TypedData) -> Self {
         QueueMessage(data)
     }
 }
 
+#[doc(hidden)]
 impl Into<protocol::TypedData> for QueueMessage {
     fn into(self) -> protocol::TypedData {
         self.0

@@ -110,6 +110,7 @@ impl fmt::Display for Table {
     }
 }
 
+#[doc(hidden)]
 impl From<protocol::TypedData> for Table {
     fn from(data: protocol::TypedData) -> Self {
         if data.has_json() {
@@ -131,6 +132,7 @@ impl From<protocol::TypedData> for Table {
     }
 }
 
+#[doc(hidden)]
 impl Into<protocol::TypedData> for Table {
     fn into(self) -> protocol::TypedData {
         let mut data = protocol::TypedData::new();

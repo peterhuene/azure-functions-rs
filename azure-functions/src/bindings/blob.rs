@@ -149,12 +149,14 @@ impl From<Vec<u8>> for Blob {
     }
 }
 
+#[doc(hidden)]
 impl From<protocol::TypedData> for Blob {
     fn from(data: protocol::TypedData) -> Self {
         Blob(data)
     }
 }
 
+#[doc(hidden)]
 impl Into<protocol::TypedData> for Blob {
     fn into(self) -> protocol::TypedData {
         self.0
