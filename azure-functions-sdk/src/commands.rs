@@ -3,7 +3,7 @@ macro_rules! template {
         $templates
             .register_template_string(
                 $file,
-                include_str!(concat!("../templates/", $dir, "/", $file, ".hbs")),
+                include_str!(concat!("templates/", $dir, "/", $file, ".hbs")),
             )
             .expect(concat!(
                 "failed to register ",

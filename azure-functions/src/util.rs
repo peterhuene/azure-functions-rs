@@ -112,5 +112,4 @@ mod tests {
         let d: f64 = convert_from(&data).unwrap();
         assert_eq!(d, DATA);
     }
-
 }
