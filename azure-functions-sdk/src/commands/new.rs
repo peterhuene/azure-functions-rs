@@ -484,7 +484,7 @@ impl<'a> EventHub<'a> {
                     .long("hub-name")
                     .short("h")
                     .value_name("HUBNAME")
-                    .help("The name of the event hub."),
+                    .help("The name of the Event Hub."),
             )
     }
 

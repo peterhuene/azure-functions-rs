@@ -6,7 +6,7 @@ use crate::event_hub::RuntimeInformation;
 pub struct PartitionContext {
     /// The name of the consumer group.
     pub consumer_group_name: String,
-    /// The path of the event hub.
+    /// The path of the Event Hub.
     pub event_hub_path: String,
     /// The partition ID for the context.
     pub partition_id: String,

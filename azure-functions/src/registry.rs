@@ -41,6 +41,10 @@ lazy_static! {
             bindings::EVENT_HUB_TRIGGER_TYPE,
             (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
         );
+        map.insert(
+            bindings::EVENT_HUB_TRIGGER_TYPE,
+            (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
+        );
         map
     };
 }

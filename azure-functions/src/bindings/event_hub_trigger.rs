@@ -33,7 +33,7 @@ const SYSTEM_PROPERTIES_KEY: &str = "SystemProperties";
 /// ```
 #[derive(Debug)]
 pub struct EventHubTrigger {
-    /// The event hub message that triggered the function.
+    /// The Event Hub message that triggered the function.
     pub message: EventHubMessage,
     /// The partition context information.
     pub partition_context: PartitionContext,

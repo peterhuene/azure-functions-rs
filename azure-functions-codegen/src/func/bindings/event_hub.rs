@@ -70,7 +70,7 @@ impl TryFrom<AttributeArguments> for EventHub<'_> {
         if connection.is_none() {
             return Err((
                 args.span,
-                "the 'connection' argument is required for event hub bindings.",
+                "the 'connection' argument is required for Event Hub bindings.",
             )
                 .into());
         }

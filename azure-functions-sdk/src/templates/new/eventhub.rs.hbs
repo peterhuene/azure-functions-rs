@@ -10,5 +10,5 @@ use azure_functions::{
 #[binding(name = "trigger", connection = "{{connection}}")]
 {{/if~}}
 pub fn {{name}}(trigger: &EventHubTrigger) {
-    // trigger.message contains the message posted to the event hub
+    // trigger.message contains the message posted to the Event Hub
 }

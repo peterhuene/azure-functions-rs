@@ -83,7 +83,7 @@ impl TryFrom<AttributeArguments> for EventHubTrigger<'_> {
         if connection.is_none() {
             return Err((
                 args.span,
-                "the 'connection' argument is required for event hub trigger bindings.",
+                "the 'connection' argument is required for Event Hub trigger bindings.",
             )
                 .into());
         }

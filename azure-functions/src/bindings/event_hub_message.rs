@@ -80,7 +80,7 @@ impl EventHubMessage {
             return self.0.get_stream();
         }
 
-        panic!("unexpected data for event hub message contents");
+        panic!("unexpected data for Event Hub message contents");
     }
 
     /// Deserializes the message as JSON to the requested type.
@@ -90,7 +90,7 @@ impl EventHubMessage {
     {
         from_str(
             self.as_str().ok_or_else(|| {
-                ::serde_json::Error::custom("event hub message is not valid UTF-8")
+                ::serde_json::Error::custom("Event Hub message is not valid UTF-8")
             })?,
         )
     }
