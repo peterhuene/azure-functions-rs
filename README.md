@@ -181,18 +181,20 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 
 The current list of supported bindings:
 
-| Rust Type                                   | Azure Functions Binding | Direction      |
-|---------------------------------------------|-------------------------|----------------|
-| `azure_functions::bindings::Blob`           | Input and Ouput Blob    | in, inout, out |
-| `azure_functions::bindings::BlobTrigger`    | Blob Trigger            | in, inout      |
-| `azure_functions::bindings::EventGridEvent` | Event Grid Event        | in             |
-| `azure_functions::bindings::HttpRequest`    | HTTP Trigger            | in             |
-| `azure_functions::bindings::HttpResponse`   | Output HTTP Response    | out            |
-| `azure_functions::bindings::QueueTrigger`   | Queue Trigger           | in             |
-| `azure_functions::bindings::QueueMessage`   | Output Queue Message    | out            |
-| `azure_functions::bindings::Table`          | Input and Ouput Table   | in, out        |
-| `azure_functions::bindings::TimerInfo`      | Timer Trigger           | in             |
-| `azure_functions::Context`*                 | Invocation Context      | n/a            |
+| Rust Type                                    | Azure Functions Binding  | Direction      |
+|----------------------------------------------|--------------------------|----------------|
+| `azure_functions::bindings::Blob`            | Input and Ouput Blob     | in, inout, out |
+| `azure_functions::bindings::BlobTrigger`     | Blob Trigger             | in, inout      |
+| `azure_functions::bindings::EventGridEvent`  | Event Grid Trigger       | in             |
+| `azure_functions::bindings::EventHubTrigger` | Event Hub Trigger        | in             |
+| `azure_functions::bindings::EventHubMessage` | Event Hub Output Message | out            |
+| `azure_functions::bindings::HttpRequest`     | HTTP Trigger             | in             |
+| `azure_functions::bindings::HttpResponse`    | Output HTTP Response     | out            |
+| `azure_functions::bindings::QueueTrigger`    | Queue Trigger            | in             |
+| `azure_functions::bindings::QueueMessage`    | Output Queue Message     | out            |
+| `azure_functions::bindings::Table`           | Input and Ouput Table    | in, out        |
+| `azure_functions::bindings::TimerInfo`       | Timer Trigger            | in             |
+| `azure_functions::Context`*                  | Invocation Context       | n/a            |
 
 \****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 

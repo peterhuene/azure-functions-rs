@@ -22,6 +22,8 @@ pub enum Binding {
     Blob(bindings::Blob),
     Table(bindings::Table),
     EventGridTrigger(bindings::EventGridTrigger),
+    EventHubTrigger(bindings::EventHubTrigger),
+    EventHub(bindings::EventHub),
 }
 
 impl Binding {
@@ -37,6 +39,8 @@ impl Binding {
             Binding::Blob(b) => Some(&b.name),
             Binding::Table(b) => Some(&b.name),
             Binding::EventGridTrigger(b) => Some(&b.name),
+            Binding::EventHubTrigger(b) => Some(&b.name),
+            Binding::EventHub(b) => Some(&b.name),
         }
     }
 
@@ -52,6 +56,8 @@ impl Binding {
             Binding::Blob(_) => Some(bindings::BLOB_TYPE),
             Binding::Table(_) => Some(bindings::TABLE_TYPE),
             Binding::EventGridTrigger(_) => Some(bindings::EVENT_GRID_TRIGGER_TYPE),
+            Binding::EventHubTrigger(_) => Some(bindings::EVENT_HUB_TRIGGER_TYPE),
+            Binding::EventHub(_) => Some(bindings::EVENT_HUB_TYPE),
         }
     }
 
@@ -68,12 +74,9 @@ impl Binding {
             | Binding::TimerTrigger(_)
             | Binding::QueueTrigger(_)
             | Binding::BlobTrigger(_)
-            | Binding::EventGridTrigger(_) => true,
-            Binding::Context
-            | Binding::Http(_)
-            | Binding::Queue(_)
-            | Binding::Blob(_)
-            | Binding::Table(_) => false,
+            | Binding::EventGridTrigger(_)
+            | Binding::EventHubTrigger(_) => true,
+            _ => false,
         }
     }
 }

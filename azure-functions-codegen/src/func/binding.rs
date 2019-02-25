@@ -1,6 +1,6 @@
 use crate::func::bindings::{
-    Blob, BlobTrigger, EventGridTrigger, Http, HttpTrigger, Queue, QueueTrigger, Table,
-    TimerTrigger,
+    Blob, BlobTrigger, EventGridTrigger, EventHub, EventHubTrigger, Http, HttpTrigger, Queue,
+    QueueTrigger, Table, TimerTrigger,
 };
 use crate::util::{AttributeArguments, MacroError, TryFrom};
 use azure_functions_shared::codegen;
@@ -51,6 +51,14 @@ impl ToTokens for Binding<'_> {
                 let b = EventGridTrigger(Cow::Borrowed(b));
                 quote!(::azure_functions::codegen::Binding::EventGridTrigger(#b)).to_tokens(tokens)
             }
+            codegen::Binding::EventHubTrigger(b) => {
+                let b = EventHubTrigger(Cow::Borrowed(b));
+                quote!(::azure_functions::codegen::Binding::EventHubTrigger(#b)).to_tokens(tokens)
+            }
+            codegen::Binding::EventHub(b) => {
+                let b = EventHub(Cow::Borrowed(b));
+                quote!(::azure_functions::codegen::Binding::EventHub(#b)).to_tokens(tokens)
+            }
         };
     }
 }
@@ -84,6 +92,11 @@ lazy_static! {
         map.insert("EventGridEvent", |args| {
             Ok(codegen::Binding::EventGridTrigger(
                 EventGridTrigger::try_from(args)?.0.into_owned(),
+            ))
+        });
+        map.insert("EventHubTrigger", |args| {
+            Ok(codegen::Binding::EventHubTrigger(
+                EventHubTrigger::try_from(args)?.0.into_owned(),
             ))
         });
         map
@@ -133,6 +146,11 @@ lazy_static! {
             let mut binding = Table::try_from(args)?.0.into_owned();
             binding.direction = codegen::Direction::Out;
             Ok(codegen::Binding::Table(binding))
+        });
+        map.insert("EventHubMessage", |args| {
+            Ok(codegen::Binding::EventHub(
+                EventHub::try_from(args)?.0.into_owned(),
+            ))
         });
         map
     };

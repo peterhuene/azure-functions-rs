@@ -1,0 +1,9 @@
+[package]
+name = "event-hub"
+version = "0.1.0"
+authors = ["Peter Huene <pehuene@microsoft.com>"]
+edition = "2018"
+
+[dependencies]
+azure-functions = { path = "../../azure-functions" }
+log = "0.4.6"

@@ -94,14 +94,11 @@ impl<'a> Run<'a> {
     fn init_script_root(&self, script_root: &Path) -> Result<(), String> {
         let mut args = vec!["run"];
 
-        match self.cargo_options.as_ref() {
-            Some(values) => {
-                for value in values.clone() {
-                    args.push(value);
-                }
+        if let Some(values) = self.cargo_options.as_ref() {
+            for value in values.clone() {
+                args.push(value);
             }
-            _ => {}
-        };
+        }
 
         args.extend_from_slice(&[
             "--",

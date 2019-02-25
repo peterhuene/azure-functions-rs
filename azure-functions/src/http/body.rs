@@ -128,6 +128,7 @@ impl fmt::Display for Body<'_> {
     }
 }
 
+#[doc(hidden)]
 impl<'a> From<&'a protocol::TypedData> for Body<'a> {
     fn from(data: &'a protocol::TypedData) -> Self {
         if data.has_string() {
@@ -183,6 +184,7 @@ impl From<Vec<u8>> for Body<'_> {
     }
 }
 
+#[doc(hidden)]
 impl Into<protocol::TypedData> for Body<'_> {
     fn into(self) -> protocol::TypedData {
         let mut data = protocol::TypedData::new();

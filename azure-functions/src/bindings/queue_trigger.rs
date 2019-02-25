@@ -1,4 +1,4 @@
-use crate::bindings::{QueueMessage, Trigger};
+use crate::bindings::QueueMessage;
 use crate::rpc::protocol;
 use crate::util::convert_from;
 use chrono::{DateTime, Utc};
@@ -38,55 +38,55 @@ pub struct QueueTrigger {
     /// The number of times this message has been dequeued.
     pub dequeue_count: u32,
     /// The time that the message expires.
-    pub expiration_time: Option<DateTime<Utc>>,
+    pub expiration_time: DateTime<Utc>,
     /// The time that the message was added to the queue.
-    pub insertion_time: Option<DateTime<Utc>>,
+    pub insertion_time: DateTime<Utc>,
     /// The time that the message will next be visible.
-    pub next_visible_time: Option<DateTime<Utc>>,
+    pub next_visible_time: DateTime<Utc>,
     /// The message's pop receipt.
     pub pop_receipt: String,
 }
 
-impl From<protocol::TypedData> for QueueTrigger {
-    fn from(data: protocol::TypedData) -> Self {
+impl QueueTrigger {
+    #[doc(hidden)]
+    pub fn new(
+        data: protocol::TypedData,
+        metadata: &mut HashMap<String, protocol::TypedData>,
+    ) -> Self {
         QueueTrigger {
             message: data.into(),
-            id: String::new(),
-            dequeue_count: 1,
-            expiration_time: None,
-            insertion_time: None,
-            next_visible_time: None,
-            pop_receipt: String::new(),
-        }
-    }
-}
-
-impl Trigger for QueueTrigger {
-    fn read_metadata(&mut self, metadata: &mut HashMap<String, protocol::TypedData>) {
-        if let Some(id) = metadata.get_mut(ID_KEY) {
-            self.id = id.take_string();
-        }
-        if let Some(count) = metadata.get(DEQUEUE_COUNT_KEY) {
-            self.dequeue_count = convert_from(count)
-                .unwrap_or_else(|| panic!("failed to read '{}' from metadata", DEQUEUE_COUNT_KEY));
-        }
-        if let Some(time) = metadata.get(EXPIRATION_TIME_KEY) {
-            self.expiration_time = Some(convert_from(time).unwrap_or_else(|| {
-                panic!("failed to read '{}' from metadata", EXPIRATION_TIME_KEY)
-            }));
-        }
-        if let Some(time) = metadata.get(INSERTION_TIME_KEY) {
-            self.insertion_time = Some(convert_from(time).unwrap_or_else(|| {
-                panic!("failed to read '{}' from metadata", INSERTION_TIME_KEY)
-            }));
-        }
-        if let Some(time) = metadata.get(NEXT_VISIBLE_TIME_KEY) {
-            self.next_visible_time = Some(convert_from(time).unwrap_or_else(|| {
-                panic!("failed to read '{}' from metadata", NEXT_VISIBLE_TIME_KEY)
-            }));
-        }
-        if let Some(receipt) = metadata.get_mut(POP_RECEIPT_KEY) {
-            self.pop_receipt = receipt.take_string();
+            id: metadata
+                .get_mut(ID_KEY)
+                .expect("expected a message id")
+                .take_string(),
+            dequeue_count: convert_from(
+                metadata
+                    .get(DEQUEUE_COUNT_KEY)
+                    .expect("expected a dequeue count"),
+            )
+            .expect("failed to convert dequeue count"),
+            expiration_time: convert_from(
+                metadata
+                    .get(EXPIRATION_TIME_KEY)
+                    .expect("expected an expiration time"),
+            )
+            .expect("failed to convert expiration time"),
+            insertion_time: convert_from(
+                metadata
+                    .get(INSERTION_TIME_KEY)
+                    .expect("expected an insertion time"),
+            )
+            .expect("failed to convert insertion time"),
+            next_visible_time: convert_from(
+                metadata
+                    .get(NEXT_VISIBLE_TIME_KEY)
+                    .expect("expected a next visible time"),
+            )
+            .expect("failed to convert next visible time"),
+            pop_receipt: metadata
+                .get_mut(POP_RECEIPT_KEY)
+                .expect("expected a pop receipt")
+                .take_string(),
         }
     }
 }
@@ -96,24 +96,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_converts_from_typed_data() {
-        const MESSAGE: &'static str = "hello world!";
-
-        let mut data = protocol::TypedData::new();
-        data.set_string(MESSAGE.to_string());
-
-        let trigger: QueueTrigger = data.into();
-        assert_eq!(trigger.id, "");
-        assert_eq!(trigger.dequeue_count, 1);
-        assert!(trigger.expiration_time.is_none());
-        assert!(trigger.insertion_time.is_none());
-        assert!(trigger.next_visible_time.is_none());
-        assert_eq!(trigger.pop_receipt, "");
-        assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
-    }
-
-    #[test]
-    fn it_reads_metadata() {
+    fn it_constructs() {
         const ID: &'static str = "12345";
         const DEQUEUE_COUNT: u32 = 101;
         const POP_RECEIPT: &'static str = "pop!";
@@ -149,22 +132,12 @@ mod tests {
         value.set_string(POP_RECEIPT.to_string());
         metadata.insert(POP_RECEIPT_KEY.to_string(), value);
 
-        let mut trigger: QueueTrigger = data.into();
-        trigger.read_metadata(&mut metadata);
+        let trigger = QueueTrigger::new(data, &mut metadata);
         assert_eq!(trigger.id, ID);
         assert_eq!(trigger.dequeue_count, DEQUEUE_COUNT);
-        assert_eq!(
-            trigger.expiration_time.unwrap().to_rfc3339(),
-            now.to_rfc3339()
-        );
-        assert_eq!(
-            trigger.insertion_time.unwrap().to_rfc3339(),
-            now.to_rfc3339()
-        );
-        assert_eq!(
-            trigger.next_visible_time.unwrap().to_rfc3339(),
-            now.to_rfc3339()
-        );
+        assert_eq!(trigger.expiration_time.to_rfc3339(), now.to_rfc3339());
+        assert_eq!(trigger.insertion_time.to_rfc3339(), now.to_rfc3339());
+        assert_eq!(trigger.next_visible_time.to_rfc3339(), now.to_rfc3339());
         assert_eq!(trigger.pop_receipt, POP_RECEIPT);
         assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
     }

@@ -12,4 +12,5 @@ members = [
     "examples/blob",
     "examples/table",
     "examples/event-grid",
+    "examples/event-hub",
 ]

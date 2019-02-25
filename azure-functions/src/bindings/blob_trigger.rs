@@ -1,4 +1,4 @@
-use crate::bindings::{Blob, Trigger};
+use crate::bindings::Blob;
 use crate::blob::Properties;
 use crate::rpc::protocol;
 use crate::util::convert_from;
@@ -42,41 +42,37 @@ pub struct BlobTrigger {
     pub metadata: HashMap<String, String>,
 }
 
-impl From<protocol::TypedData> for BlobTrigger {
-    fn from(data: protocol::TypedData) -> Self {
+impl BlobTrigger {
+    #[doc(hidden)]
+    pub fn new(
+        data: protocol::TypedData,
+        metadata: &mut HashMap<String, protocol::TypedData>,
+    ) -> Self {
         BlobTrigger {
             blob: data.into(),
-            path: String::new(),
-            uri: String::new(),
-            properties: Properties::default(),
-            metadata: HashMap::new(),
+            path: metadata
+                .get_mut(PATH_KEY)
+                .map_or(String::new(), |x| x.take_string()),
+            uri: metadata.get(URI_KEY).map_or(String::new(), |x| {
+                convert_from(x)
+                    .unwrap_or_else(|| panic!("failed to read '{}' from metadata", URI_KEY))
+            }),
+            properties: metadata
+                .get(PROPERTIES_KEY)
+                .map_or(Default::default(), |x| {
+                    from_str(x.get_json()).expect("failed to deserialize blob properties")
+                }),
+            metadata: metadata.get(METADATA_KEY).map_or(Default::default(), |x| {
+                from_str(x.get_json()).expect("failed to deserialize blob metadata")
+            }),
         }
     }
 }
 
+#[doc(hidden)]
 impl Into<protocol::TypedData> for BlobTrigger {
     fn into(self) -> protocol::TypedData {
         self.blob.into()
-    }
-}
-
-impl Trigger for BlobTrigger {
-    fn read_metadata(&mut self, metadata: &mut HashMap<String, protocol::TypedData>) {
-        if let Some(path) = metadata.get_mut(PATH_KEY) {
-            self.path = path.take_string();
-        }
-        if let Some(uri) = metadata.get(URI_KEY) {
-            self.uri = convert_from(uri)
-                .unwrap_or_else(|| panic!("failed to read '{}' from metadata", URI_KEY));
-        }
-        if let Some(properties) = metadata.get(PROPERTIES_KEY) {
-            self.properties =
-                from_str(properties.get_json()).expect("failed to deserialize blob properties");
-        }
-        if let Some(metadata) = metadata.get(METADATA_KEY) {
-            self.metadata =
-                from_str(metadata.get_json()).expect("failed to deserialize blob metadata");
-        }
     }
 }
 
@@ -88,18 +84,7 @@ mod tests {
     use serde_json::to_string;
 
     #[test]
-    fn it_converts_from_typed_data() {
-        const BLOB: &'static str = "hello world!";
-
-        let mut data = protocol::TypedData::new();
-        data.set_string(BLOB.to_string());
-
-        let trigger: BlobTrigger = data.into();
-        assert_eq!(trigger.blob.as_str().unwrap(), BLOB);
-    }
-
-    #[test]
-    fn it_reads_metadata() {
+    fn it_constructs() {
         const BLOB: &'static str = "blob";
         const PATH: &'static str = "foo/bar";
         const URI: &'static str = "https://example.com/blob";
@@ -170,8 +155,7 @@ mod tests {
         value.set_json(to_string(&user_metadata).unwrap());
         metadata.insert(METADATA_KEY.to_string(), value);
 
-        let mut trigger: BlobTrigger = data.into();
-        trigger.read_metadata(&mut metadata);
+        let trigger = BlobTrigger::new(data, &mut metadata);
         assert_eq!(trigger.path, PATH);
         assert_eq!(trigger.uri, URI);
 

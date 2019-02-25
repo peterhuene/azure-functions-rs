@@ -3,7 +3,7 @@ macro_rules! template {
         $templates
             .register_template_string(
                 $file,
-                include_str!(concat!("../templates/", $dir, "/", $file, ".hbs")),
+                include_str!(concat!("templates/", $dir, "/", $file, ".hbs")),
             )
             .expect(concat!(
                 "failed to register ",
@@ -30,6 +30,7 @@ lazy_static::lazy_static! {
         template!(templates, "new", "queue.rs");
         template!(templates, "new", "timer.rs");
         template!(templates, "new", "eventgrid.rs");
+        template!(templates, "new", "eventhub.rs");
 
         templates
     };

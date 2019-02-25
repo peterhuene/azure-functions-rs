@@ -1,6 +1,6 @@
 use crate::rpc::protocol;
-use serde::de::IntoDeserializer;
-use serde::Deserialize;
+use chrono::{DateTime, FixedOffset, Utc};
+use serde::{de::Error, de::IntoDeserializer, Deserialize, Deserializer};
 use serde_json::from_str;
 use std::str::{from_utf8, FromStr};
 
@@ -112,5 +112,21 @@ mod tests {
         let d: f64 = convert_from(&data).unwrap();
         assert_eq!(d, DATA);
     }
+}
 
+pub fn deserialize_datetime<'a, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
+where
+    D: Deserializer<'a>,
+{
+    let mut s = String::deserialize(deserializer)?;
+
+    // This exists because the Azure Functions Host serializes DateTime.MinValue without a timezone
+    // However, chrono::DateTime requires one for DateTime<Utc>
+    if s == "0001-01-01T00:00:00" {
+        s += "Z";
+    }
+
+    s.parse::<DateTime<FixedOffset>>()
+        .map_err(|e| Error::custom(format!("{}", e)))
+        .map(|dt| dt.with_timezone(&Utc))
 }

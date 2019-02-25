@@ -98,7 +98,7 @@ _Note: the syntax above works on macOS and Linux; on Windows, set the environmen
 To create a blob called `hello` in the `test` container, use curl to invoke the `create_blob` function:
 
 ```
-curl -d "hello world" http://localhost:8080/api/create/blob/test/hello
+$ curl -d "hello world" http://localhost:8080/api/create/blob/test/hello
 ```
 
 A message should print that the blob has been created.
@@ -110,7 +110,7 @@ With any luck, you should now see a `hello` blob in the `test` container with th
 To copy a blob called `hello` in the `test` container, use curl to invoke the `copy_blob` function:
 
 ```
-curl http://localhost:8080/api/copy/blob/test/hello
+$ curl http://localhost:8080/api/copy/blob/test/hello
 ```
 
 A message should print that the blob was copied.
@@ -122,7 +122,7 @@ With any luck, you should now see a `hello.copy` blob in the `test` container wi
 To print a blob called `hello` in the `test` container, use curl to invoke the `print_blob` function:
 
 ```
-curl http://localhost:8080/api/print/blob/test/hello
+$ curl http://localhost:8080/api/print/blob/test/hello
 ```
 
 With any luck, you should see `hello world` printed in your terminal.
@@ -132,7 +132,7 @@ With any luck, you should see `hello world` printed in your terminal.
 To log a message when a blob is created, use curl to invoke the `create_blob` function to trigger the `blob_watcher` function:
 
 ```
-curl -d "hello world" http://localhost:8080/api/create/blob/watching/hello
+$ curl -d "hello world" http://localhost:8080/api/create/blob/watching/hello
 ```
 
 A message should be printed saying the blob was created.

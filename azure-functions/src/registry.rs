@@ -6,6 +6,8 @@ const STORAGE_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Storage";
 const STORAGE_PACKAGE_VERSION: &str = "3.0.3";
 const EVENT_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventGrid";
 const EVENT_GRID_PACKAGE_VERSION: &str = "2.0.0";
+const EVENT_HUBS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventHubs";
+const EVENT_HUBS_PACKAGE_VERSION: &str = "3.0.2";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -34,6 +36,14 @@ lazy_static! {
         map.insert(
             bindings::EVENT_GRID_TRIGGER_TYPE,
             (EVENT_GRID_PACKAGE_NAME, EVENT_GRID_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::EVENT_HUB_TRIGGER_TYPE,
+            (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::EVENT_HUB_TRIGGER_TYPE,
+            (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
         );
         map
     };

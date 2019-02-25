@@ -195,6 +195,7 @@ impl From<ResponseBuilder> for HttpResponse {
     }
 }
 
+#[doc(hidden)]
 impl Into<protocol::TypedData> for HttpResponse {
     fn into(mut self) -> protocol::TypedData {
         self.data.set_status_code(self.status.to_string());
