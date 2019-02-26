@@ -22,3 +22,4 @@ tempdir = "0.3.7"
 regex = "1.1.0"
 syn = { version = "0.15.26", features = ["full", "extra-traits"] }
 lazy_static = "1.2.0"
+toml = "0.4.10"

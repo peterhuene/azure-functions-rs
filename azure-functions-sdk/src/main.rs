@@ -69,7 +69,7 @@ use colored::Colorize;
 
 use std::{env, process};
 
-use crate::commands::{New, NewApp, Run};
+use crate::commands::{New, NewApp, Run, Deploy};
 
 fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Azure Functions for Rust")
@@ -106,6 +106,7 @@ fn main() {
         ("new-app", Some(args)) => NewApp::from(args).execute(),
         ("run", Some(args)) => Run::from(args).execute(),
         ("new", Some(args)) => New::from(args).execute(),
+        ("deploy", Some(args)) => Deploy::from(args).execute(),
         _ => panic!("expected a subcommand."),
     } {
         print_error_and_exit(&e);

@@ -34,10 +34,21 @@ lazy_static::lazy_static! {
     };
 }
 
+mod deploy;
 mod new;
 mod new_app;
 mod run;
 
+pub use self::deploy::*;
 pub use self::new::*;
 pub use self::new_app::*;
 pub use self::run::*;
+
+fn set_colorization(color: Option<&str>) {
+    colored::control::set_override(match color {
+        Some("auto") | None => ::atty::is(atty::Stream::Stdout),
+        Some("always") => true,
+        Some("never") => false,
+        _ => panic!("unsupported color option"),
+    });
+}

@@ -1,4 +1,3 @@
-use atty::Stream;
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand, Values};
 use colored::Colorize;
 use std::env::current_dir;
@@ -57,17 +56,8 @@ impl<'a> Run<'a> {
             )
     }
 
-    fn set_colorization(&self) {
-        colored::control::set_override(match self.color {
-            Some("auto") | None => atty::is(Stream::Stdout),
-            Some("always") => true,
-            Some("never") => false,
-            _ => panic!("unsupported color option"),
-        });
-    }
-
     pub fn execute(&self) -> Result<(), String> {
-        self.set_colorization();
+        super::set_colorization(self.color);
 
         let (_temp_dir, script_root) = match self.script_root {
             Some(dir) => {

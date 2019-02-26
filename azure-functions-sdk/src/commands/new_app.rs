@@ -73,17 +73,8 @@ impl<'a> NewApp<'a> {
             )
     }
 
-    fn set_colorization(&self) {
-        ::colored::control::set_override(match self.color {
-            Some("auto") | None => ::atty::is(Stream::Stdout),
-            Some("always") => true,
-            Some("never") => false,
-            _ => panic!("unsupported color option"),
-        });
-    }
-
     pub fn execute(&self) -> Result<(), String> {
-        self.set_colorization();
+        super::set_colorization(self.color);
 
         self.create_crate()?;
 

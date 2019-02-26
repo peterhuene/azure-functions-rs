@@ -2,7 +2,6 @@ use crate::{
     commands::TEMPLATES,
     util::{create_from_template, path_to_string, print_failure, print_running, print_success},
 };
-use atty::Stream;
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use colored::Colorize;
 use regex::Regex;
@@ -166,17 +165,8 @@ impl<'a> New<'a> {
             .subcommand(Timer::create_subcommand())
     }
 
-    fn set_colorization(&self) {
-        ::colored::control::set_override(match self.color {
-            Some("auto") | None => ::atty::is(Stream::Stdout),
-            Some("always") => true,
-            Some("never") => false,
-            _ => panic!("unsupported color option"),
-        });
-    }
-
     pub fn execute(&self) -> Result<(), String> {
-        self.set_colorization();
+        super::set_colorization(self.color);
 
         match self.args.subcommand() {
             ("blob", Some(args)) => Blob::from(args).execute(self.quiet),
