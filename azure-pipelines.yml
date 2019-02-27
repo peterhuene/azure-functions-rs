@@ -1,4 +1,3 @@
-
 # https://aka.ms/yaml
 
 trigger:
@@ -21,15 +20,16 @@ steps:
   - script: git submodule sync && git submodule update --init
     displayName: Sync Azure Functions Languge Worker Protobuf
   - script: |
+      rustup component add rustfmt
       cargo fmt --version || true
       cargo fmt -- --check
       git diff
-      displayName: Check source formatting
+    displayName: Check source formatting
   - script: |
       cargo clippy --version || true
       # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
       cargo clippy
-      displayName: Check for linter errors
+    displayName: Check for linter errors
   - script: cargo build --release
     displayName: Build
   - script: git diff --exit-code -- azure-functions-shared/cache
