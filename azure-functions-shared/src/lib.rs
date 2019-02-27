@@ -10,6 +10,8 @@ extern crate serde_derive;
 #[doc(hidden)]
 pub mod codegen;
 mod context;
+#[doc(hidden)]
+pub mod util;
 
 #[doc(hidden)]
 #[allow(renamed_and_removed_lints)]

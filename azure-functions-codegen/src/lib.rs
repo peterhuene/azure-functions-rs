@@ -4,8 +4,6 @@
 #![recursion_limit = "128"]
 #![deny(unused_extern_crates)]
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
-#[macro_use]
-extern crate lazy_static;
 extern crate proc_macro;
 
 mod export;

@@ -119,7 +119,7 @@ impl<'a> Registry<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codegen::{Binding, Direction};
+    use crate::codegen::bindings::{Binding, Direction};
     use std::borrow::Cow;
 
     #[test]

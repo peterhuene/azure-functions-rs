@@ -1,5 +1,13 @@
+use crate::codegen::{
+    quotable::{QuotableBorrowedStr, QuotableOption},
+    AttributeArguments, TryFrom,
+};
+use crate::util::to_camel_case;
+use proc_macro2::{Span, TokenStream};
+use quote::{quote, ToTokens};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
+use syn::{spanned::Spanned, Lit};
 
 pub const QUEUE_TRIGGER_TYPE: &str = "queueTrigger";
 
@@ -29,5 +37,91 @@ impl Serialize for QueueTrigger {
         }
 
         map.end()
+    }
+}
+
+impl TryFrom<AttributeArguments> for QueueTrigger {
+    type Error = (Span, String);
+
+    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
+        let mut name = None;
+        let mut queue_name = None;
+        let mut connection = None;
+
+        for (key, value) in args.list.iter() {
+            let key_str = key.to_string();
+
+            match key_str.as_str() {
+                "name" => match value {
+                    Lit::Str(s) => {
+                        name = Some(Cow::Owned(to_camel_case(&s.value())));
+                    }
+                    _ => {
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'name' argument".to_string(),
+                        ));
+                    }
+                },
+                "queue_name" => match value {
+                    Lit::Str(s) => {
+                        queue_name = Some(Cow::Owned(s.value()));
+                    }
+                    _ => {
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'queue_name' argument"
+                                .to_string(),
+                        ));
+                    }
+                },
+                "connection" => match value {
+                    Lit::Str(s) => {
+                        connection = Some(Cow::Owned(s.value()));
+                    }
+                    _ => {
+                        return Err((
+                            value.span(),
+                            "expected a literal string value for the 'connection' argument"
+                                .to_string(),
+                        ));
+                    }
+                },
+                _ => {
+                    return Err((
+                        key.span(),
+                        format!("unsupported binding attribute argument '{}'", key_str),
+                    ));
+                }
+            };
+        }
+
+        if queue_name.is_none() {
+            return Err((
+                args.span,
+                "the 'queue_name' argument is required for queue trigger bindings.".to_string(),
+            ));
+        }
+
+        Ok(QueueTrigger {
+            name: name.unwrap(),
+            queue_name: queue_name.unwrap(),
+            connection,
+        })
+    }
+}
+
+impl ToTokens for QueueTrigger {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let name = QuotableBorrowedStr(&self.name);
+        let queue_name = QuotableBorrowedStr(&self.queue_name);
+        let connection = QuotableOption(self.connection.as_ref().map(|x| QuotableBorrowedStr(x)));
+
+        quote!(::azure_functions::codegen::bindings::QueueTrigger {
+            name: #name,
+            queue_name: #queue_name,
+            connection: #connection,
+        })
+        .to_tokens(tokens)
     }
 }

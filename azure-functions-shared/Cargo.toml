@@ -15,6 +15,11 @@ grpcio = { version = "0.4.4", default-features = false, features = ["protobuf-co
 futures = "0.1.24"
 serde = "1.0.88"
 serde_derive = "1.0.88"
+quote = "0.6.11"
+syn = { version = "0.15.26", features = ["full"] }
+proc-macro2 = { version = "0.4.27" }
+cfg-if = "0.1.6"
+lazy_static = "1.2.0"
 
 [build-dependencies]
 protoc-grpcio = "1.0.1"

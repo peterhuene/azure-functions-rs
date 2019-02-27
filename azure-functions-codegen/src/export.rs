@@ -1,5 +1,6 @@
 use crate::util::MacroError;
-use crate::util::{PathVec, TryFrom};
+use crate::util::PathVec;
+use azure_functions_shared::codegen::TryFrom;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_str, spanned::Spanned, Path};
@@ -13,7 +14,8 @@ pub fn attr_impl(input: TokenStream) -> TokenStream {
                 if path.leading_colon.is_some() || path.segments.len() > 1 {
                     let error: MacroError = (
                         path.span(),
-                        "fully qualified names are not supported for the `export` macro",
+                        "fully qualified names are not supported for the `export` macro"
+                            .to_string(),
                     )
                         .into();
 

@@ -26,8 +26,8 @@ use syn::{parse, Ident};
 /// mod MyModule {}
 /// ```
 #[proc_macro]
-pub fn generated_mod(item: TokenStream) -> TokenStream {
-    let ident = parse::<Ident>(item).unwrap();
+pub fn generated_mod(input: TokenStream) -> TokenStream {
+    let ident = parse::<Ident>(input).unwrap();
 
     let mut path = Path::new(&env::var("OUT_DIR").unwrap()).join(ident.to_string());
 

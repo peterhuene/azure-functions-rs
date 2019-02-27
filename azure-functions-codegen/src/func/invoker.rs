@@ -1,6 +1,7 @@
-use crate::func::TRIGGERS;
 use crate::func::{OutputBindings, CONTEXT_TYPE_NAME};
-use crate::util::{last_segment_in_path, to_camel_case};
+use crate::util::last_segment_in_path;
+use azure_functions_shared::codegen::bindings::TRIGGERS;
+use azure_functions_shared::util::to_camel_case;
 use quote::{quote, ToTokens};
 use syn::{FnArg, Ident, ItemFn, Pat, Type, TypeReference};
 
