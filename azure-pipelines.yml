@@ -18,7 +18,6 @@ steps:
       rustc -Vv
       cargo -V
     displayName: Install Rust (Nightly build)
-  - checkout
   - script: git submodule sync && git submodule update --init
     displayName: Sync Azure Functions Languge Worker Protobuf
   - script: |
