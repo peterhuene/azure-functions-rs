@@ -1,0 +1,39 @@
+# https://aka.ms/yaml
+
+trigger:
+- master
+# Scheduled triggered builds are not yet supported using yaml in Azure Pipelines
+# Ref: https://docs.microsoft.com/en-us/azure/devops/pipelines/build/triggers?view=azure-devops&tabs=yaml#scheduled
+# The nightly build can be scheduled using pipeline settings.
+
+pool:
+  vmImage: 'Ubuntu-16.04'
+
+steps:
+  - script: |
+      curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+      export PATH="$HOME/.cargo/bin:$PATH"
+      echo "##vso[task.setvariable variable=PATH]$PATH"
+      rustc -Vv
+      cargo -V
+    displayName: Install Rust (Nightly build)
+  - script: git submodule sync && git submodule update --init
+    displayName: Sync Azure Functions Languge Worker Protobuf
+  - script: |
+      rustup component add rustfmt
+      cargo fmt --version || true
+      cargo fmt -- --check
+      git diff
+    displayName: Check source formatting
+  - script: |
+      rustup component add clippy
+      cargo clippy --version || true
+      # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
+      cargo clippy
+    displayName: Check for linter errors
+  - script: cargo build --release
+    displayName: Build
+  - script: git diff --exit-code -- azure-functions-shared/cache
+    displayName: Check for stale protobuf files
+  - script: cargo test --release
+    displayName: Test
