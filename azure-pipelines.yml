@@ -36,17 +36,3 @@ steps:
     displayName: Check for stale protobuf files
   - script: cargo test --release
     displayName: Test
-          
-
-  - task: CopyFiles@2
-      inputs:
-        contents: '$(System.DefaultWorkingDirectory)/target/release/cratesfyi'
-        targetFolder: $(Build.ArtifactStagingDirectory)
-      displayName: 'Copy build'
-    - task: PublishBuildArtifacts@1
-      inputs:
-        artifactName: $(containerResource)
-      displayName: 'Upload artifacts'
-      
-  
-# --------------------------------------------------------------------------------------
