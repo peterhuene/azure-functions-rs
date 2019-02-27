@@ -8,6 +8,8 @@ const EVENT_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventG
 const EVENT_GRID_PACKAGE_VERSION: &str = "2.0.0";
 const EVENT_HUBS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventHubs";
 const EVENT_HUBS_PACKAGE_VERSION: &str = "3.0.2";
+const COSMOS_DB_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.CosmosDB";
+const COSMOS_DB_PACKAGE_VERSION: &str = "3.0.3";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -44,6 +46,10 @@ lazy_static! {
         map.insert(
             bindings::EventHub::binding_type(),
             (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::CosmosDbTrigger::binding_type(),
+            (COSMOS_DB_PACKAGE_NAME, COSMOS_DB_PACKAGE_VERSION),
         );
         map
     };

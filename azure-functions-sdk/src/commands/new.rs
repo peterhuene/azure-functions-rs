@@ -165,6 +165,7 @@ impl<'a> New<'a> {
             .subcommand(Timer::create_subcommand())
             .subcommand(EventGrid::create_subcommand())
             .subcommand(EventHub::create_subcommand())
+            .subcommand(CosmosDb::create_subcommand())
     }
 
     fn set_colorization(&self) {
@@ -186,6 +187,7 @@ impl<'a> New<'a> {
             ("timer", Some(args)) => Timer::from(args).execute(self.quiet),
             ("event-grid", Some(args)) => EventGrid::from(args).execute(self.quiet),
             ("event-hub", Some(args)) => EventHub::from(args).execute(self.quiet),
+            ("cosmos-db", Some(args)) => CosmosDb::from(args).execute(self.quiet),
             _ => panic!("expected a subcommand for the 'new' command."),
         }
     }
@@ -507,6 +509,74 @@ impl<'a> From<&'a ArgMatches<'a>> for EventHub<'a> {
             name: args.value_of("name").unwrap(),
             connection: args.value_of("connection").unwrap(),
             hub_name: args.value_of("hub_name").unwrap_or(""),
+        }
+    }
+}
+
+struct CosmosDb<'a> {
+    name: &'a str,
+    connection: &'a str,
+    database: &'a str,
+    collection: &'a str,
+}
+
+impl<'a> CosmosDb<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
+        SubCommand::with_name("cosmos-db")
+            .about("Creates a new Cosmos DB triggered Azure Function.")
+            .arg(
+                Arg::with_name("name")
+                    .long("name")
+                    .short("n")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function.")
+                    .required(true),
+            )
+            .arg(
+                Arg::with_name("connection")
+                    .long("connection")
+                    .short("c")
+                    .value_name("CONNECTION")
+                    .help("The name of the connection setting to use for the Cosmos DB trigger.")
+                    .required(true),
+            )
+            .arg(
+                Arg::with_name("database")
+                    .long("database")
+                    .short("d")
+                    .value_name("DATABASE")
+                    .help("The name of the database to use for the Cosmos DB trigger.")
+                    .required(true),
+            )
+            .arg(
+                Arg::with_name("collection")
+                    .long("collection")
+                    .short("l")
+                    .value_name("COLLECTION")
+                    .help("The name of the collection to use for the Cosmos DB trigger.")
+                    .required(true),
+            )
+    }
+
+    pub fn execute(&self, quiet: bool) -> Result<(), String> {
+        let data = json!({
+            "name": self.name,
+            "connection": self.connection,
+            "database": self.database,
+            "collection": self.collection,
+        });
+
+        create_function(self.name, "cosmosdb.rs", &data, quiet)
+    }
+}
+
+impl<'a> From<&'a ArgMatches<'a>> for CosmosDb<'a> {
+    fn from(args: &'a ArgMatches<'a>) -> Self {
+        CosmosDb {
+            name: args.value_of("name").unwrap(),
+            connection: args.value_of("connection").unwrap(),
+            database: args.value_of("database").unwrap(),
+            collection: args.value_of("collection").unwrap(),
         }
     }
 }

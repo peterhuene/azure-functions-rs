@@ -26,7 +26,7 @@ tempfile = "3.0.7"
 ctrlc = "3.1.1"
 
 [features]
-unstable = ["azure-functions-codegen/unstable"]
+unstable = ["azure-functions-codegen/unstable", "azure-functions-shared/unstable"]
 
 [dev-dependencies]
 matches = "0.1.8"

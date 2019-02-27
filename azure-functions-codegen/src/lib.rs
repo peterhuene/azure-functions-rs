@@ -44,7 +44,7 @@ fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
 /// The `export!` macro is used to export a list of modules as Azure Functions.
 ///
 /// This macro expects a comma-separated list of module names that implement a
-/// function of the same name with the #[func] attribute applied.
+/// function of the same name with the `#[func]` attribute applied.
 ///
 /// A `FUNCTIONS` constant is declared by the macro.
 ///

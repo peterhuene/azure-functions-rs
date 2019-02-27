@@ -4,21 +4,24 @@
 //!
 //! The following Azure Functions trigger bindings are supported:
 //!
-//! * [Blob triggers](bindings/struct.BlobTrigger.html)
-//! * [Event Grid triggers](bindings/struct.EventGridEvent.html)
-//! * [Event Hub triggers](bindings/struct.EventHubTrigger.html)
-//! * [HTTP triggers](bindings/struct.HttpRequest.html)
-//! * [Queue triggers](bindings/struct.QueueTrigger.html)
-//! * [Timer triggers](bindings/struct.TimerInfo.html)
+//! * [Blob trigger](bindings/struct.BlobTrigger.html)
+//! * [Cosmos DB trigger](bindings/struct.CosmosDbTrigger.html)
+//! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
+//! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
+//! * [HTTP trigger](bindings/struct.HttpRequest.html)
+//! * [Queue trigger](bindings/struct.QueueTrigger.html)
+//! * [Timer trigger](bindings/struct.TimerInfo.html)
 //!
 //! The following Azure Functions input bindings are supported:
 //!
 //! * [Blob input](bindings/struct.Blob.html)
+//! * [Cosmos DB input](bindings/struct.CosmosDbDocuments.html)
 //! * [Table input](bindings/struct.Table.html)
 //!
 //! The following Azure Functions output bindings are supported:
 //!
 //! * [Blob output](bindings/struct.Blob.html)
+//! * [Cosmos DB output](bindings/struct.CosmosDbDocuments.html)
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)

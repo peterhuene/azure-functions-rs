@@ -1,0 +1,12 @@
+use azure_functions::{bindings::CosmosDbTrigger, func};
+
+#[func]
+#[binding(
+    name = "trigger",
+    connection = "{{connection}}",
+    database_name = "{{database}}",
+    collection_name = "{{collection}}"
+)]
+pub fn {{name}}(trigger: CosmosDbTrigger) {
+    // trigger.documents contain the Cosmos DB documents that triggered the function
+}
