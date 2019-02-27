@@ -26,6 +26,7 @@ steps:
       git diff
     displayName: Check source formatting
   - script: |
+      rustup component add clippy
       cargo clippy --version || true
       # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
       cargo clippy
