@@ -14,35 +14,35 @@ lazy_static! {
     static ref BINDING_EXTENSIONS: HashMap<&'static str, (&'static str, &'static str)> = {
         let mut map = HashMap::new();
         map.insert(
-            bindings::BLOB_TRIGGER_TYPE,
+            bindings::BlobTrigger::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::BLOB_TYPE,
+            bindings::Blob::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::QUEUE_TYPE,
+            bindings::Queue::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::QUEUE_TRIGGER_TYPE,
+            bindings::QueueTrigger::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::TABLE_TYPE,
+            bindings::Table::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::EVENT_GRID_TRIGGER_TYPE,
+            bindings::EventGridTrigger::binding_type(),
             (EVENT_GRID_PACKAGE_NAME, EVENT_GRID_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::EVENT_HUB_TRIGGER_TYPE,
+            bindings::EventHubTrigger::binding_type(),
             (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::EVENT_HUB_TRIGGER_TYPE,
+            bindings::EventHub::binding_type(),
             (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
         );
         map

@@ -1,127 +1,134 @@
-use crate::codegen::{
-    quotable::{QuotableBorrowedStr, QuotableOption},
-    AttributeArguments, TryFrom,
-};
-use crate::util::to_camel_case;
-use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use azure_functions_shared_codegen::binding;
 use std::borrow::Cow;
-use syn::{spanned::Spanned, Lit};
 
-pub const QUEUE_TYPE: &str = "queue";
-
-#[derive(Debug, Clone)]
+#[binding(name = "queue", direction = "out")]
 pub struct Queue {
+    #[field(camel_case_value = true)]
     pub name: Cow<'static, str>,
+    #[field(name = "queueName")]
     pub queue_name: Cow<'static, str>,
     pub connection: Option<Cow<'static, str>>,
 }
 
-// TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive
-// The fix would allow us to set the constant `type` and `direction` entries rather than having to emit them manually.
-impl Serialize for Queue {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut map = serializer.serialize_map(None)?;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codegen::bindings::tests::should_panic;
+    use proc_macro2::{Span, TokenStream};
+    use quote::ToTokens;
+    use serde_json::to_string;
+    use syn::{parse_str, NestedMeta};
 
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", QUEUE_TYPE)?;
-        map.serialize_entry("direction", "out")?;
-        map.serialize_entry("queueName", &self.queue_name)?;
+    #[test]
+    fn it_serializes_to_json() {
+        let binding = Queue {
+            name: Cow::from("foo"),
+            queue_name: Cow::from("bar"),
+            connection: Some(Cow::from("baz")),
+        };
 
-        if let Some(connection) = self.connection.as_ref() {
-            map.serialize_entry("connection", connection)?;
-        }
-
-        map.end()
+        assert_eq!(
+            to_string(&binding).unwrap(),
+            r#"{"type":"queue","direction":"out","name":"foo","queueName":"bar","connection":"baz"}"#
+        );
     }
-}
 
-impl TryFrom<AttributeArguments> for Queue {
-    type Error = (Span, String);
+    #[test]
+    fn it_parses_attribute_arguments() {
+        let binding: Queue = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"queue_name = "bar""#).unwrap(),
+                parse_str::<NestedMeta>(r#"connection = "baz""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
 
-    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
-        let mut name = None;
-        let mut queue_name = None;
-        let mut connection = None;
-
-        for (key, value) in args.list.iter() {
-            let key_str = key.to_string();
-
-            match key_str.as_str() {
-                "name" => match value {
-                    Lit::Str(s) => {
-                        name = Some(Cow::Owned(to_camel_case(&s.value())));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'name' argument".to_string(),
-                        ));
-                    }
-                },
-                "queue_name" => match value {
-                    Lit::Str(s) => {
-                        queue_name = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'queue_name' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                "connection" => match value {
-                    Lit::Str(s) => {
-                        connection = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'connection' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                _ => {
-                    return Err((
-                        key.span(),
-                        format!("unsupported binding attribute argument '{}'", key_str),
-                    ));
-                }
-            };
-        }
-
-        if queue_name.is_none() {
-            return Err((
-                args.span,
-                "the 'queue_name' argument is required for queue message bindings.".to_string(),
-            ));
-        }
-
-        Ok(Queue {
-            name: name.unwrap(),
-            queue_name: queue_name.unwrap(),
-            connection,
-        })
+        assert_eq!(binding.name.as_ref(), "foo");
+        assert_eq!(binding.queue_name.as_ref(), "bar");
+        assert_eq!(binding.connection.unwrap().as_ref(), "baz");
     }
-}
 
-impl ToTokens for Queue {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let name = QuotableBorrowedStr(&self.name);
-        let queue_name = QuotableBorrowedStr(&self.queue_name);
-        let connection = QuotableOption(self.connection.as_ref().map(|x| QuotableBorrowedStr(x)));
+    #[test]
+    fn it_requires_the_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: Queue = (vec![], Span::call_site()).into();
+            },
+            "the 'name' argument is required for this binding",
+        );
+    }
 
-        quote!(::azure_functions::codegen::bindings::Queue {
-            name: #name,
-            queue_name: #queue_name,
-            connection: #connection,
-        })
-        .to_tokens(tokens)
+    #[test]
+    fn it_requires_the_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Queue = (
+                    vec![parse_str::<NestedMeta>(r#"name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'name' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_queue_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: Queue = (
+                    vec![parse_str::<NestedMeta>(r#"name = "foo""#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "the 'queue_name' argument is required for this binding",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_queue_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Queue = (
+                    vec![parse_str::<NestedMeta>(r#"queue_name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'queue_name' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_connection_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Queue = (
+                    vec![parse_str::<NestedMeta>(r#"connection = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'connection' argument",
+        );
+    }
+
+    #[test]
+    fn it_converts_to_tokens() {
+        let binding = Queue {
+            name: Cow::from("foo"),
+            queue_name: Cow::from("bar"),
+            connection: Some(Cow::from("baz")),
+        };
+
+        let mut stream = TokenStream::new();
+        binding.to_tokens(&mut stream);
+        let mut tokens = stream.to_string();
+        tokens.retain(|c| c != ' ');
+
+        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::Queue{name:::std::borrow::Cow::Borrowed("foo"),queue_name:::std::borrow::Cow::Borrowed("bar"),connection:Some(::std::borrow::Cow::Borrowed("baz")),}"#);
     }
 }

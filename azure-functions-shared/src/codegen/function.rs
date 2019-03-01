@@ -1,14 +1,14 @@
-use crate::codegen::bindings::Binding;
 use crate::codegen::{
+    bindings::Binding,
+    get_boolean_value, get_string_value, iter_attribute_args, macro_panic,
     quotable::{QuotableBorrowedStr, QuotableOption},
-    AttributeArguments, TryFrom,
 };
 use crate::rpc::protocol;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
-use syn::{spanned::Spanned, Ident, Lit};
+use syn::{parse_str, spanned::Spanned, AttributeArgs, Ident};
 
 #[doc(hidden)]
 #[derive(Clone)]
@@ -39,52 +39,40 @@ impl Serialize for Function {
     }
 }
 
-impl TryFrom<TokenStream> for Function {
-    type Error = (Span, String);
-
-    fn try_from(stream: TokenStream) -> Result<Self, Self::Error> {
+impl From<AttributeArgs> for Function {
+    fn from(args: AttributeArgs) -> Self {
         let mut name = None;
         let mut disabled = None;
 
-        for (key, value) in AttributeArguments::try_from(stream)?.list.into_iter() {
-            let key_str = key.to_string();
+        iter_attribute_args(&args, |key, value| {
+            let key_name = key.to_string();
 
-            match key_str.as_str() {
-                "name" => match &value {
-                    Lit::Str(s) => {
-                        name = s
-                            .parse::<Ident>()
-                            .map(|x| Some(Cow::Owned(x.to_string())))
+            match key_name.as_str() {
+                "name" => {
+                    name = {
+                        let name = get_string_value("name", value);
+                        parse_str::<Ident>(&name)
                             .map_err(|_| {
-                                (value.span(),
-                                "a legal function identifier is required for the 'name' argument".to_string(),
+                                macro_panic(
+                                value.span(),
+                                "a legal function identifier is required for the 'name' argument",
                             )
-                            })?;
+                            })
+                            .unwrap();
+                        Some(Cow::from(name))
                     }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'name' argument".to_string(),
-                        ));
-                    }
-                },
-                "disabled" => match value {
-                    Lit::Bool(b) => disabled = Some(b.value),
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal boolean value for the 'disabled' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                _ => {
-                    return Err((key.span(), format!("unsupported argument '{}'", key_str)));
                 }
+                "disabled" => disabled = Some(get_boolean_value("disabled", value)),
+                _ => macro_panic(
+                    key.span(),
+                    format!("unsupported attribue argument '{}'", key_name),
+                ),
             };
-        }
 
-        Ok(Function {
+            true
+        });
+
+        Function {
             name: name.unwrap_or(Cow::Borrowed("")),
             disabled: disabled.unwrap_or(false),
             bindings: Cow::Owned(Vec::new()),
@@ -92,7 +80,7 @@ impl TryFrom<TokenStream> for Function {
             invoker: None,
             manifest_dir: None,
             file: None,
-        })
+        }
     }
 }
 

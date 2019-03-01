@@ -1,78 +1,79 @@
-use crate::codegen::{quotable::QuotableBorrowedStr, AttributeArguments, TryFrom};
-use crate::util::to_camel_case;
-use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use azure_functions_shared_codegen::binding;
 use std::borrow::Cow;
-use syn::{spanned::Spanned, Lit};
 
-pub const EVENT_GRID_TRIGGER_TYPE: &str = "eventGridTrigger";
-
-#[derive(Debug, Clone)]
+#[binding(name = "eventGridTrigger", direction = "in")]
 pub struct EventGridTrigger {
+    #[field(camel_case_value = true)]
     pub name: Cow<'static, str>,
 }
 
-// TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive
-// The fix would allow us to set the constant `type` and `direction` entries rather than having to emit them manually.
-impl Serialize for EventGridTrigger {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut map = serializer.serialize_map(None)?;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codegen::bindings::tests::should_panic;
+    use proc_macro2::{Span, TokenStream};
+    use quote::ToTokens;
+    use serde_json::to_string;
+    use syn::{parse_str, NestedMeta};
 
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", EVENT_GRID_TRIGGER_TYPE)?;
-        map.serialize_entry("direction", "in")?;
+    #[test]
+    fn it_serializes_to_json() {
+        let binding = EventGridTrigger {
+            name: Cow::from("foo"),
+        };
 
-        map.end()
+        assert_eq!(
+            to_string(&binding).unwrap(),
+            r#"{"type":"eventGridTrigger","direction":"in","name":"foo"}"#
+        );
     }
-}
 
-impl TryFrom<AttributeArguments> for EventGridTrigger {
-    type Error = (Span, String);
+    #[test]
+    fn it_parses_attribute_arguments() {
+        let binding: EventGridTrigger = (
+            vec![parse_str::<NestedMeta>(r#"name = "foo""#).unwrap()],
+            Span::call_site(),
+        )
+            .into();
 
-    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
-        let mut name = None;
-
-        for (key, value) in args.list.iter() {
-            let key_str = key.to_string();
-
-            match key_str.as_str() {
-                "name" => match value {
-                    Lit::Str(s) => {
-                        name = Some(Cow::Owned(to_camel_case(&s.value())));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'name' argument".to_string(),
-                        ));
-                    }
-                },
-                _ => {
-                    return Err((
-                        key.span(),
-                        format!("unsupported binding attribute argument '{}'", key_str),
-                    ));
-                }
-            };
-        }
-
-        Ok(EventGridTrigger {
-            name: name.unwrap(),
-        })
+        assert_eq!(binding.name.as_ref(), "foo");
     }
-}
 
-impl ToTokens for EventGridTrigger {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let name = QuotableBorrowedStr(&self.name);
+    #[test]
+    fn it_requires_the_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: EventGridTrigger = (vec![], Span::call_site()).into();
+            },
+            "the 'name' argument is required for this binding",
+        );
+    }
 
-        quote!(::azure_functions::codegen::bindings::EventGridTrigger {
-            name: #name,
-        })
-        .to_tokens(tokens)
+    #[test]
+    fn it_requires_the_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: EventGridTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'name' argument",
+        );
+    }
+
+    #[test]
+    fn it_converts_to_tokens() {
+        let binding = EventGridTrigger {
+            name: Cow::from("foo"),
+        };
+
+        let mut stream = TokenStream::new();
+        binding.to_tokens(&mut stream);
+        let mut tokens = stream.to_string();
+        tokens.retain(|c| c != ' ');
+
+        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::EventGridTrigger{name:::std::borrow::Cow::Borrowed("foo"),}"#);
     }
 }

@@ -1,215 +1,217 @@
-use crate::codegen::{
-    bindings::Direction,
-    quotable::{QuotableBorrowedStr, QuotableDirection, QuotableOption},
-    AttributeArguments, TryFrom,
-};
-use crate::util::to_camel_case;
-use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use crate::codegen::bindings::Direction;
+use azure_functions_shared_codegen::binding;
 use std::borrow::Cow;
-use syn::{spanned::Spanned, Lit};
 
-pub const TABLE_TYPE: &str = "table";
-
-#[derive(Debug, Clone)]
+#[binding(name = "table")]
 pub struct Table {
-    pub name: Cow<'static, str>,
     pub direction: Direction,
+    #[field(camel_case_value = true)]
+    pub name: Cow<'static, str>,
+    #[field(name = "tableName")]
     pub table_name: Cow<'static, str>,
+    #[field(name = "partitionKey")]
     pub partition_key: Option<Cow<'static, str>>,
+    #[field(name = "rowKey")]
     pub row_key: Option<Cow<'static, str>>,
     pub filter: Option<Cow<'static, str>>,
-    pub take: Option<u64>,
+    pub take: Option<i64>,
     pub connection: Option<Cow<'static, str>>,
 }
 
-// TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive
-// The fix would allow us to set the constant `type` entry rather than having to emit it manually.
-impl Serialize for Table {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut map = serializer.serialize_map(None)?;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codegen::bindings::tests::should_panic;
+    use proc_macro2::{Span, TokenStream};
+    use quote::ToTokens;
+    use serde_json::to_string;
+    use syn::{parse_str, NestedMeta};
 
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", TABLE_TYPE)?;
-        map.serialize_entry("direction", &self.direction)?;
-        map.serialize_entry("tableName", &self.table_name)?;
-
-        if let Some(partition_key) = self.partition_key.as_ref() {
-            map.serialize_entry("partitionKey", partition_key)?;
-        }
-
-        if let Some(row_key) = self.row_key.as_ref() {
-            map.serialize_entry("rowKey", row_key)?;
-        }
-
-        if let Some(filter) = self.filter.as_ref() {
-            map.serialize_entry("filter", filter)?;
-        }
-
-        if let Some(take) = self.take.as_ref() {
-            map.serialize_entry("take", take)?;
-        }
-
-        if let Some(connection) = self.connection.as_ref() {
-            map.serialize_entry("connection", connection)?;
-        }
-
-        map.end()
-    }
-}
-
-impl TryFrom<AttributeArguments> for Table {
-    type Error = (Span, String);
-
-    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
-        let mut name = None;
-        let mut table_name = None;
-        let mut partition_key = None;
-        let mut row_key = None;
-        let mut filter = None;
-        let mut take = None;
-        let mut connection = None;
-
-        for (key, value) in args.list.iter() {
-            let key_str = key.to_string();
-
-            match key_str.as_str() {
-                "name" => match value {
-                    Lit::Str(s) => {
-                        name = Some(Cow::Owned(to_camel_case(&s.value())));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'name' argument".to_string(),
-                        ));
-                    }
-                },
-                "table_name" => match value {
-                    Lit::Str(s) => {
-                        table_name = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'table_name' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                "partition_key" => match value {
-                    Lit::Str(s) => {
-                        partition_key = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'partition_key' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                "row_key" => match value {
-                    Lit::Str(s) => {
-                        row_key = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'row_key' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                "filter" => match value {
-                    Lit::Str(s) => {
-                        filter = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'filter' argument".to_string(),
-                        ));
-                    }
-                },
-                "take" => match value {
-                    Lit::Int(i) => {
-                        take = Some(i.value());
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal integer value for the 'take' argument".to_string(),
-                        ));
-                    }
-                },
-                "connection" => match value {
-                    Lit::Str(s) => {
-                        connection = Some(Cow::Owned(s.value()));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'connection' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                _ => {
-                    return Err((
-                        key.span(),
-                        format!("unsupported binding attribute argument '{}'", key_str),
-                    ));
-                }
-            };
-        }
-
-        if table_name.is_none() {
-            return Err((
-                args.span,
-                "the 'table_name' argument is required for table bindings.".to_string(),
-            ));
-        }
-
-        Ok(Table {
-            name: name.unwrap(),
-            table_name: table_name.unwrap(),
-            partition_key,
-            row_key,
-            filter,
-            take,
-            connection,
+    #[test]
+    fn it_serializes_to_json() {
+        let binding = Table {
             direction: Direction::In,
-        })
+            name: Cow::from("foo"),
+            table_name: Cow::from("bar"),
+            partition_key: Some(Cow::from("baz")),
+            row_key: Some(Cow::from("cake")),
+            filter: Some(Cow::from("is")),
+            take: Some(10),
+            connection: Some(Cow::from("a lie")),
+        };
+
+        assert_eq!(
+            to_string(&binding).unwrap(),
+            r#"{"type":"table","direction":"in","name":"foo","tableName":"bar","partitionKey":"baz","rowKey":"cake","filter":"is","take":10,"connection":"a lie"}"#
+        );
     }
-}
 
-impl ToTokens for Table {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let name = QuotableBorrowedStr(&self.name);
-        let table_name = QuotableBorrowedStr(&self.table_name);
-        let partition_key =
-            QuotableOption(self.partition_key.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let row_key = QuotableOption(self.row_key.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let filter = QuotableOption(self.filter.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let take = QuotableOption(self.take.as_ref());
-        let connection = QuotableOption(self.connection.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let direction = QuotableDirection(self.direction.clone());
+    #[test]
+    fn it_parses_attribute_arguments() {
+        let binding: Table = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"table_name = "bar""#).unwrap(),
+                parse_str::<NestedMeta>(r#"partition_key = "baz""#).unwrap(),
+                parse_str::<NestedMeta>(r#"row_key = "cake""#).unwrap(),
+                parse_str::<NestedMeta>(r#"filter = "is""#).unwrap(),
+                parse_str::<NestedMeta>(r#"take = 42"#).unwrap(),
+                parse_str::<NestedMeta>(r#"connection = "a lie""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
 
-        quote!(::azure_functions::codegen::bindings::Table {
-            name: #name,
-            table_name: #table_name,
-            partition_key: #partition_key,
-            row_key: #row_key,
-            filter: #filter,
-            take: #take,
-            connection: #connection,
-            direction: #direction,
-        })
-        .to_tokens(tokens)
+        assert_eq!(binding.direction, Direction::In);
+        assert_eq!(binding.name.as_ref(), "foo");
+        assert_eq!(binding.table_name.as_ref(), "bar");
+        assert_eq!(binding.partition_key.unwrap().as_ref(), "baz");
+        assert_eq!(binding.row_key.unwrap().as_ref(), "cake");
+        assert_eq!(binding.filter.unwrap().as_ref(), "is");
+        assert_eq!(binding.take.unwrap(), 42);
+        assert_eq!(binding.connection.unwrap().as_ref(), "a lie");
+    }
+
+    #[test]
+    fn it_requires_the_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: Table = (vec![], Span::call_site()).into();
+            },
+            "the 'name' argument is required for this binding",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'name' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_table_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"name = "foo""#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "the 'table_name' argument is required for this binding",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_table_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"table_name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'table_name' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_partition_key_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"partition_key = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'partition_key' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_row_key_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"row_key = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'row_key' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_filter_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"filter = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'filter' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_take_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"take = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal integer value for the 'take' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_connection_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: Table = (
+                    vec![parse_str::<NestedMeta>(r#"connection = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'connection' argument",
+        );
+    }
+
+    #[test]
+    fn it_converts_to_tokens() {
+        let binding = Table {
+            direction: Direction::In,
+            name: Cow::from("foo"),
+            table_name: Cow::from("bar"),
+            partition_key: Some(Cow::from("baz")),
+            row_key: Some(Cow::from("cake")),
+            filter: Some(Cow::from("is")),
+            take: Some(10),
+            connection: Some(Cow::from("a lie")),
+        };
+
+        let mut stream = TokenStream::new();
+        binding.to_tokens(&mut stream);
+        let mut tokens = stream.to_string();
+        tokens.retain(|c| c != ' ');
+
+        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::Table{direction:::azure_functions::codegen::bindings::Direction::In,name:::std::borrow::Cow::Borrowed("foo"),table_name:::std::borrow::Cow::Borrowed("bar"),partition_key:Some(::std::borrow::Cow::Borrowed("baz")),row_key:Some(::std::borrow::Cow::Borrowed("cake")),filter:Some(::std::borrow::Cow::Borrowed("is")),take:Some(10i64),connection:Some(::std::borrow::Cow::Borrowed("alie")),}"#);
     }
 }

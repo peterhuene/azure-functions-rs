@@ -71,7 +71,6 @@ name = "azure-functions-codegen"
 version = "0.4.1"
 dependencies = [
  "azure-functions-shared 0.4.1",
- "cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.26 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -97,7 +96,6 @@ name = "azure-functions-shared"
 version = "0.4.1"
 dependencies = [
  "azure-functions-shared-codegen 0.4.1",
- "cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "grpcio 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -107,6 +105,7 @@ dependencies = [
  "quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.88 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.88 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.38 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.26 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -114,6 +113,7 @@ dependencies = [
 name = "azure-functions-shared-codegen"
 version = "0.4.1"
 dependencies = [
+ "proc-macro2 0.4.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.26 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

@@ -551,12 +551,12 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Regist
     if !Command::new("dotnet")
         .args(&[
             "publish",
-            "/v:q",
-            "/nologo",
             "-c",
             "Release",
             "-o",
             output_directory.join("bin").to_str().unwrap(),
+            "/v:q",
+            "/nologo",
             extensions_project_path.to_str().unwrap(),
         ])
         .current_dir(temp_dir.path())

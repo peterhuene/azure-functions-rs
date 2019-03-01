@@ -22,18 +22,24 @@ pub use self::queue_trigger::*;
 pub use self::table::*;
 pub use self::timer_trigger::*;
 
-use crate::codegen::{AttributeArguments, TryFrom};
 use lazy_static::lazy_static;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::collections::HashMap;
+use syn::AttributeArgs;
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, Copy, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Direction {
     In,
     InOut,
     Out,
+}
+
+impl Default for Direction {
+    fn default() -> Self {
+        Direction::In
+    }
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -75,17 +81,17 @@ impl Binding {
     pub fn binding_type(&self) -> Option<&str> {
         match self {
             Binding::Context => None,
-            Binding::HttpTrigger(_) => Some(HTTP_TRIGGER_TYPE),
-            Binding::Http(_) => Some(HTTP_TYPE),
-            Binding::TimerTrigger(_) => Some(TIMER_TRIGGER_TYPE),
-            Binding::QueueTrigger(_) => Some(QUEUE_TRIGGER_TYPE),
-            Binding::Queue(_) => Some(QUEUE_TYPE),
-            Binding::BlobTrigger(_) => Some(BLOB_TRIGGER_TYPE),
-            Binding::Blob(_) => Some(BLOB_TYPE),
-            Binding::Table(_) => Some(TABLE_TYPE),
-            Binding::EventGridTrigger(_) => Some(EVENT_GRID_TRIGGER_TYPE),
-            Binding::EventHubTrigger(_) => Some(EVENT_HUB_TRIGGER_TYPE),
-            Binding::EventHub(_) => Some(EVENT_HUB_TYPE),
+            Binding::HttpTrigger(_) => Some(HttpTrigger::binding_type()),
+            Binding::Http(_) => Some(HttpTrigger::binding_type()),
+            Binding::TimerTrigger(_) => Some(TimerTrigger::binding_type()),
+            Binding::QueueTrigger(_) => Some(QueueTrigger::binding_type()),
+            Binding::Queue(_) => Some(Queue::binding_type()),
+            Binding::BlobTrigger(_) => Some(BlobTrigger::binding_type()),
+            Binding::Blob(_) => Some(Blob::binding_type()),
+            Binding::Table(_) => Some(Table::binding_type()),
+            Binding::EventGridTrigger(_) => Some(EventGridTrigger::binding_type()),
+            Binding::EventHubTrigger(_) => Some(EventHubTrigger::binding_type()),
+            Binding::EventHub(_) => Some(EventHub::binding_type()),
         }
     }
 
@@ -157,73 +163,102 @@ impl ToTokens for Binding {
     }
 }
 
-pub type BindingFactory = fn(AttributeArguments) -> Result<Binding, (Span, String)>;
+pub type BindingFactory = fn(AttributeArgs, Span) -> Binding;
 type BindingMap = HashMap<&'static str, BindingFactory>;
 
 lazy_static! {
     pub static ref TRIGGERS: BindingMap = {
         let mut map: BindingMap = HashMap::new();
-        map.insert("HttpRequest", |args| {
-            Ok(Binding::HttpTrigger(HttpTrigger::try_from(args)?))
+        map.insert("HttpRequest", |args, span| {
+            Binding::HttpTrigger(HttpTrigger::from((args, span)))
         });
-        map.insert("TimerInfo", |args| {
-            Ok(Binding::TimerTrigger(TimerTrigger::try_from(args)?))
+        map.insert("TimerInfo", |args, span| {
+            Binding::TimerTrigger(TimerTrigger::from((args, span)))
         });
-        map.insert("QueueTrigger", |args| {
-            Ok(Binding::QueueTrigger(QueueTrigger::try_from(args)?))
+        map.insert("QueueTrigger", |args, span| {
+            Binding::QueueTrigger(QueueTrigger::from((args, span)))
         });
-        map.insert("BlobTrigger", |args| {
-            Ok(Binding::BlobTrigger(BlobTrigger::try_from(args)?))
+        map.insert("BlobTrigger", |args, span| {
+            Binding::BlobTrigger(BlobTrigger::from((args, span)))
         });
-        map.insert("EventGridEvent", |args| {
-            Ok(Binding::EventGridTrigger(EventGridTrigger::try_from(args)?))
+        map.insert("EventGridEvent", |args, span| {
+            Binding::EventGridTrigger(EventGridTrigger::from((args, span)))
         });
-        map.insert("EventHubTrigger", |args| {
-            Ok(Binding::EventHubTrigger(EventHubTrigger::try_from(args)?))
+        map.insert("EventHubTrigger", |args, span| {
+            Binding::EventHubTrigger(EventHubTrigger::from((args, span)))
         });
         map
     };
     pub static ref INPUT_BINDINGS: BindingMap = {
         let mut map: BindingMap = HashMap::new();
-        map.insert("Blob", |args| Ok(Binding::Blob(Blob::try_from(args)?)));
-        map.insert("Table", |args| Ok(Binding::Table(Table::try_from(args)?)));
+        map.insert("Blob", |args, span| Binding::Blob(Blob::from((args, span))));
+        map.insert("Table", |args, span| {
+            Binding::Table(Table::from((args, span)))
+        });
         map
     };
     pub static ref INPUT_OUTPUT_BINDINGS: BindingMap = {
         let mut map: BindingMap = HashMap::new();
-        map.insert("BlobTrigger", |args| {
-            let mut binding = BlobTrigger::try_from(args)?;
+        map.insert("BlobTrigger", |args, span| {
+            let mut binding = BlobTrigger::from((args, span));
             binding.direction = Direction::InOut;
-            Ok(Binding::BlobTrigger(binding))
+            Binding::BlobTrigger(binding)
         });
-        map.insert("Blob", |args| {
-            let mut binding = Blob::try_from(args)?;
+        map.insert("Blob", |args, span| {
+            let mut binding = Blob::from((args, span));
             binding.direction = Direction::InOut;
-            Ok(Binding::Blob(binding))
+            Binding::Blob(binding)
         });
         map
     };
     pub static ref OUTPUT_BINDINGS: BindingMap = {
         let mut map: BindingMap = HashMap::new();
-        map.insert("HttpResponse", |args| {
-            Ok(Binding::Http(Http::try_from(args)?))
+        map.insert("HttpResponse", |args, span| {
+            Binding::Http(Http::from((args, span)))
         });
-        map.insert("QueueMessage", |args| {
-            Ok(Binding::Queue(Queue::try_from(args)?))
+        map.insert("QueueMessage", |args, span| {
+            Binding::Queue(Queue::from((args, span)))
         });
-        map.insert("Blob", |args| {
-            let mut binding = Blob::try_from(args)?;
+        map.insert("Blob", |args, span| {
+            let mut binding = Blob::from((args, span));
             binding.direction = Direction::Out;
-            Ok(Binding::Blob(binding))
+            Binding::Blob(binding)
         });
-        map.insert("Table", |args| {
-            let mut binding = Table::try_from(args)?;
+        map.insert("Table", |args, span| {
+            let mut binding = Table::from((args, span));
             binding.direction = Direction::Out;
-            Ok(Binding::Table(binding))
+            Binding::Table(binding)
         });
-        map.insert("EventHubMessage", |args| {
-            Ok(Binding::EventHub(EventHub::try_from(args)?))
+        map.insert("EventHubMessage", |args, span| {
+            Binding::EventHub(EventHub::from((args, span)))
         });
         map
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use std::panic::{catch_unwind, UnwindSafe};
+
+    pub fn should_panic<T>(callback: T, msg: &str)
+    where
+        T: FnOnce() + UnwindSafe,
+    {
+        let result = catch_unwind(|| callback());
+        assert!(result.is_err(), "the function did not panic");
+
+        if cfg!(feature = "unstable") {
+            assert_eq!(
+                result.unwrap_err().downcast_ref::<String>().unwrap(),
+                "aborting due to previous error",
+                "the panic message is not the expected one"
+            );
+        } else {
+            assert_eq!(
+                result.unwrap_err().downcast_ref::<String>().unwrap(),
+                msg,
+                "the panic message is not the expected one"
+            );
+        }
+    }
 }

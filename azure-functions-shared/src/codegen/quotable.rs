@@ -1,6 +1,7 @@
 use crate::codegen::bindings::Direction;
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
+use std::borrow::Cow;
 
 pub struct QuotableBorrowedStr<'a>(pub &'a str);
 
@@ -8,6 +9,15 @@ impl ToTokens for QuotableBorrowedStr<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let s = self.0;
         quote!(::std::borrow::Cow::Borrowed(#s)).to_tokens(tokens);
+    }
+}
+
+pub struct QuotableStrArray<'a>(pub &'a [Cow<'a, str>]);
+
+impl ToTokens for QuotableStrArray<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let strings = self.0.iter().map(|s| QuotableBorrowedStr(s));
+        quote!(::std::borrow::Cow::Borrowed(&[#(#strings,)*])).to_tokens(tokens);
     }
 }
 

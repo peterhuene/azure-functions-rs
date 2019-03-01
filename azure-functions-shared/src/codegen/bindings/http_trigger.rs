@@ -1,196 +1,213 @@
-use crate::codegen::{
-    quotable::{QuotableBorrowedStr, QuotableOption},
-    AttributeArguments, TryFrom,
-};
-use crate::util::to_camel_case;
-use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use azure_functions_shared_codegen::binding;
 use std::borrow::Cow;
-use syn::{spanned::Spanned, Lit};
 
-pub const HTTP_TRIGGER_TYPE: &str = "httpTrigger";
-
-#[derive(Debug, Clone)]
+#[binding(name = "httpTrigger", direction = "in")]
 pub struct HttpTrigger {
+    #[field(camel_case_value = true)]
     pub name: Cow<'static, str>,
+    #[field(name = "authLevel", values = "anonymous|function|admin")]
     pub auth_level: Option<Cow<'static, str>>,
+    #[field(values = "get|post|delete|head|patch|put|options|trace")]
     pub methods: Cow<'static, [Cow<'static, str>]>,
     pub route: Option<Cow<'static, str>>,
-    pub web_hook_type: Option<Cow<'static, str>>,
 }
 
-// TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive
-// The fix would allow us to set the constant `type` and `direction` entries rather than having to emit them manually.
-impl Serialize for HttpTrigger {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut map = serializer.serialize_map(None)?;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codegen::bindings::tests::should_panic;
+    use proc_macro2::{Span, TokenStream};
+    use quote::ToTokens;
+    use serde_json::to_string;
+    use syn::{parse_str, NestedMeta};
 
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", HTTP_TRIGGER_TYPE)?;
-        map.serialize_entry("direction", "in")?;
+    #[test]
+    fn it_serializes_to_json() {
+        let binding = HttpTrigger {
+            name: Cow::from("foo"),
+            auth_level: Some(Cow::from("bar")),
+            methods: Cow::from(vec![Cow::from("foo"), Cow::from("bar"), Cow::from("baz")]),
+            route: Some(Cow::from("baz")),
+        };
 
-        if let Some(auth_level) = self.auth_level.as_ref() {
-            map.serialize_entry("authLevel", auth_level)?;
-        }
-        if !self.methods.is_empty() {
-            map.serialize_entry("methods", &self.methods)?;
-        }
-        if let Some(route) = self.route.as_ref() {
-            map.serialize_entry("route", route)?;
-        }
-        if let Some(web_hook_type) = self.web_hook_type.as_ref() {
-            map.serialize_entry("webHookType", web_hook_type)?;
-        }
-
-        map.end()
+        assert_eq!(
+            to_string(&binding).unwrap(),
+            r#"{"type":"httpTrigger","direction":"in","name":"foo","authLevel":"bar","methods":["foo","bar","baz"],"route":"baz"}"#
+        );
     }
-}
 
-impl TryFrom<AttributeArguments> for HttpTrigger {
-    type Error = (Span, String);
+    #[test]
+    fn it_parses_attribute_arguments() {
+        let binding: HttpTrigger = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"auth_level = "anonymous""#).unwrap(),
+                parse_str::<NestedMeta>(r#"methods = "get|put""#).unwrap(),
+                parse_str::<NestedMeta>(r#"route = "/foo/bar/baz""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
 
-    fn try_from(args: AttributeArguments) -> Result<Self, Self::Error> {
-        let mut name = None;
-        let mut auth_level = None;
-        let mut methods = Vec::new();
-        let mut route = None;
-        let mut web_hook_type = None;
-
-        for (key, value) in args.list.iter() {
-            let key_str = key.to_string();
-
-            match key_str.as_str() {
-                "name" => match value {
-                    Lit::Str(s) => {
-                        name = Some(Cow::Owned(to_camel_case(&s.value())));
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'name' argument".to_string(),
-                        ));
-                    }
-                },
-                "auth_level" => match value {
-                    Lit::Str(s) => {
-                        let v = s.value();
-                        auth_level = match v.as_str() {
-                            "anonymous" | "function" | "admin" => Some(Cow::Owned(v)),
-                            _ => {
-                                return Err((value
-                                    .span(),
-                                    "expected 'anonymous', 'function', or 'admin' for the 'auth_level' attribute argument".to_string()));
-                            }
-                        };
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'auth_level' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                "methods" => match value {
-                    Lit::Str(s) => {
-                        let mut invalid = Vec::new();
-                        methods = s
-                            .value()
-                            .split(',')
-                            .filter_map(|x| {
-                                let x = x.trim();
-                                match x {
-                                    "get" | "post" | "delete" | "head" | "patch" | "put"
-                                    | "options" | "trace" => Some(Cow::Owned(x.to_string())),
-                                    _ => {
-                                        invalid.push(x.to_string());
-                                        None
-                                    }
-                                }
-                            })
-                            .collect();
-
-                        if !invalid.is_empty() {
-                            return Err((
-                                value.span(),
-                                format!("unsupported HTTP methods: {}", invalid.join(", ")),
-                            ));
-                        }
-                    }
-                    _ => {
-                        return Err((value
-                                .span(),
-                                "expected a comma-delimited literal string value for the 'methods' argument".to_string()));
-                    }
-                },
-                "route" => match value {
-                    Lit::Str(s) => route = Some(Cow::Owned(s.value())),
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'route' argument".to_string(),
-                        ));
-                    }
-                },
-                "web_hook_type" => match value {
-                    Lit::Str(s) => {
-                        let s = s.value();
-                        web_hook_type = match s.trim() {
-                            "generic" | "github" | "slack" => Some(Cow::Owned(s)),
-                            _ => {
-                                return Err((value
-                                    .span(),
-                                    "expected 'generic', 'github', or 'slack' for the 'web_hook_type' attribute argument".to_string()));
-                            }
-                        };
-                    }
-                    _ => {
-                        return Err((
-                            value.span(),
-                            "expected a literal string value for the 'web_hook_type' argument"
-                                .to_string(),
-                        ));
-                    }
-                },
-                _ => {
-                    return Err((
-                        key.span(),
-                        format!("unsupported binding attribute argument '{}'", key_str),
-                    ));
-                }
-            };
-        }
-
-        Ok(HttpTrigger {
-            name: name.unwrap(),
-            auth_level,
-            methods: Cow::Owned(methods),
-            route,
-            web_hook_type,
-        })
+        assert_eq!(binding.name.as_ref(), "foo");
+        assert_eq!(binding.auth_level.unwrap().as_ref(), "anonymous");
+        assert_eq!(binding.methods.as_ref(), ["get", "put"]);
+        assert_eq!(binding.route.unwrap().as_ref(), "/foo/bar/baz");
     }
-}
 
-impl ToTokens for HttpTrigger {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let name = QuotableBorrowedStr(&self.name);
-        let auth_level = QuotableOption(self.auth_level.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let methods = self.methods.iter().map(|x| QuotableBorrowedStr(x));
-        let route = QuotableOption(self.route.as_ref().map(|x| QuotableBorrowedStr(x)));
-        let web_hook_type =
-            QuotableOption(self.web_hook_type.as_ref().map(|x| QuotableBorrowedStr(x)));
+    #[test]
+    fn it_requires_the_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (vec![], Span::call_site()).into();
+            },
+            "the 'name' argument is required for this binding",
+        );
+    }
 
-        quote!(::azure_functions::codegen::bindings::HttpTrigger {
-            name: #name,
-            auth_level: #auth_level,
-            methods: ::std::borrow::Cow::Borrowed(&[#(#methods),*]),
-            route: #route,
-            web_hook_type: #web_hook_type,
-        })
-        .to_tokens(tokens)
+    #[test]
+    fn it_requires_the_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'name' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_auth_level_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"auth_level = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'auth_level' argument",
+        );
+    }
+
+    #[test]
+    fn it_accepts_valid_auth_levels() {
+        let _: HttpTrigger = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"auth_level = "anonymous""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
+
+        let _: HttpTrigger = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"auth_level = "function""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
+
+        let _: HttpTrigger = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"auth_level = "admin""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
+    }
+
+    #[test]
+    fn it_rejects_invalid_auth_levels() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"auth_level = "foo""#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "'foo' is not a valid value for the 'auth_level' attribute",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_methods_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"methods = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'methods' argument",
+        );
+    }
+
+    #[test]
+    fn it_accepts_valid_methods() {
+        let _: HttpTrigger = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(
+                    r#"methods = "get|post|delete|head|patch|put|options|trace""#,
+                )
+                .unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
+    }
+
+    #[test]
+    fn it_rejects_invalid_methods() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"methods = "get|foo|post""#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "'foo' is not a valid value for the 'methods' attribute",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_route_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: HttpTrigger = (
+                    vec![parse_str::<NestedMeta>(r#"route = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'route' argument",
+        );
+    }
+
+    #[test]
+    fn it_converts_to_tokens() {
+        let binding = HttpTrigger {
+            name: Cow::from("foo"),
+            auth_level: Some(Cow::from("bar")),
+            methods: Cow::from(vec![Cow::from("foo"), Cow::from("bar"), Cow::from("baz")]),
+            route: Some(Cow::from("baz")),
+        };
+
+        let mut stream = TokenStream::new();
+        binding.to_tokens(&mut stream);
+        let mut tokens = stream.to_string();
+        tokens.retain(|c| c != ' ');
+
+        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::HttpTrigger{name:::std::borrow::Cow::Borrowed("foo"),auth_level:Some(::std::borrow::Cow::Borrowed("bar")),methods:::std::borrow::Cow::Borrowed(&[::std::borrow::Cow::Borrowed("foo"),::std::borrow::Cow::Borrowed("bar"),::std::borrow::Cow::Borrowed("baz"),]),route:Some(::std::borrow::Cow::Borrowed("baz")),}"#);
     }
 }

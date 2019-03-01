@@ -1,5 +1,4 @@
-use crate::util::last_segment_in_path;
-use azure_functions_shared::util::to_camel_case;
+use azure_functions_shared::{codegen::last_segment_in_path, util::to_camel_case};
 use quote::quote;
 use quote::ToTokens;
 use syn::ItemFn;
