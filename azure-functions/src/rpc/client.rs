@@ -372,6 +372,10 @@ impl Client {
             // Not supported (no-op)
             return;
         }
+        if msg.has_function_environment_reload_request() {
+            // Not supported (no-op)
+            return;
+        }
 
         panic!("Unexpected message from host: {:?}.", msg);
     }

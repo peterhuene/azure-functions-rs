@@ -19,7 +19,9 @@ pub mod rpc {
 
         generated_mod!(FunctionRpc);
         generated_mod!(FunctionRpc_grpc);
+        generated_mod!(ClaimsIdentityRpc);
 
+        pub use self::ClaimsIdentityRpc::*;
         pub use self::FunctionRpc::*;
         pub use self::FunctionRpc_grpc::*;
     }

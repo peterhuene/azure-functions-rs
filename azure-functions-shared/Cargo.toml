@@ -10,7 +10,7 @@ edition = "2018"
 
 [dependencies]
 azure-functions-shared-codegen = { version = "0.4.1", path = "../azure-functions-shared-codegen" }
-protobuf = "2.0.5"
+protobuf = "2.3.0"
 grpcio = { version = "0.4.4", default-features = false, features = ["protobuf-codec"] }
 futures = "0.1.24"
 serde = "1.0.88"
