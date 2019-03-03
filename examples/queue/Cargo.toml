@@ -7,3 +7,6 @@ edition = "2018"
 [dependencies]
 azure-functions = { path = "../../azure-functions" }
 log = "0.4.6"
+
+[features]
+unstable = ["azure-functions/unstable"]
