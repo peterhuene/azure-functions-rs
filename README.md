@@ -115,6 +115,23 @@ To build your Azure Functions application, just use `cargo build`:
 $ cargo build
 ```
 
+If you are using a nightly compiler, you can enable improved error messages during compilation.
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[features]
+unstable = ["azure-functions/unstable"]
+```
+
+Build your application:
+
+```
+$ cargo build --features unstable
+```
+
+This enables Azure Functions for Rust to emit diagnostic messages that will include the position of an error within an attribute.
+
 ## Running the Azure Functions application
 
 To build and run your Azure Functions application, use `cargo func run`:

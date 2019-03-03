@@ -1,6 +1,8 @@
 use crate::{
     commands::TEMPLATES,
-    util::{create_from_template, path_to_string, print_failure, print_running, print_success},
+    util::{
+        create_from_template, last_segment_in_path, print_failure, print_running, print_success,
+    },
 };
 use atty::Stream;
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
@@ -96,7 +98,7 @@ fn export_function(name: &str) -> Result<(), String> {
     let mut found = false;
     for item in ast.items {
         if let Item::Macro(m) = item {
-            if path_to_string(&m.mac.path) == "azure_functions::export" {
+            if last_segment_in_path(&m.mac.path).ident == "export" {
                 let mut modules: Vec<String> = Punctuated::<Ident, Token![,]>::parse_terminated
                     .parse2(m.mac.tts)
                     .map_err(|_| "failed to parse 'azure_functions::export' macro.")?

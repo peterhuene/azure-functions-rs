@@ -1,33 +1,134 @@
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use azure_functions_shared_codegen::binding;
 use std::borrow::Cow;
 
-pub const EVENT_HUB_TYPE: &str = "eventHub";
-
-#[derive(Debug, Clone)]
+#[binding(name = "eventHub", direction = "out")]
 pub struct EventHub {
+    #[field(camel_case_value = true)]
     pub name: Cow<'static, str>,
     pub connection: Cow<'static, str>,
+    #[field(name = "eventHubName")]
     pub event_hub_name: Option<Cow<'static, str>>,
 }
 
-// TODO: when https://github.com/serde-rs/serde/issues/760 is resolved, remove implementation in favor of custom Serialize derive
-// The fix would allow us to set the constant `type` and `direction` entries rather than having to emit them manually.
-impl Serialize for EventHub {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut map = serializer.serialize_map(None)?;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codegen::bindings::tests::should_panic;
+    use proc_macro2::{Span, TokenStream};
+    use quote::ToTokens;
+    use serde_json::to_string;
+    use syn::{parse_str, NestedMeta};
 
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("type", EVENT_HUB_TYPE)?;
-        map.serialize_entry("direction", "out")?;
-        map.serialize_entry("connection", &self.connection)?;
+    #[test]
+    fn it_serializes_to_json() {
+        let binding = EventHub {
+            name: Cow::from("foo"),
+            connection: Cow::from("bar"),
+            event_hub_name: Some(Cow::from("baz")),
+        };
 
-        if let Some(event_hub_name) = self.event_hub_name.as_ref() {
-            map.serialize_entry("eventHubName", event_hub_name)?;
-        }
+        assert_eq!(
+            to_string(&binding).unwrap(),
+            r#"{"type":"eventHub","direction":"out","name":"foo","connection":"bar","eventHubName":"baz"}"#
+        );
+    }
 
-        map.end()
+    #[test]
+    fn it_parses_attribute_arguments() {
+        let binding: EventHub = (
+            vec![
+                parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
+                parse_str::<NestedMeta>(r#"connection = "bar""#).unwrap(),
+                parse_str::<NestedMeta>(r#"event_hub_name = "baz""#).unwrap(),
+            ],
+            Span::call_site(),
+        )
+            .into();
+
+        assert_eq!(binding.name.as_ref(), "foo");
+        assert_eq!(binding.connection.as_ref(), "bar");
+        assert_eq!(binding.event_hub_name.as_ref().unwrap(), "baz");
+    }
+
+    #[test]
+    fn it_requires_the_name_attribute_argument() {
+        should_panic(
+            || {
+                let _: EventHub = (vec![], Span::call_site()).into();
+            },
+            "the 'name' argument is required for this binding",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: EventHub = (
+                    vec![parse_str::<NestedMeta>(r#"name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'name' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_connection_attribute_argument() {
+        should_panic(
+            || {
+                let _: EventHub = (
+                    vec![parse_str::<NestedMeta>(r#"name = "foo""#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "the 'connection' argument is required for this binding",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_connection_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: EventHub = (
+                    vec![parse_str::<NestedMeta>(r#"connection = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'connection' argument",
+        );
+    }
+
+    #[test]
+    fn it_requires_the_event_hub_name_attribute_be_a_string() {
+        should_panic(
+            || {
+                let _: EventHub = (
+                    vec![parse_str::<NestedMeta>(r#"event_hub_name = false"#).unwrap()],
+                    Span::call_site(),
+                )
+                    .into();
+            },
+            "expected a literal string value for the 'event_hub_name' argument",
+        );
+    }
+
+    #[test]
+    fn it_converts_to_tokens() {
+        let binding = EventHub {
+            name: Cow::from("foo"),
+            connection: Cow::from("bar"),
+            event_hub_name: Some(Cow::from("baz")),
+        };
+
+        let mut stream = TokenStream::new();
+        binding.to_tokens(&mut stream);
+        let mut tokens = stream.to_string();
+        tokens.retain(|c| c != ' ');
+
+        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::EventHub{name:::std::borrow::Cow::Borrowed("foo"),connection:::std::borrow::Cow::Borrowed("bar"),event_hub_name:Some(::std::borrow::Cow::Borrowed("baz")),}"#);
     }
 }

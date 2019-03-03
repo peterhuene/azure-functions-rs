@@ -4,15 +4,40 @@
 #![recursion_limit = "128"]
 #![deny(unused_extern_crates)]
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
-#[macro_use]
-extern crate lazy_static;
 extern crate proc_macro;
 
 mod export;
 mod func;
-mod util;
 
-use proc_macro::TokenStream;
+use azure_functions_shared::codegen::macro_panic;
+use proc_macro2::{Delimiter, Span};
+use syn::{
+    buffer::TokenBuffer, spanned::Spanned, token::Eq, Attribute, AttributeArgs, Ident, Lit, LitStr,
+    Meta, MetaNameValue, NestedMeta,
+};
+
+fn parse_attribute_args(attr: &Attribute) -> AttributeArgs {
+    let span = attr.span();
+    let stream: proc_macro::TokenStream = match TokenBuffer::new2(attr.tts.clone())
+        .begin()
+        .group(Delimiter::Parenthesis)
+    {
+        Some((tree, _, _)) => tree.token_stream().into(),
+        None => macro_panic(span, "failed to parse attribute"),
+    };
+
+    syn::parse_macro_input::parse::<AttributeArgs>(stream)
+        .map_err(move |e| macro_panic(span, format!("failed to parse attribute arguments: {}", e)))
+        .unwrap()
+}
+
+fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
+    vec![NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+        ident: Ident::new("name", span),
+        eq_token: Eq { spans: [span] },
+        lit: Lit::Str(LitStr::new(name, span)),
+    }))]
+}
 
 /// Implements the `export!` macro.
 ///
@@ -35,8 +60,8 @@ use proc_macro::TokenStream;
 /// }
 /// ```
 #[proc_macro]
-pub fn export(input: TokenStream) -> TokenStream {
-    export::attr_impl(input)
+pub fn export(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    export::export_impl(input)
 }
 
 /// Implements the `func` attribute.
@@ -54,6 +79,9 @@ pub fn export(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn func(args: TokenStream, input: TokenStream) -> TokenStream {
-    func::attr_impl(args, input)
+pub fn func(
+    args: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    func::func_impl(args, input)
 }
