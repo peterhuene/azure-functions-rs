@@ -25,6 +25,7 @@ const METHOD_FUNCTION_RPC_EVENT_STREAM: ::grpcio::Method<super::FunctionRpc::Str
     resp_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
 };
 
+#[derive(Clone)]
 pub struct FunctionRpcClient {
     client: ::grpcio::Client,
 }
