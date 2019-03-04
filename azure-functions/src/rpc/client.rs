@@ -228,11 +228,12 @@ impl Client {
             response.set_result(match req.metadata.as_ref() {
                 Some(metadata) => {
                     let mut result = protocol::StatusResult::new();
-                    if registry
-                        .lock()
-                        .unwrap()
-                        .register(&req.function_id, &metadata.name)
+                    let registered;
                     {
+                        let mut registry = registry.lock().unwrap();
+                        registered = registry.register(&req.function_id, &metadata.name);
+                    }
+                    if registered {
                         result.status = protocol::StatusResult_Status::Success;
                     } else {
                         result.status = protocol::StatusResult_Status::Failure;
@@ -261,46 +262,44 @@ impl Client {
         req: &mut protocol::InvocationRequest,
     ) {
         let mut message = protocol::StreamingMessage::new();
-        let res = match registry
-            .lock()
-            .unwrap()
-            .get(&req.function_id)
-            .and_then(|func| {
-                Some(
-                    match panic::catch_unwind(AssertUnwindSafe(|| {
-                        // Set the function name in TLS
-                        FUNCTION_NAME.with(|n| {
-                            *n.borrow_mut() = &func.name;
-                        });
+        let func;
+        {
+            func = registry.lock().unwrap().get(&req.function_id);
+        }
 
-                        // Set the invocation ID in TLS
-                        logger::INVOCATION_ID.with(|id| {
-                            id.borrow_mut().replace_range(.., &req.invocation_id);
-                        });
+        let res = match func {
+            Some(func) => {
+                match panic::catch_unwind(AssertUnwindSafe(|| {
+                    // Set the function name in TLS
+                    FUNCTION_NAME.with(|n| {
+                        *n.borrow_mut() = &func.name;
+                    });
 
-                        (func
-                            .invoker
-                            .as_ref()
-                            .expect("function must have an invoker"))(
-                            &func.name, req
-                        )
-                    })) {
-                        Ok(res) => res,
-                        Err(_) => {
-                            let mut res = protocol::InvocationResponse::new();
-                            res.set_invocation_id(req.invocation_id.clone());
-                            let mut result = protocol::StatusResult::new();
-                            result.status = protocol::StatusResult_Status::Failure;
-                            result.result =
-                                "Azure Function panicked: see log for more information."
-                                    .to_string();
-                            res.set_result(result);
-                            res
-                        }
-                    },
-                )
-            }) {
-            Some(res) => res,
+                    // Set the invocation ID in TLS
+                    logger::INVOCATION_ID.with(|id| {
+                        id.borrow_mut().replace_range(.., &req.invocation_id);
+                    });
+
+                    (func
+                        .invoker
+                        .as_ref()
+                        .expect("function must have an invoker"))(
+                        &func.name, req
+                    )
+                })) {
+                    Ok(res) => res,
+                    Err(_) => {
+                        let mut res = protocol::InvocationResponse::new();
+                        res.set_invocation_id(req.invocation_id.clone());
+                        let mut result = protocol::StatusResult::new();
+                        result.status = protocol::StatusResult_Status::Failure;
+                        result.result =
+                            "Azure Function panicked: see log for more information.".to_string();
+                        res.set_result(result);
+                        res
+                    }
+                }
+            }
             None => {
                 let mut res = protocol::InvocationResponse::new();
                 res.set_invocation_id(req.invocation_id.clone());
