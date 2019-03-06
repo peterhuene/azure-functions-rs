@@ -115,7 +115,6 @@ use std::env::{current_dir, current_exe};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::{Arc, Mutex};
 use tempfile::TempDir;
 use xml::writer::XmlEvent;
 use xml::EmitterConfig;
@@ -391,7 +390,7 @@ fn initialize_script_root(
     script_root: &str,
     sync: bool,
     verbose: bool,
-    registry: &Arc<Mutex<Registry<'static>>>,
+    registry: Registry<'static>,
 ) {
     let script_root = current_dir()
         .expect("failed to get current directory")
@@ -411,7 +410,7 @@ fn initialize_script_root(
 
     delete_existing_function_directories(&script_root, verbose);
 
-    for (name, info) in registry.lock().unwrap().iter() {
+    for (name, info) in registry.iter() {
         let function_dir = create_function_directory(&script_root, name, verbose);
 
         let source_file = get_source_file_path(
@@ -435,7 +434,7 @@ fn initialize_script_root(
     }
 
     if sync {
-        sync_extensions(script_root.to_str().unwrap(), verbose, &registry);
+        sync_extensions(script_root.to_str().unwrap(), verbose, registry);
     }
 }
 
@@ -524,10 +523,8 @@ fn write_generator_project_file(path: &Path) {
     writer.write(XmlEvent::end_element()).unwrap();
 }
 
-fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Registry<'static>>>) {
-    let reg = registry.lock().unwrap();
-
-    if !reg.has_binding_extensions() {
+fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>) {
+    if !registry.has_binding_extensions() {
         if verbose {
             println!("No binding extensions are needed.");
         }
@@ -541,7 +538,7 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Regist
         .expect("failed to get current directory")
         .join(script_root);
 
-    write_extensions_project_file(&extensions_project_path, &reg);
+    write_extensions_project_file(&extensions_project_path, &registry);
     write_generator_project_file(&metadata_project_path);
 
     if verbose {
@@ -598,7 +595,7 @@ fn run_worker(
     host: &str,
     port: u32,
     max_message_length: Option<i32>,
-    registry: &Arc<Mutex<Registry<'static>>>,
+    registry: Registry<'static>,
 ) {
     ctrlc::set_handler(|| {}).expect("failed setting SIGINT handler");
 
@@ -608,13 +605,13 @@ fn run_worker(
 
     client
         .connect(host, port)
-        .and_then(|client| {
+        .and_then(move |client| {
             println!(
                 "Connected to Azure Functions host version {}.",
                 client.host_version().unwrap()
             );
 
-            client.process_all_messages(&registry)
+            client.process_all_messages(registry)
         })
         .wait()
         .unwrap();
@@ -635,7 +632,7 @@ fn run_worker(
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
     let matches = cli::create_app().get_matches_from(args);
-    let registry = Arc::new(Mutex::new(Registry::new(functions)));
+    let registry = Registry::new(functions);
 
     if let Some(matches) = matches.subcommand_matches("init") {
         initialize_script_root(
@@ -644,7 +641,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
                 .expect("A script root is required."),
             matches.is_present("sync"),
             matches.is_present("verbose"),
-            &registry,
+            registry,
         );
         return;
     }
@@ -655,7 +652,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
                 .value_of("script_root")
                 .expect("A script root is required."),
             matches.is_present("verbose"),
-            &registry,
+            registry,
         );
         return;
     }
@@ -673,7 +670,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("max_message_length")
                 .map(|len| len.parse::<i32>().expect("Invalid maximum message length")),
-            &registry,
+            registry,
         );
         return;
     }

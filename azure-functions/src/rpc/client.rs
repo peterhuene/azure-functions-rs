@@ -1,3 +1,4 @@
+use crate::codegen::Function;
 use crate::logger;
 use crate::registry::Registry;
 use azure_functions_shared::rpc::protocol;
@@ -8,9 +9,9 @@ use grpcio::{ChannelBuilder, ClientDuplexReceiver, EnvBuilder, WriteFlags};
 use log::{self, error};
 use std::cell::RefCell;
 use std::panic::{self, AssertUnwindSafe};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::thread;
-use tokio_threadpool;
+use tokio_threadpool::ThreadPool;
 
 pub type Sender = mpsc::Sender<protocol::StreamingMessage>;
 type Receiver = ClientDuplexReceiver<protocol::StreamingMessage>;
@@ -142,7 +143,7 @@ impl Client {
 
     pub fn process_all_messages(
         mut self,
-        registry: &Arc<Mutex<Registry<'static>>>,
+        mut registry: Registry<'static>,
     ) -> impl Future<Item = Client, Error = ()> {
         let pool = tokio_threadpool::ThreadPool::new();
 
@@ -203,22 +204,16 @@ impl Client {
                 break;
             }
 
-            let sender = self.sender().unwrap();
-            let reg = registry.clone();
-
-            pool.spawn(lazy(move || {
-                Client::handle_request(&reg, sender, msg);
-                Ok(())
-            }));
+            Client::handle_request(&mut registry, self.sender().unwrap(), msg, &pool);
         }
 
         pool.shutdown_on_idle().and_then(|_| ok(self))
     }
 
     fn handle_function_load_request(
-        registry: &Arc<Mutex<Registry<'static>>>,
+        registry: &mut Registry<'static>,
         sender: Sender,
-        req: &protocol::FunctionLoadRequest,
+        req: protocol::FunctionLoadRequest,
     ) {
         let mut message = protocol::StreamingMessage::new();
         {
@@ -228,12 +223,7 @@ impl Client {
             response.set_result(match req.metadata.as_ref() {
                 Some(metadata) => {
                     let mut result = protocol::StatusResult::new();
-                    let registered;
-                    {
-                        let mut registry = registry.lock().unwrap();
-                        registered = registry.register(&req.function_id, &metadata.name);
-                    }
-                    if registered {
+                    if registry.register(&req.function_id, &metadata.name) {
                         result.status = protocol::StatusResult_Status::Success;
                     } else {
                         result.status = protocol::StatusResult_Status::Failure;
@@ -256,56 +246,35 @@ impl Client {
             .expect("Failed to send message to response thread");
     }
 
-    fn handle_invocation_request(
-        registry: &Arc<Mutex<Registry<'static>>>,
+    fn invoke_function(
+        func: &'static Function,
         sender: Sender,
-        req: &mut protocol::InvocationRequest,
+        mut req: protocol::InvocationRequest,
     ) {
-        let mut message = protocol::StreamingMessage::new();
-        let func;
-        {
-            func = registry.lock().unwrap().get(&req.function_id);
-        }
+        // Set the function name in TLS
+        FUNCTION_NAME.with(|n| {
+            *n.borrow_mut() = &func.name;
+        });
 
-        let res = match func {
-            Some(func) => {
-                match panic::catch_unwind(AssertUnwindSafe(|| {
-                    // Set the function name in TLS
-                    FUNCTION_NAME.with(|n| {
-                        *n.borrow_mut() = &func.name;
-                    });
+        // Set the invocation ID in TLS
+        logger::INVOCATION_ID.with(|id| {
+            id.borrow_mut().replace_range(.., &req.invocation_id);
+        });
 
-                    // Set the invocation ID in TLS
-                    logger::INVOCATION_ID.with(|id| {
-                        id.borrow_mut().replace_range(.., &req.invocation_id);
-                    });
-
-                    (func
-                        .invoker
-                        .as_ref()
-                        .expect("function must have an invoker"))(
-                        &func.name, req
-                    )
-                })) {
-                    Ok(res) => res,
-                    Err(_) => {
-                        let mut res = protocol::InvocationResponse::new();
-                        res.set_invocation_id(req.invocation_id.clone());
-                        let mut result = protocol::StatusResult::new();
-                        result.status = protocol::StatusResult_Status::Failure;
-                        result.result =
-                            "Azure Function panicked: see log for more information.".to_string();
-                        res.set_result(result);
-                        res
-                    }
-                }
-            }
-            None => {
+        let res = match panic::catch_unwind(AssertUnwindSafe(|| {
+            (func
+                .invoker
+                .as_ref()
+                .expect("function must have an invoker"))(&func.name, &mut req)
+        })) {
+            Ok(res) => res,
+            Err(_) => {
                 let mut res = protocol::InvocationResponse::new();
                 res.set_invocation_id(req.invocation_id.clone());
                 let mut result = protocol::StatusResult::new();
                 result.status = protocol::StatusResult_Status::Failure;
-                result.result = format!("Function with id '{}' does not exist.", req.function_id);
+                result.result =
+                    "Azure Function panicked: see log for more information.".to_string();
                 res.set_result(result);
                 res
             }
@@ -321,6 +290,7 @@ impl Client {
             id.borrow_mut().clear();
         });
 
+        let mut message = protocol::StreamingMessage::new();
         message.set_invocation_response(res);
 
         sender
@@ -329,7 +299,37 @@ impl Client {
             .expect("Failed to send message to response thread");
     }
 
-    fn handle_worker_status_request(sender: Sender, _req: &protocol::WorkerStatusRequest) {
+    fn handle_invocation_request(
+        registry: &Registry<'static>,
+        sender: Sender,
+        req: protocol::InvocationRequest,
+        pool: &ThreadPool,
+    ) {
+        if let Some(func) = registry.get(&req.function_id) {
+            pool.spawn(lazy(move || {
+                Client::invoke_function(func, sender, req);
+                Ok(())
+            }));
+            return;
+        }
+
+        let mut res = protocol::InvocationResponse::new();
+        res.set_invocation_id(req.invocation_id.clone());
+        let mut result = protocol::StatusResult::new();
+        result.status = protocol::StatusResult_Status::Failure;
+        result.result = format!("Function with id '{}' does not exist.", req.function_id);
+        res.set_result(result);
+
+        let mut message = protocol::StreamingMessage::new();
+        message.set_invocation_response(res);
+
+        sender
+            .send(message)
+            .wait()
+            .expect("Failed to send message to response thread");
+    }
+
+    fn handle_worker_status_request(sender: Sender, _req: protocol::WorkerStatusRequest) {
         let mut message = protocol::StreamingMessage::new();
         {
             message.mut_worker_status_response();
@@ -343,24 +343,30 @@ impl Client {
     }
 
     fn handle_request(
-        registry: &Arc<Mutex<Registry<'static>>>,
+        registry: &mut Registry<'static>,
         sender: Sender,
         mut msg: protocol::StreamingMessage,
+        pool: &ThreadPool,
     ) {
         if msg.has_function_load_request() {
             Client::handle_function_load_request(
-                &registry,
+                registry,
                 sender,
-                msg.get_function_load_request(),
+                msg.take_function_load_request(),
             );
             return;
         }
         if msg.has_invocation_request() {
-            Client::handle_invocation_request(&registry, sender, msg.mut_invocation_request());
+            Client::handle_invocation_request(
+                registry,
+                sender,
+                msg.take_invocation_request(),
+                pool,
+            );
             return;
         }
         if msg.has_worker_status_request() {
-            Client::handle_worker_status_request(sender, msg.get_worker_status_request());
+            Client::handle_worker_status_request(sender, msg.take_worker_status_request());
             return;
         }
         if msg.has_file_change_event_request() {
