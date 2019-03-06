@@ -1,7 +1,7 @@
 [package]
 name = "azure-functions"
 license = "MIT"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Azure Functions for Rust"
 repository = "https://github.com/peterhuene/azure-functions-rs/"
@@ -9,7 +9,8 @@ homepage = "https://functions.rs"
 edition = "2018"
 
 [dependencies]
-azure-functions-shared = { version = "0.5.0", path = "../azure-functions-shared" }
+azure-functions-shared = { version = "0.5.1", path = "../azure-functions-shared" }
+azure-functions-codegen = { version = "0.5.1", path = "../azure-functions-codegen" }
 log = { version = "0.4.6", features = ["std"] }
 grpcio = { version = "0.4.4", default-features = false, features = ["protobuf-codec"] }
 futures = "0.1.24"
@@ -23,10 +24,6 @@ xml-rs = "0.8.0"
 lazy_static = "1.3.0"
 tempfile = "3.0.7"
 ctrlc = "3.1.1"
-
-[dependencies.azure-functions-codegen] 
-version = "0.5.0"
-path = "../azure-functions-codegen" 
 
 [features]
 unstable = ["azure-functions-codegen/unstable"]
