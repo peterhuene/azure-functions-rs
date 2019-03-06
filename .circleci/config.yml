@@ -28,14 +28,23 @@ jobs:
           name: Check for linter errors
           command: |
             cargo clippy --version || true
-            # TODO: use cargo clippy -- -Dwarnings once this is merged https://github.com/stepancheg/rust-protobuf/pull/332
-            cargo clippy
+            cargo clippy -- -Dwarnings
       - run:
           name: Build
-          command: "cargo build --release --features 'compile_protobufs << parameters.cargo-features >>'"
+          command: "cargo build --release"
       - run:
-          name: Check for stale protobuf files
-          command: git diff --exit-code -- azure-functions-shared/cache
+          name: Check features
+          command: |
+            if [ ! -z "<< parameters.cargo-features >>" ]; then
+              cd azure-functions
+              cargo build --release --features '<< parameters.cargo-features >>'
+            fi
+      - run:
+          name: Compile protobuf files
+          command: |
+            cd azure-functions-shared
+            cargo build --release --features compile_protobufs
+            git diff --exit-code -- cache
       - run:
           name: Test
           command: cargo test --release
