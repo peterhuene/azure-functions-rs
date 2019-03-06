@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile-upstream:experimental
 
-FROM peterhuene/azure-functions-rs-build:0.5.1 AS build-image
+FROM peterhuene/azure-functions-rs-build:0.5.2 AS build-image
 
 WORKDIR /src
 COPY . /src
