@@ -41,7 +41,7 @@ impl Client {
     }
 
     pub fn host_version(&self) -> Option<&str> {
-        self.host_version.as_ref().map(|x| x.as_str())
+        self.host_version.as_ref().map(String::as_str)
     }
 
     pub fn sender(&self) -> Option<Sender> {
@@ -89,7 +89,7 @@ impl Client {
         message.mut_start_stream().worker_id = self.worker_id.to_owned();
 
         self.send(message)
-            .and_then(|c| c.read())
+            .and_then(Client::read)
             .and_then(|(mut c, msg)| {
                 let msg = msg.expect("host disconnected during worker initialization");
 
@@ -165,7 +165,7 @@ impl Client {
                         .unwrap_or_else(|| info
                             .payload()
                             .downcast_ref::<String>()
-                            .map(|x| x.as_str())
+                            .map(String::as_str)
                             .unwrap_or(UNKNOWN)),
                     location.file(),
                     location.line(),
@@ -182,7 +182,7 @@ impl Client {
                         .unwrap_or_else(|| info
                             .payload()
                             .downcast_ref::<String>()
-                            .map(|x| x.as_str())
+                            .map(String::as_str)
                             .unwrap_or(UNKNOWN)),
                 );
             }

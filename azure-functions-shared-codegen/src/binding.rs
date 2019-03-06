@@ -351,7 +351,7 @@ impl From<&syn::Field> for Field {
 
         Field {
             ident: field.ident.as_ref().unwrap().clone(),
-            args: args.map(|x| x.into()),
+            args: args.map(Into::into),
             ty: match &field.ty {
                 Type::Path(tp) => tp.into(),
                 _ => panic!("expected a type path for field type"),
@@ -409,13 +409,13 @@ pub fn binding_impl(
     let binding_name = &binding_args.name;
     let ident = &definition.ident;
     let default_direction = get_default_direction_serialization(&binding_args, &fields);
-    let serializations = fields.iter().map(|f| f.get_serialization());
-    let field_decls = fields.iter().filter_map(|f| f.get_field_decl());
-    let field_matches = fields.iter().filter_map(|f| f.get_field_match());
-    let required_checks = fields.iter().filter_map(|f| f.get_required_check());
-    let field_assignments = fields.iter().map(|f| f.get_field_assignment());
-    let quotable_decls = fields.iter().map(|f| f.get_quotable_decl());
-    let quoteable_assignments = fields.iter().map(|f| f.get_quotable_assignment());
+    let serializations = fields.iter().map(Field::get_serialization);
+    let field_decls = fields.iter().filter_map(Field::get_field_decl);
+    let field_matches = fields.iter().filter_map(Field::get_field_match);
+    let required_checks = fields.iter().filter_map(Field::get_required_check);
+    let field_assignments = fields.iter().map(Field::get_field_assignment);
+    let quotable_decls = fields.iter().map(Field::get_quotable_decl);
+    let quoteable_assignments = fields.iter().map(Field::get_quotable_assignment);
 
     quote!(
         #[derive(Debug, Clone)]
