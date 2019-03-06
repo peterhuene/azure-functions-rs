@@ -52,7 +52,7 @@ impl BlobTrigger {
             blob: data.into(),
             path: metadata
                 .get_mut(PATH_KEY)
-                .map_or(String::new(), |x| x.take_string()),
+                .map_or(String::new(), protocol::TypedData::take_string),
             uri: metadata.get(URI_KEY).map_or(String::new(), |x| {
                 convert_from(x)
                     .unwrap_or_else(|| panic!("failed to read '{}' from metadata", URI_KEY))

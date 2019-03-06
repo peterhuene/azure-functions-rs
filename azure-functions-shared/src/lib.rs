@@ -3,6 +3,7 @@
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
+#![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 
 #[macro_use]
 extern crate serde_derive;
