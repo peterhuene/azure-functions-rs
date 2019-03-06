@@ -183,6 +183,11 @@ impl Field {
                     }
                 )
             }
+            FieldType::StringArray => quote!(
+                if !self.#ident.is_empty() {
+                    map.serialize_entry(#name, &self.#ident)?;
+                }
+            ),
             _ => quote!(map.serialize_entry(#name, &self.#ident)?;),
         }
     }
@@ -268,7 +273,7 @@ impl Field {
                 match self.ty {
                     FieldType::String | FieldType::OptionalString => {
                         return quote!(
-                            if !#values.split('|').map(|s| s.trim()).any(|v| v == __v) {
+                            if !#values.split('|').map(|s| s.trim()).any(|v| v == __v.to_lowercase()) {
                                 crate::codegen::macro_panic(__key.span(), format!(concat!("'{}' is not a valid value for the '", stringify!(#ident), "' attribute"), __v));
                             }
                         );
@@ -277,7 +282,7 @@ impl Field {
                         return quote!(
                             let __acceptable: Vec<&str> = #values.split('|').map(|s| s.trim()).collect();
                             for v in __v.iter() {
-                                if !__acceptable.contains(&v.as_ref()) {
+                                if !__acceptable.contains(&v.as_ref().to_lowercase().as_ref()) {
                                     crate::codegen::macro_panic(__key.span(), format!(concat!("'{}' is not a valid value for the '", stringify!(#ident), "' attribute"), v));
                                 }
                             }
