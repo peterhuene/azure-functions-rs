@@ -5,6 +5,6 @@ use azure_functions::{
 
 #[func]
 #[binding(name = "trigger", queue_name = "{{queue_name}}")]
-pub fn {{name}}(trigger: &QueueTrigger) {
+pub fn {{name}}(trigger: QueueTrigger) {
     // trigger.message contains the message posted to the queue
 }

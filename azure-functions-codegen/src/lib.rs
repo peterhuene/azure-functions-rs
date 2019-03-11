@@ -75,7 +75,7 @@ pub fn export(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 /// use azure_functions::bindings::HttpRequest;
 ///
 /// #[func]
-/// pub fn example(req: &HttpRequest) {
+/// pub fn example(req: HttpRequest) {
 /// }
 /// ```
 #[proc_macro_attribute]

@@ -7,7 +7,7 @@ use azure_functions::{
 #[func]
 #[binding(name = "req", route = "create/blob/{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}")]
-pub fn create_blob(req: &HttpRequest) -> (HttpResponse, Blob) {
+pub fn create_blob(req: HttpRequest) -> (HttpResponse, Blob) {
     (
         HttpResponse::build()
             .status(Status::Created)

@@ -27,7 +27,7 @@ const SYSTEM_PROPERTIES_KEY: &str = "SystemProperties";
 ///
 /// #[func]
 /// #[binding(name = "trigger", connection = "my_connection")]
-/// pub fn log_event(trigger: &EventHubTrigger) {
+/// pub fn log_event(trigger: EventHubTrigger) {
 ///     log::warn!("{:?}", trigger);
 /// }
 /// ```

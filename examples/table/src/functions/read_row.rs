@@ -12,6 +12,6 @@ use serde_json::Value;
     partition_key = "{partition}",
     row_key = "{row}"
 )]
-pub fn read_row(_req: &HttpRequest, table: &Table) -> HttpResponse {
+pub fn read_row(_req: HttpRequest, table: Table) -> HttpResponse {
     table.as_value().get(0).unwrap_or(&Value::Null).into()
 }

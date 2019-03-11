@@ -12,7 +12,7 @@ use azure_functions::{bindings::QueueTrigger, func};
 
 #[func]
 #[binding(name = "trigger", queue_name = "test")]
-pub fn queue(trigger: &QueueTrigger) {
+pub fn queue(trigger: QueueTrigger) {
     log::info!("Message: {}", trigger.message);
 }
 ```
@@ -28,7 +28,7 @@ use azure_functions::{
 #[func]
 #[binding(name = "trigger", queue_name = "echo-in")]
 #[binding(name = "$return", queue_name = "echo-out")]
-pub fn queue_with_output(trigger: &QueueTrigger) -> QueueMessage {
+pub fn queue_with_output(trigger: QueueTrigger) -> QueueMessage {
     log::info!("Message: {}", trigger.message);
 
     trigger.message.clone()

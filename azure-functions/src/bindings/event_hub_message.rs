@@ -157,6 +157,55 @@ impl From<protocol::TypedData> for EventHubMessage {
     }
 }
 
+impl Into<String> for EventHubMessage {
+    fn into(mut self) -> String {
+        if self.0.has_string() {
+            return self.0.take_string();
+        }
+        if self.0.has_json() {
+            return self.0.take_json();
+        }
+        if self.0.has_bytes() {
+            return String::from_utf8(self.0.take_bytes())
+                .expect("Event Hub message does not contain valid UTF-8 bytes");
+        }
+        if self.0.has_stream() {
+            return String::from_utf8(self.0.take_stream())
+                .expect("Event Hub message does not contain valid UTF-8 bytes");
+        }
+        panic!("unexpected data for Event Hub message content");
+    }
+}
+
+impl Into<Value> for EventHubMessage {
+    fn into(self) -> Value {
+        from_str(
+            self.as_str()
+                .expect("Event Hub message does not contain valid UTF-8 data"),
+        )
+        .expect("Event Hub message does not contain valid JSON data")
+    }
+}
+
+impl Into<Vec<u8>> for EventHubMessage {
+    fn into(mut self) -> Vec<u8> {
+        if self.0.has_string() {
+            return self.0.take_string().into_bytes();
+        }
+        if self.0.has_json() {
+            return self.0.take_json().into_bytes();
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream();
+        }
+
+        panic!("unexpected data for Event Hub message content");
+    }
+}
+
 #[doc(hidden)]
 impl Into<protocol::TypedData> for EventHubMessage {
     fn into(self) -> protocol::TypedData {
@@ -252,6 +301,27 @@ mod tests {
     fn it_converts_from_u8_vec() {
         let message: EventHubMessage = vec![0, 1, 2].into();
         assert_eq!(message.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_to_string() {
+        let message: EventHubMessage = "hello world!".into();
+        let s: String = message.into();
+        assert_eq!(s, "hello world!");
+    }
+
+    #[test]
+    fn it_converts_to_json() {
+        let message: EventHubMessage = json!({"hello": "world"}).into();
+        let value: Value = message.into();
+        assert_eq!(value.to_string(), r#"{"hello":"world"}"#);
+    }
+
+    #[test]
+    fn it_converts_to_bytes() {
+        let message: EventHubMessage = vec![1, 2, 3].into();
+        let bytes: Vec<u8> = message.into();
+        assert_eq!(bytes, [1, 2, 3]);
     }
 
     #[test]

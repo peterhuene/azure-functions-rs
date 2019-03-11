@@ -7,6 +7,6 @@ use azure_functions::{
 {{#if auth_level~}}
 #[binding(name = "req", auth_level = "{{auth_level}}")]
 {{/if~}}
-pub fn {{name}}(req: &HttpRequest) -> HttpResponse {
+pub fn {{name}}(req: HttpRequest) -> HttpResponse {
     "Hello from Rust!".into()
 }

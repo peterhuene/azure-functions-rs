@@ -25,7 +25,7 @@ const POP_RECEIPT_KEY: &str = "PopReceipt";
 ///
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
-/// pub fn run_on_message(trigger: &QueueTrigger) {
+/// pub fn run_on_message(trigger: QueueTrigger) {
 ///     info!("Rust function ran due to queue message: {}", trigger.message);
 /// }
 /// ```

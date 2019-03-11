@@ -2,7 +2,7 @@ use crate::func::{OutputBindings, CONTEXT_TYPE_NAME};
 use azure_functions_shared::codegen::{bindings::TRIGGERS, last_segment_in_path};
 use azure_functions_shared::util::to_camel_case;
 use quote::{quote, ToTokens};
-use syn::{FnArg, Ident, ItemFn, Pat, Type, TypeReference};
+use syn::{FnArg, Ident, ItemFn, Pat, Type};
 
 const INVOKER_PREFIX: &str = "__invoke_";
 
@@ -16,50 +16,49 @@ impl<'a> Invoker<'a> {
     fn get_input_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
         self.iter_args()
             .filter_map(|(name, arg_type)| {
-                if Invoker::is_context_type(&arg_type.elem)
-                    | Invoker::is_trigger_type(&arg_type.elem)
-                {
+                if Invoker::is_context_type(arg_type) | Invoker::is_trigger_type(arg_type) {
                     return None;
                 }
 
-                Some((name, &*arg_type.elem))
+                Some((name, arg_type))
             })
             .unzip()
     }
 
     fn get_trigger_arg(&self) -> Option<(&'a Ident, &'a Type)> {
         self.iter_args()
-            .find(|(_, arg_type)| Invoker::is_trigger_type(&arg_type.elem))
-            .map(|(name, arg_type)| (name, &*arg_type.elem))
+            .find(|(_, arg_type)| Invoker::is_trigger_type(arg_type))
+            .map(|(name, arg_type)| (name, arg_type))
     }
 
     fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
         self.iter_args()
             .map(|(name, arg_type)| {
-                if Invoker::is_context_type(&arg_type.elem) {
-                    return quote!(__ctx);
+                if Invoker::is_context_type(arg_type) {
+                    return quote!(__ctx.clone());
                 }
 
                 let name_str = name.to_string();
-                match arg_type.mutability {
-                    Some(_) => quote!(#name.as_mut().expect(concat!("parameter binding '", #name_str, "' was not provided"))),
-                    None => quote!(#name.as_ref().expect(concat!("parameter binding '", #name_str, "' was not provided")))
+
+                if let Type::Reference(tr) = arg_type {
+                    if tr.mutability.is_some() {
+                        return quote!(#name.as_mut().expect(concat!("parameter binding '", #name_str, "' was not provided")));
+                    }
                 }
+
+                quote!(#name.expect(concat!("parameter binding '", #name_str, "' was not provided")))
             })
             .collect()
     }
 
-    fn iter_args(&self) -> impl Iterator<Item = (&'a Ident, &'a TypeReference)> {
+    fn iter_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
         self.0.decl.inputs.iter().map(|x| match x {
             FnArg::Captured(arg) => (
                 match &arg.pat {
                     Pat::Ident(name) => &name.ident,
                     _ => panic!("expected ident argument pattern"),
                 },
-                match &arg.ty {
-                    Type::Reference(tr) => tr,
-                    _ => panic!("expected a type reference"),
-                },
+                &arg.ty,
             ),
             _ => panic!("expected captured arguments"),
         })
@@ -122,7 +121,7 @@ impl ToTokens for Invoker<'_> {
                 };
             }
 
-            let __ctx = &::azure_functions::Context::new(&__req.invocation_id, &__req.function_id, __name);
+            let __ctx = ::azure_functions::Context::new(&__req.invocation_id, &__req.function_id, __name);
             let __ret = #target(#(#args_for_call,)*);
 
             let mut __res = ::azure_functions::rpc::protocol::InvocationResponse::new();

@@ -15,7 +15,7 @@ use std::collections::{HashMap, HashSet};
 use syn::spanned::Spanned;
 use syn::{
     parse, token::Mut, Attribute, AttributeArgs, FnArg, GenericArgument, Ident, ItemFn, Lit, Pat,
-    PathArguments, PathSegment, ReturnType, Type, Visibility,
+    PathArguments, PathSegment, ReturnType, Type, TypePath, Visibility,
 };
 
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
@@ -69,63 +69,50 @@ fn validate_function(func: &ItemFn) {
 
 fn bind_input_type(
     pattern: &Pat,
-    ty: &Type,
+    tp: &TypePath,
     mutability: Option<Mut>,
     has_trigger: bool,
     binding_args: &mut HashMap<String, AttributeArgs>,
 ) -> Binding {
-    match ty {
-        Type::Path(tp) => {
-            let type_name = last_segment_in_path(&tp.path).ident.to_string();
+    let type_name = last_segment_in_path(&tp.path).ident.to_string();
 
-            if type_name == CONTEXT_TYPE_NAME {
-                return Binding::Context;
-            }
+    if type_name == CONTEXT_TYPE_NAME {
+        return Binding::Context;
+    }
 
-            // Check for multiple triggers
-            if has_trigger && TRIGGERS.contains_key(type_name.as_str()) {
-                macro_panic(
-                    tp.span(),
-                    "Azure Functions can only have one trigger binding",
-                );
-            }
+    // Check for multiple triggers
+    if has_trigger && TRIGGERS.contains_key(type_name.as_str()) {
+        macro_panic(
+            tp.span(),
+            "Azure Functions can only have one trigger binding",
+        );
+    }
 
-            // If the reference is mutable, only accept input-output bindings
-            let factory = match mutability {
-                Some(m) => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
-                    Some(factory) => factory,
-                    None => macro_panic(m.span(), "only Azure Functions binding types that support the 'inout' direction can be passed by mutable reference"),
-                },
-                None => match TRIGGERS.get(type_name.as_str()) {
-                    Some(factory) => factory,
-                    None => match INPUT_BINDINGS.get(type_name.as_str()) {
-                        Some(factory) => factory,
-                        None => macro_panic(tp.span(), "expected an Azure Functions trigger or input binding type"),
-                    },
-                },
-            };
+    // If the reference is mutable, only accept input-output bindings
+    let factory = match mutability {
+        Some(m) => match INPUT_OUTPUT_BINDINGS.get(type_name.as_str()) {
+            Some(factory) => factory,
+            None => macro_panic(m.span(), "only Azure Functions binding types that support the 'inout' direction can be passed by mutable reference"),
+        },
+        None => match TRIGGERS.get(type_name.as_str()) {
+            Some(factory) => factory,
+            None => match INPUT_BINDINGS.get(type_name.as_str()) {
+                Some(factory) => factory,
+                None => macro_panic(tp.span(), "expected an Azure Functions trigger or input binding type"),
+            },
+        },
+    };
 
-            match pattern {
-                Pat::Ident(name) => {
-                    let name_str = name.ident.to_string();
-                    let name_span = name.ident.span();
-                    match binding_args.remove(&name_str) {
-                        Some(args) => (*factory)(args, name_span),
-                        None => {
-                            (*factory)(attribute_args_from_name(&name_str, name_span), name_span)
-                        }
-                    }
-                }
-                _ => macro_panic(pattern.span(), "bindings must have a named identifier"),
+    match pattern {
+        Pat::Ident(name) => {
+            let name_str = name.ident.to_string();
+            let name_span = name.ident.span();
+            match binding_args.remove(&name_str) {
+                Some(args) => (*factory)(args, name_span),
+                None => (*factory)(attribute_args_from_name(&name_str, name_span), name_span),
             }
         }
-        Type::Paren(tp) => {
-            bind_input_type(pattern, &tp.elem, mutability, has_trigger, binding_args)
-        }
-        _ => macro_panic(
-            ty.span(),
-            "expected an Azure Functions trigger or input binding type",
-        ),
+        _ => macro_panic(pattern.span(), "bindings must have a named identifier"),
     }
 }
 
@@ -136,12 +123,25 @@ fn bind_argument(
 ) -> Binding {
     match arg {
         FnArg::Captured(arg) => match &arg.ty {
-            Type::Reference(r) => {
-                bind_input_type(&arg.pat, &r.elem, r.mutability, has_trigger, binding_args)
-            }
+            Type::Reference(tr) => match &*tr.elem {
+                Type::Path(tp) => {
+                    if tr.mutability.is_none() {
+                        macro_panic(
+                            arg.ty.span(),
+                            "bindings cannot be passed by immutable reference",
+                        )
+                    }
+                    bind_input_type(&arg.pat, tp, tr.mutability, has_trigger, binding_args)
+                }
+                _ => macro_panic(
+                    arg.ty.span(),
+                    "expected an Azure Functions trigger or input binding type",
+                ),
+            },
+            Type::Path(tp) => bind_input_type(&arg.pat, tp, None, has_trigger, binding_args),
             _ => macro_panic(
                 arg.ty.span(),
-                "expected an Azure Functions trigger or input binding type passed by reference",
+                "expected an Azure Functions trigger or input binding type",
             ),
         },
         FnArg::SelfRef(_) | FnArg::SelfValue(_) => {

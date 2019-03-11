@@ -2,7 +2,7 @@ use azure_functions_shared::{codegen::last_segment_in_path, util::to_camel_case}
 use quote::quote;
 use quote::ToTokens;
 use syn::ItemFn;
-use syn::{FnArg, GenericArgument, Ident, Pat, PathArguments, ReturnType, Type, TypeReference};
+use syn::{FnArg, GenericArgument, Ident, Pat, PathArguments, ReturnType, Type};
 
 pub struct OutputBindings<'a>(pub &'a ItemFn);
 
@@ -56,23 +56,18 @@ impl<'a> OutputBindings<'a> {
         }
     }
 
-    fn iter_mut_args(&self) -> impl Iterator<Item = (&'a Ident, &'a TypeReference)> {
+    fn iter_mut_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
         self.0.decl.inputs.iter().filter_map(|x| match x {
             FnArg::Captured(arg) => {
-                let name = match &arg.pat {
-                    Pat::Ident(name) => &name.ident,
-                    _ => panic!("expected ident argument pattern"),
-                };
+                if let Type::Reference(_) = &arg.ty {
+                    let name = match &arg.pat {
+                        Pat::Ident(name) => &name.ident,
+                        _ => panic!("expected ident argument pattern"),
+                    };
 
-                let arg_type = match &arg.ty {
-                    Type::Reference(tr) => {
-                        tr.mutability?;
-                        tr
-                    }
-                    _ => panic!("expected a type reference"),
-                };
-
-                Some((name, arg_type))
+                    return Some((name, &arg.ty));
+                }
+                None
             }
             _ => panic!("expected captured arguments"),
         })
