@@ -24,7 +24,7 @@ use azure_functions::bindings::{HttpRequest, HttpResponse};
 use azure_functions::func;
 
 #[func]
-pub fn greet(req: &HttpRequest) -> HttpResponse {
+pub fn greet(req: HttpRequest) -> HttpResponse {
     // Log the message with the Azure Functions Host
     info!("Request: {:?}", req);
 
@@ -221,12 +221,12 @@ More bindings will be implemented in the future, including support for retreivin
 
 Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration:
 
-* Parameters passed by immutable reference `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
+* Parameters passed by value `T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
 
   ```rust
   #[func]
   ...
-  pub fn example(..., blob: &Blob) {
+  pub fn example(blob: Blob) {
       ...
   }
   ```
@@ -237,7 +237,7 @@ Azure Functions for Rust automatically infers the direction of bindings dependin
   ```rust
   #[func]
   ...
-  pub fn example(..., blob: &mut Blob) {
+  pub fn example(blob: &mut Blob) {
       ...
   }
   ```

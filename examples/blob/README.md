@@ -12,7 +12,7 @@ use azure_functions::{bindings::BlobTrigger, func};
 
 #[func]
 #[binding(name = "trigger", path = "watching/{name}")]
-pub fn blob_watcher(trigger: &BlobTrigger) {
+pub fn blob_watcher(trigger: BlobTrigger) {
     log::info!(
         "A blob was created at '{}' with contents: {:?}.",
         trigger.path,
@@ -33,7 +33,7 @@ use azure_functions::{
 #[func]
 #[binding(name = "req", route = "create/blob/{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}")]
-pub fn create_blob(req: &HttpRequest) -> (HttpResponse, Blob) {
+pub fn create_blob(req: HttpRequest) -> (HttpResponse, Blob) {
     (
         HttpResponse::build()
             .status(Status::Created)
@@ -56,7 +56,7 @@ use azure_functions::{
 #[binding(name = "_req", route = "copy/blob/{container}/{name}")]
 #[binding(name = "blob", path = "{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}.copy")]
-pub fn copy_blob(_req: &HttpRequest, blob: &Blob) -> (HttpResponse, Blob) {
+pub fn copy_blob(_req: HttpRequest, blob: Blob) -> (HttpResponse, Blob) {
     ("blob has been copied.".into(), blob.clone())
 }
 ```
@@ -72,7 +72,7 @@ use azure_functions::{
 #[func]
 #[binding(name = "_req", route = "print/blob/{container}/{path}")]
 #[binding(name = "blob", path = "{container}/{path}")]
-pub fn print_blob(_req: &HttpRequest, blob: &Blob) -> HttpResponse {
+pub fn print_blob(_req: HttpRequest, blob: Blob) -> HttpResponse {
     blob.as_bytes().into()
 }
 ```

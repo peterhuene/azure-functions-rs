@@ -156,6 +156,55 @@ impl From<protocol::TypedData> for Blob {
     }
 }
 
+impl Into<String> for Blob {
+    fn into(mut self) -> String {
+        if self.0.has_string() {
+            return self.0.take_string();
+        }
+        if self.0.has_json() {
+            return self.0.take_json();
+        }
+        if self.0.has_bytes() {
+            return String::from_utf8(self.0.take_bytes())
+                .expect("blob does not contain valid UTF-8 bytes");
+        }
+        if self.0.has_stream() {
+            return String::from_utf8(self.0.take_stream())
+                .expect("blob does not contain valid UTF-8 bytes");
+        }
+        panic!("unexpected data for blob content");
+    }
+}
+
+impl Into<Value> for Blob {
+    fn into(self) -> Value {
+        from_str(
+            self.as_str()
+                .expect("blob does not contain valid UTF-8 data"),
+        )
+        .expect("blob does not contain valid JSON data")
+    }
+}
+
+impl Into<Vec<u8>> for Blob {
+    fn into(mut self) -> Vec<u8> {
+        if self.0.has_string() {
+            return self.0.take_string().into_bytes();
+        }
+        if self.0.has_json() {
+            return self.0.take_json().into_bytes();
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream();
+        }
+
+        panic!("unexpected data for blob content");
+    }
+}
+
 #[doc(hidden)]
 impl Into<protocol::TypedData> for Blob {
     fn into(self) -> protocol::TypedData {
@@ -262,6 +311,27 @@ mod tests {
 
         let blob: Blob = data.into();
         assert_eq!(blob.as_str().unwrap(), BLOB);
+    }
+
+    #[test]
+    fn it_converts_to_string() {
+        let blob: Blob = "hello world!".into();
+        let s: String = blob.into();
+        assert_eq!(s, "hello world!");
+    }
+
+    #[test]
+    fn it_converts_to_json() {
+        let blob: Blob = json!({"hello": "world"}).into();
+        let value: Value = blob.into();
+        assert_eq!(value.to_string(), r#"{"hello":"world"}"#);
+    }
+
+    #[test]
+    fn it_converts_to_bytes() {
+        let blob: Blob = vec![1, 2, 3].into();
+        let bytes: Vec<u8> = blob.into();
+        assert_eq!(bytes, [1, 2, 3]);
     }
 
     #[test]

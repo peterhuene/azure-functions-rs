@@ -55,7 +55,7 @@
 //! };
 //!
 //! #[func]
-//! pub fn hello(req: &HttpRequest) -> HttpResponse {
+//! pub fn hello(req: HttpRequest) -> HttpResponse {
 //!     "Hello from Rust!".into()
 //! }
 //! ```

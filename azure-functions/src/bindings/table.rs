@@ -17,7 +17,7 @@ use std::fmt;
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
 /// #[binding(name = "table", table_name = "MyTable", partition_key = "MyPartition", row_key = "{queueTrigger}")]
-/// pub fn log_row(trigger: &QueueTrigger, table: &Table) {
+/// pub fn log_row(trigger: QueueTrigger, table: Table) {
 ///     info!("Row: {:?}", table.rows().nth(0));
 /// }
 /// ```
@@ -31,7 +31,7 @@ use std::fmt;
 ///
 /// #[func]
 /// #[binding(name = "table", table_name = "MyTable", filter = "{filter}")]
-/// pub fn log_rows(req: &HttpRequest, table: &Table) {
+/// pub fn log_rows(req: HttpRequest, table: Table) {
 ///     for row in table.rows() {
 ///         info!("Row: {:?}", row);
 ///     }

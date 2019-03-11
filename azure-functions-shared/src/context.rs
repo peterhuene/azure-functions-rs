@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 
 /// Represents context about an Azure Function invocation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context<'a> {
     invocation_id: &'a str,
     function_id: &'a str,

@@ -24,7 +24,7 @@ const METADATA_KEY: &str = "Metadata";
 ///
 /// #[func]
 /// #[binding(name = "trigger", path = "test/{name}")]
-/// pub fn print_blob(trigger: &BlobTrigger) {
+/// pub fn print_blob(trigger: BlobTrigger) {
 ///     info!("Blob (as string): {:?}", trigger.blob.as_str());
 /// }
 /// ```
@@ -66,13 +66,6 @@ impl BlobTrigger {
                 from_str(x.get_json()).expect("failed to deserialize blob metadata")
             }),
         }
-    }
-}
-
-#[doc(hidden)]
-impl Into<protocol::TypedData> for BlobTrigger {
-    fn into(self) -> protocol::TypedData {
-        self.blob.into()
     }
 }
 

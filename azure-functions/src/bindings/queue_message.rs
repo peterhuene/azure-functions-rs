@@ -156,6 +156,55 @@ impl From<protocol::TypedData> for QueueMessage {
     }
 }
 
+impl Into<String> for QueueMessage {
+    fn into(mut self) -> String {
+        if self.0.has_string() {
+            return self.0.take_string();
+        }
+        if self.0.has_json() {
+            return self.0.take_json();
+        }
+        if self.0.has_bytes() {
+            return String::from_utf8(self.0.take_bytes())
+                .expect("queue message does not contain valid UTF-8 bytes");
+        }
+        if self.0.has_stream() {
+            return String::from_utf8(self.0.take_stream())
+                .expect("queue message does not contain valid UTF-8 bytes");
+        }
+        panic!("unexpected data for queue message content");
+    }
+}
+
+impl Into<Value> for QueueMessage {
+    fn into(self) -> Value {
+        from_str(
+            self.as_str()
+                .expect("queue message does not contain valid UTF-8 data"),
+        )
+        .expect("queue message does not contain valid JSON data")
+    }
+}
+
+impl Into<Vec<u8>> for QueueMessage {
+    fn into(mut self) -> Vec<u8> {
+        if self.0.has_string() {
+            return self.0.take_string().into_bytes();
+        }
+        if self.0.has_json() {
+            return self.0.take_json().into_bytes();
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream();
+        }
+
+        panic!("unexpected data for queue message content");
+    }
+}
+
 #[doc(hidden)]
 impl Into<protocol::TypedData> for QueueMessage {
     fn into(self) -> protocol::TypedData {
@@ -251,6 +300,27 @@ mod tests {
     fn it_converts_from_u8_vec() {
         let message: QueueMessage = vec![0, 1, 2].into();
         assert_eq!(message.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_to_string() {
+        let message: QueueMessage = "hello world!".into();
+        let s: String = message.into();
+        assert_eq!(s, "hello world!");
+    }
+
+    #[test]
+    fn it_converts_to_json() {
+        let message: QueueMessage = json!({"hello": "world"}).into();
+        let value: Value = message.into();
+        assert_eq!(value.to_string(), r#"{"hello":"world"}"#);
+    }
+
+    #[test]
+    fn it_converts_to_bytes() {
+        let message: QueueMessage = vec![1, 2, 3].into();
+        let bytes: Vec<u8> = message.into();
+        assert_eq!(bytes, [1, 2, 3]);
     }
 
     #[test]

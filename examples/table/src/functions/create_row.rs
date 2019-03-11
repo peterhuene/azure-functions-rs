@@ -7,7 +7,7 @@ use serde_json::Value;
 #[func]
 #[binding(name = "req", route = "create/{table}/{partition}/{row}")]
 #[binding(name = "output1", table_name = "{table}")]
-pub fn create_row(req: &HttpRequest) -> ((), Table) {
+pub fn create_row(req: HttpRequest) -> ((), Table) {
     let mut table = Table::new();
     {
         let row = table.add_row(

@@ -16,7 +16,7 @@ use std::collections::HashMap;
 /// };
 ///
 /// #[func]
-/// pub fn greet(request: &HttpRequest) -> HttpResponse {
+/// pub fn greet(request: HttpRequest) -> HttpResponse {
 ///     format!(
 ///         "Hello, {}!",
 ///         request.query_params().get("name").map_or("stranger", |x| x)
@@ -59,7 +59,7 @@ impl HttpRequest {
     ///
     /// #[func]
     /// #[binding(name = "request", route = "users/{id:int}")]
-    /// pub fn users(request: &HttpRequest) -> HttpResponse {
+    /// pub fn users(request: HttpRequest) -> HttpResponse {
     ///     format!(
     ///         "User ID requested: {}",
     ///         request.route_params().get("id").unwrap()
@@ -85,7 +85,7 @@ impl HttpRequest {
     /// use azure_functions::bindings::{HttpRequest, HttpResponse};
     ///
     /// #[func]
-    /// pub fn users(request: &HttpRequest) -> HttpResponse {
+    /// pub fn users(request: HttpRequest) -> HttpResponse {
     ///     format!(
     ///         "The 'name' query parameter is: {}",
     ///         request.query_params().get("name").map_or("undefined", |x| x)

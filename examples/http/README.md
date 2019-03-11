@@ -13,7 +13,7 @@ use azure_functions::{
 };
 
 #[func]
-pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
+pub fn greet(context: Context, req: HttpRequest) -> HttpResponse {
     log::info!("Context: {:?}, Request: {:?}", context, req);
 
     format!(
@@ -46,7 +46,7 @@ struct Response {
 }
 
 #[func]
-pub fn greet_with_json(req: &HttpRequest) -> HttpResponse {
+pub fn greet_with_json(req: HttpRequest) -> HttpResponse {
     if let Ok(request) = req.body().as_json::<Request>() {
         let response = Response {
             message: format!("Hello from Rust, {}!", request.name),
