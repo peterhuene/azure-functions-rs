@@ -13,6 +13,13 @@ impl<'a> Invoker<'a> {
         format!("{}{}", INVOKER_PREFIX, self.0.ident)
     }
 
+    fn deref_arg_type(ty: &Type) -> &Type {
+        match ty {
+            Type::Reference(tr) => &*tr.elem,
+            _ => ty,
+        }
+    }
+
     fn get_input_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
         self.iter_args()
             .filter_map(|(name, arg_type)| {
@@ -20,7 +27,7 @@ impl<'a> Invoker<'a> {
                     return None;
                 }
 
-                Some((name, arg_type))
+                Some((name, Invoker::deref_arg_type(arg_type)))
             })
             .unzip()
     }
@@ -28,22 +35,26 @@ impl<'a> Invoker<'a> {
     fn get_trigger_arg(&self) -> Option<(&'a Ident, &'a Type)> {
         self.iter_args()
             .find(|(_, arg_type)| Invoker::is_trigger_type(arg_type))
-            .map(|(name, arg_type)| (name, arg_type))
+            .map(|(name, arg_type)| (name, Invoker::deref_arg_type(arg_type)))
     }
 
     fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
         self.iter_args()
             .map(|(name, arg_type)| {
                 if Invoker::is_context_type(arg_type) {
+                    if let Type::Reference(_) = arg_type {
+                        return quote!(&__ctx)
+                    }
                     return quote!(__ctx.clone());
                 }
 
                 let name_str = name.to_string();
 
                 if let Type::Reference(tr) = arg_type {
-                    if tr.mutability.is_some() {
-                        return quote!(#name.as_mut().expect(concat!("parameter binding '", #name_str, "' was not provided")));
-                    }
+                    return match tr.mutability {
+                        Some(_) => quote!(#name.as_mut().expect(concat!("parameter binding '", #name_str, "' was not provided"))),
+                        None => quote!(#name.as_ref().expect(concat!("parameter binding '", #name_str, "' was not provided")))
+                    };
                 }
 
                 quote!(#name.expect(concat!("parameter binding '", #name_str, "' was not provided")))
@@ -65,7 +76,7 @@ impl<'a> Invoker<'a> {
     }
 
     fn is_context_type(ty: &Type) -> bool {
-        match ty {
+        match Invoker::deref_arg_type(ty) {
             Type::Path(tp) => last_segment_in_path(&tp.path).ident == CONTEXT_TYPE_NAME,
             Type::Paren(tp) => Invoker::is_context_type(&tp.elem),
             _ => false,
@@ -73,7 +84,7 @@ impl<'a> Invoker<'a> {
     }
 
     fn is_trigger_type(ty: &Type) -> bool {
-        match ty {
+        match Invoker::deref_arg_type(ty) {
             Type::Path(tp) => {
                 TRIGGERS.contains_key(last_segment_in_path(&tp.path).ident.to_string().as_str())
             }

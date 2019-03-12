@@ -59,7 +59,9 @@ impl<'a> OutputBindings<'a> {
     fn iter_mut_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
         self.0.decl.inputs.iter().filter_map(|x| match x {
             FnArg::Captured(arg) => {
-                if let Type::Reference(_) = &arg.ty {
+                if let Type::Reference(tr) = &arg.ty {
+                    tr.mutability?;
+
                     let name = match &arg.pat {
                         Pat::Ident(name) => &name.ident,
                         _ => panic!("expected ident argument pattern"),
