@@ -77,6 +77,12 @@ fn bind_input_type(
     let type_name = last_segment_in_path(&tp.path).ident.to_string();
 
     if type_name == CONTEXT_TYPE_NAME {
+        if let Some(m) = mutability {
+            macro_panic(
+                m.span(),
+                "context bindings cannot be passed by mutable reference",
+            );
+        }
         return Binding::Context;
     }
 
@@ -125,12 +131,6 @@ fn bind_argument(
         FnArg::Captured(arg) => match &arg.ty {
             Type::Reference(tr) => match &*tr.elem {
                 Type::Path(tp) => {
-                    if tr.mutability.is_none() {
-                        macro_panic(
-                            arg.ty.span(),
-                            "bindings cannot be passed by immutable reference",
-                        )
-                    }
                     bind_input_type(&arg.pat, tp, tr.mutability, has_trigger, binding_args)
                 }
                 _ => macro_panic(

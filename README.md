@@ -221,23 +221,31 @@ More bindings will be implemented in the future, including support for retreivin
 
 Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration:
 
-* Parameters passed by value `T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
+* Parameters of type `T` or `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
 
   ```rust
   #[func]
   ...
-  pub fn example(blob: Blob) {
+  pub fn example(..., blob: Blob) {
       ...
   }
   ```
 
-* Parameters passed by mutable reference `&mut T`, where `T` is a trigger or input binding type that supports the `inout` direction, are inferred to be bindings with an `inout` direction.
+  ```rust
+  #[func]
+  ...
+  pub fn example(..., blob: &Blob) {
+      ...
+  }
+  ```
+
+* Parameters of type `&mut T`, where `T` is a trigger or input binding type that supports the `inout` direction, are inferred to be bindings with an `inout` direction.
 **Note: `inout` direction bindings are currently not implemented for languages other than C#.  See [this issue](https://github.com/Azure/azure-functions-host/issues/49) regarding this problem with the Azure Functions Host.**
 
   ```rust
   #[func]
   ...
-  pub fn example(blob: &mut Blob) {
+  pub fn example(..., blob: &mut Blob) {
       ...
   }
   ```
