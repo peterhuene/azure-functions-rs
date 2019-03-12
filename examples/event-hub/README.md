@@ -1,6 +1,6 @@
-# Example Event Hub Triggered Azure Function
+# Example Event Hub Azure Functions
 
-This project is an example of a simple Event Hub triggered Azure Function.
+This project is an example of using Event Hub with Azure Functions for Rust.
 
 ## Example function implementations
 

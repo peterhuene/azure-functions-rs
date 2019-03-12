@@ -1,5 +1,7 @@
 mod blob;
 mod blob_trigger;
+mod cosmos_db;
+mod cosmos_db_trigger;
 mod event_grid_trigger;
 mod event_hub;
 mod event_hub_trigger;
@@ -12,6 +14,8 @@ mod timer_trigger;
 
 pub use self::blob::*;
 pub use self::blob_trigger::*;
+pub use self::cosmos_db::*;
+pub use self::cosmos_db_trigger::*;
 pub use self::event_grid_trigger::*;
 pub use self::event_hub::*;
 pub use self::event_hub_trigger::*;
@@ -58,6 +62,8 @@ pub enum Binding {
     EventGridTrigger(EventGridTrigger),
     EventHubTrigger(EventHubTrigger),
     EventHub(EventHub),
+    CosmosDbTrigger(CosmosDbTrigger),
+    CosmosDb(CosmosDb),
 }
 
 impl Binding {
@@ -75,6 +81,8 @@ impl Binding {
             Binding::EventGridTrigger(b) => Some(&b.name),
             Binding::EventHubTrigger(b) => Some(&b.name),
             Binding::EventHub(b) => Some(&b.name),
+            Binding::CosmosDbTrigger(b) => Some(&b.name),
+            Binding::CosmosDb(b) => Some(&b.name),
         }
     }
 
@@ -92,6 +100,8 @@ impl Binding {
             Binding::EventGridTrigger(_) => Some(EventGridTrigger::binding_type()),
             Binding::EventHubTrigger(_) => Some(EventHubTrigger::binding_type()),
             Binding::EventHub(_) => Some(EventHub::binding_type()),
+            Binding::CosmosDbTrigger(_) => Some(CosmosDbTrigger::binding_type()),
+            Binding::CosmosDb(_) => Some(CosmosDb::binding_type()),
         }
     }
 
@@ -109,7 +119,8 @@ impl Binding {
             | Binding::QueueTrigger(_)
             | Binding::BlobTrigger(_)
             | Binding::EventGridTrigger(_)
-            | Binding::EventHubTrigger(_) => true,
+            | Binding::EventHubTrigger(_)
+            | Binding::CosmosDbTrigger(_) => true,
             _ => false,
         }
     }
@@ -159,6 +170,14 @@ impl ToTokens for Binding {
                 quote!(::azure_functions::codegen::bindings::Binding::EventHub(#b))
                     .to_tokens(tokens)
             }
+            Binding::CosmosDbTrigger(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::CosmosDbTrigger(#b))
+                    .to_tokens(tokens)
+            }
+            Binding::CosmosDb(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::CosmosDb(#b))
+                    .to_tokens(tokens)
+            }
         };
     }
 }
@@ -187,6 +206,9 @@ lazy_static! {
         map.insert("EventHubTrigger", |args, span| {
             Binding::EventHubTrigger(EventHubTrigger::from((args, span)))
         });
+        map.insert("CosmosDbTrigger", |args, span| {
+            Binding::CosmosDbTrigger(CosmosDbTrigger::from((args, span)))
+        });
         map
     };
     pub static ref INPUT_BINDINGS: BindingMap = {
@@ -194,6 +216,9 @@ lazy_static! {
         map.insert("Blob", |args, span| Binding::Blob(Blob::from((args, span))));
         map.insert("Table", |args, span| {
             Binding::Table(Table::from((args, span)))
+        });
+        map.insert("CosmosDbDocuments", |args, span| {
+            Binding::CosmosDb(CosmosDb::from((args, span)))
         });
         map
     };
@@ -208,6 +233,11 @@ lazy_static! {
             let mut binding = Blob::from((args, span));
             binding.direction = Direction::InOut;
             Binding::Blob(binding)
+        });
+        map.insert("CosmosDbDocuments", |args, span| {
+            let mut binding = CosmosDb::from((args, span));
+            binding.direction = Direction::InOut;
+            Binding::CosmosDb(binding)
         });
         map
     };
@@ -231,6 +261,11 @@ lazy_static! {
         });
         map.insert("EventHubMessage", |args, span| {
             Binding::EventHub(EventHub::from((args, span)))
+        });
+        map.insert("CosmosDbDocuments", |args, span| {
+            let mut binding = CosmosDb::from((args, span));
+            binding.direction = Direction::Out;
+            Binding::CosmosDb(binding)
         });
         map
     };

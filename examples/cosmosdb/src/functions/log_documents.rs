@@ -1,0 +1,16 @@
+use azure_functions::{bindings::CosmosDbTrigger, func};
+use log::warn;
+
+#[func]
+#[binding(
+    name = "trigger",
+    connection = "connection",
+    database_name = "exampledb",
+    collection_name = "documents",
+    create_lease_colletion = true,
+)]
+pub fn log_documents(trigger: CosmosDbTrigger) {
+    for document in trigger.documents {
+        warn!("{:#?}", document);
+    }
+}

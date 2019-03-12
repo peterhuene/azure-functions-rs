@@ -13,4 +13,5 @@ members = [
     "examples/table",
     "examples/event-grid",
     "examples/event-hub",
+    "examples/cosmosdb",
 ]

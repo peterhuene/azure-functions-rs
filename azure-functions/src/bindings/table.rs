@@ -1,3 +1,4 @@
+use crate::bindings::HttpResponse;
 use crate::rpc::protocol;
 use serde_json::{from_str, Map, Value};
 use std::fmt;
@@ -97,11 +98,6 @@ impl Table {
     pub fn as_value(&self) -> &Value {
         &self.0
     }
-
-    /// Converts the table binding to a JSON value.
-    pub fn into_value(self) -> Value {
-        self.0
-    }
 }
 
 impl fmt::Display for Table {
@@ -132,6 +128,18 @@ impl From<protocol::TypedData> for Table {
     }
 }
 
+impl Into<Value> for Table {
+    fn into(self) -> Value {
+        self.0
+    }
+}
+
+impl Into<HttpResponse> for Table {
+    fn into(self) -> HttpResponse {
+        self.0.into()
+    }
+}
+
 #[doc(hidden)]
 impl Into<protocol::TypedData> for Table {
     fn into(self) -> protocol::TypedData {
@@ -144,6 +152,7 @@ impl Into<protocol::TypedData> for Table {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::http::Status;
     use std::fmt::Write;
 
     #[test]
@@ -220,17 +229,6 @@ mod tests {
     }
 
     #[test]
-    fn it_converts_to_value() {
-        let mut table = Table::new();
-        table.add_row("partition1", "row1");
-
-        assert_eq!(
-            table.into_value().to_string(),
-            r#"[{"PartitionKey":"partition1","RowKey":"row1"}]"#
-        );
-    }
-
-    #[test]
     fn it_displays_as_a_string() {
         let mut table = Table::new();
         {
@@ -264,6 +262,40 @@ mod tests {
         let table: Table = data.into();
         assert_eq!(table.len(), 0);
         assert!(table.is_empty());
+    }
+
+    #[test]
+    fn it_converts_to_json() {
+        let mut table = Table::new();
+        table.add_row("partition1", "row1");
+
+        let value: Value = table.into();
+
+        assert_eq!(
+            value.to_string(),
+            r#"[{"PartitionKey":"partition1","RowKey":"row1"}]"#
+        );
+    }
+
+    #[test]
+    fn it_converts_to_http_response() {
+        const TABLE: &'static str =
+            r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#;
+
+        let mut data = protocol::TypedData::new();
+        data.set_json(TABLE.to_string());
+
+        let table: Table = data.into();
+        let response: HttpResponse = table.into();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(
+            response.headers().get("Content-Type").unwrap(),
+            "application/json"
+        );
+        assert_eq!(
+            response.body().as_str().unwrap(),
+            r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#
+        );
     }
 
     #[test]
