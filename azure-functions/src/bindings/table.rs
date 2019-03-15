@@ -1,4 +1,4 @@
-use crate::bindings::HttpResponse;
+use crate::http::Body;
 use crate::rpc::protocol;
 use serde_json::{from_str, Map, Value};
 use std::fmt;
@@ -134,8 +134,8 @@ impl Into<Value> for Table {
     }
 }
 
-impl Into<HttpResponse> for Table {
-    fn into(self) -> HttpResponse {
+impl<'a> Into<Body<'a>> for Table {
+    fn into(self) -> Body<'a> {
         self.0.into()
     }
 }
@@ -152,7 +152,6 @@ impl Into<protocol::TypedData> for Table {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::http::Status;
     use std::fmt::Write;
 
     #[test]
@@ -278,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn it_converts_to_http_response() {
+    fn it_converts_to_body() {
         const TABLE: &'static str =
             r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#;
 
@@ -286,14 +285,9 @@ mod tests {
         data.set_json(TABLE.to_string());
 
         let table: Table = data.into();
-        let response: HttpResponse = table.into();
-        assert_eq!(response.status(), Status::Ok);
+        let body: Body = table.into();
         assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/json"
-        );
-        assert_eq!(
-            response.body().as_str().unwrap(),
+            body.as_str().unwrap(),
             r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#
         );
     }

@@ -16,6 +16,7 @@
 //!
 //! * [Blob input](bindings/struct.Blob.html)
 //! * [Cosmos DB input](bindings/struct.CosmosDbDocuments.html)
+//! * [SignalR connection info input](bindings/struct.SignalRConnectionInfo.html)
 //! * [Table input](bindings/struct.Table.html)
 //!
 //! The following Azure Functions output bindings are supported:
@@ -25,6 +26,8 @@
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)
+//! * [SignalR group action output](bindings/struct.SignalRGroupAction.html)
+//! * [SignalR message output](bindings/struct.SignalRMessage.html)
 //! * [Table output](bindings/struct.Table.html)
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
@@ -105,6 +108,7 @@ pub mod event_hub;
 pub mod http;
 #[doc(hidden)]
 pub mod rpc;
+pub mod signalr;
 pub mod timer;
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;

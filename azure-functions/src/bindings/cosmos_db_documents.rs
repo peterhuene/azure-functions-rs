@@ -1,4 +1,4 @@
-use crate::bindings::HttpResponse;
+use crate::http::Body;
 use crate::rpc::protocol;
 use crate::util::convert_from;
 use serde_json::{from_str, Value};
@@ -188,8 +188,8 @@ impl Into<Vec<Value>> for CosmosDbDocuments {
     }
 }
 
-impl Into<HttpResponse> for CosmosDbDocuments {
-    fn into(self) -> HttpResponse {
+impl<'a> Into<Body<'a>> for CosmosDbDocuments {
+    fn into(self) -> Body<'a> {
         self.0.into()
     }
 }
@@ -206,7 +206,6 @@ impl Into<protocol::TypedData> for CosmosDbDocuments {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::http::Status;
 
     #[test]
     fn it_constructs_from_an_object_value() {
@@ -286,24 +285,14 @@ mod tests {
     }
 
     #[test]
-    fn it_converts_to_http_response() {
+    fn it_converts_to_body() {
         let documents: CosmosDbDocuments = r#"{ "foo": "bar" }"#.into();
-        let response: HttpResponse = documents.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/json"
-        );
-        assert_eq!(response.body().as_str().unwrap(), r#"[{"foo":"bar"}]"#);
+        let body: Body = documents.into();
+        assert_eq!(body.as_str().unwrap(), r#"[{"foo":"bar"}]"#);
 
         let documents: CosmosDbDocuments = json!({"hello": "world"}).into();
-        let response: HttpResponse = documents.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/json"
-        );
-        assert_eq!(response.body().as_str().unwrap(), r#"[{"hello":"world"}]"#);
+        let body: Body = documents.into();
+        assert_eq!(body.as_str().unwrap(), r#"[{"hello":"world"}]"#);
     }
 
     #[test]
