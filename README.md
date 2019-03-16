@@ -203,7 +203,7 @@ The current list of supported bindings:
 | `azure_functions::bindings::Blob`                  | Input and Ouput Blob                 | in, inout, out |
 | `azure_functions::bindings::BlobTrigger`           | Blob Trigger                         | in, inout      |
 | `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             |
-| `azure_functions::bindings::CosmosDbDocuments`     | Input and Output Cosmos DB Documents | in, out        |
+| `azure_functions::bindings::CosmosDbDocument`      | Input and Output Cosmos DB Document  | in, out        |
 | `azure_functions::bindings::EventGridEvent`        | Event Grid Trigger                   | in             |
 | `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             |
 | `azure_functions::bindings::EventHubMessage`       | Event Hub Output Message             | out            |

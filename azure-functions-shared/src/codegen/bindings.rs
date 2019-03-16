@@ -234,7 +234,7 @@ lazy_static! {
         map.insert("Table", |args, span| {
             Binding::Table(Table::from((args, span)))
         });
-        map.insert("CosmosDbDocuments", |args, span| {
+        map.insert("CosmosDbDocument", |args, span| {
             Binding::CosmosDb(CosmosDb::from((args, span)))
         });
         map.insert("SignalRConnectionInfo", |args, span| {
@@ -254,7 +254,7 @@ lazy_static! {
             binding.direction = Direction::InOut;
             Binding::Blob(binding)
         });
-        map.insert("CosmosDbDocuments", |args, span| {
+        map.insert("CosmosDbDocument", |args, span| {
             let mut binding = CosmosDb::from((args, span));
             binding.direction = Direction::InOut;
             Binding::CosmosDb(binding)
@@ -282,7 +282,7 @@ lazy_static! {
         map.insert("EventHubMessage", |args, span| {
             Binding::EventHub(EventHub::from((args, span)))
         });
-        map.insert("CosmosDbDocuments", |args, span| {
+        map.insert("CosmosDbDocument", |args, span| {
             let mut binding = CosmosDb::from((args, span));
             binding.direction = Direction::Out;
             Binding::CosmosDb(binding)

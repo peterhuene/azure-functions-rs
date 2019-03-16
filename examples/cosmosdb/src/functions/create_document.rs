@@ -1,5 +1,5 @@
 use azure_functions::{
-    bindings::{CosmosDbDocuments, HttpRequest, HttpResponse},
+    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
     func,
 };
 use serde_json::json;
@@ -13,7 +13,7 @@ use serde_json::json;
     collection_name = "documents",
     create_collection = true
 )]
-pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocuments) {
+pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument) {
     (
         "Document was created.".into(),
         json!({
