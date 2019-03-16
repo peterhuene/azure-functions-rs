@@ -8,7 +8,7 @@ An example HTTP-triggered Azure Function that outputs a Cosmos DB document:
 
 ```rust
 use azure_functions::{
-    bindings::{CosmosDbDocuments, HttpRequest, HttpResponse},
+    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
     func,
 };
 use serde_json::json;
@@ -22,7 +22,7 @@ use serde_json::json;
     collection_name = "documents",
     create_collection = true
 )]
-pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocuments) {
+pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument {
     (
         "Document was created.".into(),
         json!({
@@ -58,7 +58,7 @@ An example HTTP-triggered Azure Function that will read a Cosmos DB document and
 
 ```rust
 use azure_functions::{
-    bindings::{CosmosDbDocuments, HttpRequest, HttpResponse},
+    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
     func,
 };
 
@@ -72,15 +72,15 @@ use azure_functions::{
     id = "{id}",
     partition_key = "{id}",
 )]
-pub fn read_document(req: HttpRequest, documents: CosmosDbDocuments) -> HttpResponse {
-    if documents.is_empty() {
+pub fn read_document(req: HttpRequest, document: CosmosDbDocument) -> HttpResponse {
+    if document.is_null() {
         format!(
             "Document with id '{}' does not exist.",
             req.route_params().get("id").unwrap()
         )
         .into()
     } else {
-        documents.into_iter().nth(0).unwrap().into()
+        document.into()
     }
 }
 ```

@@ -15,14 +15,14 @@
 //! The following Azure Functions input bindings are supported:
 //!
 //! * [Blob input](bindings/struct.Blob.html)
-//! * [Cosmos DB input](bindings/struct.CosmosDbDocuments.html)
+//! * [Cosmos DB input](bindings/struct.CosmosDbDocument.html)
 //! * [SignalR connection info input](bindings/struct.SignalRConnectionInfo.html)
 //! * [Table input](bindings/struct.Table.html)
 //!
 //! The following Azure Functions output bindings are supported:
 //!
 //! * [Blob output](bindings/struct.Blob.html)
-//! * [Cosmos DB output](bindings/struct.CosmosDbDocuments.html)
+//! * [Cosmos DB output](bindings/struct.CosmosDbDocument.html)
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)
