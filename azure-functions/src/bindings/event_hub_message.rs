@@ -1,4 +1,3 @@
-use crate::bindings::HttpResponse;
 use crate::http::Body;
 use crate::rpc::protocol;
 use serde::de::Error;
@@ -209,15 +208,13 @@ impl Into<Vec<u8>> for EventHubMessage {
     }
 }
 
-impl Into<HttpResponse> for EventHubMessage {
-    fn into(mut self) -> HttpResponse {
+impl<'a> Into<Body<'a>> for EventHubMessage {
+    fn into(mut self) -> Body<'a> {
         if self.0.has_string() {
             return self.0.take_string().into();
         }
         if self.0.has_json() {
-            return HttpResponse::build()
-                .body(Body::Json(Cow::from(self.0.take_json())))
-                .into();
+            return Body::Json(Cow::from(self.0.take_json()));
         }
         if self.0.has_bytes() {
             return self.0.take_bytes().into();
@@ -240,7 +237,6 @@ impl Into<protocol::TypedData> for EventHubMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::http::Status;
     use serde_json::to_value;
     use std::fmt::Write;
 
@@ -350,33 +346,18 @@ mod tests {
     }
 
     #[test]
-    fn it_converts_to_http_response() {
+    fn it_converts_to_body() {
         let message: EventHubMessage = "hello world!".into();
-        let response: HttpResponse = message.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "text/plain"
-        );
-        assert_eq!(response.body().as_str().unwrap(), "hello world!");
+        let body: Body = message.into();
+        assert_eq!(body.as_str().unwrap(), "hello world!");
 
         let message: EventHubMessage = json!({"hello": "world"}).into();
-        let response: HttpResponse = message.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/json"
-        );
-        assert_eq!(response.body().as_str().unwrap(), r#"{"hello":"world"}"#);
+        let body: Body = message.into();
+        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
 
         let message: EventHubMessage = vec![1, 2, 3].into();
-        let response: HttpResponse = message.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/octet-stream"
-        );
-        assert_eq!(response.body().as_bytes(), [1, 2, 3]);
+        let body: Body = message.into();
+        assert_eq!(body.as_bytes(), [1, 2, 3]);
     }
 
     #[test]

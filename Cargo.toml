@@ -14,4 +14,5 @@ members = [
     "examples/event-grid",
     "examples/event-hub",
     "examples/cosmosdb",
+    "examples/signalr",
 ]

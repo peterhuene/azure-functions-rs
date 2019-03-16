@@ -9,6 +9,8 @@ mod http;
 mod http_trigger;
 mod queue;
 mod queue_trigger;
+mod signalr;
+mod signalr_connection_info;
 mod table;
 mod timer_trigger;
 
@@ -23,6 +25,8 @@ pub use self::http::*;
 pub use self::http_trigger::*;
 pub use self::queue::*;
 pub use self::queue_trigger::*;
+pub use self::signalr::*;
+pub use self::signalr_connection_info::*;
 pub use self::table::*;
 pub use self::timer_trigger::*;
 
@@ -64,6 +68,8 @@ pub enum Binding {
     EventHub(EventHub),
     CosmosDbTrigger(CosmosDbTrigger),
     CosmosDb(CosmosDb),
+    SignalRConnectionInfo(SignalRConnectionInfo),
+    SignalR(SignalR),
 }
 
 impl Binding {
@@ -83,6 +89,8 @@ impl Binding {
             Binding::EventHub(b) => Some(&b.name),
             Binding::CosmosDbTrigger(b) => Some(&b.name),
             Binding::CosmosDb(b) => Some(&b.name),
+            Binding::SignalRConnectionInfo(b) => Some(&b.name),
+            Binding::SignalR(b) => Some(&b.name),
         }
     }
 
@@ -102,6 +110,8 @@ impl Binding {
             Binding::EventHub(_) => Some(EventHub::binding_type()),
             Binding::CosmosDbTrigger(_) => Some(CosmosDbTrigger::binding_type()),
             Binding::CosmosDb(_) => Some(CosmosDb::binding_type()),
+            Binding::SignalRConnectionInfo(_) => Some(SignalRConnectionInfo::binding_type()),
+            Binding::SignalR(_) => Some(SignalR::binding_type()),
         }
     }
 
@@ -178,6 +188,13 @@ impl ToTokens for Binding {
                 quote!(::azure_functions::codegen::bindings::Binding::CosmosDb(#b))
                     .to_tokens(tokens)
             }
+            Binding::SignalRConnectionInfo(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::SignalRConnectionInfo(#b))
+                    .to_tokens(tokens)
+            }
+            Binding::SignalR(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::SignalR(#b)).to_tokens(tokens)
+            }
         };
     }
 }
@@ -219,6 +236,9 @@ lazy_static! {
         });
         map.insert("CosmosDbDocuments", |args, span| {
             Binding::CosmosDb(CosmosDb::from((args, span)))
+        });
+        map.insert("SignalRConnectionInfo", |args, span| {
+            Binding::SignalRConnectionInfo(SignalRConnectionInfo::from((args, span)))
         });
         map
     };
@@ -266,6 +286,12 @@ lazy_static! {
             let mut binding = CosmosDb::from((args, span));
             binding.direction = Direction::Out;
             Binding::CosmosDb(binding)
+        });
+        map.insert("SignalRMessage", |args, span| {
+            Binding::SignalR(SignalR::from((args, span)))
+        });
+        map.insert("SignalRGroupAction", |args, span| {
+            Binding::SignalR(SignalR::from((args, span)))
         });
         map
     };

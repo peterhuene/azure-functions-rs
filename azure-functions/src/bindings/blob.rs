@@ -1,4 +1,3 @@
-use crate::bindings::HttpResponse;
 use crate::http::Body;
 use crate::rpc::protocol;
 use serde::de::Error;
@@ -8,7 +7,7 @@ use std::borrow::Cow;
 use std::fmt;
 use std::str::from_utf8;
 
-/// Represents a Azure Storage blob input or output binding.
+/// Represents an Azure Storage blob input or output binding.
 ///
 /// # Examples
 ///
@@ -208,15 +207,13 @@ impl Into<Vec<u8>> for Blob {
     }
 }
 
-impl Into<HttpResponse> for Blob {
-    fn into(mut self) -> HttpResponse {
+impl<'a> Into<Body<'a>> for Blob {
+    fn into(mut self) -> Body<'a> {
         if self.0.has_string() {
             return self.0.take_string().into();
         }
         if self.0.has_json() {
-            return HttpResponse::build()
-                .body(Body::Json(Cow::from(self.0.take_json())))
-                .into();
+            return Body::Json(Cow::from(self.0.take_json()));
         }
         if self.0.has_bytes() {
             return self.0.take_bytes().into();
@@ -239,7 +236,6 @@ impl Into<protocol::TypedData> for Blob {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::http::Status;
     use serde_json::to_value;
     use std::fmt::Write;
 
@@ -360,33 +356,18 @@ mod tests {
     }
 
     #[test]
-    fn it_converts_to_http_response() {
+    fn it_converts_to_body() {
         let blob: Blob = "hello world!".into();
-        let response: HttpResponse = blob.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "text/plain"
-        );
-        assert_eq!(response.body().as_str().unwrap(), "hello world!");
+        let body: Body = blob.into();
+        assert_eq!(body.as_str().unwrap(), "hello world!");
 
         let blob: Blob = json!({"hello": "world"}).into();
-        let response: HttpResponse = blob.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/json"
-        );
-        assert_eq!(response.body().as_str().unwrap(), r#"{"hello":"world"}"#);
+        let body: Body = blob.into();
+        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
 
         let blob: Blob = vec![1, 2, 3].into();
-        let response: HttpResponse = blob.into();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "application/octet-stream"
-        );
-        assert_eq!(response.body().as_bytes(), [1, 2, 3]);
+        let body: Body = blob.into();
+        assert_eq!(body.as_bytes(), [1, 2, 3]);
     }
 
     #[test]

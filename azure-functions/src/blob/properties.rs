@@ -142,7 +142,7 @@ impl Default for StandardBlobTier {
     }
 }
 
-/// Represents the properties of a Azure Storage blob.
+/// Represents the properties of an Azure Storage blob.
 #[derive(Default, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Properties {
