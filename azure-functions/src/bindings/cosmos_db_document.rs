@@ -1,18 +1,36 @@
-use crate::http::Body;
-use crate::rpc::protocol;
-use crate::util::convert_from;
+use crate::{http::Body, rpc::protocol, util::convert_from, FromVec, IntoVec};
 use serde_json::{from_str, Map, Value};
+use std::borrow::Cow;
 use std::fmt;
 
 /// Represents the input or output binding for a Cosmos DB document.
 ///
 /// # Examples
 ///
-/// Using `CosmosDbDocument` as an input binding:
+/// Using `CosmosDbDocument` as an input binding with a SQL query:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
+/// use azure_functions::{
+///     bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
+///     func,
+/// };
+///
+/// #[func]
+/// #[binding(
+///     name = "documents",
+///     connection = "myconnection",
+///     database_name = "mydb",
+///     collection_name = "mycollection",
+///     sql_query = "select * from mycollection c where startswith(c.name, 'peter')",
+/// )]
+/// pub fn read_documents(_req: HttpRequest, documents: Vec<CosmosDbDocument>) -> HttpResponse {
+///     documents.into()
+/// }
+/// ```
+///
+/// Using `CosmosDbDocument` as an input binding for a specific document:
+///
+/// ```rust
 /// use azure_functions::{
 ///     bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
 ///     func,
@@ -21,40 +39,42 @@ use std::fmt;
 /// #[func]
 /// #[binding(name = "_req", route = "read/{id}")]
 /// #[binding(
-///     name = "doc",
+///     name = "document",
 ///     connection = "myconnection",
 ///     database_name = "mydb",
 ///     collection_name = "mycollection",
-///     id = "{id}"
+///     id = "{id}",
 /// )]
-/// pub fn read_documents(_req: HttpRequest, doc: CosmosDbDocument) -> HttpResponse {
-///     doc.into()
+/// pub fn read_document(_req: HttpRequest, document: CosmosDbDocument) -> HttpResponse {
+///     document.into()
 /// }
 /// ```
 ///
 /// Using `CosmosDbDocument` as an output binding:
 ///
 /// ```rust
-/// # extern crate azure_functions;
 /// # use serde_json::json;
 /// use azure_functions::{
-///     bindings::{CosmosDbDocument, HttpRequest},
+///     bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
 ///     func,
 /// };
 ///
 /// #[func]
 /// #[binding(
-///     name = "$return",
+///     name = "output1",
 ///     connection = "myconnection",
 ///     database_name = "mydb",
 ///     collection_name = "mycollection"
 /// )]
-/// pub fn create_document(_req: HttpRequest) -> CosmosDbDocument {
-///     json!({
-///         "id": "myid",
-///         "name": "Peter",
-///         "subject": "example"
-///     }).into()
+/// pub fn create_document(_req: HttpRequest) -> (HttpResponse, CosmosDbDocument) {
+///     (
+///         "Document created.".into(),
+///         json!({
+///             "id": "myid",
+///             "name": "Peter",
+///             "subject": "example"
+///         }).into()
+///     )
 /// }
 /// ```
 #[derive(Debug, Clone)]
@@ -118,6 +138,31 @@ impl From<Value> for CosmosDbDocument {
 }
 
 #[doc(hidden)]
+impl IntoVec<CosmosDbDocument> for protocol::TypedData {
+    fn into_vec(self) -> Vec<CosmosDbDocument> {
+        if self.data.is_none() {
+            return vec![];
+        }
+
+        match convert_from(&self).expect("expected JSON data for Cosmos DB document") {
+            Value::Null => vec![],
+            Value::Array(arr) => arr.into_iter().map(CosmosDbDocument::new).collect(),
+            Value::Object(obj) => vec![CosmosDbDocument(Value::Object(obj))],
+            _ => panic!("expected array or object for Cosmos DB document data"),
+        }
+    }
+}
+
+#[doc(hidden)]
+impl FromVec<CosmosDbDocument> for protocol::TypedData {
+    fn from_vec(vec: Vec<CosmosDbDocument>) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(Value::Array(vec.into_iter().map(|d| d.0).collect()).to_string());
+        data
+    }
+}
+
+#[doc(hidden)]
 impl From<protocol::TypedData> for CosmosDbDocument {
     fn from(data: protocol::TypedData) -> Self {
         if data.data.is_none() {
@@ -159,6 +204,14 @@ impl<'a> Into<Body<'a>> for CosmosDbDocument {
     }
 }
 
+impl<'a> Into<Body<'a>> for Vec<CosmosDbDocument> {
+    fn into(self) -> Body<'a> {
+        Body::Json(Cow::from(
+            Value::Array(self.into_iter().map(|d| d.0).collect()).to_string(),
+        ))
+    }
+}
+
 #[doc(hidden)]
 impl Into<protocol::TypedData> for CosmosDbDocument {
     fn into(self) -> protocol::TypedData {
@@ -171,6 +224,7 @@ impl Into<protocol::TypedData> for CosmosDbDocument {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn it_constructs_from_an_object_value() {

@@ -17,15 +17,14 @@ const METADATA_KEY: &str = "Metadata";
 /// A function that runs when a blob is created in the `test` container:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::BlobTrigger;
 /// use azure_functions::func;
+/// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "trigger", path = "test/{name}")]
+/// #[binding(name = "trigger", path = "example/")]
 /// pub fn print_blob(trigger: BlobTrigger) {
-///     info!("Blob (as string): {:?}", trigger.blob.as_str());
+///     info!("Blob (as string): {}", trigger.blob.as_str().unwrap());
 /// }
 /// ```
 #[derive(Debug)]
@@ -74,7 +73,8 @@ mod tests {
     use super::*;
     use crate::blob::*;
     use chrono::Utc;
-    use serde_json::to_string;
+    use matches::matches;
+    use serde_json::{json, to_string};
 
     #[test]
     fn it_constructs() {

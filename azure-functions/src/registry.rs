@@ -1,4 +1,5 @@
 use crate::codegen::{bindings, Function};
+use lazy_static::lazy_static;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 

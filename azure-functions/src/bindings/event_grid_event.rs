@@ -1,6 +1,7 @@
 use crate::rpc::protocol;
 use crate::util::deserialize_datetime;
 use chrono::{DateTime, Utc};
+use serde_derive::Deserialize;
 use serde_json::from_str;
 use std::collections::HashMap;
 
@@ -9,12 +10,11 @@ use std::collections::HashMap;
 /// # Examples
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::{
 ///     bindings::EventGridEvent,
 ///     func,
 /// };
+/// use log::warn;
 ///
 /// #[func]
 /// pub fn log_event(event: EventGridEvent) {

@@ -6,9 +6,6 @@
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
 
-#[macro_use]
-extern crate serde_derive;
-
 #[doc(hidden)]
 pub mod codegen;
 mod context;

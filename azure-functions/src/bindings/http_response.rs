@@ -11,97 +11,55 @@ use std::collections::HashMap;
 /// Creating a response from a string:
 ///
 /// ```rust
-/// use azure_functions::bindings::HttpResponse;
-/// use azure_functions::http::{Body, Status};
+/// use azure_functions::bindings::{HttpRequest, HttpResponse};
+/// use azure_functions::func;
 ///
-/// let response: HttpResponse = "hello world".into();
-///
-/// assert_eq!(response.status(), Status::Ok);
-/// assert_eq!(
-///     response
-///         .headers()
-///         .get("Content-Type")
-///         .unwrap(),
-///     "text/plain");
-/// assert_eq!(
-///     response.body().as_str().unwrap(),
-///     "hello world"
-/// );
+/// #[func]
+/// pub fn example(_req: HttpRequest) -> HttpResponse {
+///     "Hello world!".into()
+/// }
 /// ```
 ///
 /// Creating a response from a JSON value (see the [json! macro](https://docs.serde.rs/serde_json/macro.json.html) from the `serde_json` crate):
 ///
 /// ```rust
-/// # #[macro_use] extern crate serde_json;
-/// # extern crate azure_functions;
-/// use azure_functions::bindings::HttpResponse;
-/// use azure_functions::http::{Body, Status};
+/// use azure_functions::bindings::{HttpRequest, HttpResponse};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let response: HttpResponse = json!({ "hello": "world!" }).into();
-///
-/// assert_eq!(response.status(), Status::Ok);
-/// assert_eq!(
-///     response
-///         .headers()
-///         .get("Content-Type")
-///         .unwrap(),
-///     "application/json"
-/// );
-/// assert_eq!(
-///     response.body().as_str().unwrap(),
-///     "{\"hello\":\"world!\"}"
-/// );
+/// #[func]
+/// pub fn example(_req: HttpRequest) -> HttpResponse {
+///     json!({ "hello": "world" }).into()
+/// }
 /// ```
 ///
 /// Creating a response from a sequence of bytes:
 ///
 /// ```rust
-/// use azure_functions::bindings::HttpResponse;
-/// use azure_functions::http::{Body, Status};
+/// use azure_functions::bindings::{HttpRequest, HttpResponse};
+/// use azure_functions::func;
 ///
-/// let response: HttpResponse = [1, 2, 3][..].into();
-///
-/// assert_eq!(response.status(), Status::Ok);
-/// assert_eq!(
-///     response
-///         .headers()
-///         .get("Content-Type")
-///         .unwrap(),
-///     "application/octet-stream"
-/// );
-/// assert_eq!(
-///     response.body().as_bytes(),
-///     [1, 2, 3]
-/// );
+/// #[func]
+/// pub fn example(_req: HttpRequest) -> HttpResponse {
+///     [1, 2, 3][..].into()
+/// }
 /// ```
 ///
 /// Building a custom response:
 ///
 /// ```rust
-/// use azure_functions::bindings::HttpResponse;
-/// use azure_functions::http::{Body, Status};
+/// use azure_functions::bindings::{HttpRequest, HttpResponse};
+/// use azure_functions::func;
+/// use azure_functions::http::Status;
 ///
-/// let url = "http://example.com";
-/// let body = format!("The requested resource has moved to: {}", url);
-///
-/// let response: HttpResponse = HttpResponse::build()
-///     .status(Status::MovedPermanently)
-///     .header("Location", url)
-///     .body(body.as_str())
-///     .into();
-///
-/// assert_eq!(response.status(), Status::MovedPermanently);
-/// assert_eq!(
-///     response
-///         .headers()
-///         .get("Location")
-///         .unwrap(),
-///     url
-/// );
-/// assert_eq!(
-///     response.body().as_str().unwrap(),
-///     body
-/// );
+/// #[func]
+/// pub fn example(_req: HttpRequest) -> HttpResponse {
+///     HttpResponse::build()
+///         .status(Status::MovedPermanently)
+///         .header("Location", "http://example.com")
+///         .body("The requested resource has moved to: http://example.com")
+///         .into()
+/// }
 /// ```
 #[derive(Default, Debug)]
 pub struct HttpResponse {
@@ -209,6 +167,8 @@ impl Into<protocol::TypedData> for HttpResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use matches::matches;
+    use serde::{Deserialize, Serialize};
 
     #[test]
     fn it_is_empty_by_default() {

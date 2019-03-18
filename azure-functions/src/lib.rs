@@ -81,16 +81,6 @@
 #![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]
 
-#[macro_use]
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-#[cfg(test)]
-#[macro_use(matches)]
-extern crate matches;
-#[macro_use]
-extern crate lazy_static;
-
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;
 
@@ -117,7 +107,7 @@ pub use azure_functions_shared::Context;
 use crate::registry::Registry;
 use futures::Future;
 use serde::Serialize;
-use serde_json::{to_string_pretty, Serializer};
+use serde_json::{json, to_string_pretty, Serializer};
 use std::env::{current_dir, current_exe};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -125,6 +115,16 @@ use std::process::Command;
 use tempfile::TempDir;
 use xml::writer::XmlEvent;
 use xml::EmitterConfig;
+
+#[doc(hidden)]
+pub trait IntoVec<T> {
+    fn into_vec(self) -> Vec<T>;
+}
+
+#[doc(hidden)]
+pub trait FromVec<T> {
+    fn from_vec(vec: Vec<T>) -> Self;
+}
 
 // This is a workaround to the issue that `file!` expands to be workspace-relative
 // and cargo does not have an environment variable for the workspace directory.

@@ -198,25 +198,25 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 
 The current list of supported bindings:
 
-| Rust Type                                          | Azure Functions Binding              | Direction      |
-|----------------------------------------------------|--------------------------------------|----------------|
-| `azure_functions::bindings::Blob`                  | Input and Ouput Blob                 | in, inout, out |
-| `azure_functions::bindings::BlobTrigger`           | Blob Trigger                         | in, inout      |
-| `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             |
-| `azure_functions::bindings::CosmosDbDocument`      | Input and Output Cosmos DB Document  | in, out        |
-| `azure_functions::bindings::EventGridEvent`        | Event Grid Trigger                   | in             |
-| `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             |
-| `azure_functions::bindings::EventHubMessage`       | Event Hub Output Message             | out            |
-| `azure_functions::bindings::HttpRequest`           | HTTP Trigger                         | in             |
-| `azure_functions::bindings::HttpResponse`          | Output HTTP Response                 | out            |
-| `azure_functions::bindings::QueueTrigger`          | Queue Trigger                        | in             |
-| `azure_functions::bindings::QueueMessage`          | Output Queue Message                 | out            |
-| `azure_functions::bindings::SignalRConnectionInfo` | SignalR Connection Info              | in             |
-| `azure_functions::bindings::SignalRGroupAction`    | SignalR Group Action                 | out            |
-| `azure_functions::bindings::SignalRMessage`        | SignalR Message                      | out            |
-| `azure_functions::bindings::Table`                 | Input and Ouput Table                | in, out        |
-| `azure_functions::bindings::TimerInfo`             | Timer Trigger                        | in             |
-| `azure_functions::Context`*                        | Invocation Context                   | n/a            |
+| Rust Type                                          | Azure Functions Binding              | Direction      | Vec\<T> |
+|----------------------------------------------------|--------------------------------------|----------------|---------|
+| `azure_functions::bindings::Blob`                  | Input and Ouput Blob                 | in, inout, out | No      |
+| `azure_functions::bindings::BlobTrigger`           | Blob Trigger                         | in, inout      | No      |
+| `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             | No      |
+| `azure_functions::bindings::CosmosDbDocument`      | Input and Output Cosmos DB Document  | in, out        | Yes     |
+| `azure_functions::bindings::EventGridEvent`        | Event Grid Trigger                   | in             | No      |
+| `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             | No      |
+| `azure_functions::bindings::EventHubMessage`       | Event Hub Output Message             | out            | Yes     |
+| `azure_functions::bindings::HttpRequest`           | HTTP Trigger                         | in             | No      |
+| `azure_functions::bindings::HttpResponse`          | Output HTTP Response                 | out            | No      |
+| `azure_functions::bindings::QueueTrigger`          | Queue Trigger                        | in             | No      |
+| `azure_functions::bindings::QueueMessage`          | Output Queue Message                 | out            | Yes     |
+| `azure_functions::bindings::SignalRConnectionInfo` | SignalR Connection Info              | in             | No      |
+| `azure_functions::bindings::SignalRGroupAction`    | SignalR Group Action                 | out            | Yes     |
+| `azure_functions::bindings::SignalRMessage`        | SignalR Message                      | out            | Yes     |
+| `azure_functions::bindings::Table`                 | Input and Ouput Table                | in, out        | No      |
+| `azure_functions::bindings::TimerInfo`             | Timer Trigger                        | in             | No      |
+| `azure_functions::Context`*                        | Invocation Context                   | N/A            | N/A     |
 
 \****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 
@@ -224,81 +224,125 @@ More bindings will be implemented in the future, including support for retreivin
 
 ## Bindings in Rust
 
-Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration:
+Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration.
 
-* Parameters of type `T` or `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
+### Input bindings
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(..., blob: Blob) {
-      ...
-  }
-  ```
+Parameters of type `T` or `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(..., blob: &Blob) {
-      ...
-  }
-  ```
+```rust
+#[func]
+...
+pub fn example(..., blob: Blob) {
+    ...
+}
+```
 
-* Parameters of type `&mut T`, where `T` is a trigger or input binding type that supports the `inout` direction, are inferred to be bindings with an `inout` direction.
-**Note: `inout` direction bindings are currently not implemented for languages other than C#.  See [this issue](https://github.com/Azure/azure-functions-host/issues/49) regarding this problem with the Azure Functions Host.**
+```rust
+#[func]
+...
+pub fn example(..., blob: &Blob) {
+    ...
+}
+```
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(..., blob: &mut Blob) {
-      ...
-  }
-  ```
+Additionally, some input binding types support parameters of type `Vec<T>` and `&Vec<T>` where `T` is an input binding type:
 
-* Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.  Functions may also return `Option<T>` for any output binding type `T`; a `None` value will skip outputting a value.
+```rust
+#[func]
+...
+pub fn example(..., documents: Vec<CosmosDbDocument>) {
+    ...
+}
+```
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(...) -> Blob {
-      ...
-  }
-  ```
+The following input bindings support parameters of type `Vec<T>`:
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(...) -> Option<Blob> {
-      ...
-  }
-  ```
+* `CosmosDbDocument`
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(...) -> (HttpResponse, Option<Blob>) {
-      ...
-  }
-  ```
+### Input-output (inout) bindings
 
-  For functions that return a single output binding type, the binding has a special name of `$return`
-  and is treated as the "return value" of the function.
+Parameters of type `&mut T`, where `T` is a trigger or input binding type that supports the `inout` direction, are inferred to be bindings with an `inout` direction.
 
-  For functions that return a tuple of output binding types, the first value of the tuple has the binding name
-  of `$return` and is treated as the "return value" of the function.  The remaining values have binding names `output1`, `output2`, ..., `output(N-1)` where `N` is the number of types in the tuple, and are
-  treated as output bindings only.
+```rust
+#[func]
+...
+pub fn example(..., blob: &mut Blob) {
+    ...
+}
+```
 
-  Unit tuples `()` can be used in a tuple to "skip" a binding:
+**Note: `inout` direction bindings are currently not implemented for languages other than C#.**
 
-  ```rust
-  #[func]
-  ...
-  pub fn example(...) -> ((), Blob) {
-      ...
-  }
-  ```
+**See [this issue](https://github.com/Azure/azure-functions-host/issues/49) regarding this problem with the Azure Functions Host.**
 
-  For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
+### Output bindings
+
+Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.  
+
+```rust
+#[func]
+...
+pub fn example(...) -> Blob {
+    ...
+}
+```
+
+Functions may also return `Option<T>` for any output binding type `T`; a `None` value will skip outputting a value.
+
+
+```rust
+#[func]
+...
+pub fn example(...) -> Option<Blob> {
+    ...
+}
+```
+
+```rust
+#[func]
+...
+pub fn example(...) -> (HttpResponse, Option<Blob>) {
+    ...
+}
+```
+
+Additionally, some output binding types support returning  `Vec<T>` where `T` is an output binding type:
+
+```rust
+#[func]
+...
+pub fn example(...) -> Vec<CosmosDbDocument>) {
+    ...
+}
+```
+
+The following output bindings support returning type `Vec<T>`:
+
+* `CosmosDbDocument`
+* `EventHubMessage`
+* `QueueMessage`
+* `SignalRMessage`
+* `SignalRGroupAction`
+
+For functions that return a single output binding type, the binding has a special name of `$return`
+and is treated as the return value of the function.
+
+For functions that return a tuple of output binding types, the first value of the tuple has the binding name
+of `$return` and is treated as the return value of the function.  The remaining values have binding names `output1`, `output2`, ..., `output(N-1)` where `N` is the number of types in the tuple, and are
+treated as output bindings only.
+
+Unit tuples `()` can be used in a tuple to "skip" a binding:
+
+```rust
+#[func]
+...
+pub fn example(...) -> ((), Blob) {
+    ...
+}
+```
+
+For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
 
 # Development
 
