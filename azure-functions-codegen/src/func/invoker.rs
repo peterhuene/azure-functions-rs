@@ -1,6 +1,7 @@
-use crate::func::{OutputBindings, CONTEXT_TYPE_NAME};
+use crate::func::{get_generic_argument_type, OutputBindings, CONTEXT_TYPE_NAME};
 use azure_functions_shared::codegen::{bindings::TRIGGERS, last_segment_in_path};
 use azure_functions_shared::util::to_camel_case;
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{FnArg, Ident, ItemFn, Pat, Type};
 
@@ -30,6 +31,24 @@ impl<'a> Invoker<'a> {
                 Some((name, Invoker::deref_arg_type(arg_type)))
             })
             .unzip()
+    }
+
+    fn get_input_assignments(&self) -> Vec<TokenStream> {
+        self.iter_args()
+            .filter_map(|(_, arg_type)| {
+                if Invoker::is_context_type(arg_type) | Invoker::is_trigger_type(arg_type) {
+                    return None;
+                }
+
+                if let Type::Path(tp) = Invoker::deref_arg_type(arg_type) {
+                    if get_generic_argument_type(last_segment_in_path(&tp.path), "Vec").is_some() {
+                        return Some(quote!(__param.take_data().into_vec()));
+                    }
+                }
+
+                Some(quote!(__param.take_data().into()))
+            })
+            .collect()
     }
 
     fn get_trigger_arg(&self) -> Option<(&'a Ident, &'a Type)> {
@@ -104,6 +123,7 @@ impl ToTokens for Invoker<'_> {
 
         let (args, types) = self.get_input_args();
         let args_for_match = args.clone();
+        let arg_assignments = self.get_input_assignments();
         let arg_names: Vec<_> = args.iter().map(|x| to_camel_case(&x.to_string())).collect();
 
         let (trigger_arg, trigger_type) = self
@@ -120,6 +140,7 @@ impl ToTokens for Invoker<'_> {
             __name: &str,
             __req: &mut ::azure_functions::rpc::protocol::InvocationRequest,
         ) -> ::azure_functions::rpc::protocol::InvocationResponse {
+            use azure_functions::{IntoVec, FromVec};
 
             let mut #trigger_arg: Option<#trigger_type> = None;
             #(let mut #args: Option<#types> = None;)*
@@ -127,7 +148,7 @@ impl ToTokens for Invoker<'_> {
             for __param in __req.input_data.iter_mut() {
                 match __param.name.as_str() {
                    #trigger_name => #trigger_arg = Some(#trigger_type::new(__param.take_data(), &mut __req.trigger_metadata)),
-                   #(#arg_names => #args_for_match = Some(__param.take_data().into()),)*
+                   #(#arg_names => #args_for_match = Some(#arg_assignments),)*
                     _ => panic!(format!("unexpected parameter binding '{}'", __param.name)),
                 };
             }

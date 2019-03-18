@@ -14,35 +14,41 @@ use std::str::from_utf8;
 /// Creating a blob from a string:
 ///
 /// ```rust
-/// use azure_functions::bindings::Blob;
+/// use azure_functions::bindings::{HttpRequest, Blob};
+/// use azure_functions::func;
 ///
-/// let blob: Blob = "hello world!".into();
-/// assert_eq!(blob.as_str().unwrap(), "hello world!");
+/// #[func]
+/// #[binding(name = "output1", path = "example")]
+/// pub fn create_blob(_req: HttpRequest) -> ((), Blob) {
+///     ((), "Hello world!".into())
+/// }
 /// ```
 ///
 /// Creating a blob from a JSON value (see the [json! macro](https://docs.serde.rs/serde_json/macro.json.html) from the `serde_json` crate):
 ///
 /// ```rust
-/// # #[macro_use] extern crate serde_json;
-/// # extern crate azure_functions;
-/// use azure_functions::bindings::Blob;
+/// use azure_functions::bindings::{HttpRequest, Blob};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let blob: Blob = json!({ "hello": "world!" }).into();
-///
-/// assert_eq!(blob.as_str().unwrap(), r#"{"hello":"world!"}"#);
+/// #[func]
+/// #[binding(name = "output1", path = "example")]
+/// pub fn create_blob(_req: HttpRequest) -> ((), Blob) {
+///     ((), json!({ "hello": "world!" }).into())
+/// }
 /// ```
 ///
 /// Creating a blob from a sequence of bytes:
 ///
 /// ```rust
-/// use azure_functions::bindings::Blob;
+/// use azure_functions::bindings::{HttpRequest, Blob};
+/// use azure_functions::func;
 ///
-/// let blob: Blob = [1, 2, 3][..].into();
-///
-/// assert_eq!(
-///     blob.as_bytes(),
-///     [1, 2, 3]
-/// );
+/// #[func]
+/// #[binding(name = "output1", path = "example")]
+/// pub fn create_blob(_req: HttpRequest) -> ((), Blob) {
+///     ((), [1, 2, 3][..].into())
+/// }
 /// ```
 #[derive(Debug, Clone)]
 pub struct Blob(protocol::TypedData);
@@ -236,6 +242,8 @@ impl Into<protocol::TypedData> for Blob {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::Serialize;
+    use serde_json::json;
     use serde_json::to_value;
     use std::fmt::Write;
 

@@ -1,6 +1,6 @@
-use crate::rpc::protocol;
+use crate::{rpc::protocol, FromVec};
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{to_string, Value};
+use serde_json::{to_string, to_value, Value};
 
 /// Represents the SignalR message output binding.
 ///
@@ -45,6 +45,17 @@ impl Into<protocol::TypedData> for SignalRMessage {
     fn into(self) -> protocol::TypedData {
         let mut data = protocol::TypedData::new();
         data.set_json(to_string(&self).expect("failed to convert SignalR message to JSON string"));
+        data
+    }
+}
+
+#[doc(hidden)]
+impl FromVec<SignalRMessage> for protocol::TypedData {
+    fn from_vec(vec: Vec<SignalRMessage>) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(
+            Value::Array(vec.into_iter().map(|m| to_value(m).unwrap()).collect()).to_string(),
+        );
         data
     }
 }

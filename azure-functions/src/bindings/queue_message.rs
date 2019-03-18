@@ -1,5 +1,4 @@
-use crate::http::Body;
-use crate::rpc::protocol;
+use crate::{http::Body, rpc::protocol, FromVec};
 use serde::de::Error;
 use serde::Deserialize;
 use serde_json::{from_str, Result, Value};
@@ -14,35 +13,42 @@ use std::str::from_utf8;
 /// Creating a queue message from a string:
 ///
 /// ```rust
-/// use azure_functions::bindings::QueueMessage;
+/// use azure_functions::bindings::{HttpRequest, QueueMessage};
+/// use azure_functions::func;
 ///
-/// let message: QueueMessage = "hello world!".into();
-/// assert_eq!(message.as_str().unwrap(), "hello world!");
+/// #[func]
+/// #[binding(name = "output1", queue_name = "example")]
+/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
+///     ((), "Hello world!".into())
+/// }
 /// ```
 ///
 /// Creating a queue message from a JSON value (see the [json! macro](https://docs.serde.rs/serde_json/macro.json.html) from the `serde_json` crate):
 ///
 /// ```rust
-/// # #[macro_use] extern crate serde_json;
-/// # extern crate azure_functions;
-/// use azure_functions::bindings::QueueMessage;
+/// use azure_functions::bindings::{HttpRequest, QueueMessage};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let message: QueueMessage = json!({ "hello": "world!" }).into();
-///
-/// assert_eq!(message.as_str().unwrap(), r#"{"hello":"world!"}"#);
+/// #[func]
+/// #[binding(name = "output1", queue_name = "example")]
+/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
+///     ((), json!({ "hello": "world" }).into())
+/// }
 /// ```
 ///
 /// Creating a queue message from a sequence of bytes:
 ///
 /// ```rust
-/// use azure_functions::bindings::QueueMessage;
+/// use azure_functions::bindings::{HttpRequest, QueueMessage};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let message: QueueMessage = [1, 2, 3][..].into();
-///
-/// assert_eq!(
-///     message.as_bytes(),
-///     [1, 2, 3]
-/// );
+/// #[func]
+/// #[binding(name = "output1", queue_name = "example")]
+/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
+///     ((), [1, 2, 3][..].into())
+/// }
 /// ```
 #[derive(Debug, Clone)]
 pub struct QueueMessage(protocol::TypedData);
@@ -158,6 +164,15 @@ impl From<protocol::TypedData> for QueueMessage {
     }
 }
 
+#[doc(hidden)]
+impl FromVec<QueueMessage> for protocol::TypedData {
+    fn from_vec(vec: Vec<QueueMessage>) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(Value::Array(vec.into_iter().map(Into::into).collect()).to_string());
+        data
+    }
+}
+
 impl Into<String> for QueueMessage {
     fn into(mut self) -> String {
         if self.0.has_string() {
@@ -179,12 +194,35 @@ impl Into<String> for QueueMessage {
 }
 
 impl Into<Value> for QueueMessage {
-    fn into(self) -> Value {
-        from_str(
-            self.as_str()
-                .expect("queue message does not contain valid UTF-8 data"),
-        )
-        .expect("queue message does not contain valid JSON data")
+    fn into(mut self) -> Value {
+        if self.0.has_string() {
+            return Value::String(self.0.take_string());
+        }
+        if self.0.has_json() {
+            return from_str(self.0.get_json())
+                .expect("queue message does not contain valid JSON data");
+        }
+        // TODO: this is not an efficient encoding
+        if self.0.has_bytes() {
+            return Value::Array(
+                self.0
+                    .get_bytes()
+                    .iter()
+                    .map(|n| Value::Number(u64::from(*n).into()))
+                    .collect(),
+            );
+        }
+        // TODO: this is not an efficient encoding
+        if self.0.has_stream() {
+            return Value::Array(
+                self.0
+                    .get_stream()
+                    .iter()
+                    .map(|n| Value::Number(u64::from(*n).into()))
+                    .collect(),
+            );
+        }
+        panic!("unexpected data for queue message content");
     }
 }
 
@@ -236,7 +274,8 @@ impl Into<protocol::TypedData> for QueueMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::to_value;
+    use serde_derive::{Deserialize, Serialize};
+    use serde_json::{json, to_value};
     use std::fmt::Write;
 
     #[test]

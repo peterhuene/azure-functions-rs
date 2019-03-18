@@ -18,12 +18,11 @@ const SYSTEM_PROPERTIES_KEY: &str = "SystemProperties";
 /// # Examples
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::{
 ///     bindings::EventHubTrigger,
 ///     func,
 /// };
+/// use log::warn;
 ///
 /// #[func]
 /// #[binding(name = "trigger", connection = "my_connection")]
@@ -102,6 +101,7 @@ impl EventHubTrigger {
 mod tests {
     use super::*;
     use crate::event_hub::RuntimeInformation;
+    use serde_json::json;
     use std::str::FromStr;
 
     #[test]

@@ -1,5 +1,6 @@
 use crate::rpc::protocol;
 use crate::timer::ScheduleStatus;
+use serde_derive::Deserialize;
 use serde_json::from_str;
 use std::collections::HashMap;
 
@@ -10,15 +11,14 @@ use std::collections::HashMap;
 /// A function that runs every 5 minutes:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::TimerInfo;
 /// use azure_functions::func;
+/// use log::warn;
 ///
 /// #[func]
 /// #[binding(name = "_info", schedule = "0 */5 * * * *")]
 /// pub fn timer(_info: TimerInfo) {
-///     info!("Rust Azure function ran!");
+///     warn!("Rust Azure function ran!");
 /// }
 /// ```
 #[derive(Debug, Deserialize)]

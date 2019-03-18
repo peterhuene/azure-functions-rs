@@ -4,6 +4,7 @@
 // Export the modules that define Azure Functions here.
 azure_functions::export! {
     create_document,
+    query_documents,
     log_documents,
     read_document
 }

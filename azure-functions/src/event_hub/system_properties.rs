@@ -1,5 +1,6 @@
 use crate::util::deserialize_datetime;
 use chrono::{DateTime, Utc};
+use serde_derive::{Deserialize, Serialize};
 
 /// Represents properties that are set by the Event Hubs service.
 #[derive(Debug, Serialize, Deserialize)]

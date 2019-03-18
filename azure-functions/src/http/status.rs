@@ -19,7 +19,6 @@ macro_rules! statuses {
         /// Create a `Status` from a status code `code`:
         ///
         /// ```rust
-        /// # extern crate azure_functions;
         /// use azure_functions::http::Status;
         ///
         /// assert_eq!(Status::from_code(404), Status::NotFound);

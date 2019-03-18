@@ -1,5 +1,6 @@
 use crate::util::deserialize_datetime;
 use chrono::{DateTime, Utc};
+use serde_derive::{Deserialize, Serialize};
 
 /// Represents the approximate receiver runtime information for a logical partition of an Event Hub.
 #[derive(Debug, Serialize, Deserialize)]

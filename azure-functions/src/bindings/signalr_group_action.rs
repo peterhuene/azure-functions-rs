@@ -1,7 +1,6 @@
-use crate::rpc::protocol;
-use crate::signalr::GroupAction;
+use crate::{rpc::protocol, signalr::GroupAction, FromVec};
 use serde_derive::{Deserialize, Serialize};
-use serde_json::to_string;
+use serde_json::{to_string, to_value, Value};
 
 /// Represents the SignalR group action output binding.
 ///
@@ -46,6 +45,17 @@ impl Into<protocol::TypedData> for SignalRGroupAction {
             to_string(&self).expect("failed to convert SignalR group action to JSON string"),
         );
 
+        data
+    }
+}
+
+#[doc(hidden)]
+impl FromVec<SignalRGroupAction> for protocol::TypedData {
+    fn from_vec(vec: Vec<SignalRGroupAction>) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(
+            Value::Array(vec.into_iter().map(|a| to_value(a).unwrap()).collect()).to_string(),
+        );
         data
     }
 }

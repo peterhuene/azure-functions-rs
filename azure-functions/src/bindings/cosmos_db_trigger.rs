@@ -10,12 +10,11 @@ use std::collections::HashMap;
 /// An example of logging all Cosmos DB documents that triggered the function:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::{
 ///     bindings::CosmosDbTrigger,
 ///     func,
 /// };
+/// use log::warn;
 ///
 /// #[func]
 /// #[binding(

@@ -1,6 +1,6 @@
 use crate::http::Body;
 use crate::rpc::protocol;
-use serde_json::{from_str, Map, Value};
+use serde_json::{from_str, json, Map, Value};
 use std::fmt;
 
 /// Represents an Azure Storage table input or output binding.
@@ -10,31 +10,29 @@ use std::fmt;
 /// Read a table storage row based on a key posted to the `example` queue:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::{QueueTrigger, Table};
 /// use azure_functions::func;
+/// use log::warn;
 ///
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
 /// #[binding(name = "table", table_name = "MyTable", partition_key = "MyPartition", row_key = "{queueTrigger}")]
 /// pub fn log_row(trigger: QueueTrigger, table: Table) {
-///     info!("Row: {:?}", table.rows().nth(0));
+///     warn!("Row: {:?}", table.rows().nth(0));
 /// }
 /// ```
 /// Run an Azure Storage table query based on a HTTP request:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::{HttpRequest, Table};
 /// use azure_functions::func;
+/// use log::warn;
 ///
 /// #[func]
 /// #[binding(name = "table", table_name = "MyTable", filter = "{filter}")]
 /// pub fn log_rows(req: HttpRequest, table: Table) {
 ///     for row in table.rows() {
-///         info!("Row: {:?}", row);
+///         warn!("Row: {:?}", row);
 ///     }
 /// }
 #[derive(Default, Debug, Clone)]

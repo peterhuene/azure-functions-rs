@@ -33,7 +33,8 @@ pub use self::timer_trigger::*;
 use lazy_static::lazy_static;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use std::collections::HashMap;
+use serde_derive::Serialize;
+use std::collections::{HashMap, HashSet};
 use syn::AttributeArgs;
 
 #[derive(Serialize, Debug, Clone, Copy, PartialEq)]
@@ -294,6 +295,20 @@ lazy_static! {
             Binding::SignalR(SignalR::from((args, span)))
         });
         map
+    };
+    pub static ref VEC_INPUT_BINDINGS: HashSet<&'static str> = {
+        let mut set = HashSet::new();
+        set.insert("CosmosDbDocument");
+        set
+    };
+    pub static ref VEC_OUTPUT_BINDINGS: HashSet<&'static str> = {
+        let mut set = HashSet::new();
+        set.insert("CosmosDbDocument");
+        set.insert("EventHubMessage");
+        set.insert("QueueMessage");
+        set.insert("SignalRMessage");
+        set.insert("SignalRGroupAction");
+        set
     };
 }
 

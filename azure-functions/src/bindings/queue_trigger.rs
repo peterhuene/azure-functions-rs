@@ -18,15 +18,14 @@ const POP_RECEIPT_KEY: &str = "PopReceipt";
 /// A function that runs when a message is posted to a queue called `example`:
 ///
 /// ```rust
-/// # extern crate azure_functions;
-/// # #[macro_use] extern crate log;
 /// use azure_functions::bindings::QueueTrigger;
 /// use azure_functions::func;
+/// use log::warn;
 ///
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
 /// pub fn run_on_message(trigger: QueueTrigger) {
-///     info!("Rust function ran due to queue message: {}", trigger.message);
+///     warn!("Rust function ran due to queue message: {}", trigger.message);
 /// }
 /// ```
 #[derive(Debug)]
