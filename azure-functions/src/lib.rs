@@ -87,6 +87,7 @@ pub use azure_functions_codegen::func;
 #[doc(hidden)]
 pub use azure_functions_shared::codegen;
 
+mod backtrace;
 mod cli;
 mod logger;
 mod registry;
