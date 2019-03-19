@@ -1,14 +1,17 @@
+use crate::backtrace::Backtrace;
 use crate::codegen::Function;
 use crate::logger;
 use crate::registry::Registry;
 use azure_functions_shared::rpc::protocol;
-use futures::future::{lazy, ok};
-use futures::sync::mpsc;
-use futures::{Future, Sink, Stream};
+use futures::{
+    future::{lazy, ok},
+    sync::mpsc,
+    Future, Sink, Stream,
+};
 use grpcio::{ChannelBuilder, ClientDuplexReceiver, EnvBuilder, WriteFlags};
 use log::{self, error};
 use std::cell::RefCell;
-use std::panic::{self, AssertUnwindSafe};
+use std::panic::{self, AssertUnwindSafe, PanicInfo};
 use std::sync::Arc;
 use std::thread;
 use tokio_threadpool::ThreadPool;
@@ -154,40 +157,7 @@ impl Client {
         )))
         .expect("Failed to set the global logger instance");
 
-        // At this point, translate any panics to error! macros to log with the host
-        panic::set_hook(Box::new(|info| match info.location() {
-            Some(location) => {
-                error!(
-                    "Azure Function '{}' panicked with '{}', {}:{}:{}",
-                    FUNCTION_NAME.with(|f| *f.borrow()),
-                    info.payload()
-                        .downcast_ref::<&str>()
-                        .cloned()
-                        .unwrap_or_else(|| info
-                            .payload()
-                            .downcast_ref::<String>()
-                            .map(String::as_str)
-                            .unwrap_or(UNKNOWN)),
-                    location.file(),
-                    location.line(),
-                    location.column()
-                );
-            }
-            None => {
-                error!(
-                    "Azure Function '{}' panicked with '{}'",
-                    FUNCTION_NAME.with(|f| *f.borrow()),
-                    info.payload()
-                        .downcast_ref::<&str>()
-                        .cloned()
-                        .unwrap_or_else(|| info
-                            .payload()
-                            .downcast_ref::<String>()
-                            .map(String::as_str)
-                            .unwrap_or(UNKNOWN)),
-                );
-            }
-        }));
+        panic::set_hook(Box::new(Client::handle_panic));
 
         log::set_max_level(log::LevelFilter::Trace);
 
@@ -383,5 +353,44 @@ impl Client {
         }
 
         panic!("Unexpected message from host: {:?}.", msg);
+    }
+
+    fn handle_panic(info: &PanicInfo) {
+        let backtrace = Backtrace::new();
+        match info.location() {
+            Some(location) => {
+                error!(
+                    "Azure Function '{}' panicked with '{}', {}:{}:{}{}",
+                    FUNCTION_NAME.with(|f| *f.borrow()),
+                    info.payload()
+                        .downcast_ref::<&str>()
+                        .cloned()
+                        .unwrap_or_else(|| info
+                            .payload()
+                            .downcast_ref::<String>()
+                            .map(String::as_str)
+                            .unwrap_or(UNKNOWN)),
+                    location.file(),
+                    location.line(),
+                    location.column(),
+                    backtrace
+                );
+            }
+            None => {
+                error!(
+                    "Azure Function '{}' panicked with '{}'{}",
+                    FUNCTION_NAME.with(|f| *f.borrow()),
+                    info.payload()
+                        .downcast_ref::<&str>()
+                        .cloned()
+                        .unwrap_or_else(|| info
+                            .payload()
+                            .downcast_ref::<String>()
+                            .map(String::as_str)
+                            .unwrap_or(UNKNOWN)),
+                    backtrace
+                );
+            }
+        };
     }
 }
