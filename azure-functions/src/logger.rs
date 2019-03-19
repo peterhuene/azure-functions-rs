@@ -1,5 +1,4 @@
 use crate::rpc::{protocol, Sender};
-use futures::{Future, Sink};
 use log::{Level, Log, Metadata, Record};
 use std::cell::RefCell;
 
@@ -45,7 +44,7 @@ impl Log for Logger {
 
         let mut message = protocol::StreamingMessage::new();
         message.set_rpc_log(event);
-        self.sender.clone().send(message).wait().unwrap();
+        self.sender.try_send(message).unwrap();
     }
 
     fn flush(&self) {}

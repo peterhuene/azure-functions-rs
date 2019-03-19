@@ -3,9 +3,9 @@ use crate::codegen::Function;
 use crate::logger;
 use crate::registry::Registry;
 use azure_functions_shared::rpc::protocol;
+use crossbeam_channel::unbounded;
 use futures::{
     future::{lazy, ok},
-    sync::mpsc,
     Future, Sink, Stream,
 };
 use grpcio::{ChannelBuilder, ClientDuplexReceiver, EnvBuilder, WriteFlags};
@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::thread;
 use tokio_threadpool::ThreadPool;
 
-pub type Sender = mpsc::Sender<protocol::StreamingMessage>;
+pub type Sender = crossbeam_channel::Sender<protocol::StreamingMessage>;
 type Receiver = ClientDuplexReceiver<protocol::StreamingMessage>;
 
 const UNKNOWN: &str = "<unknown>";
@@ -63,7 +63,7 @@ impl Client {
             }
         }
 
-        let (rpc_tx, rpc_rx) = self
+        let (mut rpc_sender, rpc_receiver) = self
             .client
             .get_or_insert(protocol::FunctionRpcClient::new(
                 channel.connect(&format!("{}:{}", host, port)),
@@ -71,77 +71,54 @@ impl Client {
             .event_stream()
             .unwrap();
 
-        let (tx, rx) = mpsc::channel(1);
+        let (sender, receiver) = unbounded();
 
-        self.sender = Some(tx);
-        self.receiver = Some(rpc_rx);
+        self.sender = Some(sender);
+        self.receiver = Some(rpc_receiver);
 
         thread::spawn(move || {
-            let mut rx = rx;
-            let mut rpc_tx = rpc_tx;
-
-            while let (Some(message), r) = rx.into_future().wait().unwrap() {
-                rpc_tx = rpc_tx
-                    .send((message, WriteFlags::default()))
+            while let Ok(msg) = receiver.recv() {
+                rpc_sender = rpc_sender
+                    .send((msg, WriteFlags::default()))
                     .wait()
                     .expect("failed to send message to host");
-                rx = r;
             }
         });
 
         let mut message = protocol::StreamingMessage::new();
         message.mut_start_stream().worker_id = self.worker_id.to_owned();
 
-        self.send(message)
-            .and_then(Client::read)
-            .and_then(|(mut c, msg)| {
-                let msg = msg.expect("host disconnected during worker initialization");
-
-                if !msg.has_worker_init_request() {
-                    panic!("expected a worker init request, but received: {:?}.", msg);
-                }
-
-                c.host_version = Some(msg.get_worker_init_request().host_version.clone());
-
-                let mut msg = protocol::StreamingMessage::new();
-                {
-                    let worker_init_res = msg.mut_worker_init_response();
-                    worker_init_res.worker_version = env!("CARGO_PKG_VERSION").to_owned();
-                    let result = worker_init_res.mut_result();
-                    result.status = protocol::StatusResult_Status::Success;
-                }
-
-                c.send(msg)
-            })
-    }
-
-    pub fn send(
-        mut self,
-        message: protocol::StreamingMessage,
-    ) -> impl Future<Item = Client, Error = ()> {
         self.sender
-            .take()
+            .as_ref()
             .unwrap()
             .send(message)
-            .map_err(|err| panic!("failed to send message: {:?}.", err))
-            .and_then(move |sender| {
-                self.sender = Some(sender);
-                ok(self)
-            })
-    }
+            .expect("failed to send start stream message");
 
-    pub fn read(
-        mut self,
-    ) -> impl Future<Item = (Client, Option<protocol::StreamingMessage>), Error = ()> {
-        self.receiver
-            .take()
-            .unwrap()
-            .into_future()
-            .map_err(|(err, _)| panic!("failed to receive message: {:?}.", err))
-            .and_then(move |(msg, r)| {
-                self.receiver = Some(r);
-                ok((self, msg))
-            })
+        self.read().and_then(|(mut c, msg)| {
+            let msg = msg.expect("host disconnected during worker initialization");
+
+            if !msg.has_worker_init_request() {
+                panic!("expected a worker init request, but received: {:?}.", msg);
+            }
+
+            c.host_version = Some(msg.get_worker_init_request().host_version.clone());
+
+            let mut msg = protocol::StreamingMessage::new();
+            {
+                let worker_init_res = msg.mut_worker_init_response();
+                worker_init_res.worker_version = env!("CARGO_PKG_VERSION").to_owned();
+                let result = worker_init_res.mut_result();
+                result.status = protocol::StatusResult_Status::Success;
+            }
+
+            c.sender
+                .as_ref()
+                .unwrap()
+                .send(msg)
+                .expect("failed to send init response message");
+
+            ok(c)
+        })
     }
 
     pub fn process_all_messages(
@@ -180,6 +157,20 @@ impl Client {
         pool.shutdown_on_idle().and_then(|_| ok(self))
     }
 
+    fn read(
+        mut self,
+    ) -> impl Future<Item = (Client, Option<protocol::StreamingMessage>), Error = ()> {
+        self.receiver
+            .take()
+            .unwrap()
+            .into_future()
+            .map_err(|(err, _)| panic!("failed to receive message: {:?}.", err))
+            .and_then(move |(msg, r)| {
+                self.receiver = Some(r);
+                ok((self, msg))
+            })
+    }
+
     fn handle_function_load_request(
         registry: &mut Registry<'static>,
         sender: Sender,
@@ -212,7 +203,6 @@ impl Client {
 
         sender
             .send(message)
-            .wait()
             .expect("Failed to send message to response thread");
     }
 
@@ -264,8 +254,7 @@ impl Client {
         message.set_invocation_response(res);
 
         sender
-            .send(message)
-            .wait()
+            .try_send(message)
             .expect("Failed to send message to response thread");
     }
 
@@ -295,7 +284,6 @@ impl Client {
 
         sender
             .send(message)
-            .wait()
             .expect("Failed to send message to response thread");
     }
 
@@ -308,7 +296,6 @@ impl Client {
 
         sender
             .send(message)
-            .wait()
             .expect("Failed to send message to response thread");
     }
 
