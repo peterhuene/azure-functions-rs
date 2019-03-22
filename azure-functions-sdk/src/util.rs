@@ -52,16 +52,9 @@ pub fn create_from_template(
     Ok(())
 }
 
-pub fn path_to_string(path: &syn::Path) -> String {
-    let mut s = String::new();
-
-    for segment in path.segments.iter() {
-        if !s.is_empty() {
-            s += "::";
-        }
-
-        s += &segment.ident.to_string();
-    }
-
-    s
+pub fn last_segment_in_path(path: &syn::Path) -> &syn::PathSegment {
+    path.segments
+        .iter()
+        .last()
+        .expect("expected at least one segment in path")
 }

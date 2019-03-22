@@ -1,5 +1,6 @@
-use chrono::{DateTime, FixedOffset, Utc};
-use serde::{de::Error, Deserialize, Deserializer};
+use crate::util::deserialize_datetime;
+use chrono::{DateTime, Utc};
+use serde_derive::Deserialize;
 
 /// Represents a timer binding schedule status.
 #[derive(Debug, Deserialize)]
@@ -16,23 +17,6 @@ pub struct ScheduleStatus {
     /// This is used to re-calculate `next` with the current schedule after a host restart.
     #[serde(deserialize_with = "deserialize_datetime")]
     pub last_updated: DateTime<Utc>,
-}
-
-fn deserialize_datetime<'a, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
-where
-    D: Deserializer<'a>,
-{
-    let mut s = String::deserialize(deserializer)?;
-
-    // This exists because the Azure Functions Host serializes DateTime.MinValue without a timezone
-    // However, chrono::DateTime requires one for DateTime<Utc>
-    if s == "0001-01-01T00:00:00" {
-        s += "Z";
-    }
-
-    s.parse::<DateTime<FixedOffset>>()
-        .map_err(|e| Error::custom(format!("{}", e)))
-        .map(|dt| dt.with_timezone(&Utc))
 }
 
 #[cfg(test)]

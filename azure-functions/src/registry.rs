@@ -1,4 +1,5 @@
 use crate::codegen::{bindings, Function};
+use lazy_static::lazy_static;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
@@ -6,34 +7,60 @@ const STORAGE_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Storage";
 const STORAGE_PACKAGE_VERSION: &str = "3.0.3";
 const EVENT_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventGrid";
 const EVENT_GRID_PACKAGE_VERSION: &str = "2.0.0";
+const EVENT_HUBS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventHubs";
+const EVENT_HUBS_PACKAGE_VERSION: &str = "3.0.2";
+const COSMOS_DB_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.CosmosDB";
+const COSMOS_DB_PACKAGE_VERSION: &str = "3.0.3";
+const SIGNALR_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.SignalRService";
+const SIGNALR_PACKAGE_VERSION: &str = "1.0.0";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
     static ref BINDING_EXTENSIONS: HashMap<&'static str, (&'static str, &'static str)> = {
         let mut map = HashMap::new();
         map.insert(
-            bindings::BLOB_TRIGGER_TYPE,
+            bindings::BlobTrigger::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::BLOB_TYPE,
+            bindings::Blob::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::QUEUE_TYPE,
+            bindings::Queue::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::QUEUE_TRIGGER_TYPE,
+            bindings::QueueTrigger::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::TABLE_TYPE,
+            bindings::Table::binding_type(),
             (STORAGE_PACKAGE_NAME, STORAGE_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::EVENT_GRID_TRIGGER_TYPE,
+            bindings::EventGridTrigger::binding_type(),
             (EVENT_GRID_PACKAGE_NAME, EVENT_GRID_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::EventHubTrigger::binding_type(),
+            (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::EventHub::binding_type(),
+            (EVENT_HUBS_PACKAGE_NAME, EVENT_HUBS_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::CosmosDbTrigger::binding_type(),
+            (COSMOS_DB_PACKAGE_NAME, COSMOS_DB_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::SignalRConnectionInfo::binding_type(),
+            (SIGNALR_PACKAGE_NAME, SIGNALR_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::SignalR::binding_type(),
+            (SIGNALR_PACKAGE_NAME, SIGNALR_PACKAGE_VERSION),
         );
         map
     };
@@ -109,7 +136,7 @@ impl<'a> Registry<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codegen::{Binding, Direction};
+    use crate::codegen::bindings::{Binding, Direction};
     use std::borrow::Cow;
 
     #[test]

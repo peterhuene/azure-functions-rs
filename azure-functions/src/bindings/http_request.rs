@@ -1,4 +1,3 @@
-use crate::bindings::Trigger;
 use crate::http::Body;
 use crate::rpc::protocol;
 use std::collections::HashMap;
@@ -10,14 +9,13 @@ use std::collections::HashMap;
 /// A function that responds with a friendly greeting:
 ///
 /// ```rust
-/// # extern crate azure_functions;
 /// use azure_functions::{
 ///     bindings::{HttpRequest, HttpResponse},
 ///     func,
 /// };
 ///
 /// #[func]
-/// pub fn greet(request: &HttpRequest) -> HttpResponse {
+/// pub fn greet(request: HttpRequest) -> HttpResponse {
 ///     format!(
 ///         "Hello, {}!",
 ///         request.query_params().get("name").map_or("stranger", |x| x)
@@ -54,13 +52,12 @@ impl HttpRequest {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate azure_functions;
     /// use azure_functions::func;
     /// use azure_functions::bindings::{HttpRequest, HttpResponse};
     ///
     /// #[func]
     /// #[binding(name = "request", route = "users/{id:int}")]
-    /// pub fn users(request: &HttpRequest) -> HttpResponse {
+    /// pub fn users(request: HttpRequest) -> HttpResponse {
     ///     format!(
     ///         "User ID requested: {}",
     ///         request.route_params().get("id").unwrap()
@@ -81,12 +78,11 @@ impl HttpRequest {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate azure_functions;
     /// use azure_functions::func;
     /// use azure_functions::bindings::{HttpRequest, HttpResponse};
     ///
     /// #[func]
-    /// pub fn users(request: &HttpRequest) -> HttpResponse {
+    /// pub fn users(request: HttpRequest) -> HttpResponse {
     ///     format!(
     ///         "The 'name' query parameter is: {}",
     ///         request.query_params().get("name").map_or("undefined", |x| x)
@@ -107,8 +103,12 @@ impl HttpRequest {
     }
 }
 
-impl From<protocol::TypedData> for HttpRequest {
-    fn from(mut data: protocol::TypedData) -> Self {
+impl HttpRequest {
+    #[doc(hidden)]
+    pub fn new(
+        mut data: protocol::TypedData,
+        _: &mut HashMap<String, protocol::TypedData>,
+    ) -> Self {
         if !data.has_http() {
             panic!("unexpected type data for HTTP request.");
         }
@@ -116,13 +116,10 @@ impl From<protocol::TypedData> for HttpRequest {
     }
 }
 
-impl Trigger for HttpRequest {
-    fn read_metadata(&mut self, _: &mut HashMap<String, protocol::TypedData>) {}
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use matches::matches;
     use std::borrow::Cow;
 
     #[test]
@@ -134,7 +131,9 @@ mod tests {
         http.set_method(METHOD.to_string());
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert_eq!(request.method(), METHOD);
     }
 
@@ -147,7 +146,9 @@ mod tests {
         http.set_url(URL.to_string());
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert_eq!(request.url(), URL);
     }
 
@@ -163,7 +164,9 @@ mod tests {
         http.set_headers(headers);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert_eq!(request.headers().get(KEY).unwrap(), VALUE);
     }
 
@@ -179,7 +182,9 @@ mod tests {
         http.set_params(params);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert_eq!(request.route_params().get(KEY).unwrap(), VALUE);
     }
 
@@ -195,7 +200,9 @@ mod tests {
         http.set_query(params);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert_eq!(request.query_params().get(KEY).unwrap(), VALUE);
     }
 
@@ -206,7 +213,9 @@ mod tests {
 
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert!(matches!(request.body(), Body::Empty));
     }
 
@@ -222,7 +231,9 @@ mod tests {
         http.set_body(body);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert!(matches!(request.body(), Body::String(Cow::Borrowed(BODY))));
     }
 
@@ -238,7 +249,9 @@ mod tests {
         http.set_body(body);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert!(matches!(request.body(), Body::Json(Cow::Borrowed(BODY))));
     }
 
@@ -254,7 +267,9 @@ mod tests {
         http.set_body(body);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert!(matches!(request.body(), Body::Bytes(Cow::Borrowed(BODY))));
     }
 
@@ -270,7 +285,9 @@ mod tests {
         http.set_body(body);
         data.set_http(http);
 
-        let request: HttpRequest = data.into();
+        let mut metadata = HashMap::new();
+
+        let request = HttpRequest::new(data, &mut metadata);
         assert!(matches!(request.body(), Body::Bytes(Cow::Borrowed(BODY))));
     }
 }

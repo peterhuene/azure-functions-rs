@@ -4,22 +4,30 @@
 //!
 //! The following Azure Functions trigger bindings are supported:
 //!
-//! * [Blob triggers](bindings/struct.BlobTrigger.html)
-//! * [Event Grid triggers](bindings/struct.EventGridEvent.html)
-//! * [HTTP triggers](bindings/struct.HttpRequest.html)
-//! * [Queue triggers](bindings/struct.QueueTrigger.html)
-//! * [Timer triggers](bindings/struct.TimerInfo.html)
+//! * [Blob trigger](bindings/struct.BlobTrigger.html)
+//! * [Cosmos DB trigger](bindings/struct.CosmosDbTrigger.html)
+//! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
+//! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
+//! * [HTTP trigger](bindings/struct.HttpRequest.html)
+//! * [Queue trigger](bindings/struct.QueueTrigger.html)
+//! * [Timer trigger](bindings/struct.TimerInfo.html)
 //!
 //! The following Azure Functions input bindings are supported:
 //!
 //! * [Blob input](bindings/struct.Blob.html)
+//! * [Cosmos DB input](bindings/struct.CosmosDbDocument.html)
+//! * [SignalR connection info input](bindings/struct.SignalRConnectionInfo.html)
 //! * [Table input](bindings/struct.Table.html)
 //!
 //! The following Azure Functions output bindings are supported:
 //!
 //! * [Blob output](bindings/struct.Blob.html)
+//! * [Cosmos DB output](bindings/struct.CosmosDbDocument.html)
+//! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
-//! * [Queue message output](bindings/struct.QueueMessage.html)
+//! * [Queue output](bindings/struct.QueueMessage.html)
+//! * [SignalR group action output](bindings/struct.SignalRGroupAction.html)
+//! * [SignalR message output](bindings/struct.SignalRMessage.html)
 //! * [Table output](bindings/struct.Table.html)
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
@@ -53,7 +61,7 @@
 //! };
 //!
 //! #[func]
-//! pub fn hello(req: &HttpRequest) -> HttpResponse {
+//! pub fn hello(req: HttpRequest) -> HttpResponse {
 //!     "Hello from Rust!".into()
 //! }
 //! ```
@@ -73,22 +81,13 @@
 #![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]
 
-#[macro_use]
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-#[cfg(test)]
-#[macro_use(matches)]
-extern crate matches;
-#[macro_use]
-extern crate lazy_static;
-
 #[doc(no_inline)]
 pub use azure_functions_codegen::func;
 
 #[doc(hidden)]
 pub use azure_functions_shared::codegen;
 
+mod backtrace;
 mod cli;
 mod logger;
 mod registry;
@@ -96,9 +95,11 @@ mod util;
 
 pub mod bindings;
 pub mod blob;
+pub mod event_hub;
 pub mod http;
 #[doc(hidden)]
 pub mod rpc;
+pub mod signalr;
 pub mod timer;
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;
@@ -107,15 +108,24 @@ pub use azure_functions_shared::Context;
 use crate::registry::Registry;
 use futures::Future;
 use serde::Serialize;
-use serde_json::{to_string_pretty, Serializer};
+use serde_json::{json, to_string_pretty, Serializer};
 use std::env::{current_dir, current_exe};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::{Arc, Mutex};
 use tempfile::TempDir;
 use xml::writer::XmlEvent;
 use xml::EmitterConfig;
+
+#[doc(hidden)]
+pub trait IntoVec<T> {
+    fn into_vec(self) -> Vec<T>;
+}
+
+#[doc(hidden)]
+pub trait FromVec<T> {
+    fn from_vec(vec: Vec<T>) -> Self;
+}
 
 // This is a workaround to the issue that `file!` expands to be workspace-relative
 // and cargo does not have an environment variable for the workspace directory.
@@ -388,7 +398,7 @@ fn initialize_script_root(
     script_root: &str,
     sync: bool,
     verbose: bool,
-    registry: &Arc<Mutex<Registry<'static>>>,
+    registry: Registry<'static>,
 ) {
     let script_root = current_dir()
         .expect("failed to get current directory")
@@ -408,7 +418,7 @@ fn initialize_script_root(
 
     delete_existing_function_directories(&script_root, verbose);
 
-    for (name, info) in registry.lock().unwrap().iter() {
+    for (name, info) in registry.iter() {
         let function_dir = create_function_directory(&script_root, name, verbose);
 
         let source_file = get_source_file_path(
@@ -432,7 +442,7 @@ fn initialize_script_root(
     }
 
     if sync {
-        sync_extensions(script_root.to_str().unwrap(), verbose, &registry);
+        sync_extensions(script_root.to_str().unwrap(), verbose, registry);
     }
 }
 
@@ -521,10 +531,8 @@ fn write_generator_project_file(path: &Path) {
     writer.write(XmlEvent::end_element()).unwrap();
 }
 
-fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Registry<'static>>>) {
-    let reg = registry.lock().unwrap();
-
-    if !reg.has_binding_extensions() {
+fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>) {
+    if !registry.has_binding_extensions() {
         if verbose {
             println!("No binding extensions are needed.");
         }
@@ -538,7 +546,7 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Regist
         .expect("failed to get current directory")
         .join(script_root);
 
-    write_extensions_project_file(&extensions_project_path, &reg);
+    write_extensions_project_file(&extensions_project_path, &registry);
     write_generator_project_file(&metadata_project_path);
 
     if verbose {
@@ -548,12 +556,12 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: &Arc<Mutex<Regist
     if !Command::new("dotnet")
         .args(&[
             "publish",
-            "/v:q",
-            "/nologo",
             "-c",
             "Release",
             "-o",
             output_directory.join("bin").to_str().unwrap(),
+            "/v:q",
+            "/nologo",
             extensions_project_path.to_str().unwrap(),
         ])
         .current_dir(temp_dir.path())
@@ -595,7 +603,7 @@ fn run_worker(
     host: &str,
     port: u32,
     max_message_length: Option<i32>,
-    registry: &Arc<Mutex<Registry<'static>>>,
+    registry: Registry<'static>,
 ) {
     ctrlc::set_handler(|| {}).expect("failed setting SIGINT handler");
 
@@ -605,13 +613,13 @@ fn run_worker(
 
     client
         .connect(host, port)
-        .and_then(|client| {
+        .and_then(move |client| {
             println!(
                 "Connected to Azure Functions host version {}.",
                 client.host_version().unwrap()
             );
 
-            client.process_all_messages(&registry)
+            client.process_all_messages(registry)
         })
         .wait()
         .unwrap();
@@ -632,7 +640,7 @@ fn run_worker(
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
     let matches = cli::create_app().get_matches_from(args);
-    let registry = Arc::new(Mutex::new(Registry::new(functions)));
+    let registry = Registry::new(functions);
 
     if let Some(matches) = matches.subcommand_matches("init") {
         initialize_script_root(
@@ -641,7 +649,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
                 .expect("A script root is required."),
             matches.is_present("sync"),
             matches.is_present("verbose"),
-            &registry,
+            registry,
         );
         return;
     }
@@ -652,7 +660,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
                 .value_of("script_root")
                 .expect("A script root is required."),
             matches.is_present("verbose"),
-            &registry,
+            registry,
         );
         return;
     }
@@ -670,7 +678,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("max_message_length")
                 .map(|len| len.parse::<i32>().expect("Invalid maximum message length")),
-            &registry,
+            registry,
         );
         return;
     }

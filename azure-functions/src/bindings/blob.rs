@@ -1,46 +1,54 @@
+use crate::http::Body;
 use crate::rpc::protocol;
 use serde::de::Error;
 use serde::Deserialize;
 use serde_json::{from_str, Result, Value};
+use std::borrow::Cow;
 use std::fmt;
 use std::str::from_utf8;
 
-/// Represents a Azure Storage blob input or output binding.
+/// Represents an Azure Storage blob input or output binding.
 ///
 /// # Examples
 ///
 /// Creating a blob from a string:
 ///
 /// ```rust
-/// use azure_functions::bindings::Blob;
+/// use azure_functions::bindings::{HttpRequest, Blob};
+/// use azure_functions::func;
 ///
-/// let blob: Blob = "hello world!".into();
-/// assert_eq!(blob.as_str().unwrap(), "hello world!");
+/// #[func]
+/// #[binding(name = "output1", path = "example")]
+/// pub fn create_blob(_req: HttpRequest) -> ((), Blob) {
+///     ((), "Hello world!".into())
+/// }
 /// ```
 ///
 /// Creating a blob from a JSON value (see the [json! macro](https://docs.serde.rs/serde_json/macro.json.html) from the `serde_json` crate):
 ///
 /// ```rust
-/// # #[macro_use] extern crate serde_json;
-/// # extern crate azure_functions;
-/// use azure_functions::bindings::Blob;
+/// use azure_functions::bindings::{HttpRequest, Blob};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let blob: Blob = json!({ "hello": "world!" }).into();
-///
-/// assert_eq!(blob.as_str().unwrap(), r#"{"hello":"world!"}"#);
+/// #[func]
+/// #[binding(name = "output1", path = "example")]
+/// pub fn create_blob(_req: HttpRequest) -> ((), Blob) {
+///     ((), json!({ "hello": "world!" }).into())
+/// }
 /// ```
 ///
 /// Creating a blob from a sequence of bytes:
 ///
 /// ```rust
-/// use azure_functions::bindings::Blob;
+/// use azure_functions::bindings::{HttpRequest, Blob};
+/// use azure_functions::func;
 ///
-/// let blob: Blob = [1, 2, 3][..].into();
-///
-/// assert_eq!(
-///     blob.as_bytes(),
-///     [1, 2, 3]
-/// );
+/// #[func]
+/// #[binding(name = "output1", path = "example")]
+/// pub fn create_blob(_req: HttpRequest) -> ((), Blob) {
+///     ((), [1, 2, 3][..].into())
+/// }
 /// ```
 #[derive(Debug, Clone)]
 pub struct Blob(protocol::TypedData);
@@ -149,12 +157,82 @@ impl From<Vec<u8>> for Blob {
     }
 }
 
+#[doc(hidden)]
 impl From<protocol::TypedData> for Blob {
     fn from(data: protocol::TypedData) -> Self {
         Blob(data)
     }
 }
 
+impl Into<String> for Blob {
+    fn into(mut self) -> String {
+        if self.0.has_string() {
+            return self.0.take_string();
+        }
+        if self.0.has_json() {
+            return self.0.take_json();
+        }
+        if self.0.has_bytes() {
+            return String::from_utf8(self.0.take_bytes())
+                .expect("blob does not contain valid UTF-8 bytes");
+        }
+        if self.0.has_stream() {
+            return String::from_utf8(self.0.take_stream())
+                .expect("blob does not contain valid UTF-8 bytes");
+        }
+        panic!("unexpected data for blob content");
+    }
+}
+
+impl Into<Value> for Blob {
+    fn into(self) -> Value {
+        from_str(
+            self.as_str()
+                .expect("blob does not contain valid UTF-8 data"),
+        )
+        .expect("blob does not contain valid JSON data")
+    }
+}
+
+impl Into<Vec<u8>> for Blob {
+    fn into(mut self) -> Vec<u8> {
+        if self.0.has_string() {
+            return self.0.take_string().into_bytes();
+        }
+        if self.0.has_json() {
+            return self.0.take_json().into_bytes();
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream();
+        }
+
+        panic!("unexpected data for blob content");
+    }
+}
+
+impl<'a> Into<Body<'a>> for Blob {
+    fn into(mut self) -> Body<'a> {
+        if self.0.has_string() {
+            return self.0.take_string().into();
+        }
+        if self.0.has_json() {
+            return Body::Json(Cow::from(self.0.take_json()));
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes().into();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream().into();
+        }
+
+        panic!("unexpected data for blob content");
+    }
+}
+
+#[doc(hidden)]
 impl Into<protocol::TypedData> for Blob {
     fn into(self) -> protocol::TypedData {
         self.0
@@ -164,6 +242,8 @@ impl Into<protocol::TypedData> for Blob {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::Serialize;
+    use serde_json::json;
     use serde_json::to_value;
     use std::fmt::Write;
 
@@ -260,6 +340,42 @@ mod tests {
 
         let blob: Blob = data.into();
         assert_eq!(blob.as_str().unwrap(), BLOB);
+    }
+
+    #[test]
+    fn it_converts_to_string() {
+        let blob: Blob = "hello world!".into();
+        let s: String = blob.into();
+        assert_eq!(s, "hello world!");
+    }
+
+    #[test]
+    fn it_converts_to_json() {
+        let blob: Blob = json!({"hello": "world"}).into();
+        let value: Value = blob.into();
+        assert_eq!(value.to_string(), r#"{"hello":"world"}"#);
+    }
+
+    #[test]
+    fn it_converts_to_bytes() {
+        let blob: Blob = vec![1, 2, 3].into();
+        let bytes: Vec<u8> = blob.into();
+        assert_eq!(bytes, [1, 2, 3]);
+    }
+
+    #[test]
+    fn it_converts_to_body() {
+        let blob: Blob = "hello world!".into();
+        let body: Body = blob.into();
+        assert_eq!(body.as_str().unwrap(), "hello world!");
+
+        let blob: Blob = json!({"hello": "world"}).into();
+        let body: Body = blob.into();
+        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
+
+        let blob: Blob = vec![1, 2, 3].into();
+        let body: Body = blob.into();
+        assert_eq!(body.as_bytes(), [1, 2, 3]);
     }
 
     #[test]

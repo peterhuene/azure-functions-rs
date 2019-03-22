@@ -1,15 +1,16 @@
 //! # Azure Functions for Rust
 //!
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
+#![recursion_limit = "128"]
+#![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
-
-#[macro_use]
-extern crate serde_derive;
 
 #[doc(hidden)]
 pub mod codegen;
 mod context;
+#[doc(hidden)]
+pub mod util;
 
 #[doc(hidden)]
 #[allow(renamed_and_removed_lints)]
@@ -19,7 +20,9 @@ pub mod rpc {
 
         generated_mod!(FunctionRpc);
         generated_mod!(FunctionRpc_grpc);
+        generated_mod!(ClaimsIdentityRpc);
 
+        pub use self::ClaimsIdentityRpc::*;
         pub use self::FunctionRpc::*;
         pub use self::FunctionRpc_grpc::*;
     }

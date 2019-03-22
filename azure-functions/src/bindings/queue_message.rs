@@ -1,7 +1,8 @@
-use crate::rpc::protocol;
+use crate::{http::Body, rpc::protocol, FromVec};
 use serde::de::Error;
 use serde::Deserialize;
 use serde_json::{from_str, Result, Value};
+use std::borrow::Cow;
 use std::fmt;
 use std::str::from_utf8;
 
@@ -12,43 +13,50 @@ use std::str::from_utf8;
 /// Creating a queue message from a string:
 ///
 /// ```rust
-/// use azure_functions::bindings::QueueMessage;
+/// use azure_functions::bindings::{HttpRequest, QueueMessage};
+/// use azure_functions::func;
 ///
-/// let message: QueueMessage = "hello world!".into();
-/// assert_eq!(message.as_str().unwrap(), "hello world!");
+/// #[func]
+/// #[binding(name = "output1", queue_name = "example")]
+/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
+///     ((), "Hello world!".into())
+/// }
 /// ```
 ///
 /// Creating a queue message from a JSON value (see the [json! macro](https://docs.serde.rs/serde_json/macro.json.html) from the `serde_json` crate):
 ///
 /// ```rust
-/// # #[macro_use] extern crate serde_json;
-/// # extern crate azure_functions;
-/// use azure_functions::bindings::QueueMessage;
+/// use azure_functions::bindings::{HttpRequest, QueueMessage};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let message: QueueMessage = json!({ "hello": "world!" }).into();
-///
-/// assert_eq!(message.as_str().unwrap(), r#"{"hello":"world!"}"#);
+/// #[func]
+/// #[binding(name = "output1", queue_name = "example")]
+/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
+///     ((), json!({ "hello": "world" }).into())
+/// }
 /// ```
 ///
 /// Creating a queue message from a sequence of bytes:
 ///
 /// ```rust
-/// use azure_functions::bindings::QueueMessage;
+/// use azure_functions::bindings::{HttpRequest, QueueMessage};
+/// use azure_functions::func;
+/// use serde_json::json;
 ///
-/// let message: QueueMessage = [1, 2, 3][..].into();
-///
-/// assert_eq!(
-///     message.as_bytes(),
-///     [1, 2, 3]
-/// );
+/// #[func]
+/// #[binding(name = "output1", queue_name = "example")]
+/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
+///     ((), [1, 2, 3][..].into())
+/// }
 /// ```
 #[derive(Debug, Clone)]
 pub struct QueueMessage(protocol::TypedData);
 
 impl QueueMessage {
-    /// Gets the content of the blob as a string.
+    /// Gets the content of the message as a string.
     ///
-    /// Returns None if there is no valid string representation of the blob.
+    /// Returns None if there is no valid string representation of the message.
     pub fn as_str(&self) -> Option<&str> {
         if self.0.has_string() {
             return Some(self.0.get_string());
@@ -65,7 +73,7 @@ impl QueueMessage {
         None
     }
 
-    /// Gets the content of the blob as a slice of bytes.
+    /// Gets the content of the message as a slice of bytes.
     pub fn as_bytes(&self) -> &[u8] {
         if self.0.has_string() {
             return self.0.get_string().as_bytes();
@@ -80,17 +88,17 @@ impl QueueMessage {
             return self.0.get_stream();
         }
 
-        panic!("unexpected data for blob contents");
+        panic!("unexpected data for queue message contents");
     }
 
-    /// Deserializes the blob as JSON to the requested type.
+    /// Deserializes the message as JSON to the requested type.
     pub fn as_json<'b, T>(&'b self) -> Result<T>
     where
         T: Deserialize<'b>,
     {
         from_str(
             self.as_str()
-                .ok_or_else(|| ::serde_json::Error::custom("blob is not valid UTF-8"))?,
+                .ok_or_else(|| ::serde_json::Error::custom("queue message is not valid UTF-8"))?,
         )
     }
 }
@@ -149,12 +157,114 @@ impl From<Vec<u8>> for QueueMessage {
     }
 }
 
+#[doc(hidden)]
 impl From<protocol::TypedData> for QueueMessage {
     fn from(data: protocol::TypedData) -> Self {
         QueueMessage(data)
     }
 }
 
+#[doc(hidden)]
+impl FromVec<QueueMessage> for protocol::TypedData {
+    fn from_vec(vec: Vec<QueueMessage>) -> Self {
+        let mut data = protocol::TypedData::new();
+        data.set_json(Value::Array(vec.into_iter().map(Into::into).collect()).to_string());
+        data
+    }
+}
+
+impl Into<String> for QueueMessage {
+    fn into(mut self) -> String {
+        if self.0.has_string() {
+            return self.0.take_string();
+        }
+        if self.0.has_json() {
+            return self.0.take_json();
+        }
+        if self.0.has_bytes() {
+            return String::from_utf8(self.0.take_bytes())
+                .expect("queue message does not contain valid UTF-8 bytes");
+        }
+        if self.0.has_stream() {
+            return String::from_utf8(self.0.take_stream())
+                .expect("queue message does not contain valid UTF-8 bytes");
+        }
+        panic!("unexpected data for queue message content");
+    }
+}
+
+impl Into<Value> for QueueMessage {
+    fn into(mut self) -> Value {
+        if self.0.has_string() {
+            return Value::String(self.0.take_string());
+        }
+        if self.0.has_json() {
+            return from_str(self.0.get_json())
+                .expect("queue message does not contain valid JSON data");
+        }
+        // TODO: this is not an efficient encoding
+        if self.0.has_bytes() {
+            return Value::Array(
+                self.0
+                    .get_bytes()
+                    .iter()
+                    .map(|n| Value::Number(u64::from(*n).into()))
+                    .collect(),
+            );
+        }
+        // TODO: this is not an efficient encoding
+        if self.0.has_stream() {
+            return Value::Array(
+                self.0
+                    .get_stream()
+                    .iter()
+                    .map(|n| Value::Number(u64::from(*n).into()))
+                    .collect(),
+            );
+        }
+        panic!("unexpected data for queue message content");
+    }
+}
+
+impl Into<Vec<u8>> for QueueMessage {
+    fn into(mut self) -> Vec<u8> {
+        if self.0.has_string() {
+            return self.0.take_string().into_bytes();
+        }
+        if self.0.has_json() {
+            return self.0.take_json().into_bytes();
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream();
+        }
+
+        panic!("unexpected data for queue message content");
+    }
+}
+
+impl<'a> Into<Body<'a>> for QueueMessage {
+    fn into(mut self) -> Body<'a> {
+        if self.0.has_string() {
+            return self.0.take_string().into();
+        }
+        if self.0.has_json() {
+            return Body::Json(Cow::from(self.0.take_json()));
+        }
+        if self.0.has_bytes() {
+            return self.0.take_bytes().into();
+        }
+        if self.0.has_stream() {
+            return self.0.take_stream().into();
+        }
+
+        panic!("unexpected data for blob content");
+    }
+}
+
+#[doc(hidden)]
 impl Into<protocol::TypedData> for QueueMessage {
     fn into(self) -> protocol::TypedData {
         self.0
@@ -164,7 +274,8 @@ impl Into<protocol::TypedData> for QueueMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::to_value;
+    use serde_derive::{Deserialize, Serialize};
+    use serde_json::{json, to_value};
     use std::fmt::Write;
 
     #[test]
@@ -249,6 +360,42 @@ mod tests {
     fn it_converts_from_u8_vec() {
         let message: QueueMessage = vec![0, 1, 2].into();
         assert_eq!(message.as_bytes(), [0, 1, 2]);
+    }
+
+    #[test]
+    fn it_converts_to_string() {
+        let message: QueueMessage = "hello world!".into();
+        let s: String = message.into();
+        assert_eq!(s, "hello world!");
+    }
+
+    #[test]
+    fn it_converts_to_json() {
+        let message: QueueMessage = json!({"hello": "world"}).into();
+        let value: Value = message.into();
+        assert_eq!(value.to_string(), r#"{"hello":"world"}"#);
+    }
+
+    #[test]
+    fn it_converts_to_bytes() {
+        let message: QueueMessage = vec![1, 2, 3].into();
+        let bytes: Vec<u8> = message.into();
+        assert_eq!(bytes, [1, 2, 3]);
+    }
+
+    #[test]
+    fn it_converts_to_body() {
+        let message: QueueMessage = "hello world!".into();
+        let body: Body = message.into();
+        assert_eq!(body.as_str().unwrap(), "hello world!");
+
+        let message: QueueMessage = json!({"hello": "world"}).into();
+        let body: Body = message.into();
+        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
+
+        let message: QueueMessage = vec![1, 2, 3].into();
+        let body: Body = message.into();
+        assert_eq!(body.as_bytes(), [1, 2, 3]);
     }
 
     #[test]

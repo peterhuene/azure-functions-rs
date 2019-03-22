@@ -1,48 +1,38 @@
-extern crate protoc_grpcio;
-
 use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-const OUT_DIR_VAR: &'static str = "OUT_DIR";
-const CACHE_DIR_NAME: &'static str = "cache";
-const PROTOBUF_INPUT_FILE: &'static str = "FunctionRpc.proto";
-const RUST_PROTOBUF_FILE: &'static str = "FunctionRpc.rs";
-const RUST_GRPC_FILE: &'static str = "FunctionRpc_grpc.rs";
+const OUT_DIR_VAR: &str = "OUT_DIR";
+const CACHE_DIR_NAME: &str = "cache";
+const PROTOBUF_INPUT_FILES: &[&str] = &["FunctionRpc.proto", "identity/ClaimsIdentityRpc.proto"];
+const OUTPUT_FILES: &[&str] = &[
+    "FunctionRpc.rs",
+    "FunctionRpc_grpc.rs",
+    "ClaimsIdentityRpc.rs",
+];
 
 fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
     protoc_grpcio::compile_grpc_protos(
-        &[PROTOBUF_INPUT_FILE],
+        PROTOBUF_INPUT_FILES,
         &["protobuf/src/proto"],
         &out_dir,
         None,
     )
     .expect("Failed to compile gRPC definitions.");
 
-    fs::copy(
-        out_dir.join(RUST_PROTOBUF_FILE),
-        cache_dir.join(RUST_PROTOBUF_FILE),
-    )
-    .expect(&format!("can't update cache file '{}'", RUST_PROTOBUF_FILE));
-
-    fs::copy(out_dir.join(RUST_GRPC_FILE), cache_dir.join(RUST_GRPC_FILE))
-        .expect(&format!("can't update cache file '{}'", RUST_GRPC_FILE));
+    for file in OUTPUT_FILES.iter() {
+        fs::copy(out_dir.join(file), cache_dir.join(file))
+            .expect(&format!("can't update cache file '{}'", file));
+    }
 }
 
 fn use_cached_files(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    fs::copy(
-        cache_dir.join(RUST_PROTOBUF_FILE),
-        out_dir.join(RUST_PROTOBUF_FILE),
-    )
-    .expect(&format!(
-        "can't copy cache file '{}' to output directory",
-        RUST_PROTOBUF_FILE
-    ));
-
-    fs::copy(cache_dir.join(RUST_GRPC_FILE), out_dir.join(RUST_GRPC_FILE)).expect(&format!(
-        "can't copy cache file '{}' to output directory",
-        RUST_GRPC_FILE
-    ));
+    for file in OUTPUT_FILES.iter() {
+        fs::copy(cache_dir.join(file), out_dir.join(file)).expect(&format!(
+            "can't copy cache file '{}' to output directory",
+            file
+        ));
+    }
 }
 
 fn main() {

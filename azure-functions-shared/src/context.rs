@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 
 /// Represents context about an Azure Function invocation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context<'a> {
     invocation_id: &'a str,
     function_id: &'a str,
@@ -42,7 +42,7 @@ impl<'a> Context<'a> {
     /// Gets the directory for the current Azure Function Application.
     pub fn app_directory(&self) -> Option<PathBuf> {
         env::current_exe()
-            .map(|p| p.parent().map(|p| p.to_owned()))
+            .map(|p| p.parent().map(ToOwned::to_owned))
             .ok()
             .unwrap_or(None)
     }

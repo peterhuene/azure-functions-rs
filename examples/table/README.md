@@ -16,7 +16,7 @@ use serde_json::Value;
 #[func]
 #[binding(name = "req", route = "create/{table}/{partition}/{row}")]
 #[binding(name = "output1", table_name = "{table}")]
-pub fn create_row(req: &HttpRequest) -> ((), Table) {
+pub fn create_row(req: HttpRequest) -> ((), Table) {
     let mut table = Table::new();
     {
         let row = table.add_row(
@@ -50,7 +50,7 @@ use serde_json::Value;
     partition_key = "{partition}",
     row_key = "{row}"
 )]
-pub fn read_row(_req: &HttpRequest, table: &Table) -> HttpResponse {
+pub fn read_row(_req: HttpRequest, table: Table) -> HttpResponse {
     table.as_value().get(0).unwrap_or(&Value::Null).into()
 }
 ```
@@ -77,7 +77,7 @@ To create a row in a table named `test` with partition key `partition1` and row 
 use curl to invoke the `create_row` function:
 
 ```
-curl -d "hello world!" http://localhost:8080/api/create/test/partition1/row1 -v
+$ curl -d "hello world!" http://localhost:8080/api/create/test/partition1/row1 -v
 ```
 
 With any luck, this should return a `204 No Content` response.
@@ -87,7 +87,7 @@ With any luck, this should return a `204 No Content` response.
 To read a row from a table named `test` with partition key `partition1` and row key `row1`:
 
 ```
-curl http://localhost:8080/api/read/test/partition1/row1
+$ curl http://localhost:8080/api/read/test/partition1/row1
 ```
 
 With any luck, the entity should be printed by `curl`.

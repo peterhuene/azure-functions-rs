@@ -4,7 +4,7 @@ use azure_functions::{
 };
 
 #[func]
-pub fn greet(context: &Context, req: &HttpRequest) -> HttpResponse {
+pub fn greet(context: Context, req: HttpRequest) -> HttpResponse {
     log::info!("Context: {:?}, Request: {:?}", context, req);
 
     format!(

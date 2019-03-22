@@ -142,8 +142,8 @@ impl Default for StandardBlobTier {
     }
 }
 
-/// Represents the properties of a Azure Storage blob.
-#[derive(Default, Debug, Deserialize)]
+/// Represents the properties of an Azure Storage blob.
+#[derive(Default, Debug, serde_derive::Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Properties {
     /// The number of committed blocks, if the blob is an append blob.
@@ -320,7 +320,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::from_value;
+    use matches::matches;
+    use serde_json::{from_value, json};
 
     #[test]
     fn it_deserializes_from_json() {
