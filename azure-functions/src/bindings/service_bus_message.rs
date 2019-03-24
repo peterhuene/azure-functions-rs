@@ -6,54 +6,56 @@ use std::borrow::Cow;
 use std::fmt;
 use std::str::from_utf8;
 
-/// Represents an Azure Storage Queue message output binding.
+/// Represents a Service Bus message output binding.
 ///
 /// # Examples
 ///
-/// Creating a queue message from a string:
+/// An example that creates a Service Bus queue message based on a HTTP trigger:
 ///
 /// ```rust
-/// use azure_functions::bindings::{HttpRequest, QueueMessage};
-/// use azure_functions::func;
+/// use azure_functions::{
+///     bindings::{HttpRequest, ServiceBusMessage},
+///     func,
+/// };
 ///
 /// #[func]
-/// #[binding(name = "output1", queue_name = "example")]
-/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
-///     ((), "Hello world!".into())
+/// #[binding(name = "$return", queue_name = "example", connection = "connection")]
+/// pub fn create_queue_message(req: HttpRequest) -> ServiceBusMessage {
+///     format!(
+///         "Hello from Rust, {}!\n",
+///         req.query_params().get("name").map_or("stranger", |x| x)
+///     )
+///     .into()
 /// }
 /// ```
 ///
-/// Creating a queue message from a JSON value (see the [json! macro](https://docs.serde.rs/serde_json/macro.json.html) from the `serde_json` crate):
+/// An example that creates a Service Bus topic message based on a HTTP trigger:
 ///
 /// ```rust
-/// use azure_functions::bindings::{HttpRequest, QueueMessage};
-/// use azure_functions::func;
-/// use serde_json::json;
+/// use azure_functions::{
+///     bindings::{HttpRequest, ServiceBusMessage},
+///     func,
+/// };
 ///
 /// #[func]
-/// #[binding(name = "output1", queue_name = "example")]
-/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
-///     ((), json!({ "hello": "world" }).into())
-/// }
-/// ```
-///
-/// Creating a queue message from a sequence of bytes:
-///
-/// ```rust
-/// use azure_functions::bindings::{HttpRequest, QueueMessage};
-/// use azure_functions::func;
-/// use serde_json::json;
-///
-/// #[func]
-/// #[binding(name = "output1", queue_name = "example")]
-/// pub fn example(_req: HttpRequest) -> ((), QueueMessage) {
-///     ((), [1, 2, 3][..].into())
+/// #[binding(
+///     name = "$return",
+///     topic_name = "mytopic",
+///     subscription_name = "mysubscription",
+///     connection = "connection"
+/// )]
+/// pub fn create_topic_message(req: HttpRequest) -> ServiceBusMessage {
+///     format!(
+///         "Hello from Rust, {}!\n",
+///         req.query_params().get("name").map_or("stranger", |x| x)
+///     )
+///     .into()
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct QueueMessage(protocol::TypedData);
+pub struct ServiceBusMessage(protocol::TypedData);
 
-impl QueueMessage {
+impl ServiceBusMessage {
     /// Gets the content of the message as a string.
     ///
     /// Returns None if there is no valid string representation of the message.
@@ -88,7 +90,7 @@ impl QueueMessage {
             return self.0.get_stream();
         }
 
-        panic!("unexpected data for queue message content");
+        panic!("unexpected data for service bus message content");
     }
 
     /// Deserializes the message as JSON to the requested type.
@@ -97,83 +99,84 @@ impl QueueMessage {
         T: Deserialize<'b>,
     {
         from_str(
-            self.as_str()
-                .ok_or_else(|| ::serde_json::Error::custom("queue message is not valid UTF-8"))?,
+            self.as_str().ok_or_else(|| {
+                ::serde_json::Error::custom("service bus message is not valid UTF-8")
+            })?,
         )
     }
 }
 
-impl fmt::Display for QueueMessage {
+impl fmt::Display for ServiceBusMessage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str().unwrap_or(""))
     }
 }
 
-impl<'a> From<&'a str> for QueueMessage {
+impl<'a> From<&'a str> for ServiceBusMessage {
     fn from(content: &'a str) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_string(content.to_owned());
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
-impl From<String> for QueueMessage {
+impl From<String> for ServiceBusMessage {
     fn from(content: String) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_string(content);
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
-impl From<&Value> for QueueMessage {
+impl From<&Value> for ServiceBusMessage {
     fn from(content: &Value) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_json(content.to_string());
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
-impl From<Value> for QueueMessage {
+impl From<Value> for ServiceBusMessage {
     fn from(content: Value) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_json(content.to_string());
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
-impl<'a> From<&'a [u8]> for QueueMessage {
+impl<'a> From<&'a [u8]> for ServiceBusMessage {
     fn from(content: &'a [u8]) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_bytes(content.to_owned());
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
-impl From<Vec<u8>> for QueueMessage {
+impl From<Vec<u8>> for ServiceBusMessage {
     fn from(content: Vec<u8>) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_bytes(content);
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
 #[doc(hidden)]
-impl From<protocol::TypedData> for QueueMessage {
+impl From<protocol::TypedData> for ServiceBusMessage {
     fn from(data: protocol::TypedData) -> Self {
-        QueueMessage(data)
+        ServiceBusMessage(data)
     }
 }
 
 #[doc(hidden)]
-impl FromVec<QueueMessage> for protocol::TypedData {
-    fn from_vec(vec: Vec<QueueMessage>) -> Self {
+impl FromVec<ServiceBusMessage> for protocol::TypedData {
+    fn from_vec(vec: Vec<ServiceBusMessage>) -> Self {
         let mut data = protocol::TypedData::new();
         data.set_json(Value::Array(vec.into_iter().map(Into::into).collect()).to_string());
         data
     }
 }
 
-impl Into<String> for QueueMessage {
+impl Into<String> for ServiceBusMessage {
     fn into(mut self) -> String {
         if self.0.has_string() {
             return self.0.take_string();
@@ -183,24 +186,24 @@ impl Into<String> for QueueMessage {
         }
         if self.0.has_bytes() {
             return String::from_utf8(self.0.take_bytes())
-                .expect("queue message does not contain valid UTF-8 bytes");
+                .expect("service bus message does not contain valid UTF-8 bytes");
         }
         if self.0.has_stream() {
             return String::from_utf8(self.0.take_stream())
-                .expect("queue message does not contain valid UTF-8 bytes");
+                .expect("service bus message does not contain valid UTF-8 bytes");
         }
-        panic!("unexpected data for queue message content");
+        panic!("unexpected data for service bus message content");
     }
 }
 
-impl Into<Value> for QueueMessage {
+impl Into<Value> for ServiceBusMessage {
     fn into(mut self) -> Value {
         if self.0.has_string() {
             return Value::String(self.0.take_string());
         }
         if self.0.has_json() {
             return from_str(self.0.get_json())
-                .expect("queue message does not contain valid JSON data");
+                .expect("service bus message does not contain valid JSON data");
         }
         // TODO: this is not an efficient encoding
         if self.0.has_bytes() {
@@ -222,11 +225,11 @@ impl Into<Value> for QueueMessage {
                     .collect(),
             );
         }
-        panic!("unexpected data for queue message content");
+        panic!("unexpected data for service bus message content");
     }
 }
 
-impl Into<Vec<u8>> for QueueMessage {
+impl Into<Vec<u8>> for ServiceBusMessage {
     fn into(mut self) -> Vec<u8> {
         if self.0.has_string() {
             return self.0.take_string().into_bytes();
@@ -241,11 +244,11 @@ impl Into<Vec<u8>> for QueueMessage {
             return self.0.take_stream();
         }
 
-        panic!("unexpected data for queue message content");
+        panic!("unexpected data for service bus message content");
     }
 }
 
-impl<'a> Into<Body<'a>> for QueueMessage {
+impl<'a> Into<Body<'a>> for ServiceBusMessage {
     fn into(mut self) -> Body<'a> {
         if self.0.has_string() {
             return self.0.take_string().into();
@@ -260,12 +263,12 @@ impl<'a> Into<Body<'a>> for QueueMessage {
             return self.0.take_stream().into();
         }
 
-        panic!("unexpected data for queue message content");
+        panic!("unexpected data for service bus message content");
     }
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for QueueMessage {
+impl Into<protocol::TypedData> for ServiceBusMessage {
     fn into(self) -> protocol::TypedData {
         self.0
     }
@@ -282,7 +285,7 @@ mod tests {
     fn it_has_string_content() {
         const MESSAGE: &'static str = "test message";
 
-        let message: QueueMessage = MESSAGE.into();
+        let message: ServiceBusMessage = MESSAGE.into();
         assert_eq!(message.as_str().unwrap(), MESSAGE);
 
         let data: protocol::TypedData = message.into();
@@ -302,7 +305,7 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let message: QueueMessage = ::serde_json::to_value(data).unwrap().into();
+        let message: ServiceBusMessage = ::serde_json::to_value(data).unwrap().into();
         assert_eq!(message.as_json::<Data>().unwrap().message, MESSAGE);
 
         let data: protocol::TypedData = message.into();
@@ -313,7 +316,7 @@ mod tests {
     fn it_has_bytes_content() {
         const MESSAGE: &'static [u8] = &[1, 2, 3];
 
-        let message: QueueMessage = MESSAGE.into();
+        let message: ServiceBusMessage = MESSAGE.into();
         assert_eq!(message.as_bytes(), MESSAGE);
 
         let data: protocol::TypedData = message.into();
@@ -324,7 +327,7 @@ mod tests {
     fn it_displays_as_a_string() {
         const MESSAGE: &'static str = "test";
 
-        let message: QueueMessage = MESSAGE.into();
+        let message: ServiceBusMessage = MESSAGE.into();
 
         let mut s = String::new();
         write!(s, "{}", message).unwrap();
@@ -334,83 +337,83 @@ mod tests {
 
     #[test]
     fn it_converts_from_str() {
-        let message: QueueMessage = "test".into();
+        let message: ServiceBusMessage = "test".into();
         assert_eq!(message.as_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_string() {
-        let message: QueueMessage = "test".to_string().into();
+        let message: ServiceBusMessage = "test".to_string().into();
         assert_eq!(message.as_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_json() {
-        let message: QueueMessage = to_value("hello world").unwrap().into();
+        let message: ServiceBusMessage = to_value("hello world").unwrap().into();
         assert_eq!(message.as_str().unwrap(), r#""hello world""#);
     }
 
     #[test]
     fn it_converts_from_u8_slice() {
-        let message: QueueMessage = [0, 1, 2][..].into();
+        let message: ServiceBusMessage = [0, 1, 2][..].into();
         assert_eq!(message.as_bytes(), [0, 1, 2]);
     }
 
     #[test]
     fn it_converts_from_u8_vec() {
-        let message: QueueMessage = vec![0, 1, 2].into();
+        let message: ServiceBusMessage = vec![0, 1, 2].into();
         assert_eq!(message.as_bytes(), [0, 1, 2]);
     }
 
     #[test]
     fn it_converts_to_string() {
-        let message: QueueMessage = "hello world!".into();
+        let message: ServiceBusMessage = "hello world!".into();
         let s: String = message.into();
         assert_eq!(s, "hello world!");
     }
 
     #[test]
     fn it_converts_to_json() {
-        let message: QueueMessage = json!({"hello": "world"}).into();
+        let message: ServiceBusMessage = json!({"hello": "world"}).into();
         let value: Value = message.into();
         assert_eq!(value.to_string(), r#"{"hello":"world"}"#);
     }
 
     #[test]
     fn it_converts_to_bytes() {
-        let message: QueueMessage = vec![1, 2, 3].into();
+        let message: ServiceBusMessage = vec![1, 2, 3].into();
         let bytes: Vec<u8> = message.into();
         assert_eq!(bytes, [1, 2, 3]);
     }
 
     #[test]
     fn it_converts_to_body() {
-        let message: QueueMessage = "hello world!".into();
+        let message: ServiceBusMessage = "hello world!".into();
         let body: Body = message.into();
         assert_eq!(body.as_str().unwrap(), "hello world!");
 
-        let message: QueueMessage = json!({"hello": "world"}).into();
+        let message: ServiceBusMessage = json!({"hello": "world"}).into();
         let body: Body = message.into();
         assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
 
-        let message: QueueMessage = vec![1, 2, 3].into();
+        let message: ServiceBusMessage = vec![1, 2, 3].into();
         let body: Body = message.into();
         assert_eq!(body.as_bytes(), [1, 2, 3]);
     }
 
     #[test]
     fn it_converts_to_typed_data() {
-        let message: QueueMessage = "test".into();
+        let message: ServiceBusMessage = "test".into();
         let data: protocol::TypedData = message.into();
         assert!(data.has_string());
         assert_eq!(data.get_string(), "test");
 
-        let message: QueueMessage = to_value("test").unwrap().into();
+        let message: ServiceBusMessage = to_value("test").unwrap().into();
         let data: protocol::TypedData = message.into();
         assert!(data.has_json());
         assert_eq!(data.get_json(), r#""test""#);
 
-        let message: QueueMessage = vec![1, 2, 3].into();
+        let message: ServiceBusMessage = vec![1, 2, 3].into();
         let data: protocol::TypedData = message.into();
         assert!(data.has_bytes());
         assert_eq!(data.get_bytes(), [1, 2, 3]);

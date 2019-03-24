@@ -34,12 +34,29 @@ fn get_boolean_value(name: &str, value: &Lit) -> bool {
 struct BindingArguments {
     name: String,
     direction: Option<String>,
+    validate: Option<String>,
+}
+
+impl BindingArguments {
+    fn get_validation_call(&self) -> TokenStream {
+        if let Some(validate) = self.validate.as_ref() {
+            let ident = Ident::new(validate, Span::call_site());
+            quote!(
+                if let Err(message) = __binding.#ident() {
+                    crate::codegen::macro_panic(__args_and_span.1, message);
+                }
+            )
+        } else {
+            quote!()
+        }
+    }
 }
 
 impl From<AttributeArgs> for BindingArguments {
     fn from(args: AttributeArgs) -> Self {
         let mut name = None;
         let mut direction = None;
+        let mut validate = None;
 
         iter_attribute_args(&args, |key, value| {
             let key_name = key.to_string();
@@ -47,6 +64,7 @@ impl From<AttributeArgs> for BindingArguments {
             match key_name.as_ref() {
                 "name" => name = Some(get_string_value("name", value)),
                 "direction" => direction = Some(get_string_value("direction", value)),
+                "validate" => validate = Some(get_string_value("validate", value)),
                 _ => macro_panic(
                     key.span(),
                     format!("unsupported binding attribute argument '{}'", key_name),
@@ -66,6 +84,7 @@ impl From<AttributeArgs> for BindingArguments {
         BindingArguments {
             name: name.unwrap(),
             direction,
+            validate,
         }
     }
 }
@@ -412,6 +431,7 @@ pub fn binding_impl(
     drain_field_attributes(&mut definition.fields);
 
     let binding_name = &binding_args.name;
+    let validate = binding_args.get_validation_call();
     let ident = &definition.ident;
     let default_direction = get_default_direction_serialization(&binding_args, &fields);
     let serializations = fields.iter().map(Field::get_serialization);
@@ -463,9 +483,13 @@ pub fn binding_impl(
 
                 #(#required_checks)*
 
-                #ident {
+                let __binding = #ident {
                     #(#field_assignments,)*
-                }
+                };
+
+                #validate
+
+                __binding
             }
         }
 

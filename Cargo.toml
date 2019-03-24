@@ -15,4 +15,5 @@ members = [
     "examples/event-hub",
     "examples/cosmosdb",
     "examples/signalr",
+    "examples/service-bus",
 ]
