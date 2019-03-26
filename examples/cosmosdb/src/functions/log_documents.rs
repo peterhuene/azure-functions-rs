@@ -7,7 +7,7 @@ use log::warn;
     connection = "connection",
     database_name = "exampledb",
     collection_name = "documents",
-    create_lease_colletion = true,
+    create_lease_collection = true
 )]
 pub fn log_documents(trigger: CosmosDbTrigger) {
     for document in trigger.documents {

@@ -18,7 +18,7 @@ pub struct CosmosDbTrigger {
     #[field(name = "leaseCollectionName")]
     pub lease_collection_name: Option<Cow<'static, str>>,
     #[field(name = "createLeaseCollectionIfNotExists")]
-    pub create_lease_colletion: Option<bool>,
+    pub create_lease_collection: Option<bool>,
     #[field(name = "leasesCollectionThroughput")]
     pub lease_collection_throughput: Option<i64>,
     #[field(name = "leaseCollectionPrefix")]
@@ -58,7 +58,7 @@ mod tests {
             lease_connection: Some(Cow::from("lease-connection")),
             lease_collection_name: Some(Cow::from("lease-collection")),
             lease_database_name: Some(Cow::from("lease-database")),
-            create_lease_colletion: Some(true),
+            create_lease_collection: Some(true),
             lease_collection_throughput: Some(54321),
             lease_collection_prefix: Some(Cow::from("lease-prefix")),
             feed_poll_delay: Some(12345),
@@ -86,7 +86,7 @@ mod tests {
                 parse_str::<NestedMeta>(r#"collection_name = "collection""#).unwrap(),
                 parse_str::<NestedMeta>(r#"lease_connection = "lease-connection""#).unwrap(),
                 parse_str::<NestedMeta>(r#"lease_collection_name = "lease-collection""#).unwrap(),
-                parse_str::<NestedMeta>(r#"create_lease_colletion = true"#).unwrap(),
+                parse_str::<NestedMeta>(r#"create_lease_collection = true"#).unwrap(),
                 parse_str::<NestedMeta>(r#"lease_collection_throughput = 54321"#).unwrap(),
                 parse_str::<NestedMeta>(r#"lease_collection_prefix = "lease-prefix""#).unwrap(),
                 parse_str::<NestedMeta>(r#"feed_poll_delay = 12345"#).unwrap(),
@@ -113,7 +113,7 @@ mod tests {
             binding.lease_collection_name.as_ref().unwrap().as_ref(),
             "lease-collection"
         );
-        assert_eq!(binding.create_lease_colletion.unwrap(), true);
+        assert_eq!(binding.create_lease_collection.unwrap(), true);
         assert_eq!(binding.lease_collection_throughput.unwrap(), 54321);
         assert_eq!(
             binding.lease_collection_prefix.as_ref().unwrap().as_ref(),
@@ -258,16 +258,16 @@ mod tests {
     }
 
     #[test]
-    fn it_requires_the_create_lease_colletion_attribute_be_a_boolean() {
+    fn it_requires_the_create_lease_collection_attribute_be_a_boolean() {
         should_panic(
             || {
                 let _: CosmosDbTrigger = (
-                    vec![parse_str::<NestedMeta>(r#"create_lease_colletion = 12345"#).unwrap()],
+                    vec![parse_str::<NestedMeta>(r#"create_lease_collection = 12345"#).unwrap()],
                     Span::call_site(),
                 )
                     .into();
             },
-            "expected a literal boolean value for the 'create_lease_colletion' argument",
+            "expected a literal boolean value for the 'create_lease_collection' argument",
         );
     }
 
@@ -412,7 +412,7 @@ mod tests {
             lease_connection: Some(Cow::from("lease-connection")),
             lease_collection_name: Some(Cow::from("lease-collection")),
             lease_database_name: Some(Cow::from("lease-database")),
-            create_lease_colletion: Some(true),
+            create_lease_collection: Some(true),
             lease_collection_throughput: Some(54321),
             lease_collection_prefix: Some(Cow::from("lease-prefix")),
             feed_poll_delay: Some(12345),
@@ -429,6 +429,6 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::CosmosDbTrigger{name:::std::borrow::Cow::Borrowed("name"),connection:::std::borrow::Cow::Borrowed("connection"),database_name:::std::borrow::Cow::Borrowed("database"),collection_name:::std::borrow::Cow::Borrowed("collection"),lease_connection:Some(::std::borrow::Cow::Borrowed("lease-connection")),lease_database_name:Some(::std::borrow::Cow::Borrowed("lease-database")),lease_collection_name:Some(::std::borrow::Cow::Borrowed("lease-collection")),create_lease_colletion:Some(true),lease_collection_throughput:Some(54321i64),lease_collection_prefix:Some(::std::borrow::Cow::Borrowed("lease-prefix")),feed_poll_delay:Some(12345i64),lease_acquire_interval:Some(12121i64),lease_expiration_interval:Some(10101i64),lease_renew_interval:Some(11111i64),checkpoint_frequency:Some(0i64),max_items_per_invocation:Some(42i64),start_from_beginning:Some(false),}"#);
+        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::CosmosDbTrigger{name:::std::borrow::Cow::Borrowed("name"),connection:::std::borrow::Cow::Borrowed("connection"),database_name:::std::borrow::Cow::Borrowed("database"),collection_name:::std::borrow::Cow::Borrowed("collection"),lease_connection:Some(::std::borrow::Cow::Borrowed("lease-connection")),lease_database_name:Some(::std::borrow::Cow::Borrowed("lease-database")),lease_collection_name:Some(::std::borrow::Cow::Borrowed("lease-collection")),create_lease_collection:Some(true),lease_collection_throughput:Some(54321i64),lease_collection_prefix:Some(::std::borrow::Cow::Borrowed("lease-prefix")),feed_poll_delay:Some(12345i64),lease_acquire_interval:Some(12121i64),lease_expiration_interval:Some(10101i64),lease_renew_interval:Some(11111i64),checkpoint_frequency:Some(0i64),max_items_per_invocation:Some(42i64),start_from_beginning:Some(false),}"#);
     }
 }

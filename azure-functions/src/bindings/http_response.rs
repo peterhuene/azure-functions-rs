@@ -4,6 +4,12 @@ use std::collections::HashMap;
 
 /// Represents a HTTP output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                                                                                       |
+/// |--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                                                                                            |
+///
 /// Responses can be created for any type that implements `Into<Body>`.
 ///
 /// # Examples

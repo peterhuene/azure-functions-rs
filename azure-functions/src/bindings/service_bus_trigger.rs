@@ -20,6 +20,16 @@ const USER_PROPERTIES_KEY: &str = "UserProperties";
 
 /// Represents a service bus trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name                | Description                                                                                                                               |
+/// |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`              | The name of the parameter being bound.                                                                                                    |
+/// | `queue_name`        | The name of the queue to monitor. Use only if monitoring a queue, not for a topic.                                                        |
+/// | `topic_name`        | The name of the topic to monitor. Use only if monitoring a topic, not for a queue.                                                        |
+/// | `subscription_name` | The name of the subscription to monitor. Use only if monitoring a topic, not for a queue.                                                 |
+/// | `connection`        | The name of an app setting that contains the Service Bus connection string to use for this binding. Defaults to `AzureWebJobsServiceBus`. |
+///
 /// # Examples
 ///
 /// An example that logs a message when a message is posted to a queue:

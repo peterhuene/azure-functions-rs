@@ -6,6 +6,15 @@ use std::collections::HashMap;
 
 /// Represents the timer information from a timer trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name             | Description                                                                                                                                                                                                                        |
+/// |------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`           | The name of the parameter being bound.                                                                                                                                                                                             |
+/// | `schedule`       | The CRON expression or a TimeSpan value for the timer. A TimeSpan can be used only for a function app that runs on an App Service Plan.                                                                                            |
+/// | `run_on_startup` | If `true`, the function is invoked when the runtime starts. It should rarely, if ever, be set to `true` in production as the function will be invoked on runtime restarts and scale outs.                                          |
+/// | `use_monitor`    | Set to `true` or `false` to indicate whether the schedule should be monitored. Schedule monitoring persists schedule occurrences to aid in ensuring the schedule is maintained correctly even when function app instances restart. |
+///
 /// # Examples
 ///
 /// A function that runs every 5 minutes:
