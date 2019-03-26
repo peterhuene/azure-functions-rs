@@ -202,15 +202,17 @@ The current list of supported bindings:
 |----------------------------------------------------|--------------------------------------|----------------|---------|
 | `azure_functions::bindings::Blob`                  | Input and Ouput Blob                 | in, inout, out | No      |
 | `azure_functions::bindings::BlobTrigger`           | Blob Trigger                         | in, inout      | No      |
-| `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             | No      |
 | `azure_functions::bindings::CosmosDbDocument`      | Input and Output Cosmos DB Document  | in, out        | Yes     |
+| `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             | No      |
 | `azure_functions::bindings::EventGridEvent`        | Event Grid Trigger                   | in             | No      |
-| `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             | No      |
 | `azure_functions::bindings::EventHubMessage`       | Event Hub Output Message             | out            | Yes     |
+| `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             | No      |
 | `azure_functions::bindings::HttpRequest`           | HTTP Trigger                         | in             | No      |
 | `azure_functions::bindings::HttpResponse`          | Output HTTP Response                 | out            | No      |
-| `azure_functions::bindings::QueueTrigger`          | Queue Trigger                        | in             | No      |
 | `azure_functions::bindings::QueueMessage`          | Output Queue Message                 | out            | Yes     |
+| `azure_functions::bindings::QueueTrigger`          | Queue Trigger                        | in             | No      |
+| `azure_functions::bindings::ServiceBusMessage`     | Service Bus Output Message           | out            | Yes      |
+| `azure_functions::bindings::ServiceBusTrigger`     | Service Bus Trigger                  | in             | No      |
 | `azure_functions::bindings::SignalRConnectionInfo` | SignalR Connection Info              | in             | No      |
 | `azure_functions::bindings::SignalRGroupAction`    | SignalR Group Action                 | out            | Yes     |
 | `azure_functions::bindings::SignalRMessage`        | SignalR Message                      | out            | Yes     |
