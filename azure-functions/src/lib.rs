@@ -74,9 +74,9 @@
 //! $ cargo func run
 //! ```
 //!
-//! The above Azure Function can be invoked with `http://localhost:8080/api/hello?name=Peter`.
+//! The above Azure Function can be invoked with `http://localhost:8080/api/hello`.
 //!
-//! The expected response would be `Hello from Rust, Peter!`.
+//! The expected response would be `Hello from Rust!`.
 #![deny(unused_extern_crates)]
 #![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]

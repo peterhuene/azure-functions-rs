@@ -229,7 +229,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmosdb"
+name = "cosmosdb-example"
 version = "0.1.0"
 dependencies = [
  "azure-functions 0.6.0",
@@ -311,7 +311,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "event-hub"
+name = "event-hub-example"
 version = "0.1.0"
 dependencies = [
  "azure-functions 0.6.0",
@@ -838,6 +838,14 @@ dependencies = [
  "itoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "ryu 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "service-bus-example"
+version = "0.1.0"
+dependencies = [
+ "azure-functions 0.6.0",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

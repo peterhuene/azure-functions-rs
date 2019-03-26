@@ -9,5 +9,5 @@ use azure_functions::{
 pub fn queue_with_output(trigger: QueueTrigger) -> QueueMessage {
     log::info!("Message: {}", trigger.message);
 
-    trigger.message.clone()
+    trigger.message
 }

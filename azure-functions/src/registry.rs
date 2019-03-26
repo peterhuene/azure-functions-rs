@@ -8,11 +8,13 @@ const STORAGE_PACKAGE_VERSION: &str = "3.0.3";
 const EVENT_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventGrid";
 const EVENT_GRID_PACKAGE_VERSION: &str = "2.0.0";
 const EVENT_HUBS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventHubs";
-const EVENT_HUBS_PACKAGE_VERSION: &str = "3.0.2";
+const EVENT_HUBS_PACKAGE_VERSION: &str = "3.0.3";
 const COSMOS_DB_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.CosmosDB";
 const COSMOS_DB_PACKAGE_VERSION: &str = "3.0.3";
 const SIGNALR_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.SignalRService";
 const SIGNALR_PACKAGE_VERSION: &str = "1.0.0";
+const SERVICE_BUS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.ServiceBus";
+const SERVICE_BUS_PACKAGE_VERSION: &str = "3.0.3";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -61,6 +63,14 @@ lazy_static! {
         map.insert(
             bindings::SignalR::binding_type(),
             (SIGNALR_PACKAGE_NAME, SIGNALR_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::ServiceBusTrigger::binding_type(),
+            (SERVICE_BUS_PACKAGE_NAME, SERVICE_BUS_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::ServiceBus::binding_type(),
+            (SERVICE_BUS_PACKAGE_NAME, SERVICE_BUS_PACKAGE_VERSION),
         );
         map
     };
