@@ -5,6 +5,20 @@ use std::fmt;
 
 /// Represents the input or output binding for a Cosmos DB document.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name                    | Description                                                                                                                                                                                               |
+/// |-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`                  | The name of the parameter being bound.                                                                                                                                                                    |
+/// | `database_name`         | The database containing the document.                                                                                                                                                                     |
+/// | `collection_name`       | The name of the collection that contains the document.                                                                                                                                                    |
+/// | `id`                    | The identifier of the document to retrieve. This attribute supports binding expressions. Cannot be used with `sql_query`. If neither are specified, the entire collection is retrieved.                   |
+/// | `sql_query`             | An Azure Cosmos DB SQL query used for retrieving multiple documents. Cannot be used with `id`. If neither are specified, the entire collection is retrieved.                                              |
+/// | `connection`            | The name of the app setting containing your Azure Cosmos DB connection string.                                                                                                                            |
+/// | `partition_key`         | Specifies the partition key value for the lookup; may include binding parameters (input only). When `create_collection` is true, defines the partition key path for the created collection (output only). |
+/// | `create_collection`     | Specifies if the collection should be created (output only).                                                                                                                                              |
+/// | `collection_throughput` | When `create_collection` is true, defines the throughput of the created collection (output only).                                                                                                         |
+///
 /// # Examples
 ///
 /// Using `CosmosDbDocument` as an input binding with a SQL query:

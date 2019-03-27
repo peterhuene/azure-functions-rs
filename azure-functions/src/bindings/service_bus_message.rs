@@ -8,6 +8,16 @@ use std::str::from_utf8;
 
 /// Represents a Service Bus message output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name                | Description                                                                                                                               |
+/// |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`              | The name of the parameter being bound.                                                                                                    |
+/// | `queue_name`        | The name of the queue. Use only if sending queue messages, not for a topic.                                                               |
+/// | `topic_name`        | The name of the topic. Use only if sending topic messages, not for a queue.                                                               |
+/// | `subscription_name` | The name of the subscription. Use only if sending topic messages, not for a queue.                                                        |
+/// | `connection`        | The name of an app setting that contains the Service Bus connection string to use for this binding. Defaults to `AzureWebJobsServiceBus`. |
+///
 /// # Examples
 ///
 /// An example that creates a Service Bus queue message based on a HTTP trigger:

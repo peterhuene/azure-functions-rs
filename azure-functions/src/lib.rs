@@ -9,6 +9,7 @@
 //! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
 //! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
 //! * [HTTP trigger](bindings/struct.HttpRequest.html)
+//! * [Service Bus trigger](bindings/struct.ServiceBusTrigger.html)
 //! * [Queue trigger](bindings/struct.QueueTrigger.html)
 //! * [Timer trigger](bindings/struct.TimerInfo.html)
 //!
@@ -26,6 +27,7 @@
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)
+//! * [Service Bus output](bindings/struct.ServiceBusMessage.html)
 //! * [SignalR group action output](bindings/struct.SignalRGroupAction.html)
 //! * [SignalR message output](bindings/struct.SignalRMessage.html)
 //! * [Table output](bindings/struct.Table.html)

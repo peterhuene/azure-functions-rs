@@ -8,6 +8,14 @@ use std::str::from_utf8;
 
 /// Represents an Azure Storage Queue message output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                                  |
+/// |--------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                                       |
+/// | `queue_name` | The name of the queue.                                                                                                                       |
+/// | `connection` | The name of an app setting that contains the Azure Storage connection string to use for this binding. Defaults to the `AzureWebJobsStorage`. |
+///
 /// # Examples
 ///
 /// Creating a queue message from a string:

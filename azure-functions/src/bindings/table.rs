@@ -5,6 +5,18 @@ use std::fmt;
 
 /// Represents an Azure Storage table input or output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name            | Description                                                                                                                        |
+/// |-----------------|------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`          | The name of the parameter being bound.                                                                                             |
+/// | `table_name`    | The name of the table.                                                                                                             |
+/// | `partition_key` | The partition key of the table entity to read or write.                                                                            |
+/// | `row_key`       | The row key of the table entity to read or write.                                                                                  |
+/// | `filter`        | The maximum number of entities to read (optional; input only).                                                                     |
+/// | `take`          | The OData filter expression of entities to read (optional; input only).                                                            |
+/// | `connection`    | The name of an app setting that contains the Storage connection string to use for this binding. Defaults to `AzureWebJobsStorage`. |
+///
 /// # Examples
 ///
 /// Read a table storage row based on a key posted to the `example` queue:

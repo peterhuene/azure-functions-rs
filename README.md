@@ -198,25 +198,27 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 
 The current list of supported bindings:
 
-| Rust Type                                          | Azure Functions Binding              | Direction      | Vec\<T> |
-|----------------------------------------------------|--------------------------------------|----------------|---------|
-| `azure_functions::bindings::Blob`                  | Input and Ouput Blob                 | in, inout, out | No      |
-| `azure_functions::bindings::BlobTrigger`           | Blob Trigger                         | in, inout      | No      |
-| `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             | No      |
-| `azure_functions::bindings::CosmosDbDocument`      | Input and Output Cosmos DB Document  | in, out        | Yes     |
-| `azure_functions::bindings::EventGridEvent`        | Event Grid Trigger                   | in             | No      |
-| `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             | No      |
-| `azure_functions::bindings::EventHubMessage`       | Event Hub Output Message             | out            | Yes     |
-| `azure_functions::bindings::HttpRequest`           | HTTP Trigger                         | in             | No      |
-| `azure_functions::bindings::HttpResponse`          | Output HTTP Response                 | out            | No      |
-| `azure_functions::bindings::QueueTrigger`          | Queue Trigger                        | in             | No      |
-| `azure_functions::bindings::QueueMessage`          | Output Queue Message                 | out            | Yes     |
-| `azure_functions::bindings::SignalRConnectionInfo` | SignalR Connection Info              | in             | No      |
-| `azure_functions::bindings::SignalRGroupAction`    | SignalR Group Action                 | out            | Yes     |
-| `azure_functions::bindings::SignalRMessage`        | SignalR Message                      | out            | Yes     |
-| `azure_functions::bindings::Table`                 | Input and Ouput Table                | in, out        | No      |
-| `azure_functions::bindings::TimerInfo`             | Timer Trigger                        | in             | No      |
-| `azure_functions::Context`*                        | Invocation Context                   | N/A            | N/A     |
+| Rust Type                                                                                                                  | Azure Functions Binding             | Direction      | Vec\<T> |
+|----------------------------------------------------------------------------------------------------------------------------|-------------------------------------|----------------|---------|
+| [Blob](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Blob.html)                                   | Input and Ouput Blob                | in, inout, out | No      |
+| [BlobTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.BlobTrigger.html)                     | Blob Trigger                        | in, inout      | No      |
+| [CosmosDbDocument](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbDocument.html)           | Input and Output Cosmos DB Document | in, out        | Yes     |
+| [CosmosDbTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbTrigger.html)             | Cosmos DB Trigger                   | in             | No      |
+| [EventGridEvent](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventGridEvent.html)               | Event Grid Trigger                  | in             | No      |
+| [EventHubMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubMessage.html)             | Event Hub Output Message            | out            | Yes     |
+| [EventHubTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubTrigger.html)             | Event Hub Trigger                   | in             | No      |
+| [HttpRequest](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpRequest.html)                     | HTTP Trigger                        | in             | No      |
+| [HttpResponse](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpResponse.html)                   | Output HTTP Response                | out            | No      |
+| [QueueMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueMessage.html)                   | Output Queue Message                | out            | Yes     |
+| [QueueTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueTrigger.html)                   | Queue Trigger                       | in             | No      |
+| [ServiceBusMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusMessage.html)         | Service Bus Output Message          | out            | Yes     |
+| [ServiceBusTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusTrigger.html)         | Service Bus Trigger                 | in             | No      |
+| [SignalRConnectionInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRConnectionInfo.html) | SignalR Connection Info             | in             | No      |
+| [SignalRGroupAction](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRGroupAction.html)       | SignalR Group Action                | out            | Yes     |
+| [SignalRMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRMessage.html)               | SignalR Message                     | out            | Yes     |
+| [Table](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Table.html)                                 | Input and Ouput Table               | in, out        | No      |
+| [TimerInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TimerInfo.html)                         | Timer Trigger                       | in             | No      |
+| [Context](https://docs.rs/azure-functions/latest/azure_functions/struct.Context.html)*                                     | Invocation Context                  | N/A            | N/A     |
 
 \****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 
