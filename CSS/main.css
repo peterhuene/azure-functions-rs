@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono');
+
+body {
+    font-family: "Roboto", Helvetica, sans-serif;
+    background-color: #F2F2F2;
+}
+
+.lead {
+    font-weight: 300;
+    padding-top: 3rem;
+    padding-bottom: 1rem;
+}
+
+header {
+    color: #FFFFFF;
+    background-color: #233142;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+header a {
+    color: #FFFFFF;
+}
+
+.homepage-header {
+    height: 319px;
+}
+
+.triangle {
+    background: #F2F2F2;
+    position: absolute;
+    top: 10rem;
+    left: 0;
+    right: 0;
+    padding-bottom: 10rem;
+    -webkit-clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.call-to-action {
+    margin-bottom: 80px;
+}
+
+.btn-outline-info {
+    color: #233142;
+    border-color: #233142;
+}
+
+.btn-outline-info:hover {
+    background-color: #233142;
+    border-color: #233142;
+}
+
+.btn-outline-info:not(:disabled):not(.disabled):active,
+.show>.btn-outline-info.dropdown-toggle {
+    color: #fff;
+    background-color: #233142;
+    border-color: #233142;
+}
+
+.btn-outline-info.focus,
+.btn-outline-info:focus {
+    box-shadow: 0 0 0 0.2rem hsla(213, 31%, 20%, 0.5);
+}
+
+.btn-outline-info:not(:disabled):not(.disabled).active:focus,
+.btn-outline-info:not(:disabled):not(.disabled):active:focus,
+.show>.btn-outline-info.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0.2rem hsla(213, 31%, 20%, 0.5);
+}
+
+.list-group-item.active {
+    background-color: #233142;
+    border-color: #233142;
+}
+
+footer {
+    margin-top: 40px;
+    background-color: #233142;
+}

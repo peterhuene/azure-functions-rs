@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>functions.rs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+    </script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" media="screen" href="CSS/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="CSS/main.css">
+</head>
+
+<body>
+
+    <header class="homepage-header ">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg">
+                <a class="navbar-brand" href="index.html">functions.rs</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
+                    aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarText">
+                    <ul class="navbar-nav mr-auto">
+
+                    </ul>
+                    <span class="navbar-text">
+                        <ul class="navbar-nav mr-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://github.com/peterhuene/azure-functions-rs">
+                                    <i class="fab fa-github"></i>
+                                    GitHub
+                                </a>
+                            </li>
+                        </ul>
+                    </span>
+                </div>
+            </nav>
+        </div>
+        <div class="text-center lead">Run Fast. Run Serverless.</div>
+        <div class="triangle" />
+    </header>
+
+    <content>
+        <div class="container">
+            <div class="row call-to-action">
+                <div class="col"></div>
+                <div class="col-12 col-sm-11 col-md-10 text-center">
+                    <h1>Write your first<br> Azure Function in Rust</h1>
+                    <a href="first-func-in-rust/index.html" class="btn btn-outline-info">
+                        Get Started!
+                    </a>
+                </div>
+                <div class="col"></div>
+            </div>
+            <div class="row">
+                <div class="col">
+
+                </div>
+                <div class="col-12 col-md-8">
+                    <p>
+                        <a href="https://crates.io/crates/azure-functions" rel="nofollow"><img
+                                src="https://camo.githubusercontent.com/2fb1ed33503217b4654e21e7b8759f0cb95296bb/68747470733a2f2f696d672e736869656c64732e696f2f6372617465732f762f617a7572652d66756e6374696f6e732e737667"
+                                alt="crates.io" data-canonical-src="https://img.shields.io/crates/v/azure-functions.svg"
+                                style="max-width:100%;"></a>
+                        <a href="https://docs.rs/azure-functions" rel="nofollow"><img
+                                src="https://camo.githubusercontent.com/cdf5315219050598567d231cb83bee0492a4b386/68747470733a2f2f646f63732e72732f617a7572652d66756e6374696f6e732f62616467652e737667"
+                                alt="docs.rs" data-canonical-src="https://docs.rs/azure-functions/badge.svg"
+                                style="max-width:100%;"></a>
+                        <a href="https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_build/latest?definitionId=2&amp;branchName=master"
+                            rel="nofollow"><img
+                                src="https://camo.githubusercontent.com/5d21ff12176a536b668099a8ab8dd65ac6c020a8/68747470733a2f2f6465762e617a7572652e636f6d2f617a7572652d66756e6374696f6e732d72732f417a75726525323046756e6374696f6e73253230666f72253230527573742f5f617069732f6275696c642f7374617475732f70657465726875656e652e617a7572652d66756e6374696f6e732d72733f6272616e63684e616d653d6d6173746572"
+                                alt="Build Status"
+                                data-canonical-src="https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_apis/build/status/peterhuene.azure-functions-rs?branchName=master"
+                                style="max-width:100%;"></a>
+                        <a href="https://dependabot.com" rel="nofollow"><img
+                                src="https://camo.githubusercontent.com/c83f3aa5f6d5b989686a85668619444479a1a512/68747470733a2f2f6170692e646570656e6461626f742e636f6d2f6261646765732f7374617475733f686f73743d676974687562267265706f3d70657465726875656e652f617a7572652d66756e6374696f6e732d7273"
+                                alt="Dependabot Status"
+                                data-canonical-src="https://api.dependabot.com/badges/status?host=github&amp;repo=peterhuene/azure-functions-rs"
+                                style="max-width:100%;"></a>
+                        <a href="https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE"><img
+                                src="https://camo.githubusercontent.com/f3c6ebcb92898abeb27d06761cf5a8e45b5da992/68747470733a2f2f696d672e736869656c64732e696f2f6372617465732f6c2f617a7572652d66756e6374696f6e732e737667"
+                                alt="license" data-canonical-src="https://img.shields.io/crates/l/azure-functions.svg"
+                                style="max-width:100%;"></a></p>
+                    <p>This is an early-stage framework for implementing <a
+                            href="https://azure.microsoft.com/en-us/services/functions/" rel="nofollow">Azure
+                            Functions</a>
+                        in <a href="https://www.rust-lang.org/en-US/" rel="nofollow">Rust</a>
+                    </p>
+                    <p>
+                        Azure Functions for Rust is a project that enables authoring functions in Rust that can be
+                        easily deployed to Azure Functions.
+                    </p>
+                    <p>
+                        The project is currently under heavy development as it marches towards a 1.0.0 stable release.
+                    </p>
+                    <p>
+                        Check out the <a href="https://github.com/peterhuene/azure-functions-rs">GitHub project page</a>
+                        for more information.
+                    </p>
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-text">Disclaimer</h2>
+                            <p class="card-text">
+                                Although the maintainer of this project is a Microsoft employee, this project is not an
+                                officially recognized Microsoft product and is not an endorsement of any future product
+                                offering from Microsoft.
+                            </p>
+                            <p class="card-text">
+                                <em>Microsoft</em> and <em>Azure</em> are registered trademarks of Microsoft
+                                Corporation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col"></div>
+            </div>
+        </div>
+    </content>
+
+    <footer>
+
+    </footer>
+
+</body>
+
+</html>
