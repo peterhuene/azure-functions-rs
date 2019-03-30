@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Your First Azure Function in Rust</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="../CSS/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="../CSS/main.css">
+    <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+</head>
+
+<body data-spy="scroll" data-target="#toc">
+
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg">
+                <a class="navbar-brand" href="index.html">functions.rs</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
+                    aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarText">
+                    <ul class="navbar-nav mr-auto">
+
+                    </ul>
+                    <span class="navbar-text">
+                        <ul class="navbar-nav mr-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://github.com/peterhuene/azure-functions-rs">
+                                    <i class="fab fa-github"></i>
+                                    GitHub
+                                </a>
+                            </li>
+                        </ul>
+                    </span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <content>
+        <div class="container">
+            <div class="row">
+                <div class="col-3">
+                    <nav id="toc" data-toggle="toc" class="sticky-top"></nav>
+                </div>
+                <div class="col-9 text-block">
+                    <h1>Your First Azure Function in Rust</h1>
+                    <hr>
+                    <h2>Prerequisites</h2>
+                    <h3>Install CMake</h3>
+                    <p>
+                        The <code>azure-functions</code> crate has a dependency on the <code>grpcio</code> crate that
+                        uses <a href="https://cmake.org" rel="nofollow">CMake</a> to build and link against the gRPC
+                        native library.
+                    </p>
+                    <p>
+                        CMake must be installed and on the <code>PATH</code> to be able to use Azure Functions for Rust.
+                    </p>
+                    <h4>Windows</h4>
+                    <p>
+                        Install CMake from the <a href="https://cmake.org/download/" rel="nofollow">Windows
+                            installer</a>.
+                    </p>
+                    <h4>macOS</h4>
+                    <p>
+                        The easiest way to install CMake on macOS is with <a href="https://brew.sh/"
+                            rel="nofollow">Homebrew</a>:
+                    </p>
+                    <pre><code>$ brew install cmake</code></pre>
+                    <h4>Linux</h4>
+                    <p>
+                        Use your distro's package manager to install a <code>cmake</code> (or similar) package.
+                    </p>
+                    <p>
+                        For example on Debian/Ubuntu:
+                    </p>
+                    <pre><code>$ apt-get install cmake</code></pre>
+                    <h3>Install the Azure Functions Core Tools</h3>
+                    <p>
+                        Install version 2 or higher of the <a
+                            href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools"
+                            rel="nofollow">Azure Functions Core Tools</a>.
+                    </p>
+                    <p>
+                        If you are on Windows, you must add
+                        <code>%ProgramFiles%\nodejs\node_modules\azure-functions-core-tools\bin</code> (where
+                        <code>func.exe</code> is located) to the <code>PATH</code> environment variable.
+                    </p>
+                    <h3>Installing the Azure Functions for Rust SDK</h3>
+                    <p>
+                        Install the Azure Functions for Rust SDK using <code>cargo install</code>:
+                    </p>
+                    <div class="highlight highlight-source-shell">
+                        <pre>$ cargo install azure-functions-sdk</pre>
+                    </div>
+                    <p>
+                        This installs a new cargo command named <code>func</code> that can be used to create and run new
+                        Azure Functions applications.
+                    </p>
+                    <h2>Creating a new Azure Functions application</h2>
+                    <p>
+                        Use the <code>cargo func new-app</code> command to create a new Azure Functions application:
+                    </p>
+                    <div class="highlight highlight-source-shell">
+                        <pre>$ cargo func new-app hello</pre>
+                    </div>
+                    <p>
+                        This will create a new application in the <code>./hello</code> directory with a module named
+                        <code>functions</code> where the exported Azure Functions are expected to be placed.
+                    </p>
+                    <h2>Adding a simple HTTP-triggered application</h2>
+                    <p>
+                        Use the <code>cargo func new</code> command to create a new HTTP-triggered Azure Function named
+                        <code>hello</code>:
+                    </p>
+                    <div class="highlight highlight-source-shell">
+                        <pre>$ cargo func new http -n hello</pre>
+                    </div>
+                    <p>
+                        The source for the function will be in <code>src/functions/hello.rs</code>.
+                    </p>
+                    <h2>Building the Azure Functions application</h2>
+                    <p>
+                        To build your Azure Functions application, just use <code>cargo build</code>:
+                    </p>
+                    <pre><code>$ cargo build</code></pre>
+                    <p>
+                        If you are using a nightly compiler, you can enable improved error messages during compilation.
+                    </p>
+                    <p>
+                        Add the following to your <code>Cargo.toml</code>:
+                    </p>
+                    <div class="highlight highlight-source-toml">
+                        <pre>[<span class="pl-en">features</span>]
+<span class="pl-smi">unstable</span> = [<span class="pl-s"><span class="pl-pds">"</span>azure-functions/unstable<span class="pl-pds">"</span></span>]</pre>
+                    </div>
+                    <p>
+                        Build your application:
+                    </p>
+                    <pre><code>$ cargo build --features unstable</code></pre>
+                    <p>
+                        This enables Azure Functions for Rust to emit diagnostic messages that will include the position
+                        of an error within an attribute.
+                    </p>
+                    <h2>Running the Azure Functions application</h2>
+                    <p>
+                        To build and run your Azure Functions application, use <code>cargo func run</code>:
+                    </p>
+                    <pre><code>$ cargo func run</code></pre>
+                    <p>
+                        The <code>cargo func run</code> command builds and runs your application locally using the Azure
+                        Function Host that was
+                        installed by the Azure Functions Core Tools.
+                    </p>
+                    <p>
+                        By default, the host will be configured to listen on <code>0.0.0.0:8080</code>.
+                    </p>
+                    <p>
+                        For the <code>hello</code> function added previously, it can be invoked from
+                        <code>http://localhost:8080/api/hello</code>.
+                    </p>
+                    <h2>Debugging the Azure Functions application</h2>
+                    <p>
+                        The easiest way to debug the Azure Functions application is to use <a
+                            href="https://code.visualstudio.com/" rel="nofollow">Visual Studio Code</a> with the <a
+                            href="https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb"
+                            rel="nofollow">CodeLLDB</a> extension.
+                    </p>
+                    <p>
+                        Copy the example <a
+                            href="https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/launch.json">launch.json</a>
+                        and
+                        <a
+                            href="https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/tasks.json">tasks.json</a>
+                        files to the <code>.vscode</code> directory inside the root of your project.
+                    </p>
+                    <p>
+                        This will enable a <code>Debug</code> launch configuration that will build and run your
+                        application locally before attaching the <code>lldb</code> debugger to the Rust worker process.
+                    </p>
+                    <h2>Deploying the Azure Functions application</h2>
+                    <p>
+                        In the future, there will be a <code>cargo func deploy</code> command to deploy the Azure
+                        Functions application directly to Azure.
+                    </p>
+                    <p>
+                        Until that time, you must manually build and push the Docker image to a repository that can be
+                        accessed by Azure.
+                    </p>
+                    <p>
+                        <strong>Note: this requires <a href="https://www.docker.com/get-started"
+                                rel="nofollow">Docker</a> that is at least <em>18.06</em> for the experimental BuildKit
+                            support.</strong>
+                    </p>
+                    <p>
+                        <strong>To enable the BuildKit support, set the <code>DOCKER_BUILDKIT</code> environment
+                            variable
+                            to <code>1</code> before running <code>docker build</code>.</strong></p>
+                    <p>Start by building your image with <code>docker build -t $TAG_NAME .</code>:</p>
+                    <pre><code>$ docker build -t $TAG_NAME .</code></pre>
+                    <p>
+                        Where <code>$TAG_NAME</code> is the tag name to use (e.g.
+                        <code>username/my-functions-app</code>).
+                    </p>
+                    <p>
+                        Use <code>docker push</code> to push the image to a repository that is accessible to Azure
+                        Functions.
+                    </p>
+                    <pre><code>$ docker push $TAG_NAME</code></pre>
+                    <p>
+                        Create the Function App in <a href="https://portal.azure.com" rel="nofollow">Azure</a> using the
+                        "Linux (Preview)" OS. Under the "Publish" setting, select "Docker Image".
+                    </p>
+                    <p>
+                        From the "Configure Container" section, select the repository and enter the image you pushed.
+                    </p>
+                    <p>
+                        That's it! Once the Functions App starts in Azure, you should be able to view the functions and
+                        run them.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </content>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+    </script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
+    </script>
+    <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+</body>
+
+</html>
