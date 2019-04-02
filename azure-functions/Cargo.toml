@@ -13,7 +13,7 @@ azure-functions-shared = { version = "0.6.0", path = "../azure-functions-shared"
 azure-functions-codegen = { version = "0.6.0", path = "../azure-functions-codegen" }
 log = { version = "0.4.6", features = ["std"] }
 grpcio = { version = "0.4.4", default-features = false, features = ["protobuf-codec"] }
-futures = "0.1.24"
+futures = "0.1.26"
 clap = "2.32.0"
 tokio-threadpool = "0.1.12"
 serde = "1.0.89"
