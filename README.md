@@ -7,7 +7,7 @@
 [![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
 
 This is an early-stage framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
-in [Rust](https://www.rust-lang.org/en-US/).
+in [Rust](https://www.rust-lang.org/).
 
 ## Disclaimer
 
