@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/src/target \
 
 FROM mcr.microsoft.com/azure-functions/base:2.0 as runtime-image
 
-FROM microsoft/dotnet:2.2-aspnetcore-runtime
+FROM mcr.microsoft.com/dotnet/core/runtime-deps:2.2
 
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     HOME=/home \
@@ -30,4 +30,4 @@ COPY --from=build-image ["/src/appsettings.json", "/azure-functions-host/appsett
 COPY --from=build-image ["/home/site/wwwroot", "/home/site/wwwroot"]
 
 WORKDIR /home/site/wwwroot
-CMD [ "dotnet", "/azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost.dll" ]
+CMD [ "/azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost" ]
