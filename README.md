@@ -72,6 +72,44 @@ For example on Debian/Ubuntu:
 $ apt-get install cmake
 ```
 
+## Install a C++ Compiler
+
+The `grpcio` crate builds a native library that implements the gRPC runtime.
+
+Therefore, a C++ compiler must be on your PATH.
+
+### Windows
+
+Install [Visual Studio 2015 or later](https://visualstudio.microsoft.com/).
+
+### macOS
+
+Ensure the XCode command line utilities are installed, as this will install `clang`:
+
+```
+$ xcode-select --install
+```
+
+### Linux
+
+Use your distro's package manager to install `g++` (or similar) package:
+
+For example on Debian/Ubuntu:
+
+```
+$ apt-get install g++
+```
+
+## Install a .NET Core SDK
+
+A .NET Core SDK is required to synchronize Azure Functions Host binding extensions.
+
+For example, using the Cosmos DB bindings will need the `Microsoft.Azure.WebJobs.Extensions.CosmosDB` extensions installed for the Azure Functions Host.
+
+This happens automatically by Azure Functions for Rust when the application is initialized.
+
+Follow the [download instructions for the 2.2 .NET Core SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2) to install for Windows, macOS, or your Linux distro.
+
 ## Install the Azure Functions Core Tools
 
 Install version 2 or higher of the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
