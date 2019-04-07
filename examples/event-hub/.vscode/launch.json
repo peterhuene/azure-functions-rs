@@ -6,9 +6,9 @@
             "request": "attach",
             "name": "Debug",
             "windows": {
-                "program": "http-example.exe"
+                "program": "event-hub-example.exe"
             },
-            "program": "http-example",
+            "program": "event-hub-example",
             "preLaunchTask": "Launch Azure Functions Application",
             "postDebugTask": "Terminate Azure Functions Application"
         }

@@ -20,6 +20,7 @@ pub struct NewApp<'a> {
     name: Option<&'a str>,
     verbose: bool,
     quiet: bool,
+    no_launch_config: bool,
     color: Option<&'a str>,
 }
 
@@ -40,6 +41,7 @@ impl<'a> NewApp<'a> {
             .arg(
                 Arg::with_name("name")
                     .long("name")
+                    .short("n")
                     .value_name("NAME")
                     .help("Set the resulting package name, defaults to the directory name."),
             )
@@ -55,6 +57,11 @@ impl<'a> NewApp<'a> {
                     .short("q")
                     .help("No output printed to stdout.")
                     .conflicts_with("verbose"),
+            )
+            .arg(
+                Arg::with_name("no_launch_config")
+                    .long("no-launch-config")
+                    .help("Do not create a Visual Studio Code launch configuration."),
             )
             .arg(
                 Arg::with_name("color")
@@ -100,22 +107,37 @@ impl<'a> NewApp<'a> {
                 e
             })?;
 
-        for (template, relative_path, data) in &[
-            ("main.rs", "src/main.rs", &json!({})),
-            ("functions_mod.rs", "src/functions/mod.rs", &json!({})),
-            ("dockerignore", ".dockerignore", &json!({})),
+        let mut templates = vec![
+            ("main.rs", "src/main.rs", json!({})),
+            ("functions_mod.rs", "src/functions/mod.rs", json!({})),
+            ("dockerignore", ".dockerignore", json!({})),
             (
                 "Dockerfile",
                 "Dockerfile",
-                &json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
+                json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
             ),
-            ("appsettings.json", "appsettings.json", &json!({})),
-        ] {
+            ("appsettings.json", "appsettings.json", json!({})),
+        ];
+
+        if !self.no_launch_config {
+            let name = self
+                .name
+                .unwrap_or_else(|| Path::new(self.path).file_name().unwrap().to_str().unwrap());
+
+            templates.push((
+                "launch.json",
+                ".vscode/launch.json",
+                json!({ "name": name }),
+            ));
+            templates.push(("tasks.json", ".vscode/tasks.json", json!({})));
+        }
+
+        for (template, relative_path, data) in templates.into_iter() {
             if !self.quiet {
                 print_running(&format!("creating {}.", relative_path.cyan()));
             }
 
-            create_from_template(&TEMPLATES, template, self.path, relative_path, data)
+            create_from_template(&TEMPLATES, template, self.path, relative_path, &data)
                 .map(|_| {
                     if !self.quiet {
                         print_success();
@@ -250,6 +272,7 @@ impl<'a> From<&'a ArgMatches<'a>> for NewApp<'a> {
             name: args.value_of("name"),
             verbose: args.is_present("verbose"),
             quiet: args.is_present("quiet"),
+            no_launch_config: args.is_present("no_launch_config"),
             color: args.value_of("color"),
         }
     }

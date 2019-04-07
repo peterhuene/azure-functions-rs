@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -9,9 +6,9 @@
             "request": "attach",
             "name": "Debug",
             "windows": {
-                "program": "rust_worker.exe"
+                "program": "table-example.exe"
             },
-            "program": "rust_worker",
+            "program": "table-example",
             "preLaunchTask": "Launch Azure Functions Application",
             "postDebugTask": "Terminate Azure Functions Application"
         }

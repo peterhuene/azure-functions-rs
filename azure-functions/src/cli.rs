@@ -23,6 +23,11 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                         .help("Synchronize the Azure Function binding extensions.")
                 )
                 .arg(
+                    Arg::with_name("no_debug_info")
+                        .long("--no-debug-info")
+                        .help("Do not copy debug information for the worker executable.")
+                )
+                .arg(
                     Arg::with_name("verbose")
                         .long("verbose")
                         .short("v")

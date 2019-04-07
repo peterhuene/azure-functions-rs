@@ -23,7 +23,9 @@ lazy_static::lazy_static! {
         template!(templates, "new-app", "Dockerfile");
         template!(templates, "new-app", "dockerignore");
         template!(templates, "new-app", "functions_mod.rs");
+        template!(templates, "new-app", "launch.json");
         template!(templates, "new-app", "main.rs");
+        template!(templates, "new-app", "tasks.json");
 
         template!(templates, "new", "http.rs");
         template!(templates, "new", "blob.rs");
