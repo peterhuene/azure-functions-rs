@@ -243,6 +243,15 @@ fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bo
 fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
     let worker_dir = script_root.join("workers").join("rust");
 
+    if worker_dir.exists() {
+        fs::remove_dir_all(&worker_dir).unwrap_or_else(|_| {
+            panic!(
+                "Failed to delete Rust worker directory '{}",
+                worker_dir.display()
+            )
+        });
+    }
+
     if verbose {
         println!("Creating worker directory '{}'.", worker_dir.display());
     }
@@ -257,26 +266,67 @@ fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
     worker_dir
 }
 
-fn copy_worker_executable(worker_dir: &Path, verbose: bool) {
+fn copy_worker_executable(current_exe: &Path, worker_exe: &Path, verbose: bool) {
     if verbose {
         println!(
             "Copying current worker executable to '{}'.",
-            worker_dir.display()
+            worker_exe.display()
         );
     }
 
-    fs::copy(
-        current_exe().expect("Failed to determine the path to the current executable"),
-        worker_dir.join(if cfg!(windows) {
-            "rust_worker.exe"
-        } else {
-            "rust_worker"
-        }),
-    )
-    .expect("Failed to copy worker executable");
+    fs::copy(current_exe, worker_exe).expect("Failed to copy worker executable");
 }
 
-fn create_worker_config_file(worker_dir: &Path, verbose: bool) {
+#[cfg(target_os = "windows")]
+fn copy_worker_debug_info(current_exe: &Path, worker_exe: &Path, verbose: bool) {
+    let current_pdb = current_exe.with_extension("pdb");
+    if !current_pdb.is_file() {
+        return;
+    }
+
+    let worker_pdb = worker_exe.with_extension("pdb");
+
+    if verbose {
+        println!(
+            "Copying worker debug information to '{}'.",
+            worker_pdb.display()
+        );
+    }
+
+    fs::copy(current_pdb, worker_pdb).expect("Failed to copy worker debug information");
+}
+
+#[cfg(target_os = "macos")]
+fn copy_worker_debug_info(current_exe: &Path, worker_exe: &Path, verbose: bool) {
+    use fs_extra::dir;
+
+    let current_dsym = current_exe.with_extension("dSYM");
+    if !current_dsym.exists() {
+        return;
+    }
+
+    let worker_dsym = worker_exe.with_extension("dSYM");
+
+    if verbose {
+        println!(
+            "Copying worker debug information to '{}'.",
+            worker_dsym.display()
+        );
+    }
+
+    let mut options = dir::CopyOptions::new();
+    options.copy_inside = true;
+
+    dir::copy(current_dsym, worker_dsym, &options)
+        .expect("Failed to copy worker debug information");
+}
+
+#[cfg(target_os = "linux")]
+fn copy_worker_debug_info(_: &Path, _: &Path, _: bool) {
+    // No-op
+}
+
+fn create_worker_config_file(worker_dir: &Path, worker_exe: &Path, verbose: bool) {
     let config = worker_dir.join("worker.config.json");
     if config.exists() {
         return;
@@ -293,7 +343,7 @@ fn create_worker_config_file(worker_dir: &Path, verbose: bool) {
             "description":{
                 "language": "Rust",
                 "extensions": [".rs"],
-                "defaultExecutablePath": "workers/rust/rust_worker",
+                "defaultExecutablePath": worker_exe.to_str().unwrap(),
                 "arguments": ["run"]
             }
         }))
@@ -399,6 +449,7 @@ fn create_function_config_file(
 fn initialize_script_root(
     script_root: &str,
     sync: bool,
+    copy_debug_info: bool,
     verbose: bool,
     registry: Registry<'static>,
 ) {
@@ -414,9 +465,18 @@ fn initialize_script_root(
 
     create_local_settings_file(&script_root, &worker_dir, verbose);
 
-    copy_worker_executable(&worker_dir, verbose);
+    let current_exe =
+        current_exe().expect("Failed to determine the path to the current executable");
 
-    create_worker_config_file(&worker_dir, verbose);
+    let worker_exe = worker_dir.join(current_exe.file_name().unwrap());
+
+    copy_worker_executable(&current_exe, &worker_exe, verbose);
+
+    if copy_debug_info {
+        copy_worker_debug_info(&current_exe, &worker_exe, verbose);
+    }
+
+    create_worker_config_file(&worker_dir, &worker_exe, verbose);
 
     delete_existing_function_directories(&script_root, verbose);
 
@@ -650,6 +710,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
                 .value_of("script_root")
                 .expect("A script root is required."),
             matches.is_present("sync"),
+            !matches.is_present("no_debug_info"),
             matches.is_present("verbose"),
             registry,
         );

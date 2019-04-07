@@ -190,8 +190,7 @@ For the `hello` function added previously, it can be invoked from `http://localh
 
 The easiest way to debug the Azure Functions application is to use [Visual Studio Code](https://code.visualstudio.com/) with the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension.
 
-Copy the example [launch.json](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/launch.json) and
-[tasks.json](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/tasks.json) files to the `.vscode` directory inside the root of your project.
+By default, the Azure Functions for Rust SDK will create a Visual Studio Code launch configuration when you run `cargo func new-app`.
 
 This will enable a `Debug` launch configuration that will build and run your application locally before attaching the `lldb` debugger to the Rust worker process.
 
