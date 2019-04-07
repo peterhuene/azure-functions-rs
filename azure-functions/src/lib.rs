@@ -110,7 +110,7 @@ pub use azure_functions_shared::Context;
 use crate::registry::Registry;
 use futures::Future;
 use serde::Serialize;
-use serde_json::{json, to_string_pretty, Serializer};
+use serde_json::{json, to_string_pretty, Serializer, Value};
 use std::env::{current_dir, current_exe};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -213,31 +213,55 @@ fn create_host_file(script_root: &Path, verbose: bool) {
     .unwrap_or_else(|_| panic!("Failed to create '{}'", host_json.display()));
 }
 
+/*
+ * Merge implementation with Serde, from:
+ * https://stackoverflow.com/a/47142105
+ */
+fn merge(a: &mut Value, b: Value) {
+    match (a, b) {
+        (a @ &mut Value::Object(_), Value::Object(b)) => {
+            let a = a.as_object_mut().unwrap();
+            for (k, v) in b {
+                merge(a.entry(k).or_insert(Value::Null), v);
+            }
+        }
+        (a, b) => *a = b,
+    }
+}
+
 fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bool) {
     let settings = script_root.join("local.settings.json");
+    let mut local: Value;
+    let required_json = json!({
+        "Values" : {
+            "FUNCTIONS_WORKER_RUNTIME": "Rust",
+            "languageWorkers:workersDirectory": worker_dir.parent().unwrap()
+        }
+    });
+    /*
+     * If the settings exists, we need to insert the right workersDirectory setting
+     */
     if settings.exists() {
-        return;
-    }
+        let file = fs::File::open(&settings).expect("Could not read the local.settings.json file");
+        local = serde_json::from_reader(file).expect("local.settings.json not valid JSON");
 
-    if verbose {
-        println!("Creating local settings file '{}'.", settings.display());
-    }
-
-    fs::write(
-        &settings,
-        to_string_pretty(&json!(
-        {
+        if verbose {
+            println!("Merging local settings file '{}'.", settings.display());
+        }
+    } else {
+        local = json!({
             "IsEncrypted": false,
-            "Values": {
-                "FUNCTIONS_WORKER_RUNTIME": "Rust",
-                "languageWorkers:workersDirectory": worker_dir.parent().unwrap()
-            },
             "ConnectionStrings": {
             }
-        }))
-        .unwrap(),
-    )
-    .unwrap_or_else(|_| panic!("Failed to create '{}'", settings.display()));
+        });
+        if verbose {
+            println!("Creating local settings file '{}'.", settings.display());
+        }
+    }
+    merge(&mut local, required_json);
+
+    fs::write(&settings, to_string_pretty(&local).unwrap())
+        .unwrap_or_else(|_| panic!("Failed to create '{}'", settings.display()));
 }
 
 fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
