@@ -14,7 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 colored = "1.7"
-clap = "2.31.2"
+clap = "2.33.0"
 atty = "0.2.11"
 handlebars = "1.1.0"
 serde_json = "1.0.39"
