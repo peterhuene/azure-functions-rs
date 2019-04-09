@@ -14,7 +14,7 @@ azure-functions-codegen = { version = "0.6.0", path = "../azure-functions-codege
 log = { version = "0.4.6", features = ["std"] }
 grpcio = { version = "0.4.4", default-features = false, features = ["protobuf-codec"] }
 futures = "0.1.26"
-clap = "2.32.0"
+clap = "2.33.0"
 tokio-threadpool = "0.1.13"
 serde = "1.0.90"
 serde_json = "1.0.39"
