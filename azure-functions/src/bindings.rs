@@ -17,6 +17,7 @@ mod signalr_group_action;
 mod signalr_message;
 mod table;
 mod timer_info;
+mod twilio_sms_message;
 
 pub use self::blob::*;
 pub use self::blob_trigger::*;
@@ -36,3 +37,4 @@ pub use self::signalr_group_action::*;
 pub use self::signalr_message::*;
 pub use self::table::*;
 pub use self::timer_info::*;
+pub use self::twilio_sms_message::*;

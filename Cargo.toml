@@ -16,4 +16,5 @@ members = [
     "examples/cosmosdb",
     "examples/signalr",
     "examples/service-bus",
+    "examples/twilio",
 ]
