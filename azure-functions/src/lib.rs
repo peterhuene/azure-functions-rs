@@ -472,7 +472,7 @@ fn create_function_config_file(
 
 fn initialize_script_root(
     script_root: &str,
-    sync: bool,
+    sync_extensions: bool,
     copy_debug_info: bool,
     verbose: bool,
     registry: Registry<'static>,
@@ -527,8 +527,8 @@ fn initialize_script_root(
         create_function_config_file(&function_dir, info, verbose);
     }
 
-    if sync {
-        sync_extensions(script_root.to_str().unwrap(), verbose, registry);
+    if sync_extensions {
+        crate::sync_extensions(script_root.to_str().unwrap(), verbose, registry);
     }
 }
 
@@ -733,7 +733,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
-            matches.is_present("sync"),
+            matches.is_present("sync_extensions"),
             !matches.is_present("no_debug_info"),
             matches.is_present("verbose"),
             registry,

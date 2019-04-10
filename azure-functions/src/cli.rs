@@ -17,8 +17,8 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                         .required(true),
                 )
                 .arg(
-                    Arg::with_name("sync")
-                        .long("sync")
+                    Arg::with_name("sync_extensions")
+                        .long("sync-extensions")
                         .short("s")
                         .help("Synchronize the Azure Function binding extensions.")
                 )
