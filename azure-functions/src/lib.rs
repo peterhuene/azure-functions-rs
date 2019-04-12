@@ -108,10 +108,11 @@ pub use azure_functions_codegen::export;
 pub use azure_functions_shared::Context;
 
 use crate::registry::Registry;
+use clap::ArgMatches;
 use futures::Future;
 use serde::Serialize;
-use serde_json::{json, to_string_pretty, Serializer, Value};
-use std::env::{current_dir, current_exe};
+use serde_json::{json, to_string_pretty, Serializer};
+use std::env::{current_dir, current_exe, var};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -214,55 +215,51 @@ fn create_host_file(script_root: &Path, verbose: bool) {
     .unwrap_or_else(|e| panic!("failed to create '{}': {}", host_json.display(), e));
 }
 
-/*
- * Merge implementation with Serde, from:
- * https://stackoverflow.com/a/47142105
- */
-fn merge(a: &mut Value, b: Value) {
-    match (a, b) {
-        (a @ &mut Value::Object(_), Value::Object(b)) => {
-            let a = a.as_object_mut().unwrap();
-            for (k, v) in b {
-                merge(a.entry(k).or_insert(Value::Null), v);
-            }
-        }
-        (a, b) => *a = b,
+fn copy_local_settings_file(local_settings_file: &Path, script_root: &Path, verbose: bool) {
+    let output_settings = script_root.join("local.settings.json");
+
+    if verbose {
+        println!(
+            "Copying local settings file '{}' to '{}'.",
+            local_settings_file.display(),
+            output_settings.display()
+        );
     }
+
+    fs::copy(local_settings_file, output_settings).unwrap_or_else(|e| {
+        panic!(
+            "failed to copy local settings file '{}': {}",
+            local_settings_file.display(),
+            e
+        )
+    });
 }
 
-fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bool) {
+fn create_local_settings_file(script_root: &Path, verbose: bool) {
     let settings = script_root.join("local.settings.json");
-    let mut local: Value;
-    let required_json = json!({
-        "Values" : {
-            "FUNCTIONS_WORKER_RUNTIME": "Rust",
-            "languageWorkers:workersDirectory": worker_dir.parent().unwrap()
-        }
-    });
-    /*
-     * If the settings exists, we need to insert the right workersDirectory setting
-     */
-    if settings.exists() {
-        let file = fs::File::open(&settings).expect("Could not read the local.settings.json file");
-        local = serde_json::from_reader(file).expect("local.settings.json not valid JSON");
 
-        if verbose {
-            println!("Merging local settings file '{}'.", settings.display());
-        }
-    } else {
-        local = json!({
+    if verbose {
+        println!(
+            "Creating default local settings file '{}'.",
+            settings.display()
+        );
+    }
+
+    fs::write(
+        &settings,
+        to_string_pretty(&json!(
+        {
             "IsEncrypted": false,
+            "Values": {
+                "FUNCTIONS_WORKER_RUNTIME": "Rust",
+                "languageWorkers:workersDirectory": "workers"
+            },
             "ConnectionStrings": {
             }
-        });
-        if verbose {
-            println!("Creating local settings file '{}'.", settings.display());
-        }
-    }
-    merge(&mut local, required_json);
-
-    fs::write(&settings, to_string_pretty(&local).unwrap())
-        .unwrap_or_else(|e| panic!("failed to create '{}': {}", settings.display(), e));
+        }))
+        .unwrap(),
+    )
+    .unwrap_or_else(|e| panic!("failed to create '{}': {}", settings.display(), e));
 }
 
 fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
@@ -493,6 +490,7 @@ fn initialize_script_root(
     script_root: &str,
     sync_extensions: bool,
     copy_debug_info: bool,
+    local_settings_file: Option<PathBuf>,
     verbose: bool,
     registry: Registry<'static>,
 ) {
@@ -504,13 +502,15 @@ fn initialize_script_root(
 
     create_host_file(&script_root, verbose);
 
-    let worker_dir = create_worker_dir(&script_root, verbose);
-
-    create_local_settings_file(&script_root, &worker_dir, verbose);
+    match local_settings_file {
+        Some(file) => copy_local_settings_file(&file, &script_root, verbose),
+        None => create_local_settings_file(&script_root, verbose),
+    };
 
     let current_exe =
         current_exe().expect("Failed to determine the path to the current executable");
 
+    let worker_dir = create_worker_dir(&script_root, verbose);
     let worker_exe = worker_dir.join(current_exe.file_name().unwrap());
 
     copy_worker_executable(&current_exe, &worker_exe, verbose);
@@ -734,6 +734,23 @@ fn run_worker(
         .unwrap();
 }
 
+fn get_local_settings_path(matches: &ArgMatches) -> Option<PathBuf> {
+    if let Some(local_settings) = matches.value_of("local_settings") {
+        return Some(local_settings.into());
+    }
+
+    var("CARGO_MANIFEST_DIR")
+        .map(|dir| {
+            let settings = PathBuf::from(dir).join("local.settings.json");
+            if settings.is_file() {
+                Some(settings)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(None)
+}
+
 /// The main entry point for the Azure Functions for Rust worker.
 ///
 /// # Examples
@@ -758,6 +775,7 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
                 .expect("A script root is required."),
             matches.is_present("sync_extensions"),
             !matches.is_present("no_debug_info"),
+            get_local_settings_path(matches),
             matches.is_present("verbose"),
             registry,
         );

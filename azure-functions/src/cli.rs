@@ -1,4 +1,5 @@
 use clap::{App, AppSettings, Arg, SubCommand};
+use std::path::Path;
 
 pub fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Azure Functions for Rust worker")
@@ -13,8 +14,21 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                     Arg::with_name("script_root")
                         .long("script-root")
                         .value_name("SCRIPT_ROOT")
-                        .help("The directory to create the script root.")
+                        .help("The script root directory to initialize the application in.")
                         .required(true),
+                )
+                .arg(
+                    Arg::with_name("local_settings")
+                        .long("local-settings")
+                        .value_name("SETTINGS_FILE")
+                        .help("The path to the local settings file to use. Defaults to the `local.settings.json` file in the directory containing `Cargo.toml`, if present.")
+                        .validator(|v| {
+                            if Path::new(&v).is_file() {
+                                Ok(())
+                            } else {
+                                Err(format!("local settings file '{}' does not exist", v))
+                            }
+                        })
                 )
                 .arg(
                     Arg::with_name("sync_extensions")
