@@ -149,7 +149,7 @@ fn get_source_file_path(manifest_dir: &Path, file: &Path) -> PathBuf {
 
 fn has_rust_files(directory: &Path) -> bool {
     fs::read_dir(directory)
-        .unwrap_or_else(|_| panic!("failed to read directory '{}'", directory.display()))
+        .unwrap_or_else(|e| panic!("failed to read directory '{}': {}", directory.display(), e))
         .any(|p| match p {
             Ok(p) => {
                 let p = p.path();
@@ -175,10 +175,11 @@ fn create_script_root(script_root: &Path, verbose: bool) {
             );
         }
 
-        fs::create_dir_all(&script_root).unwrap_or_else(|_| {
+        fs::create_dir_all(&script_root).unwrap_or_else(|e| {
             panic!(
-                "Failed to create Azure Functions application directory '{}'",
-                script_root.display()
+                "failed to create Azure Functions application directory '{}': {}",
+                script_root.display(),
+                e
             )
         });
     }
@@ -210,7 +211,7 @@ fn create_host_file(script_root: &Path, verbose: bool) {
         }))
         .unwrap(),
     )
-    .unwrap_or_else(|_| panic!("Failed to create '{}'", host_json.display()));
+    .unwrap_or_else(|e| panic!("failed to create '{}': {}", host_json.display(), e));
 }
 
 /*
@@ -261,17 +262,18 @@ fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bo
     merge(&mut local, required_json);
 
     fs::write(&settings, to_string_pretty(&local).unwrap())
-        .unwrap_or_else(|_| panic!("Failed to create '{}'", settings.display()));
+        .unwrap_or_else(|e| panic!("failed to create '{}': {}", settings.display(), e));
 }
 
 fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
     let worker_dir = script_root.join("workers").join("rust");
 
     if worker_dir.exists() {
-        fs::remove_dir_all(&worker_dir).unwrap_or_else(|_| {
+        fs::remove_dir_all(&worker_dir).unwrap_or_else(|e| {
             panic!(
-                "Failed to delete Rust worker directory '{}",
-                worker_dir.display()
+                "failed to delete Rust worker directory '{}': {}",
+                worker_dir.display(),
+                e
             )
         });
     }
@@ -280,10 +282,11 @@ fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
         println!("Creating worker directory '{}'.", worker_dir.display());
     }
 
-    fs::create_dir_all(&worker_dir).unwrap_or_else(|_| {
+    fs::create_dir_all(&worker_dir).unwrap_or_else(|e| {
         panic!(
-            "Failed to create directory for worker executable '{}'",
-            worker_dir.display()
+            "failed to create directory for worker executable '{}': {}",
+            worker_dir.display(),
+            e
         )
     });
 
@@ -373,7 +376,7 @@ fn create_worker_config_file(worker_dir: &Path, worker_exe: &Path, verbose: bool
         }))
         .unwrap(),
     )
-    .unwrap_or_else(|_| panic!("Failed to create '{}'", config.display()));
+    .unwrap_or_else(|e| panic!("failed to create '{}': {}", config.display(), e));
 }
 
 fn delete_existing_function_directories(script_root: &Path, verbose: bool) {
@@ -390,8 +393,13 @@ fn delete_existing_function_directories(script_root: &Path, verbose: bool) {
             );
         }
 
-        fs::remove_dir_all(&path)
-            .unwrap_or_else(|_| panic!("Failed to delete function directory '{}", path.display()));
+        fs::remove_dir_all(&path).unwrap_or_else(|e| {
+            panic!(
+                "failed to delete function directory '{}': {}",
+                path.display(),
+                e
+            )
+        });
     }
 }
 
@@ -402,10 +410,11 @@ fn create_function_directory(script_root: &Path, function_name: &str, verbose: b
         println!("Creating function directory '{}'.", function_dir.display());
     }
 
-    fs::create_dir(&function_dir).unwrap_or_else(|_| {
+    fs::create_dir(&function_dir).unwrap_or_else(|e| {
         panic!(
-            "Failed to create function directory '{}'",
-            function_dir.display()
+            "failed to create function directory '{}': {}",
+            function_dir.display(),
+            e
         )
     });
 
@@ -429,8 +438,13 @@ fn copy_source_file(function_dir: &Path, source_file: &Path, function_name: &str
             );
         }
 
-        fs::copy(&source_file, destination_file)
-            .unwrap_or_else(|_| panic!("Failed to copy source file '{}'", source_file.display()));
+        fs::copy(&source_file, destination_file).unwrap_or_else(|e| {
+            panic!(
+                "failed to copy source file '{}': {}",
+                source_file.display(),
+                e
+            )
+        });
     } else {
         if verbose {
             println!(
@@ -444,7 +458,7 @@ fn copy_source_file(function_dir: &Path, source_file: &Path, function_name: &str
                 &destination_file,
                 "// This file is intentionally empty.\n\
                  // The original source file was not available when the Functions Application was initialized.\n"
-            ).unwrap_or_else(|_| panic!("Failed to create '{}'", destination_file.display()));
+            ).unwrap_or_else(|e| panic!("failed to create '{}': {}", destination_file.display(), e));
     }
 }
 
@@ -464,10 +478,15 @@ fn create_function_config_file(
     }
 
     let mut output = fs::File::create(&function_json)
-        .unwrap_or_else(|_| panic!("Failed to create '{}'", function_json.display()));
+        .unwrap_or_else(|e| panic!("failed to create '{}': {}", function_json.display(), e));
 
     info.serialize(&mut Serializer::pretty(&mut output))
-        .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", info.name));
+        .unwrap_or_else(|e| {
+            panic!(
+                "failed to serialize metadata for function '{}': {}",
+                info.name, e
+            )
+        });
 }
 
 fn initialize_script_root(
@@ -652,8 +671,7 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         ])
         .current_dir(temp_dir.path())
         .status()
-        .map_err(|e| format!("failed to spawn dotnet: {}", e))
-        .unwrap()
+        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e))
         .success()
     {
         panic!("failed to restore extension assemblies.");
@@ -676,8 +694,7 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         ])
         .current_dir(temp_dir.path())
         .status()
-        .map_err(|e| format!("failed to spawn dotnet: {}", e))
-        .unwrap()
+        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e))
         .success()
     {
         panic!("failed to generate extension metadata.");
