@@ -20,10 +20,13 @@ lazy_static::lazy_static! {
         let mut templates = handlebars::Handlebars::new();
 
         template!(templates, "new-app", "appsettings.json");
+        template!(templates, "new-app", "local.settings.json");
         template!(templates, "new-app", "Dockerfile");
         template!(templates, "new-app", "dockerignore");
         template!(templates, "new-app", "functions_mod.rs");
+        template!(templates, "new-app", "launch.json");
         template!(templates, "new-app", "main.rs");
+        template!(templates, "new-app", "tasks.json");
 
         template!(templates, "new", "http.rs");
         template!(templates, "new", "blob.rs");
@@ -32,6 +35,7 @@ lazy_static::lazy_static! {
         template!(templates, "new", "eventgrid.rs");
         template!(templates, "new", "eventhub.rs");
         template!(templates, "new", "cosmosdb.rs");
+        template!(templates, "new", "servicebus.rs");
 
         templates
     };

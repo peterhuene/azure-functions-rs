@@ -13,6 +13,7 @@ pub struct Run<'a> {
     color: Option<&'a str>,
     port: Option<&'a str>,
     script_root: Option<&'a str>,
+    no_debug_info: bool,
     cargo_options: Option<Values<'a>>,
 }
 
@@ -49,6 +50,11 @@ impl<'a> Run<'a> {
                     .short("r")
                     .value_name("ROOT")
                     .help("The directory to use for the Azure Functions application script root. Default is a temporary directory."),
+            )
+            .arg(
+                Arg::with_name("no_debug_info")
+                    .long("--no-debug-info")
+                    .help("Do not copy debug information for the worker executable.")
             )
             .arg(Arg::with_name("cargo_options")
                 .multiple(true)
@@ -105,8 +111,12 @@ impl<'a> Run<'a> {
             "init",
             "--script-root",
             script_root.to_str().unwrap(),
-            "--sync",
+            "--sync-extensions",
         ]);
+
+        if self.no_debug_info {
+            args.push("--no-debug-info");
+        }
 
         if !self.quiet {
             print_running(&format!(
@@ -187,6 +197,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Run<'a> {
             color: args.value_of("color"),
             port: args.value_of("port"),
             script_root: args.value_of("script_root"),
+            no_debug_info: args.is_present("no_debug_info"),
             cargo_options: args.values_of("cargo_options"),
         }
     }

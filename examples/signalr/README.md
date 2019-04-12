@@ -115,22 +115,22 @@ When the above function is invoked, the user gets removed from the specified gro
 
 # Running the example locally
 
-Start by creating a known script root for the Azure Functions application:
-
-```
-$ cargo run -- init --script-root /tmp/myroot && cd /tmp/myroot
-```
-
-This example uses a connection setting named `connection` for the Azure SignalR Service connection string, so add that setting:
+This example uses a connection setting named `connection` for the Azure SignalR Service connection string, so add that setting to `local.settings.json`:
 
 ```
 $ func settings add connection <signalr_connection_string>
 ```
 
-Finally, change back to the example directory and start the Azure Functions application:
+You may encrypt `local.settings.json`, if desired:
 
 ```
-$ cargo func run --script-root /tmp/myroot
+$ func settings encrypt
+```
+
+Finally, start the Azure Functions application:
+
+```
+$ cargo func run
 ```
 
 # Invoking the functions

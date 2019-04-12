@@ -1,5 +1,5 @@
 [package]
-name = "signalr"
+name = "signalr-example"
 version = "0.1.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 edition = "2018"
@@ -7,8 +7,8 @@ edition = "2018"
 [dependencies]
 azure-functions = { path = "../../azure-functions" }
 serde_json = "1.0.39"
-serde = "1.0.89"
-serde_derive = "1.0.89"
+serde = "1.0.90"
+serde_derive = "1.0.90"
 
 [features]
 unstable = ["azure-functions/unstable"]

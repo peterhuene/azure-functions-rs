@@ -9,6 +9,8 @@ mod http;
 mod http_trigger;
 mod queue;
 mod queue_trigger;
+mod service_bus;
+mod service_bus_trigger;
 mod signalr;
 mod signalr_connection_info;
 mod table;
@@ -25,6 +27,8 @@ pub use self::http::*;
 pub use self::http_trigger::*;
 pub use self::queue::*;
 pub use self::queue_trigger::*;
+pub use self::service_bus::*;
+pub use self::service_bus_trigger::*;
 pub use self::signalr::*;
 pub use self::signalr_connection_info::*;
 pub use self::table::*;
@@ -71,6 +75,8 @@ pub enum Binding {
     CosmosDb(CosmosDb),
     SignalRConnectionInfo(SignalRConnectionInfo),
     SignalR(SignalR),
+    ServiceBusTrigger(ServiceBusTrigger),
+    ServiceBus(ServiceBus),
 }
 
 impl Binding {
@@ -92,6 +98,8 @@ impl Binding {
             Binding::CosmosDb(b) => Some(&b.name),
             Binding::SignalRConnectionInfo(b) => Some(&b.name),
             Binding::SignalR(b) => Some(&b.name),
+            Binding::ServiceBusTrigger(b) => Some(&b.name),
+            Binding::ServiceBus(b) => Some(&b.name),
         }
     }
 
@@ -113,6 +121,8 @@ impl Binding {
             Binding::CosmosDb(_) => Some(CosmosDb::binding_type()),
             Binding::SignalRConnectionInfo(_) => Some(SignalRConnectionInfo::binding_type()),
             Binding::SignalR(_) => Some(SignalR::binding_type()),
+            Binding::ServiceBusTrigger(_) => Some(ServiceBusTrigger::binding_type()),
+            Binding::ServiceBus(_) => Some(ServiceBus::binding_type()),
         }
     }
 
@@ -131,7 +141,8 @@ impl Binding {
             | Binding::BlobTrigger(_)
             | Binding::EventGridTrigger(_)
             | Binding::EventHubTrigger(_)
-            | Binding::CosmosDbTrigger(_) => true,
+            | Binding::CosmosDbTrigger(_)
+            | Binding::ServiceBusTrigger(_) => true,
             _ => false,
         }
     }
@@ -196,6 +207,14 @@ impl ToTokens for Binding {
             Binding::SignalR(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::SignalR(#b)).to_tokens(tokens)
             }
+            Binding::ServiceBusTrigger(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::ServiceBusTrigger(#b))
+                    .to_tokens(tokens)
+            }
+            Binding::ServiceBus(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::ServiceBus(#b))
+                    .to_tokens(tokens)
+            }
         };
     }
 }
@@ -226,6 +245,9 @@ lazy_static! {
         });
         map.insert("CosmosDbTrigger", |args, span| {
             Binding::CosmosDbTrigger(CosmosDbTrigger::from((args, span)))
+        });
+        map.insert("ServiceBusTrigger", |args, span| {
+            Binding::ServiceBusTrigger(ServiceBusTrigger::from((args, span)))
         });
         map
     };
@@ -294,6 +316,9 @@ lazy_static! {
         map.insert("SignalRGroupAction", |args, span| {
             Binding::SignalR(SignalR::from((args, span)))
         });
+        map.insert("ServiceBusMessage", |args, span| {
+            Binding::ServiceBus(ServiceBus::from((args, span)))
+        });
         map
     };
     pub static ref VEC_INPUT_BINDINGS: HashSet<&'static str> = {
@@ -308,6 +333,7 @@ lazy_static! {
         set.insert("QueueMessage");
         set.insert("SignalRMessage");
         set.insert("SignalRGroupAction");
+        set.insert("ServiceBusMessage");
         set
     };
 }

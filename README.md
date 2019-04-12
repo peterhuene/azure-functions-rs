@@ -2,12 +2,13 @@
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
+[![Gitter](https://badges.gitter.im/azure-functions-rs/community.svg)](https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Build Status](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_apis/build/status/peterhuene.azure-functions-rs?branchName=master)](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_build/latest?definitionId=2&branchName=master)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
 [![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
 
 This is an early-stage framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
-in [Rust](https://www.rust-lang.org/en-US/).
+in [Rust](https://www.rust-lang.org/).
 
 ## Disclaimer
 
@@ -70,6 +71,44 @@ For example on Debian/Ubuntu:
 ```
 $ apt-get install cmake
 ```
+
+## Install a C++ Compiler
+
+The `grpcio` crate builds a native library that implements the gRPC runtime.
+
+Therefore, a C++ compiler must be on your PATH.
+
+### Windows
+
+Install [Visual Studio 2015 or later](https://visualstudio.microsoft.com/).
+
+### macOS
+
+Ensure the XCode command line utilities are installed, as this will install `clang`:
+
+```
+$ xcode-select --install
+```
+
+### Linux
+
+Use your distro's package manager to install `g++` (or similar) package:
+
+For example on Debian/Ubuntu:
+
+```
+$ apt-get install g++
+```
+
+## Install a .NET Core SDK
+
+A .NET Core SDK is required to synchronize Azure Functions Host binding extensions.
+
+For example, using the Cosmos DB bindings will need the `Microsoft.Azure.WebJobs.Extensions.CosmosDB` extensions installed for the Azure Functions Host.
+
+This happens automatically by Azure Functions for Rust when the application is initialized.
+
+Follow the [download instructions for the 2.2 .NET Core SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2) to install for Windows, macOS, or your Linux distro.
 
 ## Install the Azure Functions Core Tools
 
@@ -151,8 +190,7 @@ For the `hello` function added previously, it can be invoked from `http://localh
 
 The easiest way to debug the Azure Functions application is to use [Visual Studio Code](https://code.visualstudio.com/) with the [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension.
 
-Copy the example [launch.json](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/launch.json) and
-[tasks.json](https://github.com/peterhuene/azure-functions-rs/tree/master/examples/http/.vscode/tasks.json) files to the `.vscode` directory inside the root of your project.
+By default, the Azure Functions for Rust SDK will create a Visual Studio Code launch configuration when you run `cargo func new-app`.
 
 This will enable a `Debug` launch configuration that will build and run your application locally before attaching the `lldb` debugger to the Rust worker process.
 
@@ -198,25 +236,27 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 
 The current list of supported bindings:
 
-| Rust Type                                          | Azure Functions Binding              | Direction      | Vec\<T> |
-|----------------------------------------------------|--------------------------------------|----------------|---------|
-| `azure_functions::bindings::Blob`                  | Input and Ouput Blob                 | in, inout, out | No      |
-| `azure_functions::bindings::BlobTrigger`           | Blob Trigger                         | in, inout      | No      |
-| `azure_functions::bindings::CosmosDbTrigger`       | Cosmos DB Trigger                    | in             | No      |
-| `azure_functions::bindings::CosmosDbDocument`      | Input and Output Cosmos DB Document  | in, out        | Yes     |
-| `azure_functions::bindings::EventGridEvent`        | Event Grid Trigger                   | in             | No      |
-| `azure_functions::bindings::EventHubTrigger`       | Event Hub Trigger                    | in             | No      |
-| `azure_functions::bindings::EventHubMessage`       | Event Hub Output Message             | out            | Yes     |
-| `azure_functions::bindings::HttpRequest`           | HTTP Trigger                         | in             | No      |
-| `azure_functions::bindings::HttpResponse`          | Output HTTP Response                 | out            | No      |
-| `azure_functions::bindings::QueueTrigger`          | Queue Trigger                        | in             | No      |
-| `azure_functions::bindings::QueueMessage`          | Output Queue Message                 | out            | Yes     |
-| `azure_functions::bindings::SignalRConnectionInfo` | SignalR Connection Info              | in             | No      |
-| `azure_functions::bindings::SignalRGroupAction`    | SignalR Group Action                 | out            | Yes     |
-| `azure_functions::bindings::SignalRMessage`        | SignalR Message                      | out            | Yes     |
-| `azure_functions::bindings::Table`                 | Input and Ouput Table                | in, out        | No      |
-| `azure_functions::bindings::TimerInfo`             | Timer Trigger                        | in             | No      |
-| `azure_functions::Context`*                        | Invocation Context                   | N/A            | N/A     |
+| Rust Type                                                                                                                  | Azure Functions Binding             | Direction      | Vec\<T> |
+|----------------------------------------------------------------------------------------------------------------------------|-------------------------------------|----------------|---------|
+| [Blob](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Blob.html)                                   | Input and Ouput Blob                | in, inout, out | No      |
+| [BlobTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.BlobTrigger.html)                     | Blob Trigger                        | in, inout      | No      |
+| [CosmosDbDocument](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbDocument.html)           | Input and Output Cosmos DB Document | in, out        | Yes     |
+| [CosmosDbTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbTrigger.html)             | Cosmos DB Trigger                   | in             | No      |
+| [EventGridEvent](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventGridEvent.html)               | Event Grid Trigger                  | in             | No      |
+| [EventHubMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubMessage.html)             | Event Hub Output Message            | out            | Yes     |
+| [EventHubTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubTrigger.html)             | Event Hub Trigger                   | in             | No      |
+| [HttpRequest](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpRequest.html)                     | HTTP Trigger                        | in             | No      |
+| [HttpResponse](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpResponse.html)                   | Output HTTP Response                | out            | No      |
+| [QueueMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueMessage.html)                   | Output Queue Message                | out            | Yes     |
+| [QueueTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueTrigger.html)                   | Queue Trigger                       | in             | No      |
+| [ServiceBusMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusMessage.html)         | Service Bus Output Message          | out            | Yes     |
+| [ServiceBusTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusTrigger.html)         | Service Bus Trigger                 | in             | No      |
+| [SignalRConnectionInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRConnectionInfo.html) | SignalR Connection Info             | in             | No      |
+| [SignalRGroupAction](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRGroupAction.html)       | SignalR Group Action                | out            | Yes     |
+| [SignalRMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRMessage.html)               | SignalR Message                     | out            | Yes     |
+| [Table](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Table.html)                                 | Input and Ouput Table               | in, out        | No      |
+| [TimerInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TimerInfo.html)                         | Timer Trigger                       | in             | No      |
+| [Context](https://docs.rs/azure-functions/latest/azure_functions/struct.Context.html)*                                     | Invocation Context                  | N/A            | N/A     |
 
 \****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 

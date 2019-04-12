@@ -9,6 +9,7 @@
 //! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
 //! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
 //! * [HTTP trigger](bindings/struct.HttpRequest.html)
+//! * [Service Bus trigger](bindings/struct.ServiceBusTrigger.html)
 //! * [Queue trigger](bindings/struct.QueueTrigger.html)
 //! * [Timer trigger](bindings/struct.TimerInfo.html)
 //!
@@ -26,6 +27,7 @@
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)
+//! * [Service Bus output](bindings/struct.ServiceBusMessage.html)
 //! * [SignalR group action output](bindings/struct.SignalRGroupAction.html)
 //! * [SignalR message output](bindings/struct.SignalRMessage.html)
 //! * [Table output](bindings/struct.Table.html)
@@ -74,9 +76,9 @@
 //! $ cargo func run
 //! ```
 //!
-//! The above Azure Function can be invoked with `http://localhost:8080/api/hello?name=Peter`.
+//! The above Azure Function can be invoked with `http://localhost:8080/api/hello`.
 //!
-//! The expected response would be `Hello from Rust, Peter!`.
+//! The expected response would be `Hello from Rust!`.
 #![deny(unused_extern_crates)]
 #![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]
@@ -106,10 +108,11 @@ pub use azure_functions_codegen::export;
 pub use azure_functions_shared::Context;
 
 use crate::registry::Registry;
+use clap::ArgMatches;
 use futures::Future;
 use serde::Serialize;
 use serde_json::{json, to_string_pretty, Serializer};
-use std::env::{current_dir, current_exe};
+use std::env::{current_dir, current_exe, var};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -147,7 +150,7 @@ fn get_source_file_path(manifest_dir: &Path, file: &Path) -> PathBuf {
 
 fn has_rust_files(directory: &Path) -> bool {
     fs::read_dir(directory)
-        .unwrap_or_else(|_| panic!("failed to read directory '{}'", directory.display()))
+        .unwrap_or_else(|e| panic!("failed to read directory '{}': {}", directory.display(), e))
         .any(|p| match p {
             Ok(p) => {
                 let p = p.path();
@@ -173,10 +176,11 @@ fn create_script_root(script_root: &Path, verbose: bool) {
             );
         }
 
-        fs::create_dir_all(&script_root).unwrap_or_else(|_| {
+        fs::create_dir_all(&script_root).unwrap_or_else(|e| {
             panic!(
-                "Failed to create Azure Functions application directory '{}'",
-                script_root.display()
+                "failed to create Azure Functions application directory '{}': {}",
+                script_root.display(),
+                e
             )
         });
     }
@@ -208,17 +212,37 @@ fn create_host_file(script_root: &Path, verbose: bool) {
         }))
         .unwrap(),
     )
-    .unwrap_or_else(|_| panic!("Failed to create '{}'", host_json.display()));
+    .unwrap_or_else(|e| panic!("failed to create '{}': {}", host_json.display(), e));
 }
 
-fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bool) {
-    let settings = script_root.join("local.settings.json");
-    if settings.exists() {
-        return;
-    }
+fn copy_local_settings_file(local_settings_file: &Path, script_root: &Path, verbose: bool) {
+    let output_settings = script_root.join("local.settings.json");
 
     if verbose {
-        println!("Creating local settings file '{}'.", settings.display());
+        println!(
+            "Copying local settings file '{}' to '{}'.",
+            local_settings_file.display(),
+            output_settings.display()
+        );
+    }
+
+    fs::copy(local_settings_file, output_settings).unwrap_or_else(|e| {
+        panic!(
+            "failed to copy local settings file '{}': {}",
+            local_settings_file.display(),
+            e
+        )
+    });
+}
+
+fn create_local_settings_file(script_root: &Path, verbose: bool) {
+    let settings = script_root.join("local.settings.json");
+
+    if verbose {
+        println!(
+            "Creating default local settings file '{}'.",
+            settings.display()
+        );
     }
 
     fs::write(
@@ -228,53 +252,105 @@ fn create_local_settings_file(script_root: &Path, worker_dir: &Path, verbose: bo
             "IsEncrypted": false,
             "Values": {
                 "FUNCTIONS_WORKER_RUNTIME": "Rust",
-                "languageWorkers:workersDirectory": worker_dir.parent().unwrap()
+                "languageWorkers:workersDirectory": "workers"
             },
             "ConnectionStrings": {
             }
         }))
         .unwrap(),
     )
-    .unwrap_or_else(|_| panic!("Failed to create '{}'", settings.display()));
+    .unwrap_or_else(|e| panic!("failed to create '{}': {}", settings.display(), e));
 }
 
 fn create_worker_dir(script_root: &Path, verbose: bool) -> PathBuf {
     let worker_dir = script_root.join("workers").join("rust");
 
+    if worker_dir.exists() {
+        fs::remove_dir_all(&worker_dir).unwrap_or_else(|e| {
+            panic!(
+                "failed to delete Rust worker directory '{}': {}",
+                worker_dir.display(),
+                e
+            )
+        });
+    }
+
     if verbose {
         println!("Creating worker directory '{}'.", worker_dir.display());
     }
 
-    fs::create_dir_all(&worker_dir).unwrap_or_else(|_| {
+    fs::create_dir_all(&worker_dir).unwrap_or_else(|e| {
         panic!(
-            "Failed to create directory for worker executable '{}'",
-            worker_dir.display()
+            "failed to create directory for worker executable '{}': {}",
+            worker_dir.display(),
+            e
         )
     });
 
     worker_dir
 }
 
-fn copy_worker_executable(worker_dir: &Path, verbose: bool) {
+fn copy_worker_executable(current_exe: &Path, worker_exe: &Path, verbose: bool) {
     if verbose {
         println!(
             "Copying current worker executable to '{}'.",
-            worker_dir.display()
+            worker_exe.display()
         );
     }
 
-    fs::copy(
-        current_exe().expect("Failed to determine the path to the current executable"),
-        worker_dir.join(if cfg!(windows) {
-            "rust_worker.exe"
-        } else {
-            "rust_worker"
-        }),
-    )
-    .expect("Failed to copy worker executable");
+    fs::copy(current_exe, worker_exe).expect("Failed to copy worker executable");
 }
 
-fn create_worker_config_file(worker_dir: &Path, verbose: bool) {
+#[cfg(target_os = "windows")]
+fn copy_worker_debug_info(current_exe: &Path, worker_exe: &Path, verbose: bool) {
+    let current_pdb = current_exe.with_extension("pdb");
+    if !current_pdb.is_file() {
+        return;
+    }
+
+    let worker_pdb = worker_exe.with_extension("pdb");
+
+    if verbose {
+        println!(
+            "Copying worker debug information to '{}'.",
+            worker_pdb.display()
+        );
+    }
+
+    fs::copy(current_pdb, worker_pdb).expect("Failed to copy worker debug information");
+}
+
+#[cfg(target_os = "macos")]
+fn copy_worker_debug_info(current_exe: &Path, worker_exe: &Path, verbose: bool) {
+    use fs_extra::dir;
+
+    let current_dsym = current_exe.with_extension("dSYM");
+    if !current_dsym.exists() {
+        return;
+    }
+
+    let worker_dsym = worker_exe.with_extension("dSYM");
+
+    if verbose {
+        println!(
+            "Copying worker debug information to '{}'.",
+            worker_dsym.display()
+        );
+    }
+
+    let mut options = dir::CopyOptions::new();
+    options.copy_inside = true;
+
+    dir::copy(current_dsym, worker_dsym, &options)
+        .expect("Failed to copy worker debug information");
+}
+
+#[cfg(target_os = "linux")]
+fn copy_worker_debug_info(_: &Path, _: &Path, _: bool) {
+    // No-op
+}
+
+fn create_worker_config_file(worker_dir: &Path, worker_exe: &Path, verbose: bool) {
     let config = worker_dir.join("worker.config.json");
     if config.exists() {
         return;
@@ -291,13 +367,13 @@ fn create_worker_config_file(worker_dir: &Path, verbose: bool) {
             "description":{
                 "language": "Rust",
                 "extensions": [".rs"],
-                "defaultExecutablePath": "workers/rust/rust_worker",
+                "defaultExecutablePath": worker_exe.to_str().unwrap(),
                 "arguments": ["run"]
             }
         }))
         .unwrap(),
     )
-    .unwrap_or_else(|_| panic!("Failed to create '{}'", config.display()));
+    .unwrap_or_else(|e| panic!("failed to create '{}': {}", config.display(), e));
 }
 
 fn delete_existing_function_directories(script_root: &Path, verbose: bool) {
@@ -314,8 +390,13 @@ fn delete_existing_function_directories(script_root: &Path, verbose: bool) {
             );
         }
 
-        fs::remove_dir_all(&path)
-            .unwrap_or_else(|_| panic!("Failed to delete function directory '{}", path.display()));
+        fs::remove_dir_all(&path).unwrap_or_else(|e| {
+            panic!(
+                "failed to delete function directory '{}': {}",
+                path.display(),
+                e
+            )
+        });
     }
 }
 
@@ -326,10 +407,11 @@ fn create_function_directory(script_root: &Path, function_name: &str, verbose: b
         println!("Creating function directory '{}'.", function_dir.display());
     }
 
-    fs::create_dir(&function_dir).unwrap_or_else(|_| {
+    fs::create_dir(&function_dir).unwrap_or_else(|e| {
         panic!(
-            "Failed to create function directory '{}'",
-            function_dir.display()
+            "failed to create function directory '{}': {}",
+            function_dir.display(),
+            e
         )
     });
 
@@ -353,8 +435,13 @@ fn copy_source_file(function_dir: &Path, source_file: &Path, function_name: &str
             );
         }
 
-        fs::copy(&source_file, destination_file)
-            .unwrap_or_else(|_| panic!("Failed to copy source file '{}'", source_file.display()));
+        fs::copy(&source_file, destination_file).unwrap_or_else(|e| {
+            panic!(
+                "failed to copy source file '{}': {}",
+                source_file.display(),
+                e
+            )
+        });
     } else {
         if verbose {
             println!(
@@ -368,7 +455,7 @@ fn copy_source_file(function_dir: &Path, source_file: &Path, function_name: &str
                 &destination_file,
                 "// This file is intentionally empty.\n\
                  // The original source file was not available when the Functions Application was initialized.\n"
-            ).unwrap_or_else(|_| panic!("Failed to create '{}'", destination_file.display()));
+            ).unwrap_or_else(|e| panic!("failed to create '{}': {}", destination_file.display(), e));
     }
 }
 
@@ -388,15 +475,22 @@ fn create_function_config_file(
     }
 
     let mut output = fs::File::create(&function_json)
-        .unwrap_or_else(|_| panic!("Failed to create '{}'", function_json.display()));
+        .unwrap_or_else(|e| panic!("failed to create '{}': {}", function_json.display(), e));
 
     info.serialize(&mut Serializer::pretty(&mut output))
-        .unwrap_or_else(|_| panic!("Failed to serialize metadata for function '{}'", info.name));
+        .unwrap_or_else(|e| {
+            panic!(
+                "failed to serialize metadata for function '{}': {}",
+                info.name, e
+            )
+        });
 }
 
 fn initialize_script_root(
     script_root: &str,
-    sync: bool,
+    sync_extensions: bool,
+    copy_debug_info: bool,
+    local_settings_file: Option<PathBuf>,
     verbose: bool,
     registry: Registry<'static>,
 ) {
@@ -408,13 +502,24 @@ fn initialize_script_root(
 
     create_host_file(&script_root, verbose);
 
+    match local_settings_file {
+        Some(file) => copy_local_settings_file(&file, &script_root, verbose),
+        None => create_local_settings_file(&script_root, verbose),
+    };
+
+    let current_exe =
+        current_exe().expect("Failed to determine the path to the current executable");
+
     let worker_dir = create_worker_dir(&script_root, verbose);
+    let worker_exe = worker_dir.join(current_exe.file_name().unwrap());
 
-    create_local_settings_file(&script_root, &worker_dir, verbose);
+    copy_worker_executable(&current_exe, &worker_exe, verbose);
 
-    copy_worker_executable(&worker_dir, verbose);
+    if copy_debug_info {
+        copy_worker_debug_info(&current_exe, &worker_exe, verbose);
+    }
 
-    create_worker_config_file(&worker_dir, verbose);
+    create_worker_config_file(&worker_dir, &worker_exe, verbose);
 
     delete_existing_function_directories(&script_root, verbose);
 
@@ -441,8 +546,8 @@ fn initialize_script_root(
         create_function_config_file(&function_dir, info, verbose);
     }
 
-    if sync {
-        sync_extensions(script_root.to_str().unwrap(), verbose, registry);
+    if sync_extensions {
+        crate::sync_extensions(script_root.to_str().unwrap(), verbose, registry);
     }
 }
 
@@ -553,7 +658,7 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         println!("Restoring extension assemblies...");
     }
 
-    if !Command::new("dotnet")
+    let status = Command::new("dotnet")
         .args(&[
             "publish",
             "-c",
@@ -566,18 +671,20 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         ])
         .current_dir(temp_dir.path())
         .status()
-        .map_err(|e| format!("failed to spawn dotnet: {}", e))
-        .unwrap()
-        .success()
-    {
-        panic!("failed to restore extension assemblies.");
+        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e));
+
+    if !status.success() {
+        panic!(
+            "failed to restore extensions: dotnet returned non-zero exit code {}.",
+            status.code().unwrap()
+        );
     }
 
     if verbose {
         println!("Generating extension metadata...");
     }
 
-    if !Command::new("dotnet")
+    let status = Command::new("dotnet")
         .args(&[
             "msbuild",
             "/t:_GenerateFunctionsExtensionsMetadataPostPublish",
@@ -590,11 +697,13 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         ])
         .current_dir(temp_dir.path())
         .status()
-        .map_err(|e| format!("failed to spawn dotnet: {}", e))
-        .unwrap()
-        .success()
-    {
-        panic!("failed to generate extension metadata.");
+        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e));
+
+    if !status.success() {
+        panic!(
+            "failed to generate extension metadata: dotnet returned non-zero exit code {}.",
+            status.code().unwrap()
+        );
     }
 }
 
@@ -625,6 +734,23 @@ fn run_worker(
         .unwrap();
 }
 
+fn get_local_settings_path(matches: &ArgMatches) -> Option<PathBuf> {
+    if let Some(local_settings) = matches.value_of("local_settings") {
+        return Some(local_settings.into());
+    }
+
+    var("CARGO_MANIFEST_DIR")
+        .map(|dir| {
+            let settings = PathBuf::from(dir).join("local.settings.json");
+            if settings.is_file() {
+                Some(settings)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(None)
+}
+
 /// The main entry point for the Azure Functions for Rust worker.
 ///
 /// # Examples
@@ -647,7 +773,9 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
             matches
                 .value_of("script_root")
                 .expect("A script root is required."),
-            matches.is_present("sync"),
+            matches.is_present("sync_extensions"),
+            !matches.is_present("no_debug_info"),
+            get_local_settings_path(matches),
             matches.is_present("verbose"),
             registry,
         );

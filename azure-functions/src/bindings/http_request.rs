@@ -4,6 +4,15 @@ use std::collections::HashMap;
 
 /// Represents a HTTP trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                                                                                       |
+/// |--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                                                                                            |
+/// | `auth_level` | Determines what keys, if any, need to be present on the request in order to invoke the function. The authorization level can be one of the following values: `anonymous`, `function`, or `admin`. |
+/// | `methods`    | A list of HTTP methods to which the function responds, separated by <code>&#124;</code> (e.g. <code>get&#124;post</code>). If not specified, the function responds to all HTTP methods.           |
+/// | `route`      | The URL route to which the function responds. The default value is the name of the function.                                                                                                      |
+///
 /// # Examples
 ///
 /// A function that responds with a friendly greeting:
