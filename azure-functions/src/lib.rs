@@ -658,7 +658,7 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         println!("Restoring extension assemblies...");
     }
 
-    if !Command::new("dotnet")
+    let status = Command::new("dotnet")
         .args(&[
             "publish",
             "-c",
@@ -671,17 +671,20 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         ])
         .current_dir(temp_dir.path())
         .status()
-        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e))
-        .success()
-    {
-        panic!("failed to restore extension assemblies.");
+        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e));
+
+    if !status.success() {
+        panic!(
+            "failed to restore extensions: dotnet returned non-zero exit code {}.",
+            status.code().unwrap()
+        );
     }
 
     if verbose {
         println!("Generating extension metadata...");
     }
 
-    if !Command::new("dotnet")
+    let status = Command::new("dotnet")
         .args(&[
             "msbuild",
             "/t:_GenerateFunctionsExtensionsMetadataPostPublish",
@@ -694,10 +697,13 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
         ])
         .current_dir(temp_dir.path())
         .status()
-        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e))
-        .success()
-    {
-        panic!("failed to generate extension metadata.");
+        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e));
+
+    if !status.success() {
+        panic!(
+            "failed to generate extension metadata: dotnet returned non-zero exit code {}.",
+            status.code().unwrap()
+        );
     }
 }
 
