@@ -292,14 +292,14 @@ impl Field {
                 match self.ty {
                     FieldType::String | FieldType::OptionalString => {
                         return quote!(
-                            if !#values.split('|').map(|s| s.trim()).any(|v| v == __v.to_lowercase()) {
+                            if !#values.split('|').map(str::trim).any(|v| v == __v.to_lowercase()) {
                                 crate::codegen::macro_panic(__key.span(), format!(concat!("'{}' is not a valid value for the '", stringify!(#ident), "' attribute"), __v));
                             }
                         );
                     },
                     FieldType::StringArray => {
                         return quote!(
-                            let __acceptable: Vec<&str> = #values.split('|').map(|s| s.trim()).collect();
+                            let __acceptable: Vec<&str> = #values.split('|').map(str::trim).collect();
                             for v in __v.iter() {
                                 if !__acceptable.contains(&v.as_ref().to_lowercase().as_ref()) {
                                     crate::codegen::macro_panic(__key.span(), format!(concat!("'{}' is not a valid value for the '", stringify!(#ident), "' attribute"), v));
