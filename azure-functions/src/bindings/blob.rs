@@ -9,6 +9,14 @@ use std::str::from_utf8;
 
 /// Represents an Azure Storage blob input or output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                        |
+/// |--------------|------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                             |
+/// | `path`       | The path to the blob.                                                                                                              |
+/// | `connection` | The name of an app setting that contains the Storage connection string to use for this binding. Defaults to `AzureWebJobsStorage`. |
+///
 /// # Examples
 ///
 /// Creating a blob from a string:

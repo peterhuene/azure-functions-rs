@@ -91,13 +91,7 @@ Because this example relies on Azure Storage to function, the `AzureWebJobsStora
 setting must be set to a connection string that the Azure Functions Host will use for 
 the default storage connection.
 
-Start by creating a known script root for the Azure Functions application:
-
-```
-$ cargo run -- init --script-root /tmp/myroot && cd /tmp/myroot
-```
-
-Next, add a setting for `AzureWebJobsStorage`:
+Add a setting for `AzureWebJobsStorage` into `local.settings.json`:
 
 ```
 $ func settings add AzureWebJobsStorage <storage_connection_string>
@@ -109,12 +103,18 @@ Additionally, this example uses a connection setting named `connection` for the 
 $ func settings add connection <cosmos_db_connection_string>
 ```
 
-This example expects an `exampledb` database with a collection named `documents` to exist for the Cosmos DB triggered function to monitor.  Use the Cosmos DB Data Explorer to create a database named `exampledb` that contains a collection named `documents` before running the example.
-
-Finally, change back to the example directory and start the Azure Functions application:
+You may encrypt `local.settings.json`, if desired:
 
 ```
-$ cargo func run --script-root /tmp/myroot
+$ func settings encrypt
+```
+
+This example expects an `exampledb` database with a collection named `documents` to exist for the Cosmos DB triggered function to monitor.  Use the Cosmos DB Data Explorer to create a database named `exampledb` that contains a collection named `documents` before running the example.
+
+Finally, start the Azure Functions application:
+
+```
+$ cargo func run
 ```
 
 # Invoking the functions

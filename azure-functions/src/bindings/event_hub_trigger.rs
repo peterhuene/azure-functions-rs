@@ -15,6 +15,15 @@ const SYSTEM_PROPERTIES_KEY: &str = "SystemProperties";
 
 /// Represents an Event Hub trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name             | Description                                                                                                                                                                      |
+/// |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`           | The name of the parameter being bound.                                                                                                                                           |
+/// | `event_hub_name` | The name of the event hub. When the event hub name is also present in the connection string, that value overrides this property at runtime.                                      |
+/// | `connection`     | The name of an app setting that contains the connection string to the event hub's namespace. This connection string must have at least read permissions to activate the trigger. |
+/// | `consumer_group` | An optional property that sets the consumer group used to subscribe to events in the hub. If omitted, the `$Default` consumer group is used.                                     |
+///
 /// # Examples
 ///
 /// ```rust

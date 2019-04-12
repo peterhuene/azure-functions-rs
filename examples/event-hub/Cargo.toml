@@ -1,5 +1,5 @@
 [package]
-name = "event-hub"
+name = "event-hub-example"
 version = "0.1.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 edition = "2018"

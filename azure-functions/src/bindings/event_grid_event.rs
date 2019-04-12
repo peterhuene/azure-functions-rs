@@ -7,6 +7,12 @@ use std::collections::HashMap;
 
 /// Represents an Event Grid trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name   | Description                            |
+/// |--------|----------------------------------------|
+/// | `name` | The name of the parameter being bound. |
+///
 /// # Examples
 ///
 /// ```rust
