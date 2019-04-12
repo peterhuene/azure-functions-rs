@@ -20,22 +20,22 @@ pub fn log_event(event: EventGridEvent) {
 Because this example relies on Azure Storage to function, the `AzureWebJobsStorage` setting must be set to a connection string that the Azure Functions Host will use for the default
 storage connection.
 
-Start by creating a known script root for the Azure Functions application:
-
-```
-$ cargo run -- init --script-root /tmp/myroot && cd /tmp/myroot
-```
-
-Next, add a setting for `AzureWebJobsStorage`:
+Add a setting for `AzureWebJobsStorage` into `local.settings.json`:
 
 ```
 $ func settings add AzureWebJobsStorage <storage_connection_string>
 ```
 
-Finally, change back to the example directory and start the Azure Functions application:
+You may encrypt `local.settings.json`, if desired:
 
 ```
-$ cargo func run --script-root /tmp/myroot
+$ func settings encrypt
+```
+
+Finally, start the Azure Functions application:
+
+```
+$ cargo func run
 ```
 
 # Invoking the functions

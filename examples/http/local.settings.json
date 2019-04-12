@@ -1,0 +1,9 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "FUNCTIONS_WORKER_RUNTIME": "Rust",
+        "languageWorkers:workersDirectory": "workers"
+    },
+    "ConnectionStrings": {
+    }
+}

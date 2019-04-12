@@ -84,13 +84,7 @@ Because this example relies on Azure Storage to function, the `AzureWebJobsStora
 setting must be set to a connection string that the Azure Functions Host will use for 
 the default storage connection.
 
-Start by creating a known script root for the Azure Functions application:
-
-```
-$ cargo run -- init --script-root /tmp/myroot && cd /tmp/myroot
-```
-
-Next, add a setting for `AzureWebJobsStorage`:
+Add a setting for `AzureWebJobsStorage` into `local.settings.json`:
 
 ```
 $ func settings add AzureWebJobsStorage <storage_connection_string>
@@ -102,14 +96,20 @@ Additionally, this example uses a connection setting named `connection` for the 
 $ func settings add connection <service_bus_connection_string>
 ```
 
+You may encrypt `local.settings.json`, if desired:
+
+```
+$ func settings encrypt
+```
+
 This example expects a Service Bus queue named `example` to exist.  Use the Azure Portal to create a Service Bus queue with that name.
 
 Additionally, this example expects a Service Bus topic named `mytopic` to have a subscription named `mysubscription`.  Use the Azure Portal to create a Service Bus topic and subscription with those names.
 
-Finally, change back to the example directory and start the Azure Functions application:
+Finally, start the Azure Functions application:
 
 ```
-$ cargo func run --script-root /tmp/myroot
+$ cargo func run
 ```
 
 # Invoking the functions
