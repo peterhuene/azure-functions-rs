@@ -2,7 +2,7 @@ use crate::func::get_generic_argument_type;
 use azure_functions_shared::{codegen::last_segment_in_path, util::to_camel_case};
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{FnArg, Ident, ItemFn, Pat, ReturnType, Type};
+use syn::{FnArg, Ident, Index, ItemFn, Pat, ReturnType, Type};
 
 pub struct OutputBindings<'a>(pub &'a ItemFn);
 
@@ -21,12 +21,12 @@ impl<'a> OutputBindings<'a> {
             .collect()
     }
 
-    fn get_output_return_binding(ty: &Type, index: usize) -> Option<TokenStream> {
+    fn get_output_return_binding(ty: &Type, index: Index) -> Option<TokenStream> {
         if OutputBindings::is_unit_tuple(ty) {
             return None;
         }
 
-        let name = format!("{}{}", crate::func::OUTPUT_BINDING_PREFIX, index);
+        let name = format!("{}{}", crate::func::OUTPUT_BINDING_PREFIX, index.index);
 
         match OutputBindings::get_generic_argument_type(ty, "Option") {
             Some(inner) => {
@@ -52,7 +52,7 @@ impl<'a> OutputBindings<'a> {
         }
     }
 
-    fn get_binding_conversion(ty: &Type, index: Option<usize>) -> TokenStream {
+    fn get_binding_conversion(ty: &Type, index: Option<Index>) -> TokenStream {
         match OutputBindings::get_generic_argument_type(ty, "Vec") {
             Some(_) => match index {
                 Some(index) => {
@@ -76,7 +76,7 @@ impl<'a> OutputBindings<'a> {
                     .iter()
                     .enumerate()
                     .skip(1)
-                    .filter_map(|(i, ty)| OutputBindings::get_output_return_binding(ty, i))
+                    .filter_map(|(i, ty)| OutputBindings::get_output_return_binding(ty, i.into()))
                     .collect(),
                 _ => vec![],
             },
@@ -137,7 +137,7 @@ impl<'a> OutputBindings<'a> {
                     ))
                 }
                 None => {
-                    let conversion = OutputBindings::get_binding_conversion(ty, Some(0));
+                    let conversion = OutputBindings::get_binding_conversion(ty, Some(0.into()));
                     Some(quote!(__res.set_return_value(#conversion);))
                 }
             }

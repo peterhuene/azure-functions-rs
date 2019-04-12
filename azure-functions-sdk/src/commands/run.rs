@@ -111,7 +111,7 @@ impl<'a> Run<'a> {
             "init",
             "--script-root",
             script_root.to_str().unwrap(),
-            "--sync",
+            "--sync-extensions",
         ]);
 
         if self.no_debug_info {

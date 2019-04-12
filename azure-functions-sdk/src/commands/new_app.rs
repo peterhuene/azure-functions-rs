@@ -117,6 +117,7 @@ impl<'a> NewApp<'a> {
                 json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
             ),
             ("appsettings.json", "appsettings.json", json!({})),
+            ("local.settings.json", "local.settings.json", json!({})),
         ];
 
         if !self.no_launch_config {

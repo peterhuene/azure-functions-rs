@@ -9,7 +9,7 @@ COPY . /src
 RUN --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/usr/local/cargo/registry \
-    ["cargo", "run", "--release", "--", "init", "--script-root", "/home/site/wwwroot", "--sync"]
+    ["cargo", "run", "--release", "--", "init", "--script-root", "/home/site/wwwroot", "--sync-extensions"]
 
 FROM mcr.microsoft.com/azure-functions/base:2.0 as runtime-image
 
