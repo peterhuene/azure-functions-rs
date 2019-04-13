@@ -1,5 +1,7 @@
-use crate::http::Body;
-use crate::rpc::protocol;
+use crate::{
+    http::Body,
+    rpc::{typed_data::Data, TypedData},
+};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_str, to_string};
 use std::borrow::Cow;
@@ -47,9 +49,12 @@ pub struct SignalRConnectionInfo {
 }
 
 #[doc(hidden)]
-impl From<protocol::TypedData> for SignalRConnectionInfo {
-    fn from(data: protocol::TypedData) -> Self {
-        from_str(data.get_json()).expect("failed to parse SignalR connection info")
+impl From<TypedData> for SignalRConnectionInfo {
+    fn from(data: TypedData) -> Self {
+        match &data.data {
+            Some(Data::Json(s)) => from_str(s).expect("failed to parse SignalR connection info"),
+            _ => panic!("expected JSON data for SignalR connection info"),
+        }
     }
 }
 
@@ -78,8 +83,11 @@ mod tests {
 
     #[test]
     fn it_converts_from_typed_data() {
-        let mut data = protocol::TypedData::new();
-        data.set_json(r#"{ "url": "foo", "accessToken": "bar"}"#.to_owned());
+        let data = TypedData {
+            data: Some(Data::Json(
+                r#"{ "url": "foo", "accessToken": "bar"}"#.to_owned(),
+            )),
+        };
 
         let info: SignalRConnectionInfo = data.into();
         assert_eq!(info.url, "foo");

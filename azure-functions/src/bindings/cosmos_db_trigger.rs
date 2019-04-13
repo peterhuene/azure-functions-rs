@@ -1,5 +1,4 @@
-use crate::rpc::protocol;
-use crate::util::convert_from;
+use crate::{rpc::TypedData, util::convert_from};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -58,10 +57,7 @@ pub struct CosmosDbTrigger {
 
 impl CosmosDbTrigger {
     #[doc(hidden)]
-    pub fn new(
-        data: protocol::TypedData,
-        _metadata: &mut HashMap<String, protocol::TypedData>,
-    ) -> Self {
+    pub fn new(data: TypedData, _metadata: &mut HashMap<String, TypedData>) -> Self {
         let value = convert_from(&data).expect("expected JSON document data");
         match value {
             Value::Array(array) => CosmosDbTrigger { documents: array },
@@ -73,6 +69,7 @@ impl CosmosDbTrigger {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rpc::typed_data::Data;
 
     #[test]
     fn it_constructs() {
@@ -103,8 +100,9 @@ mod tests {
             }
         ]"#;
 
-        let mut data = protocol::TypedData::new();
-        data.set_json(DOCUMENTS.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(DOCUMENTS.to_string())),
+        };
 
         let mut metadata = HashMap::new();
         let trigger = CosmosDbTrigger::new(data, &mut metadata);

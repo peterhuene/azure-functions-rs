@@ -91,6 +91,7 @@ pub use azure_functions_shared::codegen;
 
 mod backtrace;
 mod cli;
+mod commands;
 mod logger;
 mod registry;
 mod util;
@@ -99,17 +100,14 @@ pub mod bindings;
 pub mod blob;
 pub mod event_hub;
 pub mod http;
-#[doc(hidden)]
-pub mod rpc;
 pub mod signalr;
 pub mod timer;
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;
-pub use azure_functions_shared::Context;
+pub use azure_functions_shared::{rpc, Context};
 
 use crate::registry::Registry;
 use clap::ArgMatches;
-use futures::Future;
 use serde::Serialize;
 use serde_json::{json, to_string_pretty, Serializer};
 use std::env::{current_dir, current_exe, var};
@@ -707,33 +705,6 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
     }
 }
 
-fn run_worker(
-    worker_id: &str,
-    host: &str,
-    port: u32,
-    max_message_length: Option<i32>,
-    registry: Registry<'static>,
-) {
-    ctrlc::set_handler(|| {}).expect("failed setting SIGINT handler");
-
-    let client = rpc::Client::new(worker_id.to_string(), max_message_length);
-
-    println!("Connecting to Azure Functions host at {}:{}.", host, port);
-
-    client
-        .connect(host, port)
-        .and_then(move |client| {
-            println!(
-                "Connected to Azure Functions host version {}.",
-                client.host_version().unwrap()
-            );
-
-            client.process_all_messages(registry)
-        })
-        .wait()
-        .unwrap();
-}
-
 fn get_local_settings_path(matches: &ArgMatches) -> Option<PathBuf> {
     if let Some(local_settings) = matches.value_of("local_settings") {
         return Some(local_settings.into());
@@ -793,23 +764,14 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
         return;
     }
 
-    if let Some(matches) = matches.subcommand_matches("run") {
-        run_worker(
-            matches
-                .value_of("worker_id")
-                .expect("A worker id is required."),
-            matches.value_of("host").expect("A host is required."),
-            matches
-                .value_of("port")
-                .map(|port| port.parse::<u32>().expect("Invalid port number"))
-                .expect("A port number is required."),
-            matches
-                .value_of("max_message_length")
-                .map(|len| len.parse::<i32>().expect("Invalid maximum message length")),
-            registry,
-        );
-        return;
+    if let Err(e) = match matches
+        //.get_or_insert_with(|| create_app().get_matches_from(env::args().skip(1)))
+        .subcommand()
+    {
+        ("run", Some(args)) => commands::Run::from(args).execute(registry),
+        _ => panic!("expected a subcommand."),
+    } {
+        eprintln!("error: {}", e);
+        std::process::exit(1);
     }
-
-    panic!("expected a subcommand.");
 }

@@ -5,6 +5,7 @@
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
+#![allow(clippy::large_enum_variant)]
 
 #[doc(hidden)]
 pub mod codegen;
@@ -15,17 +16,11 @@ pub mod util;
 #[doc(hidden)]
 #[allow(renamed_and_removed_lints)]
 pub mod rpc {
-    pub mod protocol {
-        use azure_functions_shared_codegen::generated_mod;
+    use azure_functions_shared_codegen::generated_mod;
 
-        generated_mod!(FunctionRpc);
-        generated_mod!(FunctionRpc_grpc);
-        generated_mod!(ClaimsIdentityRpc);
+    generated_mod!(azure_functions_rpc_messages);
 
-        pub use self::ClaimsIdentityRpc::*;
-        pub use self::FunctionRpc::*;
-        pub use self::FunctionRpc_grpc::*;
-    }
+    pub use self::azure_functions_rpc_messages::*;
 }
 
 pub use self::context::*;

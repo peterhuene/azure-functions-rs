@@ -12,10 +12,10 @@ impl<'a> OutputBindings<'a> {
             .map(|(name, _)| {
                 let name_str = to_camel_case(&name.to_string());
                 quote!(
-                    let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
-                    __output_binding.set_name(#name_str.to_string());
-                    __output_binding.set_data(#name.unwrap().into());
-                    __output_data.push(__output_binding);
+                    __output_data.push(::azure_functions::rpc::ParameterBinding{
+                        name: #name_str.to_string(),
+                        data: Some(#name.unwrap().into()),
+                    });
                 )
             })
             .collect()
@@ -33,20 +33,20 @@ impl<'a> OutputBindings<'a> {
                 let conversion = OutputBindings::get_binding_conversion(inner, None);
                 Some(quote!(
                     if let Some(__ret) = __ret.#index {
-                        let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
-                        __output_binding.set_name(#name.to_string());
-                        __output_binding.set_data(#conversion);
-                        __output_data.push(__output_binding);
+                        __res.output_data.push(::azure_functions::rpc::ParameterBinding{
+                            name: #name.to_string(),
+                            data: Some(#conversion)
+                        });
                     }
                 ))
             }
             None => {
                 let conversion = OutputBindings::get_binding_conversion(ty, Some(index));
                 Some(quote!(
-                    let mut __output_binding = ::azure_functions::rpc::protocol::ParameterBinding::new();
-                    __output_binding.set_name(#name.to_string());
-                    __output_binding.set_data(#conversion);
-                    __output_data.push(__output_binding);
+                    __res.output_data.push(::azure_functions::rpc::ParameterBinding{
+                        name: #name.to_string(),
+                        data: Some(#conversion)
+                    });
                 ))
             }
         }
@@ -55,10 +55,8 @@ impl<'a> OutputBindings<'a> {
     fn get_binding_conversion(ty: &Type, index: Option<Index>) -> TokenStream {
         match OutputBindings::get_generic_argument_type(ty, "Vec") {
             Some(_) => match index {
-                Some(index) => {
-                    quote!(::azure_functions::rpc::protocol::TypedData::from_vec(__ret.#index))
-                }
-                None => quote!(::azure_functions::rpc::protocol::TypedData::from_vec(__ret)),
+                Some(index) => quote!(::azure_functions::rpc::TypedData::from_vec(__ret.#index)),
+                None => quote!(::azure_functions::rpc::TypedData::from_vec(__ret)),
             },
             None => match index {
                 Some(index) => quote!(__ret.#index.into()),
@@ -132,13 +130,13 @@ impl<'a> OutputBindings<'a> {
                     let conversion = OutputBindings::get_binding_conversion(inner, None);
                     Some(quote!(
                         if let Some(__ret) = __ret.0 {
-                            __res.set_return_value(#conversion);
+                            __res.return_value = Some(#conversion);
                         }
                     ))
                 }
                 None => {
                     let conversion = OutputBindings::get_binding_conversion(ty, Some(0.into()));
-                    Some(quote!(__res.set_return_value(#conversion);))
+                    Some(quote!(__res.return_value = Some(#conversion);))
                 }
             }
         } else {
@@ -154,13 +152,13 @@ impl<'a> OutputBindings<'a> {
                     let conversion = OutputBindings::get_binding_conversion(inner, None);
                     Some(quote!(
                         if let Some(__ret) = __ret {
-                            __res.set_return_value(#conversion);
+                            __res.return_value = Some(#conversion);
                         }
                     ))
                 }
                 None => {
                     let conversion = OutputBindings::get_binding_conversion(ty, None);
-                    Some(quote!(__res.set_return_value(#conversion);))
+                    Some(quote!(__res.return_value = Some(#conversion);))
                 }
             }
         }
@@ -169,17 +167,12 @@ impl<'a> OutputBindings<'a> {
 
 impl ToTokens for OutputBindings<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let mut output_bindings = self.get_output_argument_bindings();
-        output_bindings.append(&mut self.iter_output_return_bindings());
+        for binding in self.get_output_argument_bindings() {
+            binding.to_tokens(tokens);
+        }
 
-        if !output_bindings.is_empty() {
-            quote!(
-                {
-                    let mut __output_data = __res.mut_output_data();
-                    #(#output_bindings;)*
-                }
-            )
-            .to_tokens(tokens);
+        for binding in self.iter_output_return_bindings() {
+            binding.to_tokens(tokens);
         }
 
         match &self.0.decl.output {

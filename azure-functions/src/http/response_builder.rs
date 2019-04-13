@@ -52,7 +52,7 @@ impl ResponseBuilder {
     /// );
     /// ```
     pub fn header<T: Into<String>, U: Into<String>>(mut self, name: T, value: U) -> Self {
-        self.0.data.mut_headers().insert(name.into(), value.into());
+        self.0.data.headers.insert(name.into(), value.into());
         self
     }
 
@@ -85,17 +85,17 @@ impl ResponseBuilder {
     {
         let body = body.into();
         if let Body::Empty = &body {
-            self.0.data.clear_body();
+            self.0.data.body = None;
             return self;
         }
 
         if !self.0.headers().contains_key("Content-Type") {
-            self.0.data.mut_headers().insert(
+            self.0.data.headers.insert(
                 "Content-Type".to_string(),
                 body.default_content_type().to_string(),
             );
         }
-        self.0.data.set_body(body.into());
+        self.0.data.body = Some(Box::new(body.into()));
         self
     }
 }

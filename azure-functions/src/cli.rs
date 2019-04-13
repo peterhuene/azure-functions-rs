@@ -1,3 +1,4 @@
+use crate::commands::Run;
 use clap::{App, AppSettings, Arg, SubCommand};
 use std::path::Path;
 
@@ -65,43 +66,5 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                         .help("Use verbose output.")
                 )
         )
-        .subcommand(
-            SubCommand::with_name("run")
-                .about("Runs the Rust language worker.")
-                .arg(
-                    Arg::with_name("host")
-                        .long("host")
-                        .value_name("HOST")
-                        .help("The hostname of the Azure Functions Host.")
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name("port")
-                        .long("port")
-                        .value_name("PORT")
-                        .help("The port of the Azure Functions Host.")
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name("worker_id")
-                        .long("workerId")
-                        .value_name("WORKER_ID")
-                        .help("The worker ID to use when registering with the Azure Functions Host.")
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name("request_id")
-                        .long("requestId")
-                        .value_name("REQUEST_ID")
-                        .help("The request ID to use when communicating with the Azure Functions Host.")
-                        .hidden(true)
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name("max_message_length")
-                        .long("grpcMaxMessageLength")
-                        .value_name("MAXIMUM")
-                        .help("The maximum message length to use for gRPC messages.")
-                )
-        )
+        .subcommand(Run::create_subcommand())
 }
