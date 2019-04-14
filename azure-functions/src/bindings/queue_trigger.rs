@@ -13,6 +13,14 @@ const POP_RECEIPT_KEY: &str = "PopReceipt";
 
 /// Represents a queue trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                                  |
+/// |--------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                                       |
+/// | `queue_name` | The name of the queue to poll.                                                                                                               |
+/// | `connection` | The name of an app setting that contains the Azure Storage connection string to use for this binding. Defaults to the `AzureWebJobsStorage`. |
+///
 /// # Examples
 ///
 /// A function that runs when a message is posted to a queue called `example`:

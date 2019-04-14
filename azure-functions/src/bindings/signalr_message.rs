@@ -4,6 +4,14 @@ use serde_json::{to_string, to_value, Value};
 
 /// Represents the SignalR message output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                  |
+/// |--------------|------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                       |
+/// | `hub_name`   | The name of the SignalR hub that will receive the message.                                                                   |
+/// | `connection` | The name of the app setting that contains the SignalR Service connection string. Defaults to `AzureSignalRConnectionString`. |
+///
 /// # Examples
 ///
 /// This example implements an HTTP-triggered Azure Function that returns a SignalRMessage binding:

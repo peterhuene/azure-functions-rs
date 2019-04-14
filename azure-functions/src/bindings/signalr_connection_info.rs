@@ -6,6 +6,15 @@ use std::borrow::Cow;
 
 /// Represents the SignalR connection information input binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                  |
+/// |--------------|------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                       |
+/// | `hub_name`   | The name of the SignalR hub for which the connection information is generated.                                               |
+/// | `user_id`    | The value of the user identifier claim to be set in the access key token (optional).                                         |
+/// | `connection` | The name of the app setting that contains the SignalR Service connection string. Defaults to `AzureSignalRConnectionString`. |
+///
 /// # Examples
 ///
 /// This example implements an HTTP-triggered Azure Function that returns SignalR connection information:

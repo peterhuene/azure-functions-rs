@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "attach",
+            "name": "Debug",
+            "windows": {
+                "program": "{{name}}.exe"
+            },
+            "program": "{{name}}",
+            "preLaunchTask": "Launch Azure Functions Application",
+            "postDebugTask": "Terminate Azure Functions Application"
+        }
+    ]
+}

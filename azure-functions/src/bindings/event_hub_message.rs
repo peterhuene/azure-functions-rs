@@ -8,6 +8,14 @@ use std::str::from_utf8;
 
 /// Represents an Event Hubs message output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name             | Description                                                                                                                                                                             |
+/// |------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`           | The name of the parameter being bound.                                                                                                                                                  |
+/// | `event_hub_name` | The name of the event hub. When the event hub name is also present in the connection string, that value overrides this property at runtime.                                             |
+/// | `connection`     | The name of an app setting that contains the connection string to the event hub's namespace. This connection string must have send permissions to send the message to the event stream. |
+///
 /// # Examples
 ///
 /// Creating a message from a string:

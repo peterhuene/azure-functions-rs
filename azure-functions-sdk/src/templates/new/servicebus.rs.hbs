@@ -1,0 +1,11 @@
+use azure_functions::{bindings::ServiceBusTrigger, func};
+
+#[func]
+{{#if queue~}}
+#[binding(name = "trigger", connection = "{{connection}}", queue_name = "{{queue}}")]
+{{else~}}
+#[binding(name = "trigger", connection = "{{connection}}", topic_name = "{{topic}}", subscription_name = "{{subscription}}")]
+{{/if~}}
+pub fn {{name}}(trigger: ServiceBusTrigger) {
+    // trigger.message contains the posted message
+}

@@ -222,7 +222,7 @@ fn bind_input_type(
     tp: &TypePath,
     mutability: Option<Mut>,
     has_trigger: bool,
-    binding_args: &mut HashMap<String, AttributeArgs>,
+    binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Binding {
     let last_segment = last_segment_in_path(&tp.path);
     let type_name = last_segment.ident.to_string();
@@ -242,10 +242,12 @@ fn bind_input_type(
     match pattern {
         Pat::Ident(name) => {
             let name_str = name.ident.to_string();
-            let name_span = name.ident.span();
             match binding_args.remove(&name_str) {
-                Some(args) => (*factory)(args, name_span),
-                None => (*factory)(attribute_args_from_name(&name_str, name_span), name_span),
+                Some(args) => (*factory)(args.0, args.1),
+                None => {
+                    let name_span = name.ident.span();
+                    (*factory)(attribute_args_from_name(&name_str, name_span), name_span)
+                }
             }
         }
         _ => macro_panic(pattern.span(), "bindings must have a named identifier"),
@@ -255,7 +257,7 @@ fn bind_input_type(
 fn bind_argument(
     arg: &FnArg,
     has_trigger: bool,
-    binding_args: &mut HashMap<String, AttributeArgs>,
+    binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Binding {
     match arg {
         FnArg::Captured(arg) => match &arg.ty {
@@ -290,7 +292,7 @@ fn bind_argument(
 fn bind_output_type(
     ty: &Type,
     name: &str,
-    binding_args: &mut HashMap<String, AttributeArgs>,
+    binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
     check_option: bool,
 ) -> Binding {
     match ty {
@@ -306,8 +308,11 @@ fn bind_output_type(
             let factory = get_output_binding_factory(tp);
 
             match binding_args.remove(name) {
-                Some(args) => (*factory)(args, tp.span()),
-                None => (*factory)(attribute_args_from_name(name, tp.span()), tp.span()),
+                Some(args) => (*factory)(args.0, args.1),
+                None => {
+                    let span = tp.span();
+                    (*factory)(attribute_args_from_name(name, span), span)
+                }
             }
         }
         Type::Paren(tp) => bind_output_type(&tp.elem, name, binding_args, check_option),
@@ -317,7 +322,7 @@ fn bind_output_type(
 
 fn bind_return_type(
     ret: &ReturnType,
-    binding_args: &mut HashMap<String, AttributeArgs>,
+    binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Vec<Binding> {
     match ret {
         ReturnType::Default => Vec::new(),
@@ -363,7 +368,7 @@ fn bind_return_type(
     }
 }
 
-fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, AttributeArgs> {
+fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, (AttributeArgs, Span)> {
     let mut map = HashMap::new();
     // TODO: use drain_filter when stable https://github.com/rust-lang/rust/issues/43244
     for attr in attrs
@@ -389,7 +394,7 @@ fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, Attri
             macro_panic(attr_span, "binding attributes must have a 'name' argument");
         }
 
-        if map.insert(name.unwrap(), args).is_some() {
+        if map.insert(name.unwrap(), (args, attr.span())).is_some() {
             macro_panic(attr_span, "binding attributes must have a 'name' argument");
         }
     }
@@ -458,7 +463,7 @@ pub fn func_impl(
     }
 
     if let Some((_, args)) = binding_args.iter().nth(0) {
-        iter_attribute_args(args, |k, v| {
+        iter_attribute_args(&args.0, |k, v| {
             if k != "name" {
                 return true;
             }

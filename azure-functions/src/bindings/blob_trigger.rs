@@ -12,9 +12,17 @@ const METADATA_KEY: &str = "Metadata";
 
 /// Represents an Azure Storage blob trigger binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                        |
+/// |--------------|------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                             |
+/// | `path`       | The container to monitor. May be a blob name pattern.                                                                              |
+/// | `connection` | The name of an app setting that contains the Storage connection string to use for this binding. Defaults to `AzureWebJobsStorage`. |
+///
 /// # Examples
 ///
-/// A function that runs when a blob is created in the `test` container:
+/// A function that runs when a blob is created in the `example` container:
 ///
 /// ```rust
 /// use azure_functions::bindings::BlobTrigger;

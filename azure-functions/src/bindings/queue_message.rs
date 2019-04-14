@@ -8,6 +8,14 @@ use std::str::from_utf8;
 
 /// Represents an Azure Storage Queue message output binding.
 ///
+/// The following binding attributes are supported:
+///
+/// | Name         | Description                                                                                                                                  |
+/// |--------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+/// | `name`       | The name of the parameter being bound.                                                                                                       |
+/// | `queue_name` | The name of the queue.                                                                                                                       |
+/// | `connection` | The name of an app setting that contains the Azure Storage connection string to use for this binding. Defaults to the `AzureWebJobsStorage`. |
+///
 /// # Examples
 ///
 /// Creating a queue message from a string:
@@ -88,7 +96,7 @@ impl QueueMessage {
             return self.0.get_stream();
         }
 
-        panic!("unexpected data for queue message contents");
+        panic!("unexpected data for queue message content");
     }
 
     /// Deserializes the message as JSON to the requested type.
@@ -260,7 +268,7 @@ impl<'a> Into<Body<'a>> for QueueMessage {
             return self.0.take_stream().into();
         }
 
-        panic!("unexpected data for blob content");
+        panic!("unexpected data for queue message content");
     }
 }
 
