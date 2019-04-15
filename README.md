@@ -10,11 +10,9 @@
 This is an early-stage framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/).
 
-## Disclaimer
-
-Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.
-
-_Microsoft and Azure are registered trademarks of Microsoft Corporation._
+> **Disclaimer**  
+> Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.  
+> _Microsoft and Azure are registered trademarks of Microsoft Corporation._
 
 ## Example
 
@@ -237,7 +235,7 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 The current list of supported bindings:
 
 | Rust Type                                                                                                                  | Azure Functions Binding             | Direction      | Vec\<T> |
-|----------------------------------------------------------------------------------------------------------------------------|-------------------------------------|----------------|---------|
+| -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------- | ------- |
 | [Blob](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Blob.html)                                   | Input and Ouput Blob                | in, inout, out | No      |
 | [BlobTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.BlobTrigger.html)                     | Blob Trigger                        | in, inout      | No      |
 | [CosmosDbDocument](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbDocument.html)           | Input and Output Cosmos DB Document | in, out        | Yes     |
