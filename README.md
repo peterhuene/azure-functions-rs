@@ -1,4 +1,6 @@
-# Azure Functions for Rust
+# &lt;functions.rs&gt;
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
@@ -7,100 +9,92 @@
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
 [![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
 
-This is an early-stage framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
+An early-stage framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/).
 
-## Disclaimer
+> :triangular_flag_on_post: **Disclaimer**  
+> Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.  
+> _Microsoft and Azure are registered trademarks of Microsoft Corporation._
 
-Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.
+## Get Started
 
-_Microsoft and Azure are registered trademarks of Microsoft Corporation._
+- [Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
+- [Documentation](https://docs.rs/azure-functions/0.7.0/azure_functions/)
+- [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
-## Example
+## Table of Contents
 
-A simple HTTP-triggered Azure Function:
+- [Installation](#installation)
+  - [Requirements](#requirements)
+    - [CMake](#cmake)
+    - [A C++ Compiler](#a-c++-compiler)
+    - [.Net Core SDK](#.net-core-sdk)
+    - [Azure Functions Core Tools](#azure-functions-core-tools)
+  - [Installing the Azure Functions for Rust SDK](#installing-the-azure-functions-for-rust-sdk)
 
-```rust
-use azure_functions::bindings::{HttpRequest, HttpResponse};
-use azure_functions::func;
+- [Creating a new Azure Functions application](#creating-a-new-azure-functions-application)
+- [Adding a simple HTTP-triggered application](#adding-a-simple-http-triggered-application)
+- [Building the Azure Functions application](#building-the-azure-functions-application)
+- [Running the Azure Functions application](#running-the-azure-functions-application)
+- [Debugging the Azure Functions application](#debugging-the-azure-functions-application)
+- [Deploying the Azure Functions application](#deploying-the-azure-functions-application)
+- [Azure Functions Bindings](#azure-functions-bindings)
+  - [Bindings in Rust](#bindings-in-rust)
+    - [Input bindings](#input-bindings)
+    - [Input-output (inout) bindings](#input-output-inout-bindings)
+    - [Output bindings](#output-bindings)
 
-#[func]
-pub fn greet(req: HttpRequest) -> HttpResponse {
-    // Log the message with the Azure Functions Host
-    info!("Request: {:?}", req);
+## Installation
 
-    format!(
-        "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
-    ).into()
-}
-```
+### Requirements
 
-See the [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) directory for the complete list of examples.
-
-# Documentation
-
-Documentation for the [latest published version](https://docs.rs/azure-functions).
-
-# Getting Started
-
-## Install CMake
+#### CMake
 
 The `azure-functions` crate has a dependency on the `grpcio` crate that uses [CMake](https://cmake.org) to build and link against the gRPC native library.
 
 CMake must be installed and on the `PATH` to be able to use Azure Functions for Rust.
 
-### Windows
-
+<i class="fab fa-windows"></i> Windows:  
 Install CMake from the [Windows installer](https://cmake.org/download/).
 
-### macOS
-
+<i class="fab fa-apple"></i> macOS:  
 The easiest way to install CMake on macOS is with [Homebrew](https://brew.sh/):
 
-```
-$ brew install cmake
-```
-
-### Linux
-
-Use your distro's package manager to install a `cmake` (or similar) package.
-
-For example on Debian/Ubuntu:
-
-```
-$ apt-get install cmake
+``` bash
+brew install cmake
 ```
 
-## Install a C++ Compiler
+<i class="fab fa-linux"></i> Linux:  
+Use your distro's package manager to install a `cmake` (or similar) package. For example on Debian/Ubuntu:
+
+``` bash
+apt-get install cmake
+```
+
+#### A C++ Compiler
 
 The `grpcio` crate builds a native library that implements the gRPC runtime.
 
 Therefore, a C++ compiler must be on your PATH.
 
-### Windows
-
+<i class="fab fa-windows"></i> Windows:  
 Install [Visual Studio 2015 or later](https://visualstudio.microsoft.com/).
 
-### macOS
-
+<i class="fab fa-apple"></i> macOS:  
 Ensure the XCode command line utilities are installed, as this will install `clang`:
 
-```
-$ xcode-select --install
-```
-
-### Linux
-
-Use your distro's package manager to install `g++` (or similar) package:
-
-For example on Debian/Ubuntu:
-
-```
-$ apt-get install g++
+``` bash
+xcode-select --install
 ```
 
-## Install a .NET Core SDK
+<i class="fab fa-linux"></i> Linux:  
+Use your distro's package manager to install `g++` (or similar) package. For example on Debian/Ubuntu:
+
+``` bash
+apt-get install g++
+```
+
+#### .NET Core SDK
 
 A .NET Core SDK is required to synchronize Azure Functions Host binding extensions.
 
@@ -110,18 +104,18 @@ This happens automatically by Azure Functions for Rust when the application is i
 
 Follow the [download instructions for the 2.2 .NET Core SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2) to install for Windows, macOS, or your Linux distro.
 
-## Install the Azure Functions Core Tools
+#### Azure Functions Core Tools
 
 Install version 2 or higher of the [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools).
 
 If you are on Windows, you must add `%ProgramFiles%\nodejs\node_modules\azure-functions-core-tools\bin` (where `func.exe` is located) to the `PATH` environment variable.
 
-## Installing the Azure Functions for Rust SDK
+### Installing the Azure Functions for Rust SDK
 
 Install the Azure Functions for Rust SDK using `cargo install`:
 
 ```bash
-$ cargo install azure-functions-sdk
+cargo install azure-functions-sdk
 ```
 
 This installs a new cargo command named `func` that can be used to create and run new Azure Functions applications.
@@ -130,8 +124,8 @@ This installs a new cargo command named `func` that can be used to create and ru
 
 Use the `cargo func new-app` command to create a new Azure Functions application:
 
-```bash
-$ cargo func new-app hello
+``` bash
+cargo func new-app hello
 ```
 
 This will create a new application in the `./hello` directory with a module named `functions` where the exported Azure Functions are expected to be placed.
@@ -140,8 +134,8 @@ This will create a new application in the `./hello` directory with a module name
 
 Use the `cargo func new` command to create a new HTTP-triggered Azure Function named `hello`:
 
-```bash
-$ cargo func new http -n hello
+``` bash
+cargo func new http -n hello
 ```
 
 The source for the function will be in `src/functions/hello.rs`.
@@ -150,23 +144,23 @@ The source for the function will be in `src/functions/hello.rs`.
 
 To build your Azure Functions application, just use `cargo build`:
 
-```
-$ cargo build
+``` bash
+cargo build
 ```
 
 If you are using a nightly compiler, you can enable improved error messages during compilation.
 
 Add the following to your `Cargo.toml`:
 
-```toml
+``` toml
 [features]
 unstable = ["azure-functions/unstable"]
 ```
 
 Build your application:
 
-```
-$ cargo build --features unstable
+``` bash
+cargo build --features unstable
 ```
 
 This enables Azure Functions for Rust to emit diagnostic messages that will include the position of an error within an attribute.
@@ -175,8 +169,8 @@ This enables Azure Functions for Rust to emit diagnostic messages that will incl
 
 To build and run your Azure Functions application, use `cargo func run`:
 
-```
-$ cargo func run
+``` bash
+cargo func run
 ```
 
 The `cargo func run` command builds and runs your application locally using the Azure Function Host that was
@@ -200,22 +194,22 @@ In the future, there will be a `cargo func deploy` command to deploy the Azure F
 
 Until that time, you must manually build and push the Docker image to a repository that can be accessed by Azure.
 
-**Note: this requires [Docker](https://www.docker.com/get-started) that is at least *18.06* for the experimental BuildKit support.**
+> Note: this requires [Docker](https://www.docker.com/get-started) that is at least *18.06* for the experimental BuildKit support.
 
 **To enable the BuildKit support, set the `DOCKER_BUILDKIT` environment variable to `1` before running `docker build`.**
 
 Start by building your image with `docker build -t $TAG_NAME .`:
 
-```
-$ docker build -t $TAG_NAME .
+``` bash
+docker build -t $TAG_NAME .
 ```
 
 Where `$TAG_NAME` is the tag name to use (e.g. `username/my-functions-app`).
 
 Use `docker push` to push the image to a repository that is accessible to Azure Functions.
 
-```
-$ docker push $TAG_NAME
+``` bash
+docker push $TAG_NAME
 ```
 
 Create the Function App in [Azure](https://portal.azure.com) using the "Linux (Preview)" OS.  Under the "Publish" setting, select "Docker Image".
@@ -224,7 +218,7 @@ From the "Configure Container" section, select the repository and enter the imag
 
 That's it! Once the Functions App starts in Azure, you should be able to view the functions and run them.
 
-# Azure Functions Bindings
+## Azure Functions Bindings
 
 Azure Functions supports a [wide variety of input and output bindings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings) that can be used by a function.
 
@@ -262,11 +256,11 @@ The current list of supported bindings:
 
 More bindings will be implemented in the future, including support for retreiving data from custom bindings.
 
-## Bindings in Rust
+### Bindings in Rust
 
 Azure Functions for Rust automatically infers the direction of bindings depending on how the binding is used in a function's declaration.
 
-### Input bindings
+#### Input bindings
 
 Parameters of type `T` or `&T`, where `T` is a trigger or input binding type, are inferred to be bindings with an `in` direction.
 
@@ -298,9 +292,9 @@ pub fn example(..., documents: Vec<CosmosDbDocument>) {
 
 The following input bindings support parameters of type `Vec<T>`:
 
-* `CosmosDbDocument`
+- `CosmosDbDocument`
 
-### Input-output (inout) bindings
+#### Input-output (inout) bindings
 
 Parameters of type `&mut T`, where `T` is a trigger or input binding type that supports the `inout` direction, are inferred to be bindings with an `inout` direction.
 
@@ -316,7 +310,7 @@ pub fn example(..., blob: &mut Blob) {
 
 **See [this issue](https://github.com/Azure/azure-functions-host/issues/49) regarding this problem with the Azure Functions Host.**
 
-### Output bindings
+#### Output bindings
 
 Functions that return a type `T`, where `T` is an output binding type, or a tuple of output binding types, are inferred to be bindings with an `out` direction.  
 
@@ -383,43 +377,3 @@ pub fn example(...) -> ((), Blob) {
 ```
 
 For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
-
-# Development
-
-## Cloning the Repository
-
-This repository uses a git submodule for defining the [Azure Functions Language Worker Protocol](https://github.com/Azure/azure-functions-language-worker-protobuf).
-
-Use `--recurse-submodules` when cloning this repository:
-
-```
-$ git clone --recurse-submodules git@github.com:peterhuene/azure-functions-rs.git
-```
-
-## Repository Layout
-
-This repository is split into multiple Rust crates:
-
-* [azure-functions](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions) - The `azure-functions` crate that defines the types and functions that are used when writing Azure Functions with Rust.
-* [azure-functions-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-codegen) - The `azure-functions-codegen` crate that defines the procedural macros that are used when writing Azure Functions with Rust.
-* [azure-functions-sdk](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-sdk) - The `azure-functions-sdk` crate that implements the `cargo func` command.
-* [azure-functions-shared](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared) - The `azure-functions-shared` crate that defines types and functions that are shared between the `azure-functions-codegen` and `azure-functions` crates.
-    * Note: the `azure-functions-shared/protobuf` directory is the git submodule for [Azure Functions Language Worker Protocol](https://github.com/Azure/azure-functions-language-worker-protobuf).
-* [azure-functions-shared-codegen](https://github.com/peterhuene/azure-functions-rs/tree/master/azure-functions-shared-codegen) - The `azure-functions-shared-codegen` crate that defines the procedural macros used by the shared `azure-functions-shared` crate.
-* [examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples) - The directory containing example Azure Functions.
-
-## Building
-
-Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo build`:
-
-```
-$ cargo build
-```
-
-## Running tests
-
-Use `cargo test` to run the tests:
-
-```
-$ cargo test
-```
