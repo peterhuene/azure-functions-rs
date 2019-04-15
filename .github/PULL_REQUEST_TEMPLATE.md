@@ -1,6 +1,6 @@
 ## What is the goal of this pull request?
 
-## What does pull request change?
+## What does this pull request change?
 
 ## What work remains to be done?
 
