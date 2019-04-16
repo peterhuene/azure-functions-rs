@@ -84,3 +84,11 @@ Use `cargo test` to run the tests:
 ``` bash
 cargo test
 ```
+
+### Installing Azure Functions SDK from Source
+
+To install the Azure Functions SDK from source, from the root of the project run  
+
+``` bash
+cargo install -f --path azure-functions-sdk
+```
