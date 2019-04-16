@@ -16,7 +16,7 @@ RUN apt-get update \
     && wget https://github.com/google/protobuf/releases/download/v3.6.1/protoc-3.6.1-linux-x86_64.zip \
     && unzip protoc-3.6.1-linux-x86_64.zip -d /usr \
     && rm protoc-3.6.1-linux-x86_64.zip \
-    && apt-get install -y cmake g++ dotnet-sdk-2.2 \
+    && apt-get install -y dotnet-sdk-2.2 \
     && apt-get remove -y --purge wget unzip apt-transport-https gnupg \
     && apt-get autoremove -y \
     && apt-get clean \

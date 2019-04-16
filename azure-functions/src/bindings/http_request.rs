@@ -1,5 +1,7 @@
-use crate::http::Body;
-use crate::rpc::protocol;
+use crate::{
+    http::Body,
+    rpc::{typed_data::Data, RpcHttp, TypedData},
+};
 use std::collections::HashMap;
 
 /// Represents a HTTP trigger binding.
@@ -32,7 +34,7 @@ use std::collections::HashMap;
 /// }
 /// ```
 #[derive(Debug)]
-pub struct HttpRequest(protocol::RpcHttp);
+pub struct HttpRequest(RpcHttp);
 
 impl HttpRequest {
     /// Gets the HTTP method (e.g. "GET") for the request.
@@ -104,24 +106,21 @@ impl HttpRequest {
 
     /// Gets the body of the request.
     pub fn body(&self) -> Body {
-        if self.0.has_body() {
-            Body::from(self.0.get_body())
-        } else {
-            Body::Empty
-        }
+        self.0
+            .body
+            .as_ref()
+            .map(|b| Body::from(&**b))
+            .unwrap_or(Body::Empty)
     }
 }
 
 impl HttpRequest {
     #[doc(hidden)]
-    pub fn new(
-        mut data: protocol::TypedData,
-        _: &mut HashMap<String, protocol::TypedData>,
-    ) -> Self {
-        if !data.has_http() {
-            panic!("unexpected type data for HTTP request.");
+    pub fn new(data: TypedData, _: &mut HashMap<String, TypedData>) -> Self {
+        match data.data {
+            Some(Data::Http(http)) => HttpRequest(*http),
+            _ => panic!("unexpected type data for HTTP request."),
         }
-        HttpRequest(data.take_http())
     }
 }
 
@@ -135,10 +134,12 @@ mod tests {
     fn it_has_the_method() {
         const METHOD: &'static str = "GET";
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        http.set_method(METHOD.to_string());
-        data.set_http(http);
+        let mut http = RpcHttp::default();
+        http.method = METHOD.to_string();
+
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -150,10 +151,12 @@ mod tests {
     fn it_has_the_url() {
         const URL: &'static str = "http://example.com";
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        http.set_url(URL.to_string());
-        data.set_http(http);
+        let mut http = RpcHttp::default();
+        http.url = URL.to_string();
+
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -166,12 +169,12 @@ mod tests {
         const KEY: &'static str = "Accept";
         const VALUE: &'static str = "application/json";
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut headers = HashMap::new();
-        headers.insert(KEY.to_string(), VALUE.to_string());
-        http.set_headers(headers);
-        data.set_http(http);
+        let mut http = RpcHttp::default();
+        http.headers.insert(KEY.to_string(), VALUE.to_string());
+
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -184,12 +187,12 @@ mod tests {
         const KEY: &'static str = "id";
         const VALUE: &'static str = "12345";
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut params = HashMap::new();
-        params.insert(KEY.to_string(), VALUE.to_string());
-        http.set_params(params);
-        data.set_http(http);
+        let mut http = RpcHttp::default();
+        http.params.insert(KEY.to_string(), VALUE.to_string());
+
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -202,12 +205,12 @@ mod tests {
         const KEY: &'static str = "name";
         const VALUE: &'static str = "Peter";
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut params = HashMap::new();
-        params.insert(KEY.to_string(), VALUE.to_string());
-        http.set_query(params);
-        data.set_http(http);
+        let mut http = RpcHttp::default();
+        http.query.insert(KEY.to_string(), VALUE.to_string());
+
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -217,10 +220,9 @@ mod tests {
 
     #[test]
     fn it_has_an_empty_body() {
-        let mut data = protocol::TypedData::new();
-        let http = protocol::RpcHttp::new();
-
-        data.set_http(http);
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(RpcHttp::default()))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -232,13 +234,14 @@ mod tests {
     fn it_has_a_string_body() {
         const BODY: &'static str = "TEXT BODY";
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut body = protocol::TypedData::new();
+        let mut http = RpcHttp::default();
+        http.body = Some(Box::new(TypedData {
+            data: Some(Data::String(BODY.to_string())),
+        }));
 
-        body.set_string(BODY.to_string());
-        http.set_body(body);
-        data.set_http(http);
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -250,13 +253,14 @@ mod tests {
     fn it_has_a_json_body() {
         const BODY: &'static str = r#"{ "json": "body" }"#;
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut body = protocol::TypedData::new();
+        let mut http = RpcHttp::default();
+        http.body = Some(Box::new(TypedData {
+            data: Some(Data::Json(BODY.to_string())),
+        }));
 
-        body.set_json(BODY.to_string());
-        http.set_body(body);
-        data.set_http(http);
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -268,13 +272,14 @@ mod tests {
     fn it_has_a_bytes_body() {
         const BODY: &'static [u8] = &[0, 1, 2];
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut body = protocol::TypedData::new();
+        let mut http = RpcHttp::default();
+        http.body = Some(Box::new(TypedData {
+            data: Some(Data::Bytes(BODY.to_vec())),
+        }));
 
-        body.set_bytes(BODY.to_owned());
-        http.set_body(body);
-        data.set_http(http);
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -286,13 +291,14 @@ mod tests {
     fn it_has_a_stream_body() {
         const BODY: &'static [u8] = &[0, 1, 2];
 
-        let mut data = protocol::TypedData::new();
-        let mut http = protocol::RpcHttp::new();
-        let mut body = protocol::TypedData::new();
+        let mut http = RpcHttp::default();
+        http.body = Some(Box::new(TypedData {
+            data: Some(Data::Stream(BODY.to_vec())),
+        }));
 
-        body.set_stream(BODY.to_owned());
-        http.set_body(body);
-        data.set_http(http);
+        let data = TypedData {
+            data: Some(Data::Http(Box::new(http))),
+        };
 
         let mut metadata = HashMap::new();
 

@@ -1,5 +1,7 @@
-use crate::http::Body;
-use crate::rpc::protocol;
+use crate::{
+    http::Body,
+    rpc::{typed_data::Data, TypedData},
+};
 use serde::de::Error;
 use serde::Deserialize;
 use serde_json::{from_str, Result, Value};
@@ -59,44 +61,31 @@ use std::str::from_utf8;
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Blob(protocol::TypedData);
+pub struct Blob(TypedData);
 
 impl Blob {
     /// Gets the content of the blob as a string.
     ///
     /// Returns None if there is no valid string representation of the blob.
     pub fn as_str(&self) -> Option<&str> {
-        if self.0.has_string() {
-            return Some(self.0.get_string());
+        match &self.0.data {
+            Some(Data::String(s)) => Some(s),
+            Some(Data::Json(s)) => Some(s),
+            Some(Data::Bytes(b)) => from_utf8(b).ok(),
+            Some(Data::Stream(s)) => from_utf8(s).ok(),
+            _ => None,
         }
-        if self.0.has_json() {
-            return Some(self.0.get_json());
-        }
-        if self.0.has_bytes() {
-            return from_utf8(self.0.get_bytes()).map(|s| s).ok();
-        }
-        if self.0.has_stream() {
-            return from_utf8(self.0.get_stream()).map(|s| s).ok();
-        }
-        None
     }
 
     /// Gets the content of the blob as a slice of bytes.
     pub fn as_bytes(&self) -> &[u8] {
-        if self.0.has_string() {
-            return self.0.get_string().as_bytes();
+        match &self.0.data {
+            Some(Data::String(s)) => s.as_bytes(),
+            Some(Data::Json(s)) => s.as_bytes(),
+            Some(Data::Bytes(b)) => b,
+            Some(Data::Stream(s)) => s,
+            _ => panic!("unexpected data for blob content"),
         }
-        if self.0.has_json() {
-            return self.0.get_json().as_bytes();
-        }
-        if self.0.has_bytes() {
-            return self.0.get_bytes();
-        }
-        if self.0.has_stream() {
-            return self.0.get_stream();
-        }
-
-        panic!("unexpected data for blob content");
     }
 
     /// Deserializes the blob as JSON to the requested type.
@@ -119,76 +108,72 @@ impl fmt::Display for Blob {
 
 impl<'a> From<&'a str> for Blob {
     fn from(content: &'a str) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_string(content.to_owned());
-        Blob(data)
+        Blob(TypedData {
+            data: Some(Data::String(content.to_owned())),
+        })
     }
 }
 
 impl From<String> for Blob {
     fn from(content: String) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_string(content);
-        Blob(data)
+        Blob(TypedData {
+            data: Some(Data::String(content)),
+        })
     }
 }
 
 impl From<&Value> for Blob {
     fn from(content: &Value) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(content.to_string());
-        Blob(data)
+        Blob(TypedData {
+            data: Some(Data::Json(content.to_string())),
+        })
     }
 }
 
 impl From<Value> for Blob {
     fn from(content: Value) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(content.to_string());
-        Blob(data)
+        Blob(TypedData {
+            data: Some(Data::Json(content.to_string())),
+        })
     }
 }
 
 impl<'a> From<&'a [u8]> for Blob {
     fn from(content: &'a [u8]) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_bytes(content.to_owned());
-        Blob(data)
+        Blob(TypedData {
+            data: Some(Data::Bytes(content.to_owned())),
+        })
     }
 }
 
 impl From<Vec<u8>> for Blob {
     fn from(content: Vec<u8>) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_bytes(content);
-        Blob(data)
+        Blob(TypedData {
+            data: Some(Data::Bytes(content)),
+        })
     }
 }
 
 #[doc(hidden)]
-impl From<protocol::TypedData> for Blob {
-    fn from(data: protocol::TypedData) -> Self {
+impl From<TypedData> for Blob {
+    fn from(data: TypedData) -> Self {
         Blob(data)
     }
 }
 
 impl Into<String> for Blob {
-    fn into(mut self) -> String {
-        if self.0.has_string() {
-            return self.0.take_string();
+    fn into(self) -> String {
+        match self.0.data {
+            Some(Data::String(s)) => s,
+            Some(Data::Json(s)) => s,
+            Some(Data::Bytes(b)) => {
+                String::from_utf8(b).expect("blob does not contain valid UTF-8 bytes")
+            }
+            Some(Data::Stream(s)) => {
+                String::from_utf8(s).expect("blob does not contain valid UTF-8 bytes")
+            }
+            _ => panic!("unexpected data for blob content"),
         }
-        if self.0.has_json() {
-            return self.0.take_json();
-        }
-        if self.0.has_bytes() {
-            return String::from_utf8(self.0.take_bytes())
-                .expect("blob does not contain valid UTF-8 bytes");
-        }
-        if self.0.has_stream() {
-            return String::from_utf8(self.0.take_stream())
-                .expect("blob does not contain valid UTF-8 bytes");
-        }
-        panic!("unexpected data for blob content");
     }
 }
 
@@ -203,46 +188,32 @@ impl Into<Value> for Blob {
 }
 
 impl Into<Vec<u8>> for Blob {
-    fn into(mut self) -> Vec<u8> {
-        if self.0.has_string() {
-            return self.0.take_string().into_bytes();
+    fn into(self) -> Vec<u8> {
+        match self.0.data {
+            Some(Data::String(s)) => s.into_bytes(),
+            Some(Data::Json(s)) => s.into_bytes(),
+            Some(Data::Bytes(b)) => b,
+            Some(Data::Stream(s)) => s,
+            _ => panic!("unexpected data for blob content"),
         }
-        if self.0.has_json() {
-            return self.0.take_json().into_bytes();
-        }
-        if self.0.has_bytes() {
-            return self.0.take_bytes();
-        }
-        if self.0.has_stream() {
-            return self.0.take_stream();
-        }
-
-        panic!("unexpected data for blob content");
     }
 }
 
 impl<'a> Into<Body<'a>> for Blob {
-    fn into(mut self) -> Body<'a> {
-        if self.0.has_string() {
-            return self.0.take_string().into();
+    fn into(self) -> Body<'a> {
+        match self.0.data {
+            Some(Data::String(s)) => s.into(),
+            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
+            Some(Data::Bytes(b)) => b.into(),
+            Some(Data::Stream(s)) => s.into(),
+            _ => panic!("unexpected data for blob content"),
         }
-        if self.0.has_json() {
-            return Body::Json(Cow::from(self.0.take_json()));
-        }
-        if self.0.has_bytes() {
-            return self.0.take_bytes().into();
-        }
-        if self.0.has_stream() {
-            return self.0.take_stream().into();
-        }
-
-        panic!("unexpected data for blob content");
     }
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for Blob {
-    fn into(self) -> protocol::TypedData {
+impl Into<TypedData> for Blob {
+    fn into(self) -> TypedData {
         self.0
     }
 }
@@ -262,28 +233,31 @@ mod tests {
         let blob: Blob = BLOB.into();
         assert_eq!(blob.as_str().unwrap(), BLOB);
 
-        let data: protocol::TypedData = blob.into();
-        assert_eq!(data.get_string(), BLOB);
+        let data: TypedData = blob.into();
+        assert_eq!(data.data, Some(Data::String(BLOB.to_string())));
     }
 
     #[test]
     fn it_has_json_content() {
         #[derive(Serialize, Deserialize)]
-        struct Data {
+        struct SerializedData {
             message: String,
         };
 
         const MESSAGE: &'static str = "test";
 
-        let data = Data {
+        let data = SerializedData {
             message: MESSAGE.to_string(),
         };
 
         let blob: Blob = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(blob.as_json::<Data>().unwrap().message, MESSAGE);
+        assert_eq!(blob.as_json::<SerializedData>().unwrap().message, MESSAGE);
 
-        let data: protocol::TypedData = blob.into();
-        assert_eq!(data.get_json(), r#"{"message":"test"}"#);
+        let data: TypedData = blob.into();
+        assert_eq!(
+            data.data,
+            Some(Data::Json(r#"{"message":"test"}"#.to_string()))
+        );
     }
 
     #[test]
@@ -293,8 +267,8 @@ mod tests {
         let blob: Blob = BLOB.into();
         assert_eq!(blob.as_bytes(), BLOB);
 
-        let data: protocol::TypedData = blob.into();
-        assert_eq!(data.get_bytes(), BLOB);
+        let data: TypedData = blob.into();
+        assert_eq!(data.data, Some(Data::Bytes(BLOB.to_owned())));
     }
 
     #[test]
@@ -343,8 +317,9 @@ mod tests {
     fn it_converts_from_typed_data() {
         const BLOB: &'static str = "hello world!";
 
-        let mut data = protocol::TypedData::new();
-        data.set_string(BLOB.to_string());
+        let data = TypedData {
+            data: Some(Data::String(BLOB.to_string())),
+        };
 
         let blob: Blob = data.into();
         assert_eq!(blob.as_str().unwrap(), BLOB);
@@ -389,18 +364,15 @@ mod tests {
     #[test]
     fn it_converts_to_typed_data() {
         let blob: Blob = "test".into();
-        let data: protocol::TypedData = blob.into();
-        assert!(data.has_string());
-        assert_eq!(data.get_string(), "test");
+        let data: TypedData = blob.into();
+        assert_eq!(data.data, Some(Data::String("test".to_string())));
 
         let blob: Blob = to_value("test").unwrap().into();
-        let data: protocol::TypedData = blob.into();
-        assert!(data.has_json());
-        assert_eq!(data.get_json(), r#""test""#);
+        let data: TypedData = blob.into();
+        assert_eq!(data.data, Some(Data::Json(r#""test""#.to_string())));
 
         let blob: Blob = vec![1, 2, 3].into();
-        let data: protocol::TypedData = blob.into();
-        assert!(data.has_bytes());
-        assert_eq!(data.get_bytes(), [1, 2, 3]);
+        let data: TypedData = blob.into();
+        assert_eq!(data.data, Some(Data::Bytes(vec![1, 2, 3])));
     }
 }

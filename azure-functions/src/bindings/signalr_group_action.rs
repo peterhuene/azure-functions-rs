@@ -1,4 +1,8 @@
-use crate::{rpc::protocol, signalr::GroupAction, FromVec};
+use crate::{
+    rpc::{typed_data::Data, TypedData},
+    signalr::GroupAction,
+    FromVec,
+};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{to_string, to_value, Value};
 
@@ -46,25 +50,24 @@ pub struct SignalRGroupAction {
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for SignalRGroupAction {
-    fn into(self) -> protocol::TypedData {
-        let mut data = protocol::TypedData::new();
-        data.set_json(
-            to_string(&self).expect("failed to convert SignalR group action to JSON string"),
-        );
-
-        data
+impl Into<TypedData> for SignalRGroupAction {
+    fn into(self) -> TypedData {
+        TypedData {
+            data: Some(Data::Json(
+                to_string(&self).expect("failed to convert SignalR group action to JSON string"),
+            )),
+        }
     }
 }
 
 #[doc(hidden)]
-impl FromVec<SignalRGroupAction> for protocol::TypedData {
+impl FromVec<SignalRGroupAction> for TypedData {
     fn from_vec(vec: Vec<SignalRGroupAction>) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(
-            Value::Array(vec.into_iter().map(|a| to_value(a).unwrap()).collect()).to_string(),
-        );
-        data
+        TypedData {
+            data: Some(Data::Json(
+                Value::Array(vec.into_iter().map(|a| to_value(a).unwrap()).collect()).to_string(),
+            )),
+        }
     }
 }
 
@@ -92,10 +95,12 @@ mod tests {
             action: GroupAction::Remove,
         };
 
-        let data: protocol::TypedData = action.into();
+        let data: TypedData = action.into();
         assert_eq!(
-            data.get_json(),
-            r#"{"groupName":"foo","userId":"bar","action":"remove"}"#
+            data.data,
+            Some(Data::Json(
+                r#"{"groupName":"foo","userId":"bar","action":"remove"}"#.to_string()
+            ))
         );
     }
 }
