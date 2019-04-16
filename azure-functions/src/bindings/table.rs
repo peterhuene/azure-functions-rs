@@ -1,5 +1,7 @@
-use crate::http::Body;
-use crate::rpc::protocol;
+use crate::{
+    http::Body,
+    rpc::{typed_data::Data, TypedData},
+};
 use serde_json::{from_str, json, Map, Value};
 use std::fmt;
 
@@ -117,23 +119,24 @@ impl fmt::Display for Table {
 }
 
 #[doc(hidden)]
-impl From<protocol::TypedData> for Table {
-    fn from(data: protocol::TypedData) -> Self {
-        if data.has_json() {
-            let mut rows: Value =
-                from_str(data.get_json()).expect("expected valid JSON data for table binding");
+impl From<TypedData> for Table {
+    fn from(data: TypedData) -> Self {
+        match &data.data {
+            Some(Data::Json(s)) => {
+                let mut rows: Value =
+                    from_str(s).expect("expected valid JSON data for table binding");
 
-            if rows.is_object() {
-                rows = Value::Array(vec![rows]);
+                if rows.is_object() {
+                    rows = Value::Array(vec![rows]);
+                }
+
+                if !rows.is_array() {
+                    panic!("expected an object or array for table binding data");
+                }
+
+                Table(rows)
             }
-
-            if !rows.is_array() {
-                panic!("expected an object or array for table binding data");
-            }
-
-            Table(rows)
-        } else {
-            Table::new()
+            _ => Table::new(),
         }
     }
 }
@@ -151,11 +154,11 @@ impl<'a> Into<Body<'a>> for Table {
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for Table {
-    fn into(self) -> protocol::TypedData {
-        let mut data = protocol::TypedData::new();
-        data.set_json(self.0.to_string());
-        data
+impl Into<TypedData> for Table {
+    fn into(self) -> TypedData {
+        TypedData {
+            data: Some(Data::Json(self.0.to_string())),
+        }
     }
 }
 
@@ -258,15 +261,17 @@ mod tests {
         const TABLE: &'static str =
             r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#;
 
-        let mut data = protocol::TypedData::new();
-        data.set_json(TABLE.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(TABLE.to_string())),
+        };
 
         let table: Table = data.into();
         assert_eq!(table.len(), 1);
         assert_eq!(table.to_string(), TABLE);
 
-        let mut data = protocol::TypedData::new();
-        data.set_string("".to_string());
+        let data = TypedData {
+            data: Some(Data::String("".to_string())),
+        };
 
         let table: Table = data.into();
         assert_eq!(table.len(), 0);
@@ -291,8 +296,9 @@ mod tests {
         const TABLE: &'static str =
             r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#;
 
-        let mut data = protocol::TypedData::new();
-        data.set_json(TABLE.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(TABLE.to_string())),
+        };
 
         let table: Table = data.into();
         let body: Body = table.into();
@@ -309,11 +315,12 @@ mod tests {
             let row = table.add_row("partition1", "row1");
             row.insert("data".to_string(), Value::String("value".to_string()));
         }
-        let data: protocol::TypedData = table.into();
-        assert!(data.has_json());
+        let data: TypedData = table.into();
         assert_eq!(
-            data.get_json(),
-            r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#
+            data.data,
+            Some(Data::Json(
+                r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#.to_string()
+            ))
         );
     }
 }

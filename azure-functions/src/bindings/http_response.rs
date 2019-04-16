@@ -1,5 +1,7 @@
-use crate::http::{Body, ResponseBuilder, Status};
-use crate::rpc::protocol;
+use crate::{
+    http::{Body, ResponseBuilder, Status},
+    rpc::{typed_data::Data, RpcHttp, TypedData},
+};
 use std::collections::HashMap;
 
 /// Represents a HTTP output binding.
@@ -69,14 +71,14 @@ use std::collections::HashMap;
 /// ```
 #[derive(Default, Debug)]
 pub struct HttpResponse {
-    pub(crate) data: protocol::RpcHttp,
+    pub(crate) data: RpcHttp,
     pub(crate) status: Status,
 }
 
 impl HttpResponse {
     pub(crate) fn new() -> Self {
         HttpResponse {
-            data: protocol::RpcHttp::new(),
+            data: RpcHttp::default(),
             status: Status::Ok,
         }
     }
@@ -122,11 +124,11 @@ impl HttpResponse {
     /// assert_eq!(response.body().as_str().unwrap(), "example");
     /// ```
     pub fn body(&self) -> Body {
-        if self.data.has_body() {
-            Body::from(self.data.get_body())
-        } else {
-            Body::Empty
-        }
+        self.data
+            .body
+            .as_ref()
+            .map(|b| Body::from(&**b))
+            .unwrap_or(Body::Empty)
     }
 
     /// Gets the headers of the response.
@@ -160,13 +162,13 @@ impl From<ResponseBuilder> for HttpResponse {
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for HttpResponse {
-    fn into(mut self) -> protocol::TypedData {
-        self.data.set_status_code(self.status.to_string());
+impl Into<TypedData> for HttpResponse {
+    fn into(mut self) -> TypedData {
+        self.data.status_code = self.status.to_string();
 
-        let mut data = protocol::TypedData::new();
-        data.set_http(self.data);
-        data
+        TypedData {
+            data: Some(Data::Http(Box::new(self.data))),
+        }
     }
 }
 
@@ -270,13 +272,19 @@ mod tests {
             .body("body")
             .into();
 
-        let data: protocol::TypedData = response.into();
-        assert!(data.has_http());
-
-        let http = data.get_http();
-        assert_eq!(http.get_status_code(), "400");
-        assert_eq!(http.get_headers().get("header").unwrap(), "value");
-        assert!(http.get_body().has_string());
-        assert_eq!(http.get_body().get_string(), "body");
+        let data: TypedData = response.into();
+        match data.data {
+            Some(Data::Http(http)) => {
+                assert_eq!(http.status_code, "400");
+                assert_eq!(http.headers.get("header").unwrap(), "value");
+                assert_eq!(
+                    http.body,
+                    Some(Box::new(TypedData {
+                        data: Some(Data::String("body".to_string()))
+                    }))
+                );
+            }
+            _ => assert!(false),
+        }
     }
 }

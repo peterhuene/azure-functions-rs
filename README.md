@@ -69,6 +69,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 
 #### .NET Core SDK
 
+
 A .NET Core SDK is required to synchronize Azure Functions Host binding extensions.
 
 For example, using the Cosmos DB bindings will need the `Microsoft.Azure.WebJobs.Extensions.CosmosDB` extensions installed for the Azure Functions Host.

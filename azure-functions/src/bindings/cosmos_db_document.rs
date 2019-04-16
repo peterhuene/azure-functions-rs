@@ -1,4 +1,9 @@
-use crate::{http::Body, rpc::protocol, util::convert_from, FromVec, IntoVec};
+use crate::{
+    http::Body,
+    rpc::{typed_data::Data, TypedData},
+    util::convert_from,
+    FromVec, IntoVec,
+};
 use serde_json::{from_str, Map, Value};
 use std::borrow::Cow;
 use std::fmt;
@@ -152,7 +157,7 @@ impl From<Value> for CosmosDbDocument {
 }
 
 #[doc(hidden)]
-impl IntoVec<CosmosDbDocument> for protocol::TypedData {
+impl IntoVec<CosmosDbDocument> for TypedData {
     fn into_vec(self) -> Vec<CosmosDbDocument> {
         if self.data.is_none() {
             return vec![];
@@ -168,17 +173,19 @@ impl IntoVec<CosmosDbDocument> for protocol::TypedData {
 }
 
 #[doc(hidden)]
-impl FromVec<CosmosDbDocument> for protocol::TypedData {
+impl FromVec<CosmosDbDocument> for TypedData {
     fn from_vec(vec: Vec<CosmosDbDocument>) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(Value::Array(vec.into_iter().map(|d| d.0).collect()).to_string());
-        data
+        TypedData {
+            data: Some(Data::Json(
+                Value::Array(vec.into_iter().map(|d| d.0).collect()).to_string(),
+            )),
+        }
     }
 }
 
 #[doc(hidden)]
-impl From<protocol::TypedData> for CosmosDbDocument {
-    fn from(data: protocol::TypedData) -> Self {
+impl From<TypedData> for CosmosDbDocument {
+    fn from(data: TypedData) -> Self {
         if data.data.is_none() {
             return CosmosDbDocument(Value::Null);
         }
@@ -227,11 +234,11 @@ impl<'a> Into<Body<'a>> for Vec<CosmosDbDocument> {
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for CosmosDbDocument {
-    fn into(self) -> protocol::TypedData {
-        let mut data = protocol::TypedData::new();
-        data.set_json(self.0.to_string());
-        data
+impl Into<TypedData> for CosmosDbDocument {
+    fn into(self) -> TypedData {
+        TypedData {
+            data: Some(Data::Json(self.0.to_string())),
+        }
     }
 }
 
@@ -312,10 +319,11 @@ mod tests {
 
     #[test]
     fn it_converts_from_typed_data() {
-        let mut data = protocol::TypedData::new();
-        data.set_json(r#"{ "foo": "bar" }"#.to_string());
+        let document: CosmosDbDocument = TypedData {
+            data: Some(Data::Json(r#"{ "foo": "bar" }"#.to_string())),
+        }
+        .into();
 
-        let document: CosmosDbDocument = data.into();
         let data = document.as_object().unwrap();
         assert_eq!(data["foo"].as_str().unwrap(), "bar");
     }
@@ -326,8 +334,7 @@ mod tests {
         let data = document.as_object().unwrap();
         assert_eq!(data["foo"].as_str().unwrap(), "bar");
 
-        let data: protocol::TypedData = document.into();
-        assert!(data.has_json());
-        assert_eq!(data.get_json(), r#"{"foo":"bar"}"#);
+        let data: TypedData = document.into();
+        assert_eq!(data.data, Some(Data::Json(r#"{"foo":"bar"}"#.to_string())));
     }
 }

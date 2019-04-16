@@ -1,4 +1,7 @@
-use crate::{rpc::protocol, FromVec};
+use crate::{
+    rpc::{typed_data::Data, TypedData},
+    FromVec,
+};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{to_string, to_value, Value};
 
@@ -49,22 +52,24 @@ pub struct SignalRMessage {
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for SignalRMessage {
-    fn into(self) -> protocol::TypedData {
-        let mut data = protocol::TypedData::new();
-        data.set_json(to_string(&self).expect("failed to convert SignalR message to JSON string"));
-        data
+impl Into<TypedData> for SignalRMessage {
+    fn into(self) -> TypedData {
+        TypedData {
+            data: Some(Data::Json(
+                to_string(&self).expect("failed to convert SignalR message to JSON string"),
+            )),
+        }
     }
 }
 
 #[doc(hidden)]
-impl FromVec<SignalRMessage> for protocol::TypedData {
+impl FromVec<SignalRMessage> for TypedData {
     fn from_vec(vec: Vec<SignalRMessage>) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(
-            Value::Array(vec.into_iter().map(|m| to_value(m).unwrap()).collect()).to_string(),
-        );
-        data
+        TypedData {
+            data: Some(Data::Json(
+                Value::Array(vec.into_iter().map(|m| to_value(m).unwrap()).collect()).to_string(),
+            )),
+        }
     }
 }
 
@@ -106,10 +111,13 @@ mod tests {
             ],
         };
 
-        let data: protocol::TypedData = message.into();
+        let data: TypedData = message.into();
         assert_eq!(
-            data.get_json(),
-            r#"{"userId":"foo","groupName":"bar","target":"baz","arguments":[1,"foo",false]}"#
+            data.data,
+            Some(Data::Json(
+                r#"{"userId":"foo","groupName":"bar","target":"baz","arguments":[1,"foo",false]}"#
+                    .to_string()
+            ))
         );
     }
 }
