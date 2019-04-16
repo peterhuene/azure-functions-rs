@@ -51,6 +51,24 @@ git clone --recurse-submodules https://github.com/<GITHUB-USERNAME>/azure-functi
 
 If you want to clone the source repository, replace `<GITHUB-USERNAME>` with `peterhuene`. To clone your own fork, replace the value with your GitHub username.
 
+### Developing Your Contribution
+
+Create a new branch from `dev` for the feature you are adding on your fork. Name the branch according to the feature you are adding (i.e. `binding-to-iot`). As you work on your contributions, code on the source repository may get updated. You can keep your fork up-to-date and avoid merge conflicts by adding the source repo as a remote, upstream branch.
+
+``` bash
+git remote add upstream https://github.com/peterhuene/azure-functions-rs
+```
+
+You only need to do this once. Then, to update your fork run
+
+``` bash
+git pull --rebase upstream <YOUR-FEATURE-BRANCH>
+```
+
+This will update your code with the changes that have occurred in the source repo.
+
+> :warning: Note that this will not update the Azure Functions Language Worker Protocol. However, that code is much less likely to change.
+
 ### Building
 
 Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo build`:
@@ -66,26 +84,3 @@ Use `cargo test` to run the tests:
 ``` bash
 cargo test
 ```
-
-### Updating Your Fork
-
-As you work on your contributions, code on the source repository may get updated. You can keep your fork up-to-date and avoid merge conflict by adding the source repo as a remote, upstream branch.
-
-``` bash
-git remote add upstream https://github.com/peterhuene/azure-functions-rs
-```
-
-You only need to do this once. Then, to update your fork fetch all branches of the source repo
-
-``` bash
-git fetch upstream
-```
-
-Switch to `master` and rebase so that any commits you have made which aren't in upstream/master are replaced on top of that other branch:
-
-``` bash
-git checkout master
-git rebase upstream/master
-```
-
-> :warning: Note that this will not update the Azure Functions Language Worker Protocol. However, that code is much less likely to change.
