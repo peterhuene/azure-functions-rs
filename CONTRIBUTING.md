@@ -71,7 +71,7 @@ This will update your code with the changes that have occurred in the source rep
 
 ### Building
 
-Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo build`:
+Build at the root of the repository to build all the libraries and examples using `cargo build`:
 
 ``` bash
 cargo build
