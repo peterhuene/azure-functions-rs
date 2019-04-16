@@ -1,7 +1,9 @@
-use crate::bindings::Blob;
-use crate::blob::Properties;
-use crate::rpc::protocol;
-use crate::util::convert_from;
+use crate::{
+    bindings::Blob,
+    blob::Properties,
+    rpc::{typed_data::Data, TypedData},
+    util::convert_from,
+};
 use serde_json::from_str;
 use std::collections::HashMap;
 
@@ -51,27 +53,35 @@ pub struct BlobTrigger {
 
 impl BlobTrigger {
     #[doc(hidden)]
-    pub fn new(
-        data: protocol::TypedData,
-        metadata: &mut HashMap<String, protocol::TypedData>,
-    ) -> Self {
+    pub fn new(data: TypedData, metadata: &mut HashMap<String, TypedData>) -> Self {
         BlobTrigger {
             blob: data.into(),
             path: metadata
-                .get_mut(PATH_KEY)
-                .map_or(String::new(), protocol::TypedData::take_string),
-            uri: metadata.get(URI_KEY).map_or(String::new(), |x| {
-                convert_from(x)
-                    .unwrap_or_else(|| panic!("failed to read '{}' from metadata", URI_KEY))
+                .remove(PATH_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for 'path' metadata key"),
+                })
+                .expect("expected a blob path"),
+            uri: metadata.get(URI_KEY).map_or(String::new(), |data| {
+                convert_from(data).unwrap_or_else(|| panic!("failed to convert uri"))
             }),
             properties: metadata
-                .get(PROPERTIES_KEY)
-                .map_or(Default::default(), |x| {
-                    from_str(x.get_json()).expect("failed to deserialize blob properties")
+                .remove(PROPERTIES_KEY)
+                .map_or(Properties::default(), |data| match data.data {
+                    Some(Data::Json(s)) => {
+                        from_str(&s).expect("failed to deserialize blob properties")
+                    }
+                    _ => panic!("expected a string for properties"),
                 }),
-            metadata: metadata.get(METADATA_KEY).map_or(Default::default(), |x| {
-                from_str(x.get_json()).expect("failed to deserialize blob metadata")
-            }),
+            metadata: metadata
+                .remove(METADATA_KEY)
+                .map_or(HashMap::new(), |data| match data.data {
+                    Some(Data::Json(s)) => {
+                        from_str(&s).expect("failed to deserialize blob metadata")
+                    }
+                    _ => panic!("expected a string for metadata"),
+                }),
         }
     }
 }
@@ -130,31 +140,41 @@ mod tests {
             "BlobTierLastModifiedTime": null
         });
 
-        let mut data = protocol::TypedData::new();
-        data.set_string(BLOB.to_string());
+        let data = TypedData {
+            data: Some(Data::String(BLOB.to_string())),
+        };
 
-        let mut metadata = HashMap::new();
-
-        let mut value = protocol::TypedData::new();
-        value.set_string(PATH.to_string());
-        metadata.insert(PATH_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
-        value.set_json("\"".to_string() + URI + "\"");
-        metadata.insert(URI_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
-        value.set_json(properties.to_string());
-        metadata.insert(PROPERTIES_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
         let mut user_metadata = HashMap::new();
         user_metadata.insert(
             USER_METADAT_KEY.to_string(),
             USER_METADATA_VALUE.to_string(),
         );
-        value.set_json(to_string(&user_metadata).unwrap());
-        metadata.insert(METADATA_KEY.to_string(), value);
+
+        let mut metadata = HashMap::new();
+        metadata.insert(
+            PATH_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(PATH.to_string())),
+            },
+        );
+        metadata.insert(
+            URI_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json("\"".to_string() + URI + "\"")),
+            },
+        );
+        metadata.insert(
+            PROPERTIES_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(properties.to_string())),
+            },
+        );
+        metadata.insert(
+            METADATA_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(to_string(&user_metadata).unwrap())),
+            },
+        );
 
         let trigger = BlobTrigger::new(data, &mut metadata);
         assert_eq!(trigger.path, PATH);

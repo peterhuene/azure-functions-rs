@@ -1,4 +1,8 @@
-use crate::{http::Body, rpc::protocol, FromVec};
+use crate::{
+    http::Body,
+    rpc::{typed_data::Data, TypedData},
+    FromVec,
+};
 use serde::de::Error;
 use serde::Deserialize;
 use serde_json::{from_str, Result, Value};
@@ -63,44 +67,31 @@ use std::str::from_utf8;
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct ServiceBusMessage(protocol::TypedData);
+pub struct ServiceBusMessage(TypedData);
 
 impl ServiceBusMessage {
     /// Gets the content of the message as a string.
     ///
     /// Returns None if there is no valid string representation of the message.
     pub fn as_str(&self) -> Option<&str> {
-        if self.0.has_string() {
-            return Some(self.0.get_string());
+        match &self.0.data {
+            Some(Data::String(s)) => Some(s),
+            Some(Data::Json(s)) => Some(s),
+            Some(Data::Bytes(b)) => from_utf8(b).ok(),
+            Some(Data::Stream(s)) => from_utf8(s).ok(),
+            _ => None,
         }
-        if self.0.has_json() {
-            return Some(self.0.get_json());
-        }
-        if self.0.has_bytes() {
-            return from_utf8(self.0.get_bytes()).map(|s| s).ok();
-        }
-        if self.0.has_stream() {
-            return from_utf8(self.0.get_stream()).map(|s| s).ok();
-        }
-        None
     }
 
     /// Gets the content of the message as a slice of bytes.
     pub fn as_bytes(&self) -> &[u8] {
-        if self.0.has_string() {
-            return self.0.get_string().as_bytes();
+        match &self.0.data {
+            Some(Data::String(s)) => s.as_bytes(),
+            Some(Data::Json(s)) => s.as_bytes(),
+            Some(Data::Bytes(b)) => b,
+            Some(Data::Stream(s)) => s,
+            _ => panic!("unexpected data for service bus message content"),
         }
-        if self.0.has_json() {
-            return self.0.get_json().as_bytes();
-        }
-        if self.0.has_bytes() {
-            return self.0.get_bytes();
-        }
-        if self.0.has_stream() {
-            return self.0.get_stream();
-        }
-
-        panic!("unexpected data for service bus message content");
     }
 
     /// Deserializes the message as JSON to the requested type.
@@ -124,162 +115,134 @@ impl fmt::Display for ServiceBusMessage {
 
 impl<'a> From<&'a str> for ServiceBusMessage {
     fn from(content: &'a str) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_string(content.to_owned());
-        ServiceBusMessage(data)
+        ServiceBusMessage(TypedData {
+            data: Some(Data::String(content.to_owned())),
+        })
     }
 }
 
 impl From<String> for ServiceBusMessage {
     fn from(content: String) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_string(content);
-        ServiceBusMessage(data)
+        ServiceBusMessage(TypedData {
+            data: Some(Data::String(content)),
+        })
     }
 }
 
 impl From<&Value> for ServiceBusMessage {
     fn from(content: &Value) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(content.to_string());
-        ServiceBusMessage(data)
+        ServiceBusMessage(TypedData {
+            data: Some(Data::Json(content.to_string())),
+        })
     }
 }
 
 impl From<Value> for ServiceBusMessage {
     fn from(content: Value) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(content.to_string());
-        ServiceBusMessage(data)
+        ServiceBusMessage(TypedData {
+            data: Some(Data::Json(content.to_string())),
+        })
     }
 }
 
 impl<'a> From<&'a [u8]> for ServiceBusMessage {
     fn from(content: &'a [u8]) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_bytes(content.to_owned());
-        ServiceBusMessage(data)
+        ServiceBusMessage(TypedData {
+            data: Some(Data::Bytes(content.to_owned())),
+        })
     }
 }
 
 impl From<Vec<u8>> for ServiceBusMessage {
     fn from(content: Vec<u8>) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_bytes(content);
+        ServiceBusMessage(TypedData {
+            data: Some(Data::Bytes(content)),
+        })
+    }
+}
+
+#[doc(hidden)]
+impl From<TypedData> for ServiceBusMessage {
+    fn from(data: TypedData) -> Self {
         ServiceBusMessage(data)
     }
 }
 
 #[doc(hidden)]
-impl From<protocol::TypedData> for ServiceBusMessage {
-    fn from(data: protocol::TypedData) -> Self {
-        ServiceBusMessage(data)
-    }
-}
-
-#[doc(hidden)]
-impl FromVec<ServiceBusMessage> for protocol::TypedData {
+impl FromVec<ServiceBusMessage> for TypedData {
     fn from_vec(vec: Vec<ServiceBusMessage>) -> Self {
-        let mut data = protocol::TypedData::new();
-        data.set_json(Value::Array(vec.into_iter().map(Into::into).collect()).to_string());
-        data
+        TypedData {
+            data: Some(Data::Json(
+                Value::Array(vec.into_iter().map(Into::into).collect()).to_string(),
+            )),
+        }
     }
 }
 
 impl Into<String> for ServiceBusMessage {
-    fn into(mut self) -> String {
-        if self.0.has_string() {
-            return self.0.take_string();
+    fn into(self) -> String {
+        match self.0.data {
+            Some(Data::String(s)) => s,
+            Some(Data::Json(s)) => s,
+            Some(Data::Bytes(b)) => String::from_utf8(b)
+                .expect("service bus message does not contain valid UTF-8 bytes"),
+            Some(Data::Stream(s)) => String::from_utf8(s)
+                .expect("service bus message does not contain valid UTF-8 bytes"),
+            _ => panic!("unexpected data for service bus message content"),
         }
-        if self.0.has_json() {
-            return self.0.take_json();
-        }
-        if self.0.has_bytes() {
-            return String::from_utf8(self.0.take_bytes())
-                .expect("service bus message does not contain valid UTF-8 bytes");
-        }
-        if self.0.has_stream() {
-            return String::from_utf8(self.0.take_stream())
-                .expect("service bus message does not contain valid UTF-8 bytes");
-        }
-        panic!("unexpected data for service bus message content");
     }
 }
 
 impl Into<Value> for ServiceBusMessage {
-    fn into(mut self) -> Value {
-        if self.0.has_string() {
-            return Value::String(self.0.take_string());
-        }
-        if self.0.has_json() {
-            return from_str(self.0.get_json())
-                .expect("service bus message does not contain valid JSON data");
-        }
-        // TODO: this is not an efficient encoding
-        if self.0.has_bytes() {
-            return Value::Array(
-                self.0
-                    .get_bytes()
-                    .iter()
+    fn into(self) -> Value {
+        // TODO: this is not an efficient encoding for bytes/stream
+        match self.0.data {
+            Some(Data::String(s)) => Value::String(s),
+            Some(Data::Json(s)) => {
+                from_str(&s).expect("service bus message does not contain valid JSON data")
+            }
+            Some(Data::Bytes(b)) => Value::Array(
+                b.iter()
                     .map(|n| Value::Number(u64::from(*n).into()))
                     .collect(),
-            );
-        }
-        // TODO: this is not an efficient encoding
-        if self.0.has_stream() {
-            return Value::Array(
-                self.0
-                    .get_stream()
-                    .iter()
+            ),
+            Some(Data::Stream(s)) => Value::Array(
+                s.iter()
                     .map(|n| Value::Number(u64::from(*n).into()))
                     .collect(),
-            );
+            ),
+            _ => panic!("unexpected data for service bus message content"),
         }
-        panic!("unexpected data for service bus message content");
     }
 }
 
 impl Into<Vec<u8>> for ServiceBusMessage {
-    fn into(mut self) -> Vec<u8> {
-        if self.0.has_string() {
-            return self.0.take_string().into_bytes();
+    fn into(self) -> Vec<u8> {
+        match self.0.data {
+            Some(Data::String(s)) => s.into_bytes(),
+            Some(Data::Json(s)) => s.into_bytes(),
+            Some(Data::Bytes(b)) => b,
+            Some(Data::Stream(s)) => s,
+            _ => panic!("unexpected data for service bus message content"),
         }
-        if self.0.has_json() {
-            return self.0.take_json().into_bytes();
-        }
-        if self.0.has_bytes() {
-            return self.0.take_bytes();
-        }
-        if self.0.has_stream() {
-            return self.0.take_stream();
-        }
-
-        panic!("unexpected data for service bus message content");
     }
 }
 
 impl<'a> Into<Body<'a>> for ServiceBusMessage {
-    fn into(mut self) -> Body<'a> {
-        if self.0.has_string() {
-            return self.0.take_string().into();
+    fn into(self) -> Body<'a> {
+        match self.0.data {
+            Some(Data::String(s)) => s.into(),
+            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
+            Some(Data::Bytes(b)) => b.into(),
+            Some(Data::Stream(s)) => s.into(),
+            _ => panic!("unexpected data for service bus message content"),
         }
-        if self.0.has_json() {
-            return Body::Json(Cow::from(self.0.take_json()));
-        }
-        if self.0.has_bytes() {
-            return self.0.take_bytes().into();
-        }
-        if self.0.has_stream() {
-            return self.0.take_stream().into();
-        }
-
-        panic!("unexpected data for service bus message content");
     }
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for ServiceBusMessage {
-    fn into(self) -> protocol::TypedData {
+impl Into<TypedData> for ServiceBusMessage {
+    fn into(self) -> TypedData {
         self.0
     }
 }
@@ -298,28 +261,34 @@ mod tests {
         let message: ServiceBusMessage = MESSAGE.into();
         assert_eq!(message.as_str().unwrap(), MESSAGE);
 
-        let data: protocol::TypedData = message.into();
-        assert_eq!(data.get_string(), MESSAGE);
+        let data: TypedData = message.into();
+        assert_eq!(data.data, Some(Data::String(MESSAGE.to_string())));
     }
 
     #[test]
     fn it_has_json_content() {
         #[derive(Serialize, Deserialize)]
-        struct Data {
+        struct SerializedData {
             message: String,
         };
 
         const MESSAGE: &'static str = "test";
 
-        let data = Data {
+        let data = SerializedData {
             message: MESSAGE.to_string(),
         };
 
         let message: ServiceBusMessage = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(message.as_json::<Data>().unwrap().message, MESSAGE);
+        assert_eq!(
+            message.as_json::<SerializedData>().unwrap().message,
+            MESSAGE
+        );
 
-        let data: protocol::TypedData = message.into();
-        assert_eq!(data.get_json(), r#"{"message":"test"}"#);
+        let data: TypedData = message.into();
+        assert_eq!(
+            data.data,
+            Some(Data::Json(r#"{"message":"test"}"#.to_string()))
+        );
     }
 
     #[test]
@@ -329,8 +298,8 @@ mod tests {
         let message: ServiceBusMessage = MESSAGE.into();
         assert_eq!(message.as_bytes(), MESSAGE);
 
-        let data: protocol::TypedData = message.into();
-        assert_eq!(data.get_bytes(), MESSAGE);
+        let data: TypedData = message.into();
+        assert_eq!(data.data, Some(Data::Bytes(MESSAGE.to_vec())));
     }
 
     #[test]
@@ -414,18 +383,15 @@ mod tests {
     #[test]
     fn it_converts_to_typed_data() {
         let message: ServiceBusMessage = "test".into();
-        let data: protocol::TypedData = message.into();
-        assert!(data.has_string());
-        assert_eq!(data.get_string(), "test");
+        let data: TypedData = message.into();
+        assert_eq!(data.data, Some(Data::String("test".to_string())));
 
         let message: ServiceBusMessage = to_value("test").unwrap().into();
-        let data: protocol::TypedData = message.into();
-        assert!(data.has_json());
-        assert_eq!(data.get_json(), r#""test""#);
+        let data: TypedData = message.into();
+        assert_eq!(data.data, Some(Data::Json(r#""test""#.to_string())));
 
         let message: ServiceBusMessage = vec![1, 2, 3].into();
-        let data: protocol::TypedData = message.into();
-        assert!(data.has_bytes());
-        assert_eq!(data.get_bytes(), [1, 2, 3]);
+        let data: TypedData = message.into();
+        assert_eq!(data.data, Some(Data::Bytes([1, 2, 3].to_vec())));
     }
 }
