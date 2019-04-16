@@ -4,7 +4,7 @@ This project is open for contributions. See the [issues](https://github.com/pete
 
 ## Submitting Changes
 
-To make changes to this project, please [fork the repo](https://help.github.com/en/articles/fork-a-repo) and make your changes on a branch in this repo. When you are ready to contribute, make your pull-request into the `dev` branch.
+To make changes to this project, please [fork the repo](https://help.github.com/en/articles/fork-a-repo). Create a feature branch with a name describing the feature added by the branch (i.e. `binding-to-iot`). Commit and push your changes to this branch. When you are ready to contribute, make your pull-request into the `dev` branch.
 
 ### Before you make a Pull Request
 
