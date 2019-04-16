@@ -1,4 +1,4 @@
-# &lt;functions.rs&gt;
+# Azure Functions for Rust
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
@@ -16,10 +16,31 @@ in [Rust](https://www.rust-lang.org/).
 > Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.  
 > _Microsoft and Azure are registered trademarks of Microsoft Corporation._
 
+## Example
+
+A simple HTTP-triggered Azure Function:
+
+```rust
+use azure_functions::bindings::{HttpRequest, HttpResponse};
+use azure_functions::func;
+
+#[func]
+pub fn greet(req: HttpRequest) -> HttpResponse {
+    // Log the message with the Azure Functions Host
+    info!("Request: {:?}", req);
+
+    format!(
+        "Hello from Rust, {}!\n",
+        req.query_params().get("name").map_or("stranger", |x| x)
+    ).into()
+}
+```
+
 ## Get Started
 
-- [Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
+- [More Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
 - [Documentation](https://docs.rs/azure-functions/0.7.0/azure_functions/)
+- [Installation](#installation)
 - [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
 ## Table of Contents
