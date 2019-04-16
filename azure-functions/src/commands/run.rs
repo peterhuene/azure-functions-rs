@@ -48,9 +48,9 @@ impl Service<()> for HttpService {
 }
 
 pub struct Run<'a> {
-    host: &'a str,
-    port: u16,
-    worker_id: &'a str,
+    pub host: &'a str,
+    pub port: u16,
+    pub worker_id: &'a str,
 }
 
 impl<'a> Run<'a> {

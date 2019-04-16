@@ -90,7 +90,6 @@ pub use azure_functions_codegen::func;
 pub use azure_functions_shared::codegen;
 
 mod backtrace;
-mod cli;
 mod commands;
 mod logger;
 mod registry;
@@ -106,14 +105,9 @@ pub mod timer;
 pub use azure_functions_codegen::export;
 pub use azure_functions_shared::{rpc, Context};
 
+use crate::commands::{Init, Run, SyncExtensions};
 use crate::registry::Registry;
-use std::env::current_dir;
-use std::fs;
-use std::path::Path;
-use std::process::Command;
-use tempfile::TempDir;
-use xml::writer::XmlEvent;
-use xml::EmitterConfig;
+use clap::{App, AppSettings};
 
 #[doc(hidden)]
 pub trait IntoVec<T> {
@@ -123,162 +117,6 @@ pub trait IntoVec<T> {
 #[doc(hidden)]
 pub trait FromVec<T> {
     fn from_vec(vec: Vec<T>) -> Self;
-}
-
-fn write_property(writer: &mut xml::EventWriter<&mut fs::File>, name: &str, value: &str) {
-    writer.write(XmlEvent::start_element(name)).unwrap();
-    writer.write(XmlEvent::characters(value)).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap();
-}
-
-fn write_extensions_project_file(path: &Path, registry: &Registry<'static>) {
-    let mut project_file =
-        fs::File::create(path).expect("Failed to create extensions project file.");
-
-    let mut writer = EmitterConfig::new()
-        .perform_indent(true)
-        .create_writer(&mut project_file);
-
-    writer
-        .write(XmlEvent::start_element("Project").attr("Sdk", "Microsoft.NET.Sdk"))
-        .unwrap();
-
-    writer
-        .write(XmlEvent::start_element("PropertyGroup"))
-        .unwrap();
-
-    write_property(&mut writer, "TargetFramework", "netstandard2.0");
-    write_property(&mut writer, "CopyBuildOutputToPublishDirectory", "false");
-    write_property(&mut writer, "CopyOutputSymbolsToPublishDirectory", "false");
-    write_property(&mut writer, "GenerateDependencyFile", "false");
-
-    writer.write(XmlEvent::end_element()).unwrap();
-
-    writer.write(XmlEvent::start_element("ItemGroup")).unwrap();
-
-    for extension in registry.iter_binding_extensions() {
-        writer
-            .write(
-                XmlEvent::start_element("PackageReference")
-                    .attr("Include", extension.0)
-                    .attr("Version", extension.1),
-            )
-            .unwrap();
-        writer.write(XmlEvent::end_element()).unwrap();
-    }
-
-    writer.write(XmlEvent::end_element()).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap();
-}
-
-fn write_generator_project_file(path: &Path) {
-    let mut project_file =
-        fs::File::create(path).expect("Failed to create generator project file.");
-
-    let mut writer = EmitterConfig::new()
-        .perform_indent(true)
-        .create_writer(&mut project_file);
-
-    writer
-        .write(XmlEvent::start_element("Project").attr("Sdk", "Microsoft.NET.Sdk"))
-        .unwrap();
-
-    writer
-        .write(XmlEvent::start_element("PropertyGroup"))
-        .unwrap();
-
-    write_property(&mut writer, "TargetFramework", "netstandard2.0");
-
-    writer.write(XmlEvent::end_element()).unwrap();
-
-    writer.write(XmlEvent::start_element("ItemGroup")).unwrap();
-
-    writer
-        .write(
-            XmlEvent::start_element("PackageReference")
-                .attr(
-                    "Include",
-                    "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator",
-                )
-                .attr("Version", "1.0.1")
-                .attr("PrivateAssets", "all"),
-        )
-        .unwrap();
-
-    writer.write(XmlEvent::end_element()).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap();
-}
-
-fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>) {
-    if !registry.has_binding_extensions() {
-        if verbose {
-            println!("No binding extensions are needed.");
-        }
-        return;
-    }
-
-    let temp_dir = TempDir::new().expect("failed to create temporary directory");
-    let extensions_project_path = temp_dir.path().join("extensions.csproj");
-    let metadata_project_path = temp_dir.path().join("metadata.csproj");
-    let output_directory = current_dir()
-        .expect("failed to get current directory")
-        .join(script_root);
-
-    write_extensions_project_file(&extensions_project_path, &registry);
-    write_generator_project_file(&metadata_project_path);
-
-    if verbose {
-        println!("Restoring extension assemblies...");
-    }
-
-    let status = Command::new("dotnet")
-        .args(&[
-            "publish",
-            "-c",
-            "Release",
-            "-o",
-            output_directory.join("bin").to_str().unwrap(),
-            "/v:q",
-            "/nologo",
-            extensions_project_path.to_str().unwrap(),
-        ])
-        .current_dir(temp_dir.path())
-        .status()
-        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e));
-
-    if !status.success() {
-        panic!(
-            "failed to restore extensions: dotnet returned non-zero exit code {}.",
-            status.code().unwrap()
-        );
-    }
-
-    if verbose {
-        println!("Generating extension metadata...");
-    }
-
-    let status = Command::new("dotnet")
-        .args(&[
-            "msbuild",
-            "/t:_GenerateFunctionsExtensionsMetadataPostPublish",
-            "/v:q",
-            "/nologo",
-            "/restore",
-            "-p:Configuration=Release",
-            &format!("-p:PublishDir={}/", output_directory.to_str().unwrap()),
-            metadata_project_path.to_str().unwrap(),
-        ])
-        .current_dir(temp_dir.path())
-        .status()
-        .unwrap_or_else(|e| panic!("failed to spawn dotnet: {}", e));
-
-    if !status.success() {
-        panic!(
-            "failed to generate extension metadata: dotnet returned non-zero exit code {}.",
-            status.code().unwrap()
-        );
-    }
 }
 
 /// The main entry point for the Azure Functions for Rust worker.
@@ -295,26 +133,21 @@ fn sync_extensions(script_root: &str, verbose: bool, registry: Registry<'static>
 /// }
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
-    let matches = cli::create_app().get_matches_from(args);
     let registry = Registry::new(functions);
 
-    if let Some(matches) = matches.subcommand_matches("sync-extensions") {
-        sync_extensions(
-            matches
-                .value_of("script_root")
-                .expect("A script root is required."),
-            matches.is_present("verbose"),
-            registry,
-        );
-        return;
-    }
+    let app = App::new("Azure Functions for Rust worker")
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("Implements the Azure Functions for Rust worker.")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .setting(AppSettings::VersionlessSubcommands)
+        .subcommand(Init::create_subcommand())
+        .subcommand(SyncExtensions::create_subcommand())
+        .subcommand(Run::create_subcommand());
 
-    if let Err(e) = match matches
-        //.get_or_insert_with(|| create_app().get_matches_from(env::args().skip(1)))
-        .subcommand()
-    {
-        ("init", Some(args)) => commands::Init::from(args).execute(registry),
-        ("run", Some(args)) => commands::Run::from(args).execute(registry),
+    if let Err(e) = match app.get_matches_from(args).subcommand() {
+        ("init", Some(args)) => Init::from(args).execute(registry),
+        ("sync-extensions", Some(args)) => SyncExtensions::from(args).execute(registry),
+        ("run", Some(args)) => Run::from(args).execute(registry),
         _ => panic!("expected a subcommand."),
     } {
         eprintln!("error: {}", e);

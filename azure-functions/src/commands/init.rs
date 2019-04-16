@@ -1,4 +1,4 @@
-use crate::{codegen::Function, registry::Registry};
+use crate::{codegen::Function, commands::SyncExtensions, registry::Registry};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use serde::Serialize;
 use serde_json::{json, to_string_pretty, Serializer};
@@ -7,11 +7,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub struct Init<'a> {
-    script_root: PathBuf,
-    local_settings: Option<&'a str>,
-    sync_extensions: bool,
-    no_debug_info: bool,
-    verbose: bool,
+    pub script_root: PathBuf,
+    pub local_settings: Option<&'a str>,
+    pub sync_extensions: bool,
+    pub no_debug_info: bool,
+    pub verbose: bool,
 }
 
 impl<'a> Init<'a> {
@@ -106,7 +106,11 @@ impl<'a> Init<'a> {
         }
 
         if self.sync_extensions {
-            crate::sync_extensions(self.script_root.to_str().unwrap(), self.verbose, registry);
+            let command = SyncExtensions {
+                script_root: self.script_root.clone(),
+                verbose: self.verbose,
+            };
+            return command.execute(registry);
         }
 
         Ok(())
