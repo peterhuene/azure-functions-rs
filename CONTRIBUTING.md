@@ -53,7 +53,7 @@ If you want to clone the source repository, replace `<GITHUB-USERNAME>` with `pe
 
 ### Building
 
-Build at the root of the repository to build both the `azure-functions-codegen` and the `azure-functions` libraries using `cargo build`:
+Build at the root of the repository to build all the libraries and examples using `cargo build`:
 
 ``` bash
 cargo build
