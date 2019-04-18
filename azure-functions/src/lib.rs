@@ -31,6 +31,7 @@
 //! * [SignalR group action output](bindings/struct.SignalRGroupAction.html)
 //! * [SignalR message output](bindings/struct.SignalRMessage.html)
 //! * [Table output](bindings/struct.Table.html)
+//! * [Twilio SMS message output](bindings/struct.TwilioSmsMessage.html)
 //!
 //! Eventually more bindings will be implemented, including custom binding data.
 //!

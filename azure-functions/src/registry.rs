@@ -15,6 +15,8 @@ const SIGNALR_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.SignalRSe
 const SIGNALR_PACKAGE_VERSION: &str = "1.0.0";
 const SERVICE_BUS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.ServiceBus";
 const SERVICE_BUS_PACKAGE_VERSION: &str = "3.0.3";
+const TWILIO_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Twilio";
+const TWILIO_PACKAGE_VERSION: &str = "3.0.0";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -71,6 +73,10 @@ lazy_static! {
         map.insert(
             bindings::ServiceBus::binding_type(),
             (SERVICE_BUS_PACKAGE_NAME, SERVICE_BUS_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::TwilioSms::binding_type(),
+            (TWILIO_PACKAGE_NAME, TWILIO_PACKAGE_VERSION),
         );
         map
     };

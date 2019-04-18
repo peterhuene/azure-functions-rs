@@ -15,6 +15,7 @@ mod signalr;
 mod signalr_connection_info;
 mod table;
 mod timer_trigger;
+mod twilio_sms;
 
 pub use self::blob::*;
 pub use self::blob_trigger::*;
@@ -33,6 +34,7 @@ pub use self::signalr::*;
 pub use self::signalr_connection_info::*;
 pub use self::table::*;
 pub use self::timer_trigger::*;
+pub use self::twilio_sms::*;
 
 use lazy_static::lazy_static;
 use proc_macro2::{Span, TokenStream};
@@ -77,6 +79,7 @@ pub enum Binding {
     SignalR(SignalR),
     ServiceBusTrigger(ServiceBusTrigger),
     ServiceBus(ServiceBus),
+    TwilioSms(TwilioSms),
 }
 
 impl Binding {
@@ -100,6 +103,7 @@ impl Binding {
             Binding::SignalR(b) => Some(&b.name),
             Binding::ServiceBusTrigger(b) => Some(&b.name),
             Binding::ServiceBus(b) => Some(&b.name),
+            Binding::TwilioSms(b) => Some(&b.name),
         }
     }
 
@@ -123,6 +127,7 @@ impl Binding {
             Binding::SignalR(_) => Some(SignalR::binding_type()),
             Binding::ServiceBusTrigger(_) => Some(ServiceBusTrigger::binding_type()),
             Binding::ServiceBus(_) => Some(ServiceBus::binding_type()),
+            Binding::TwilioSms(_) => Some(TwilioSms::binding_type()),
         }
     }
 
@@ -213,6 +218,10 @@ impl ToTokens for Binding {
             }
             Binding::ServiceBus(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ServiceBus(#b))
+                    .to_tokens(tokens)
+            }
+            Binding::TwilioSms(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::TwilioSms(#b))
                     .to_tokens(tokens)
             }
         };
@@ -319,6 +328,9 @@ lazy_static! {
         map.insert("ServiceBusMessage", |args, span| {
             Binding::ServiceBus(ServiceBus::from((args, span)))
         });
+        map.insert("TwilioSmsMessage", |args, span| {
+            Binding::TwilioSms(TwilioSms::from((args, span)))
+        });
         map
     };
     pub static ref VEC_INPUT_BINDINGS: HashSet<&'static str> = {
@@ -334,6 +346,7 @@ lazy_static! {
         set.insert("SignalRMessage");
         set.insert("SignalRGroupAction");
         set.insert("ServiceBusMessage");
+        set.insert("TwilioSmsMessage");
         set
     };
 }

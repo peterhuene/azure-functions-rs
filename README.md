@@ -224,6 +224,7 @@ The current list of supported bindings:
 | [SignalRMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRMessage.html)               | SignalR Message                     | out            | Yes     |
 | [Table](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Table.html)                                 | Input and Ouput Table               | in, out        | No      |
 | [TimerInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TimerInfo.html)                         | Timer Trigger                       | in             | No      |
+| [TwilioSmsMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TwilioSmsMessage.html)           | Twilio SMS Message Output | out     | Yes            | Yes     |
 | [Context](https://docs.rs/azure-functions/latest/azure_functions/struct.Context.html)*                                     | Invocation Context                  | N/A            | N/A     |
 
 \****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
@@ -330,8 +331,10 @@ The following output bindings support returning type `Vec<T>`:
 * `CosmosDbDocument`
 * `EventHubMessage`
 * `QueueMessage`
+* `ServiceBusMessage`
 * `SignalRMessage`
 * `SignalRGroupAction`
+* `TwilioSmsMessage`
 
 For functions that return a single output binding type, the binding has a special name of `$return`
 and is treated as the return value of the function.
