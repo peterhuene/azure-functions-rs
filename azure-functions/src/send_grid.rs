@@ -1,0 +1,36 @@
+//! Module for SendGrid types.
+mod attachment;
+mod bcc_settings;
+mod bypass_list_management;
+mod click_tracking;
+mod content;
+mod email_address;
+mod footer_settings;
+mod google_analytics;
+mod mail_settings;
+mod message_builder;
+mod open_tracking;
+mod personalization;
+mod sandbox_mode;
+mod spam_check;
+mod subscription_tracking;
+mod tracking_settings;
+mod unsubscribe_group;
+
+pub use self::attachment::*;
+pub use self::bcc_settings::*;
+pub use self::bypass_list_management::*;
+pub use self::click_tracking::*;
+pub use self::content::*;
+pub use self::email_address::*;
+pub use self::footer_settings::*;
+pub use self::google_analytics::*;
+pub use self::mail_settings::*;
+pub use self::message_builder::*;
+pub use self::open_tracking::*;
+pub use self::personalization::*;
+pub use self::sandbox_mode::*;
+pub use self::spam_check::*;
+pub use self::subscription_tracking::*;
+pub use self::tracking_settings::*;
+pub use self::unsubscribe_group::*;

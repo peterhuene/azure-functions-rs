@@ -27,6 +27,7 @@
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)
+//! * [SendGrid email message output](bindings/struct.SendGridMessage.html)
 //! * [Service Bus output](bindings/struct.ServiceBusMessage.html)
 //! * [SignalR group action output](bindings/struct.SignalRGroupAction.html)
 //! * [SignalR message output](bindings/struct.SignalRMessage.html)
@@ -100,6 +101,7 @@ pub mod bindings;
 pub mod blob;
 pub mod event_hub;
 pub mod http;
+pub mod send_grid;
 pub mod signalr;
 pub mod timer;
 #[doc(no_inline)]

@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "attach",
+            "name": "Debug",
+            "windows": {
+                "program": "sendgrid-example.exe"
+            },
+            "program": "sendgrid-example",
+            "preLaunchTask": "Launch Azure Functions Application",
+            "postDebugTask": "Terminate Azure Functions Application"
+        }
+    ]
+}
