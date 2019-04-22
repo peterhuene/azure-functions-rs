@@ -23,21 +23,24 @@ use serde_json::{to_string, to_value, Value};
 ///
 /// ```rust
 /// use azure_functions::{
-///     bindings::{HttpRequest, TwilioSmsMessage},
+///     bindings::{HttpRequest, HttpResponse, TwilioSmsMessage},
 ///     func,
 /// };
 /// use std::borrow::ToOwned;
 ///
 /// #[func]
-/// #[binding(name = "$return", from = "+15555555555")]
-/// pub fn send_sms(req: HttpRequest) -> TwilioSmsMessage {
+/// #[binding(name = "output1", from = "+15555555555")]
+/// pub fn send_sms(req: HttpRequest) -> (HttpResponse, TwilioSmsMessage) {
 ///     let params = req.query_params();
 ///
-///     TwilioSmsMessage {
-///         to: params.get("to").unwrap().to_owned(),
-///         body: params.get("body").map(ToOwned::to_owned),
-///         ..Default::default()
-///     }
+///     (
+///         "Text message sent.".into(),
+///         TwilioSmsMessage {
+///             to: params.get("to").unwrap().to_owned(),
+///             body: params.get("body").map(ToOwned::to_owned),
+///             ..Default::default()
+///         },
+///     )
 /// }
 /// ```
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
