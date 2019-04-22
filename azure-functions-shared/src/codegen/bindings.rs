@@ -9,6 +9,7 @@ mod http;
 mod http_trigger;
 mod queue;
 mod queue_trigger;
+mod send_grid;
 mod service_bus;
 mod service_bus_trigger;
 mod signalr;
@@ -28,6 +29,7 @@ pub use self::http::*;
 pub use self::http_trigger::*;
 pub use self::queue::*;
 pub use self::queue_trigger::*;
+pub use self::send_grid::*;
 pub use self::service_bus::*;
 pub use self::service_bus_trigger::*;
 pub use self::signalr::*;
@@ -80,6 +82,7 @@ pub enum Binding {
     ServiceBusTrigger(ServiceBusTrigger),
     ServiceBus(ServiceBus),
     TwilioSms(TwilioSms),
+    SendGrid(SendGrid),
 }
 
 impl Binding {
@@ -104,6 +107,7 @@ impl Binding {
             Binding::ServiceBusTrigger(b) => Some(&b.name),
             Binding::ServiceBus(b) => Some(&b.name),
             Binding::TwilioSms(b) => Some(&b.name),
+            Binding::SendGrid(b) => Some(&b.name),
         }
     }
 
@@ -128,6 +132,7 @@ impl Binding {
             Binding::ServiceBusTrigger(_) => Some(ServiceBusTrigger::binding_type()),
             Binding::ServiceBus(_) => Some(ServiceBus::binding_type()),
             Binding::TwilioSms(_) => Some(TwilioSms::binding_type()),
+            Binding::SendGrid(_) => Some(SendGrid::binding_type()),
         }
     }
 
@@ -222,6 +227,10 @@ impl ToTokens for Binding {
             }
             Binding::TwilioSms(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::TwilioSms(#b))
+                    .to_tokens(tokens)
+            }
+            Binding::SendGrid(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::SendGrid(#b))
                     .to_tokens(tokens)
             }
         };
@@ -331,6 +340,9 @@ lazy_static! {
         map.insert("TwilioSmsMessage", |args, span| {
             Binding::TwilioSms(TwilioSms::from((args, span)))
         });
+        map.insert("SendGridMessage", |args, span| {
+            Binding::SendGrid(SendGrid::from((args, span)))
+        });
         map
     };
     pub static ref VEC_INPUT_BINDINGS: HashSet<&'static str> = {
@@ -347,6 +359,7 @@ lazy_static! {
         set.insert("SignalRGroupAction");
         set.insert("ServiceBusMessage");
         set.insert("TwilioSmsMessage");
+        set.insert("SendGridMessage");
         set
     };
 }

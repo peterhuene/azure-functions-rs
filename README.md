@@ -217,6 +217,7 @@ The current list of supported bindings:
 | [HttpResponse](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpResponse.html)                   | Output HTTP Response                | out            | No      |
 | [QueueMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueMessage.html)                   | Output Queue Message                | out            | Yes     |
 | [QueueTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueTrigger.html)                   | Queue Trigger                       | in             | No      |
+| [SendGridMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SendGridMessage.html)             | SendGrid Email Message              | out            | Yes     |
 | [ServiceBusMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusMessage.html)         | Service Bus Output Message          | out            | Yes     |
 | [ServiceBusTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusTrigger.html)         | Service Bus Trigger                 | in             | No      |
 | [SignalRConnectionInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRConnectionInfo.html) | SignalR Connection Info             | in             | No      |
@@ -331,9 +332,10 @@ The following output bindings support returning type `Vec<T>`:
 * `CosmosDbDocument`
 * `EventHubMessage`
 * `QueueMessage`
+* `SendGridMessage`
 * `ServiceBusMessage`
-* `SignalRMessage`
 * `SignalRGroupAction`
+* `SignalRMessage`
 * `TwilioSmsMessage`
 
 For functions that return a single output binding type, the binding has a special name of `$return`

@@ -1,0 +1,11 @@
+[package]
+name = "sendgrid-example"
+version = "0.1.0"
+authors = ["Peter Huene <peterhuene@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+azure-functions = { path = "../../azure-functions" }
+
+[features]
+unstable = ["azure-functions/unstable"]

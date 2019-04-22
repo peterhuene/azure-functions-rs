@@ -17,6 +17,8 @@ const SERVICE_BUS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Servi
 const SERVICE_BUS_PACKAGE_VERSION: &str = "3.0.3";
 const TWILIO_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Twilio";
 const TWILIO_PACKAGE_VERSION: &str = "3.0.0";
+const SEND_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.SendGrid";
+const SEND_GRID_PACKAGE_VERSION: &str = "3.0.0";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -77,6 +79,10 @@ lazy_static! {
         map.insert(
             bindings::TwilioSms::binding_type(),
             (TWILIO_PACKAGE_NAME, TWILIO_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::SendGrid::binding_type(),
+            (SEND_GRID_PACKAGE_NAME, SEND_GRID_PACKAGE_VERSION),
         );
         map
     };

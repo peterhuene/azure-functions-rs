@@ -1014,6 +1014,13 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "sendgrid-example"
+version = "0.1.0"
+dependencies = [
+ "azure-functions 0.7.0",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.90"
 source = "registry+https://github.com/rust-lang/crates.io-index"
