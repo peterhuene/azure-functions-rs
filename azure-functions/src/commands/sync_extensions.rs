@@ -1,11 +1,17 @@
 use crate::registry::Registry;
 use clap::{App, Arg, ArgMatches, SubCommand};
-use std::env::current_dir;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    collections::HashMap,
+    env::current_dir,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 use tempfile::TempDir;
-use xml::{writer::XmlEvent, EmitterConfig};
+use xml::{
+    writer::{EventWriter, XmlEvent},
+    EmitterConfig,
+};
 
 pub struct SyncExtensions {
     pub script_root: PathBuf,
@@ -31,8 +37,13 @@ impl SyncExtensions {
             )
     }
 
-    pub fn execute(&self, registry: Registry<'static>) -> Result<(), String> {
-        if !registry.has_binding_extensions() {
+    pub fn execute(
+        &self,
+        registry: Registry<'static>,
+        extensions: &[(&str, &str)],
+    ) -> Result<(), String> {
+        let extensions = registry.build_extensions_map(extensions);
+        if extensions.is_empty() {
             if self.verbose {
                 println!("No binding extensions are needed.");
             }
@@ -43,7 +54,7 @@ impl SyncExtensions {
         let extensions_project_path = temp_dir.path().join("extensions.csproj");
         let metadata_project_path = temp_dir.path().join("metadata.csproj");
 
-        Self::write_extensions_project_file(&extensions_project_path, &registry);
+        self.write_extensions_project_file(&extensions_project_path, &extensions);
         Self::write_generator_project_file(&metadata_project_path);
 
         if self.verbose {
@@ -107,7 +118,7 @@ impl SyncExtensions {
         writer.write(XmlEvent::end_element()).unwrap();
     }
 
-    fn write_extensions_project_file(path: &Path, registry: &Registry<'static>) {
+    fn write_extensions_project_file(&self, path: &Path, extensions: &HashMap<String, String>) {
         let mut project_file =
             fs::File::create(path).expect("Failed to create extensions project file.");
 
@@ -132,18 +143,32 @@ impl SyncExtensions {
 
         writer.write(XmlEvent::start_element("ItemGroup")).unwrap();
 
-        for extension in registry.iter_binding_extensions() {
-            writer
-                .write(
-                    XmlEvent::start_element("PackageReference")
-                        .attr("Include", extension.0)
-                        .attr("Version", extension.1),
-                )
-                .unwrap();
-            writer.write(XmlEvent::end_element()).unwrap();
+        for (name, version) in extensions {
+            if self.verbose {
+                println!("Synchronizing version {} of extension '{}'.", version, name);
+            }
+            Self::write_package_reference(&mut writer, name, version, None);
         }
 
         writer.write(XmlEvent::end_element()).unwrap();
+        writer.write(XmlEvent::end_element()).unwrap();
+    }
+
+    fn write_package_reference(
+        writer: &mut EventWriter<&mut fs::File>,
+        package: &str,
+        version: &str,
+        private_assets: Option<&str>,
+    ) {
+        let mut element = XmlEvent::start_element("PackageReference")
+            .attr("Include", package)
+            .attr("Version", version);
+
+        if let Some(private_assets) = private_assets {
+            element = element.attr("PrivateAssets", private_assets);
+        }
+
+        writer.write(element).unwrap();
         writer.write(XmlEvent::end_element()).unwrap();
     }
 
@@ -169,19 +194,13 @@ impl SyncExtensions {
 
         writer.write(XmlEvent::start_element("ItemGroup")).unwrap();
 
-        writer
-            .write(
-                XmlEvent::start_element("PackageReference")
-                    .attr(
-                        "Include",
-                        "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator",
-                    )
-                    .attr("Version", "1.0.1")
-                    .attr("PrivateAssets", "all"),
-            )
-            .unwrap();
+        Self::write_package_reference(
+            &mut writer,
+            "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator",
+            "1.0.1",
+            Some("all"),
+        );
 
-        writer.write(XmlEvent::end_element()).unwrap();
         writer.write(XmlEvent::end_element()).unwrap();
         writer.write(XmlEvent::end_element()).unwrap();
     }

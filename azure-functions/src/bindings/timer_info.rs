@@ -45,7 +45,7 @@ pub struct TimerInfo {
 
 impl TimerInfo {
     #[doc(hidden)]
-    pub fn new(data: TypedData, _: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, _: HashMap<String, TypedData>) -> Self {
         match &data.data {
             Some(Data::Json(s)) => from_str(s).expect("failed to parse timer JSON data"),
             _ => panic!("expected JSON data for timer trigger binding"),
@@ -65,9 +65,7 @@ mod tests {
             data: Some(Data::Json(JSON.to_string())),
         };
 
-        let mut metadata = HashMap::new();
-
-        let info = TimerInfo::new(data, &mut metadata);
+        let info = TimerInfo::new(data, HashMap::new());
 
         assert!(info.is_past_due);
 

@@ -53,7 +53,7 @@ pub struct EventGridEvent {
 
 impl EventGridEvent {
     #[doc(hidden)]
-    pub fn new(data: TypedData, _: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, _: HashMap<String, TypedData>) -> Self {
         match data.data {
             Some(Data::Json(s)) => from_str(&s).expect("failed to parse Event Grid JSON"),
             _ => panic!("expected JSON data for Event Grid trigger binding"),
@@ -73,9 +73,7 @@ mod tests {
             data: Some(Data::Json(EVENT.to_string())),
         };
 
-        let mut metadata = HashMap::new();
-
-        let event = EventGridEvent::new(data, &mut metadata);
+        let event = EventGridEvent::new(data, HashMap::new());
         assert_eq!(event.topic, "/subscriptions/{subscription-id}/resourceGroups/Storage/providers/Microsoft.Storage/storageAccounts/xstoretestaccount");
         assert_eq!(event.subject, "/blobServices/default/containers/oc2d2817345i200097container/blobs/oc2d2817345i20002296blob");
         assert_eq!(event.event_type, "Microsoft.Storage.BlobCreated");

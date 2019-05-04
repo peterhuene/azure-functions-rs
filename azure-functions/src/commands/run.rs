@@ -289,7 +289,7 @@ impl<'a> Run<'a> {
             .expect("failed to send worker status response");
     }
 
-    fn invoke_function(func: &'static Function, sender: Sender, mut req: InvocationRequest) {
+    fn invoke_function(func: &'static Function, sender: Sender, req: InvocationRequest) {
         // Set the function name in TLS
         FUNCTION_NAME.with(|n| {
             *n.borrow_mut() = &func.name;
@@ -304,18 +304,18 @@ impl<'a> Run<'a> {
             (func
                 .invoker
                 .as_ref()
-                .expect("function must have an invoker"))(&func.name, &mut req)
+                .expect("function must have an invoker"))(&func.name, req)
         })) {
             Ok(res) => res,
-            Err(_) => InvocationResponse {
-                invocation_id: req.invocation_id,
+            Err(_) => logger::INVOCATION_ID.with(|id| InvocationResponse {
+                invocation_id: id.borrow().clone(),
                 result: Some(StatusResult {
                     status: Status::Failure as i32,
                     result: "Azure Function panicked: see log for more information.".to_string(),
                     ..Default::default()
                 }),
                 ..Default::default()
-            },
+            }),
         };
 
         // Clear the function name from TLS

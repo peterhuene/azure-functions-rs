@@ -57,7 +57,7 @@ pub struct CosmosDbTrigger {
 
 impl CosmosDbTrigger {
     #[doc(hidden)]
-    pub fn new(data: TypedData, _metadata: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, _metadata: HashMap<String, TypedData>) -> Self {
         let value = convert_from(&data).expect("expected JSON document data");
         match value {
             Value::Array(array) => CosmosDbTrigger { documents: array },
@@ -104,8 +104,7 @@ mod tests {
             data: Some(Data::Json(DOCUMENTS.to_string())),
         };
 
-        let mut metadata = HashMap::new();
-        let trigger = CosmosDbTrigger::new(data, &mut metadata);
+        let trigger = CosmosDbTrigger::new(data, HashMap::new());
 
         let documents = trigger.documents;
         assert_eq!(documents.len(), 3);

@@ -37,6 +37,14 @@ use std::collections::HashMap;
 pub struct HttpRequest(RpcHttp);
 
 impl HttpRequest {
+    #[doc(hidden)]
+    pub fn new(data: TypedData, _: HashMap<String, TypedData>) -> Self {
+        match data.data {
+            Some(Data::Http(http)) => HttpRequest(*http),
+            _ => panic!("unexpected type data for HTTP request."),
+        }
+    }
+
     /// Gets the HTTP method (e.g. "GET") for the request.
     pub fn method(&self) -> &str {
         &self.0.method
@@ -114,16 +122,6 @@ impl HttpRequest {
     }
 }
 
-impl HttpRequest {
-    #[doc(hidden)]
-    pub fn new(data: TypedData, _: &mut HashMap<String, TypedData>) -> Self {
-        match data.data {
-            Some(Data::Http(http)) => HttpRequest(*http),
-            _ => panic!("unexpected type data for HTTP request."),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,9 +139,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert_eq!(request.method(), METHOD);
     }
 
@@ -158,9 +154,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert_eq!(request.url(), URL);
     }
 
@@ -176,9 +170,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert_eq!(request.headers().get(KEY).unwrap(), VALUE);
     }
 
@@ -194,9 +186,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert_eq!(request.route_params().get(KEY).unwrap(), VALUE);
     }
 
@@ -212,9 +202,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert_eq!(request.query_params().get(KEY).unwrap(), VALUE);
     }
 
@@ -224,9 +212,7 @@ mod tests {
             data: Some(Data::Http(Box::new(RpcHttp::default()))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert!(matches!(request.body(), Body::Empty));
     }
 
@@ -243,9 +229,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert!(matches!(request.body(), Body::String(Cow::Borrowed(BODY))));
     }
 
@@ -262,9 +246,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert!(matches!(request.body(), Body::Json(Cow::Borrowed(BODY))));
     }
 
@@ -281,9 +263,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert!(matches!(request.body(), Body::Bytes(Cow::Borrowed(BODY))));
     }
 
@@ -300,9 +280,7 @@ mod tests {
             data: Some(Data::Http(Box::new(http))),
         };
 
-        let mut metadata = HashMap::new();
-
-        let request = HttpRequest::new(data, &mut metadata);
+        let request = HttpRequest::new(data, HashMap::new());
         assert!(matches!(request.body(), Body::Bytes(Cow::Borrowed(BODY))));
     }
 }

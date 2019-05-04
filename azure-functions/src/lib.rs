@@ -8,6 +8,7 @@
 //! * [Cosmos DB trigger](bindings/struct.CosmosDbTrigger.html)
 //! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
 //! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
+//! * [Generic trigger](bindings/struct.GenericTrigger.html)
 //! * [HTTP trigger](bindings/struct.HttpRequest.html)
 //! * [Service Bus trigger](bindings/struct.ServiceBusTrigger.html)
 //! * [Queue trigger](bindings/struct.QueueTrigger.html)
@@ -17,6 +18,7 @@
 //!
 //! * [Blob input](bindings/struct.Blob.html)
 //! * [Cosmos DB input](bindings/struct.CosmosDbDocument.html)
+//! * [Generic input](bindings/struct.GenericInput.html)
 //! * [SignalR connection info input](bindings/struct.SignalRConnectionInfo.html)
 //! * [Table input](bindings/struct.Table.html)
 //!
@@ -25,6 +27,7 @@
 //! * [Blob output](bindings/struct.Blob.html)
 //! * [Cosmos DB output](bindings/struct.CosmosDbDocument.html)
 //! * [Event Hub output](bindings/struct.EventHubMessage.html)
+//! * [Generic output](bindings/struct.GenericOutput.html)
 //! * [HTTP output](bindings/struct.HttpResponse.html)
 //! * [Queue output](bindings/struct.QueueMessage.html)
 //! * [SendGrid email message output](bindings/struct.SendGridMessage.html)
@@ -100,6 +103,7 @@ mod util;
 pub mod bindings;
 pub mod blob;
 pub mod event_hub;
+pub mod generic;
 pub mod http;
 pub mod send_grid;
 pub mod signalr;
@@ -124,6 +128,8 @@ pub trait FromVec<T> {
 
 /// The main entry point for the Azure Functions for Rust worker.
 ///
+/// This entry point does not use any additional Azure Functions binding extensions.
+///
 /// # Examples
 ///
 /// ```rust,ignore
@@ -136,6 +142,33 @@ pub trait FromVec<T> {
 /// }
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
+    worker_main_with_extensions(args, functions, &[])
+}
+
+/// The main entry point for the Azure Functions for Rust worker.
+///
+/// This entry point uses additional Azure Function binding extensions.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// azure_functions::export! {
+///     example
+/// }
+///
+/// fn main() {
+///     azure_functions::worker_main_with_extensions(
+///         ::std::env::args(),
+///         FUNCTIONS,
+///         &[("Microsoft.Azure.WebJobs.Extensions.Kafka", "1.0.0-alpha")]
+///     );
+/// }
+/// ```
+pub fn worker_main_with_extensions(
+    args: impl Iterator<Item = String>,
+    functions: &[&'static codegen::Function],
+    extensions: &[(&str, &str)],
+) {
     let registry = Registry::new(functions);
 
     let app = App::new("Azure Functions for Rust worker")
@@ -148,8 +181,8 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
         .subcommand(Run::create_subcommand());
 
     if let Err(e) = match app.get_matches_from(args).subcommand() {
-        ("init", Some(args)) => Init::from(args).execute(registry),
-        ("sync-extensions", Some(args)) => SyncExtensions::from(args).execute(registry),
+        ("init", Some(args)) => Init::from(args).execute(registry, extensions),
+        ("sync-extensions", Some(args)) => SyncExtensions::from(args).execute(registry, extensions),
         ("run", Some(args)) => Run::from(args).execute(registry),
         _ => panic!("expected a subcommand."),
     } {

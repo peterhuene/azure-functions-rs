@@ -58,7 +58,7 @@ pub struct QueueTrigger {
 
 impl QueueTrigger {
     #[doc(hidden)]
-    pub fn new(data: TypedData, metadata: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         QueueTrigger {
             message: data.into(),
             id: metadata
@@ -163,7 +163,7 @@ mod tests {
             },
         );
 
-        let trigger = QueueTrigger::new(data, &mut metadata);
+        let trigger = QueueTrigger::new(data, metadata);
         assert_eq!(trigger.id, ID);
         assert_eq!(trigger.dequeue_count, DEQUEUE_COUNT);
         assert_eq!(trigger.expiration_time.to_rfc3339(), now.to_rfc3339());

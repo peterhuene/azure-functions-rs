@@ -1,6 +1,9 @@
 # Example Cosmos DB Azure Functions
 
-This project is an example of using Cosmos DB with Azure Functions for Rust.
+This project is an example of using generic trigger, input, and output bindings with Azure Functions for Rust.
+
+This is a copy of the CosmosDB example, except it uses `GenericTrigger`, `GenericInput`, and `GenericOutput` bindings
+in place of the actual CosmosDB bindings.
 
 ## Example function implementations
 
@@ -8,7 +11,7 @@ An example HTTP-triggered Azure Function that outputs a Cosmos DB document:
 
 ```rust
 use azure_functions::{
-    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
+    bindings::{GenericOutput, HttpRequest, HttpResponse},
     func,
 };
 use serde_json::json;
@@ -16,13 +19,14 @@ use serde_json::json;
 #[func]
 #[binding(name = "req", route = "create/{id}")]
 #[binding(
+    type = "cosmosDB",
     name = "output1",
     connection = "connection",
     database_name = "exampledb",
     collection_name = "documents",
     create_collection = true
 )]
-pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument {
+pub fn create_document(req: HttpRequest) -> (HttpResponse, GenericOutput) {
     (
         "Document was created.".into(),
         json!({
@@ -37,20 +41,20 @@ pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument {
 An example Cosmos DB triggered Azure Function that will log warnings for each new Cosmos DB document inserted or updated to a collection:
 
 ```rust
-use azure_functions::{bindings::CosmosDbTrigger, func};
+use azure_functions::{bindings::GenericTrigger, func};
 use log::warn;
 
 #[func]
 #[binding(
+    type = "cosmosDBTrigger",
     name = "trigger",
     connection = "connection",
     database_name = "exampledb",
-    collection_name = "documents"
+    collection_name = "documents",
+    create_lease_collection = true
 )]
-pub fn log_documents(trigger: CosmosDbTrigger) {
-    for document in trigger.documents {
-        warn!("{}", document);
-    }
+pub fn log_documents(trigger: GenericTrigger) {
+    warn!("{:#?}", trigger.data)
 }
 ```
 
@@ -58,13 +62,14 @@ An example HTTP-triggered Azure Function that will query for Cosmos DB documents
 
 ```rust
 use azure_functions::{
-    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
+    bindings::{GenericInput, HttpRequest, HttpResponse},
     func,
 };
 
 #[func]
 #[binding(name = "_req", route = "query/{name}")]
 #[binding(
+    type = "cosmosDB",
     name = "documents",
     connection = "connection",
     database_name = "exampledb",
@@ -72,7 +77,7 @@ use azure_functions::{
     sql_query="select * from documents d where contains(d.name, {name})",
     create_collection = true,
 )]
-pub fn query_documents(_req: HttpRequest, documents: Vec<CosmosDbDocument>) -> HttpResponse {
+pub fn query_documents(_req: HttpRequest, documents: GenericInput) -> HttpResponse {
     documents.into()
 }
 ```
@@ -81,29 +86,36 @@ An example HTTP-triggered Azure Function that will read a Cosmos DB document and
 
 ```rust
 use azure_functions::{
-    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
+    bindings::{GenericInput, HttpRequest, HttpResponse},
     func,
+    generic::Value,
 };
 
 #[func]
 #[binding(name = "req", route = "read/{id}")]
 #[binding(
-    name = "documents",
+    type = "cosmosDB",
+    name = "document",
     connection = "connection",
     database_name = "exampledb",
     collection_name = "documents",
     id = "{id}",
-    partition_key = "{id}",
+    partition_key = "{id}"
 )]
-pub fn read_document(req: HttpRequest, document: CosmosDbDocument) -> HttpResponse {
-    if document.is_null() {
-        format!(
-            "Document with id '{}' does not exist.",
-            req.route_params().get("id").unwrap()
-        )
-        .into()
-    } else {
-        document.into()
+pub fn read_document(req: HttpRequest, document: GenericInput) -> HttpResponse {
+    match document.data {
+        Value::Json(v) => {
+            if v.is_null() {
+                format!(
+                    "Document with id '{}' does not exist.",
+                    req.route_params().get("id").unwrap()
+                )
+                .into()
+            } else {
+                v.into()
+            }
+        }
+        _ => panic!("expected JSON for CosmosDB document"),
     }
 }
 ```
@@ -157,7 +169,7 @@ Where `<id>` is the document identifier.
 With any luck, something like the following should be logged by the Azure Functions Host as a warning:
 
 ```
-[3/12/19 7:14:53 AM] {"_etag":"\"12005511-0000-0000-0000-5c875c6a0000\"","_lsn":10,"_metadata":{},"_rid":"JeJJAIEVMHMFAAAAAAAAAA==","_self":"dbs/JeJJAA==/colls/JeJJAIEVMHM=/docs/JeJJAIEVMHMFAAAAAAAAAA==/","_ts":1552374890,"id":"test","name":"stranger"}
+[3/12/19 7:14:53 AM] [{"_etag":"\"12005511-0000-0000-0000-5c875c6a0000\"","_lsn":10,"_metadata":{},"_rid":"JeJJAIEVMHMFAAAAAAAAAA==","_self":"dbs/JeJJAA==/colls/JeJJAIEVMHM=/docs/JeJJAIEVMHMFAAAAAAAAAA==/","_ts":1552374890,"id":"test","name":"stranger"}]
 ```
 
 This was logged by the `log_documents` function when the Cosmos DB document was saved to the database.

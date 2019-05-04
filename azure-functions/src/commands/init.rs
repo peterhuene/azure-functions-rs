@@ -57,7 +57,11 @@ impl<'a> Init<'a> {
                 )
     }
 
-    pub fn execute(&self, registry: Registry<'static>) -> Result<(), String> {
+    pub fn execute(
+        &self,
+        registry: Registry<'static>,
+        extensions: &[(&str, &str)],
+    ) -> Result<(), String> {
         self.create_script_root();
 
         self.create_host_file();
@@ -110,7 +114,7 @@ impl<'a> Init<'a> {
                 script_root: self.script_root.clone(),
                 verbose: self.verbose,
             };
-            return command.execute(registry);
+            return command.execute(registry, extensions);
         }
 
         Ok(())
