@@ -1,8 +1,10 @@
 pub mod bindings;
 mod function;
 mod quotable;
+mod value;
 
 pub use self::function::*;
+pub use self::value::*;
 
 use proc_macro2::Span;
 use syn::{spanned::Spanned, Ident, Lit, Meta, NestedMeta, Path, PathSegment};

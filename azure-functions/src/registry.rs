@@ -1,23 +1,24 @@
 use crate::codegen::{bindings, Function};
 use lazy_static::lazy_static;
-use std::collections::hash_map::Iter;
-use std::collections::HashMap;
+use semver::Version;
+use std::collections::{hash_map::Iter, HashMap};
 
-const STORAGE_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Storage";
+// Note: package names are expected to be lowercase.
+const STORAGE_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.storage";
 const STORAGE_PACKAGE_VERSION: &str = "3.0.3";
-const EVENT_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventGrid";
+const EVENT_GRID_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.eventgrid";
 const EVENT_GRID_PACKAGE_VERSION: &str = "2.0.0";
-const EVENT_HUBS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.EventHubs";
+const EVENT_HUBS_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.eventhubs";
 const EVENT_HUBS_PACKAGE_VERSION: &str = "3.0.3";
-const COSMOS_DB_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.CosmosDB";
+const COSMOS_DB_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.cosmosdb";
 const COSMOS_DB_PACKAGE_VERSION: &str = "3.0.3";
-const SIGNALR_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.SignalRService";
+const SIGNALR_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.signalrservice";
 const SIGNALR_PACKAGE_VERSION: &str = "1.0.0";
-const SERVICE_BUS_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.ServiceBus";
+const SERVICE_BUS_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.servicebus";
 const SERVICE_BUS_PACKAGE_VERSION: &str = "3.0.3";
-const TWILIO_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.Twilio";
+const TWILIO_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.twilio";
 const TWILIO_PACKAGE_VERSION: &str = "3.0.0";
-const SEND_GRID_PACKAGE_NAME: &str = "Microsoft.Azure.WebJobs.Extensions.SendGrid";
+const SEND_GRID_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.sendgrid";
 const SEND_GRID_PACKAGE_VERSION: &str = "3.0.0";
 
 lazy_static! {
@@ -58,6 +59,10 @@ lazy_static! {
         );
         map.insert(
             bindings::CosmosDbTrigger::binding_type(),
+            (COSMOS_DB_PACKAGE_NAME, COSMOS_DB_PACKAGE_VERSION),
+        );
+        map.insert(
+            bindings::CosmosDb::binding_type(),
             (COSMOS_DB_PACKAGE_NAME, COSMOS_DB_PACKAGE_VERSION),
         );
         map.insert(
@@ -127,31 +132,37 @@ impl<'a> Registry<'a> {
         self.functions.iter()
     }
 
-    pub fn has_binding_extensions(&self) -> bool {
-        for function in self.functions.iter() {
-            for binding in function.1.bindings.iter() {
-                if let Some(t) = binding.binding_type() {
-                    if BINDING_EXTENSIONS.get(t).is_some() {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
+    pub fn build_extensions_map(&self, extensions: &[(&str, &str)]) -> HashMap<String, String> {
+        let mut map = HashMap::new();
 
-    pub fn iter_binding_extensions(&self) -> impl Iterator<Item = (&'static str, &'static str)> {
-        let mut set = std::collections::HashSet::new();
         for function in self.functions.iter() {
             for binding in function.1.bindings.iter() {
                 if let Some(t) = binding.binding_type() {
                     if let Some(extension) = BINDING_EXTENSIONS.get(t) {
-                        set.insert(extension.clone());
+                        Self::insert_extension(&mut map, extension.0, extension.1);
                     }
                 }
             }
         }
-        set.into_iter()
+
+        for extension in extensions {
+            Self::insert_extension(&mut map, &extension.0.to_lowercase(), extension.1);
+        }
+
+        map
+    }
+
+    fn insert_extension(map: &mut HashMap<String, String>, name: &str, version: &str) {
+        match map.get_mut(name) {
+            Some(current) => {
+                if Version::parse(version) > Version::parse(current) {
+                    *current = version.to_owned();
+                }
+            }
+            None => {
+                map.insert(name.to_owned(), version.to_owned());
+            }
+        };
     }
 }
 
@@ -242,7 +253,7 @@ mod tests {
     }
 
     #[test]
-    fn it_iterates_binding_extensions() {
+    fn it_builds_an_extensions_map() {
         let registry = Registry::new(&[&Function {
             name: Cow::Borrowed("function1"),
             disabled: false,
@@ -267,16 +278,39 @@ mod tests {
             manifest_dir: None,
             file: None,
         }]);
-        assert_eq!(registry.iter_binding_extensions().count(), 1);
 
-        let extensions = registry.iter_binding_extensions().nth(0).unwrap();
-
-        assert_eq!(extensions.0, STORAGE_PACKAGE_NAME);
-        assert_eq!(extensions.1, STORAGE_PACKAGE_VERSION);
+        let map = registry.build_extensions_map(&[]);
+        assert_eq!(map.len(), 1);
+        assert_eq!(
+            map.get(STORAGE_PACKAGE_NAME),
+            Some(&STORAGE_PACKAGE_VERSION.to_owned())
+        );
     }
 
     #[test]
-    fn it_iterates_empty_binding_extensions() {
+    fn it_uses_the_latest_extension_version() {
+        let registry = Registry::new(&[&Function {
+            name: Cow::Borrowed("function"),
+            disabled: false,
+            bindings: Cow::Borrowed(&[Binding::Queue(bindings::Queue {
+                name: Cow::Borrowed("binding"),
+                queue_name: Cow::Borrowed("some_queue"),
+                connection: None,
+            })]),
+            invoker_name: None,
+            invoker: None,
+            manifest_dir: None,
+            file: None,
+        }]);
+
+        let map =
+            registry.build_extensions_map(&[(&STORAGE_PACKAGE_NAME.to_uppercase(), "1000.0.0")]);
+        assert_eq!(map.len(), 1);
+        assert_eq!(map.get(STORAGE_PACKAGE_NAME), Some(&"1000.0.0".to_owned()));
+    }
+
+    #[test]
+    fn it_builds_an_empty_extensions_map() {
         let registry = Registry::new(&[&Function {
             name: Cow::Borrowed("function1"),
             disabled: false,
@@ -288,6 +322,6 @@ mod tests {
             manifest_dir: None,
             file: None,
         }]);
-        assert_eq!(registry.iter_binding_extensions().count(), 0);
+        assert_eq!(registry.build_extensions_map(&[]).len(), 0);
     }
 }

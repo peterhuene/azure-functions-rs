@@ -13,14 +13,14 @@ fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
         .build(PROTOBUF_INPUT_FILES, &["protobuf/src/proto"])
         .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
 
-    for file in OUTPUT_FILES.iter() {
+    for file in OUTPUT_FILES {
         fs::copy(out_dir.join(file), cache_dir.join(file))
             .expect(&format!("can't update cache file '{}'", file));
     }
 }
 
 fn use_cached_files(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    for file in OUTPUT_FILES.iter() {
+    for file in OUTPUT_FILES {
         fs::copy(cache_dir.join(file), out_dir.join(file)).expect(&format!(
             "can't copy cache file '{}' to output directory",
             file

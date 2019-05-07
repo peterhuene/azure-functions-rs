@@ -18,4 +18,5 @@ members = [
     "examples/service-bus",
     "examples/twilio",
     "examples/sendgrid",
+    "examples/generic",
 ]

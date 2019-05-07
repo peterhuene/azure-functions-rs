@@ -213,6 +213,9 @@ The current list of supported bindings:
 | [EventGridEvent](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventGridEvent.html)               | Event Grid Trigger                  | in             | No      |
 | [EventHubMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubMessage.html)             | Event Hub Output Message            | out            | Yes     |
 | [EventHubTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubTrigger.html)             | Event Hub Trigger                   | in             | No      |
+| [GenericInput](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericInput.html)                   | Generic Input                       | in             | No      |
+| [GenericOutput](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericOutput.html)                 | Generic Output                      | out            | No      |
+| [GenericTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericTrigger.html)               | Generic Trigger                     | in             | No      |
 | [HttpRequest](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpRequest.html)                     | HTTP Trigger                        | in             | No      |
 | [HttpResponse](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpResponse.html)                   | Output HTTP Response                | out            | No      |
 | [QueueMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueMessage.html)                   | Output Queue Message                | out            | Yes     |
@@ -268,7 +271,7 @@ pub fn example(..., documents: Vec<CosmosDbDocument>) {
 
 The following input bindings support parameters of type `Vec<T>`:
 
-- `CosmosDbDocument`
+* `CosmosDbDocument`
 
 #### Input-output (inout) bindings
 

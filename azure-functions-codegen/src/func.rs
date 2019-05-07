@@ -107,7 +107,7 @@ fn get_input_binding_factory_for_vec(tp: &TypePath, mutability: Option<Mut>) -> 
         macro_panic(
             tp.span(),
             format!(
-                "Vec<{}> is not a supported Azure Function input binding type",
+                "`Vec<{}>` is not a supported Azure Function input binding type",
                 type_name
             ),
         );
@@ -137,7 +137,7 @@ fn get_output_binding_factory(tp: &TypePath) -> &BindingFactory {
                     macro_panic(
                         tp.span(),
                         format!(
-                            "Vec<{}> is not a supported Azure Function output binding type",
+                            "`Vec<{}>` is not a supported Azure Function output binding type",
                             type_name
                         ),
                     );

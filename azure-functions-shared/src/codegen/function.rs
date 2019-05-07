@@ -17,7 +17,7 @@ pub struct Function {
     pub disabled: bool,
     pub bindings: Cow<'static, [Binding]>,
     pub invoker_name: Option<Cow<'static, str>>,
-    pub invoker: Option<fn(&str, &mut rpc::InvocationRequest) -> rpc::InvocationResponse>,
+    pub invoker: Option<fn(&str, rpc::InvocationRequest) -> rpc::InvocationResponse>,
     pub manifest_dir: Option<Cow<'static, str>>,
     pub file: Option<Cow<'static, str>>,
 }

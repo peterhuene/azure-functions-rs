@@ -61,7 +61,7 @@ pub struct EventHubTrigger {
 
 impl EventHubTrigger {
     #[doc(hidden)]
-    pub fn new(data: TypedData, metadata: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         EventHubTrigger {
             message: data.into(),
             partition_context: from_str(
@@ -210,7 +210,7 @@ mod tests {
             },
         );
 
-        let trigger = EventHubTrigger::new(data, &mut metadata);
+        let trigger = EventHubTrigger::new(data, metadata);
 
         assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
         assert_eq!(

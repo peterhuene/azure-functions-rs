@@ -473,7 +473,7 @@ pub fn binding_impl(
                 crate::codegen::iter_attribute_args(&__args_and_span.0, |__key, __value| {
                     let __key_name = __key.to_string();
 
-                    match __key_name.as_ref() {
+                    match __key_name.as_str() {
                         #(#field_matches,)*
                         _ => crate::codegen::macro_panic(__key.span(), format!("unsupported binding attribute argument '{}'", __key_name)),
                     };

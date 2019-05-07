@@ -53,7 +53,7 @@ pub struct BlobTrigger {
 
 impl BlobTrigger {
     #[doc(hidden)]
-    pub fn new(data: TypedData, metadata: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         BlobTrigger {
             blob: data.into(),
             path: metadata
@@ -176,7 +176,7 @@ mod tests {
             },
         );
 
-        let trigger = BlobTrigger::new(data, &mut metadata);
+        let trigger = BlobTrigger::new(data, metadata);
         assert_eq!(trigger.path, PATH);
         assert_eq!(trigger.uri, URI);
 

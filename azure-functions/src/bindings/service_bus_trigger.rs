@@ -97,7 +97,7 @@ pub struct ServiceBusTrigger {
 
 impl ServiceBusTrigger {
     #[doc(hidden)]
-    pub fn new(data: TypedData, metadata: &mut HashMap<String, TypedData>) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         ServiceBusTrigger {
             message: data.into(),
             delivery_count: convert_from(
@@ -284,7 +284,7 @@ mod tests {
             },
         );
 
-        let trigger = ServiceBusTrigger::new(data, &mut metadata);
+        let trigger = ServiceBusTrigger::new(data, metadata);
 
         assert_eq!(trigger.delivery_count, DELIVERY_COUNT);
         assert_eq!(trigger.dead_letter_source.unwrap(), DEAD_LETTER_SOURCE);
