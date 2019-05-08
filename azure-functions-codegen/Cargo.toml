@@ -14,7 +14,7 @@ proc-macro = true
 [dependencies]
 azure-functions-shared = { version = "0.7.0", path = "../azure-functions-shared" }
 quote = "0.6.12"
-syn = { version = "0.15.33", features = ["full"] }
+syn = { version = "0.15.34", features = ["full"] }
 proc-macro2 = { version = "0.4.29" }
 
 [features]
