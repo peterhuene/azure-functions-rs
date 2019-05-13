@@ -17,7 +17,7 @@ tower-grpc = { git = "https://github.com/tower-rs/tower-grpc", rev = "55d004e49f
 tower-service = "0.2.0"
 tower-util = { git = "https://github.com/tower-rs/tower", rev = "979c1399127bdb269c751b99c12b3adfad55463c" }
 log = { version = "0.4.6", features = ["std"] }
-futures = "0.1.26"
+futures = "0.1.27"
 clap = "2.33.0"
 tokio = "0.1.18"
 serde = "1.0.91"
