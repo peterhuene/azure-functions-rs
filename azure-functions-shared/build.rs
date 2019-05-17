@@ -8,10 +8,12 @@ const PROTOBUF_INPUT_FILES: &[&str] = &["FunctionRpc.proto"];
 const OUTPUT_FILES: &[&str] = &["azure_functions_rpc_messages.rs"];
 
 fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    tower_grpc_build::Config::new()
-        .enable_client(true)
-        .build(PROTOBUF_INPUT_FILES, &["protobuf/src/proto"])
-        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
+    grpcio_compiler::prost_codegen::compile_protos(
+        PROTOBUF_INPUT_FILES,
+        &["protobuf/src/proto"],
+        out_dir.to_str().unwrap(),
+    )
+    .unwrap();
 
     for file in OUTPUT_FILES {
         fs::copy(out_dir.join(file), cache_dir.join(file))

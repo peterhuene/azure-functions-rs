@@ -4,48 +4,26 @@ use crate::{
     logger,
     registry::Registry,
     rpc::{
-        client::FunctionRpc, status_result::Status, streaming_message::Content,
-        FunctionLoadRequest, FunctionLoadResponse, InvocationRequest, InvocationResponse,
+        status_result::Status, streaming_message::Content, FunctionLoadRequest,
+        FunctionLoadResponse, FunctionRpcClient, InvocationRequest, InvocationResponse,
         StartStream, StatusResult, StreamingMessage, WorkerInitResponse, WorkerStatusRequest,
         WorkerStatusResponse,
     },
 };
 use clap::{App, Arg, ArgMatches, SubCommand};
-use futures::{future::lazy, sync::mpsc::unbounded, Future, Poll, Stream};
+use futures::{future::lazy, sink::Sink, sync::mpsc::unbounded, Future, Stream};
+use grpcio::{ChannelBuilder, EnvBuilder, WriteFlags};
 use log::error;
 use std::cell::RefCell;
-use std::net::{IpAddr, SocketAddr};
 use std::panic::{catch_unwind, set_hook, AssertUnwindSafe, PanicInfo};
-use tokio::{
-    executor::DefaultExecutor,
-    net::tcp::{ConnectFuture, TcpStream},
-};
-use tower_grpc::Request;
-use tower_h2::client::Connect;
-use tower_service::Service;
-use tower_util::MakeService;
+use std::sync::Arc;
+use std::thread;
 
 const UNKNOWN: &str = "<unknown>";
 
 thread_local!(static FUNCTION_NAME: RefCell<&'static str> = RefCell::new(UNKNOWN));
 
 type Sender = futures::sync::mpsc::UnboundedSender<StreamingMessage>;
-
-struct HttpService(IpAddr, u16);
-
-impl Service<()> for HttpService {
-    type Response = TcpStream;
-    type Error = ::std::io::Error;
-    type Future = ConnectFuture;
-
-    fn poll_ready(&mut self) -> Poll<(), Self::Error> {
-        Ok(().into())
-    }
-
-    fn call(&mut self, _: ()) -> Self::Future {
-        TcpStream::connect(&SocketAddr::new(self.0, self.1))
-    }
-}
 
 pub struct Run<'a> {
     pub host: &'a str,
@@ -97,63 +75,63 @@ impl<'a> Run<'a> {
     pub fn execute(&self, mut registry: Registry<'static>) -> Result<(), String> {
         ctrlc::set_handler(|| {}).expect("failed setting SIGINT handler");
 
-        let uri = format!("http://{0}:{1}", self.host, self.port);
-        let (sender, receiver) = unbounded::<StreamingMessage>();
+        println!(
+            "Connecting to Azure Functions Host at {}:{}",
+            self.host, self.port
+        );
 
-        // Start by sending a start stream message to the channel
-        // This will be sent to the host upon connection
-        sender
-            .unbounded_send(StreamingMessage {
-                content: Some(Content::StartStream(StartStream {
-                    worker_id: self.worker_id.to_owned(),
-                })),
-                ..Default::default()
-            })
-            .unwrap();
+        let client = FunctionRpcClient::new(
+            ChannelBuilder::new(Arc::new(EnvBuilder::new().build()))
+                .connect(&format!("{}:{}", self.host, self.port)),
+        );
 
-        println!("Connecting to Azure Functions host at {}", uri);
+        let (rpc_sender, rpc_receiver) = client.event_stream().unwrap();
 
-        let run = Connect::new(
-            HttpService(self.host.parse().unwrap(), self.port),
-            Default::default(),
-            DefaultExecutor::current(),
-        )
-        .make_service(())
-        .map(move |conn| {
-            FunctionRpc::new(
-                tower_request_modifier::Builder::new()
-                    .set_origin(uri)
-                    .build(conn)
-                    .unwrap(),
-            )
-        })
-        .map_err(|e| panic!("failed to connect to host: {}", e))
-        .and_then(|mut client| {
-            client
-                .event_stream(Request::new(
-                    receiver.map_err(|_| panic!("failed to receive from channel")),
-                ))
-                .map_err(|e| panic!("failed to start event stream: {}", e))
-        })
-        .and_then(move |stream| {
-            stream
-                .into_inner()
-                .into_future()
-                .map_err(|(e, _)| panic!("failed to read worker init request: {}", e))
-                .and_then(move |(init_req, stream)| {
-                    Run::handle_worker_init_request(
-                        sender.clone(),
-                        init_req.expect("expected a worker init request"),
-                    );
+        let run = rpc_sender
+            .send((
+                StreamingMessage {
+                    content: Some(Content::StartStream(StartStream {
+                        worker_id: self.worker_id.to_owned(),
+                    })),
+                    ..Default::default()
+                },
+                WriteFlags::default(),
+            ))
+            .map_err(|e| panic!("failed to send start stream message: {}", e))
+            .and_then(|mut rpc_sender| {
+                rpc_receiver
+                    .into_future()
+                    .map_err(|(e, _)| panic!("failed to read worker init request: {}", e))
+                    .and_then(move |(res, rpc_receiver)| {
+                        let (sender, mut receiver) = unbounded::<StreamingMessage>();
 
-                    stream
-                        .for_each(move |req| {
-                            Run::handle_request(&mut registry, sender.clone(), req);
-                            Ok(())
-                        })
-                        .map_err(|e| panic!("fail to read request: {}", e))
-                })
-        });
+                        thread::spawn(move || loop {
+                            match receiver.into_future().wait() {
+                                Ok((Some(msg), r)) => {
+                                    receiver = r;
+                                    rpc_sender = rpc_sender
+                                        .send((msg, WriteFlags::default()))
+                                        .wait()
+                                        .expect("failed to send message to host");
+                                }
+                                Ok((None, _)) => break,
+                                Err(_e) => panic!("failed to receive message to send"),
+                            }
+                        });
+
+                        Run::handle_worker_init_request(
+                            sender.clone(),
+                            res.expect("expected a worker init request"),
+                        );
+
+                        rpc_receiver
+                            .for_each(move |req| {
+                                Run::handle_request(&mut registry, sender.clone(), req);
+                                Ok(())
+                            })
+                            .map_err(|e| panic!("failed to read request: {}", e))
+                    })
+            });
 
         tokio::run(run);
 

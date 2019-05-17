@@ -11,11 +11,7 @@ edition = "2018"
 [dependencies]
 azure-functions-shared = { version = "0.7.0", path = "../azure-functions-shared" }
 azure-functions-codegen = { version = "0.7.0", path = "../azure-functions-codegen" }
-tower-h2 = { git = "https://github.com/tower-rs/tower-h2", rev = "a3c958a243ef3d837933b31bf186ba0e6b0e60c9"}
-tower-request-modifier = { git = "https://github.com/tower-rs/tower-http", rev = "e7ef6ef623411342ee89c0a83ef924db6206143a" }
-tower-grpc = { git = "https://github.com/tower-rs/tower-grpc", rev = "55d004e49f6c6097a9f556752bceb8b32c8c700f"}
-tower-service = "0.2.0"
-tower-util = { git = "https://github.com/tower-rs/tower", rev = "979c1399127bdb269c751b99c12b3adfad55463c" }
+grpcio = { version = "0.5.0-alpha", default-features = false, features = ["prost-codec"] }
 log = { version = "0.4.6", features = ["std"] }
 futures = "0.1.27"
 clap = "2.33.0"
