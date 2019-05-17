@@ -39,7 +39,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 ## Get Started
 
 - [More Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
-- [Documentation](https://docs.rs/azure-functions/0.7.0/azure_functions/)
+- [Documentation](https://docs.rs/azure-functions/0.8.0/azure_functions/)
 - [Installation](#installation)
 - [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
