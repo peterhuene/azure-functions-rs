@@ -1,21 +1,37 @@
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const OUT_DIR_VAR: &str = "OUT_DIR";
 const CACHE_DIR_NAME: &str = "cache";
 const PROTOBUF_INPUT_FILES: &[&str] = &["FunctionRpc.proto"];
 const OUTPUT_FILES: &[&str] = &["azure_functions_rpc_messages.rs"];
 
+fn format_source(path: &Path) {
+    Command::new("rustfmt")
+        .arg(path.to_str().unwrap())
+        .output()
+        .expect("Failed to format generated source");
+}
+
 fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    tower_grpc_build::Config::new()
-        .enable_client(true)
-        .build(PROTOBUF_INPUT_FILES, &["protobuf/src/proto"])
-        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
+    grpcio_compiler::prost_codegen::compile_protos(
+        PROTOBUF_INPUT_FILES,
+        &["protobuf/src/proto"],
+        out_dir.to_str().unwrap(),
+    )
+    .unwrap();
 
     for file in OUTPUT_FILES {
-        fs::copy(out_dir.join(file), cache_dir.join(file))
-            .expect(&format!("can't update cache file '{}'", file));
+        let cached_output = cache_dir.join(file);
+
+        fs::copy(out_dir.join(file), &cached_output).expect(&format!(
+            "can't update cache file '{}'",
+            cached_output.display()
+        ));
+
+        format_source(&cached_output);
     }
 }
 
