@@ -3,7 +3,7 @@ use crate::codegen::{
     get_boolean_value, get_string_value, iter_attribute_args, macro_panic,
     quotable::{QuotableBorrowedStr, QuotableOption},
 };
-use crate::rpc::protocol;
+use crate::rpc;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use serde::{ser::SerializeMap, Serialize, Serializer};
@@ -17,7 +17,7 @@ pub struct Function {
     pub disabled: bool,
     pub bindings: Cow<'static, [Binding]>,
     pub invoker_name: Option<Cow<'static, str>>,
-    pub invoker: Option<fn(&str, &mut protocol::InvocationRequest) -> protocol::InvocationResponse>,
+    pub invoker: Option<fn(&str, rpc::InvocationRequest) -> rpc::InvocationResponse>,
     pub manifest_dir: Option<Cow<'static, str>>,
     pub file: Option<Cow<'static, str>>,
 }

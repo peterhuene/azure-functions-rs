@@ -38,15 +38,10 @@ pub struct QuotableDirection(pub Direction);
 impl ToTokens for QuotableDirection {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self.0 {
-            Direction::In => {
-                quote!(::azure_functions::codegen::bindings::Direction::In).to_tokens(tokens)
-            }
-            Direction::InOut => {
-                quote!(::azure_functions::codegen::bindings::Direction::InOut).to_tokens(tokens)
-            }
-            Direction::Out => {
-                quote!(::azure_functions::codegen::bindings::Direction::Out).to_tokens(tokens);
-            }
-        };
+            Direction::In => quote!(::azure_functions::codegen::bindings::Direction::In),
+            Direction::InOut => quote!(::azure_functions::codegen::bindings::Direction::InOut),
+            Direction::Out => quote!(::azure_functions::codegen::bindings::Direction::Out),
+        }
+        .to_tokens(tokens);
     }
 }

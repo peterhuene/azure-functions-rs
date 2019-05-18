@@ -1,7 +1,9 @@
-use crate::bindings::EventHubMessage;
-use crate::event_hub::{PartitionContext, SystemProperties};
-use crate::rpc::protocol;
-use crate::util::convert_from;
+use crate::{
+    bindings::EventHubMessage,
+    event_hub::{PartitionContext, SystemProperties},
+    rpc::{typed_data::Data, TypedData},
+    util::convert_from,
+};
 use chrono::{DateTime, Utc};
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
@@ -59,17 +61,18 @@ pub struct EventHubTrigger {
 
 impl EventHubTrigger {
     #[doc(hidden)]
-    pub fn new(
-        data: protocol::TypedData,
-        metadata: &mut HashMap<String, protocol::TypedData>,
-    ) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         EventHubTrigger {
             message: data.into(),
             partition_context: from_str(
-                metadata
+                match &metadata
                     .get(PARTITION_CONTEXT_KEY)
                     .expect("expected partition context")
-                    .get_json(),
+                    .data
+                {
+                    Some(Data::Json(s)) => s,
+                    _ => panic!("expected JSON data for partition context"),
+                },
             )
             .expect("failed to deserialize partition context"),
             enqueued_time: convert_from(
@@ -79,14 +82,21 @@ impl EventHubTrigger {
             )
             .expect("failed to convert enqueued time"),
             offset: metadata
-                .get_mut(OFFSET_KEY)
-                .expect("expected offset")
-                .take_string(),
+                .remove(OFFSET_KEY)
+                .map(|offset| match offset.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for offset"),
+                })
+                .expect("expected offset"),
             properties: from_str(
-                metadata
+                match &metadata
                     .get(PROPERTIES_KEY)
                     .expect("expected properties")
-                    .get_json(),
+                    .data
+                {
+                    Some(Data::Json(s)) => s,
+                    _ => panic!("expected JSON data for properties"),
+                },
             )
             .expect("failed to deserialize properties"),
             sequence_number: convert_from(
@@ -96,10 +106,14 @@ impl EventHubTrigger {
             )
             .expect("failed to convert sequence number"),
             system_properties: from_str(
-                metadata
+                match &metadata
                     .get(SYSTEM_PROPERTIES_KEY)
                     .expect("expected system properties")
-                    .get_json(),
+                    .data
+                {
+                    Some(Data::Json(s)) => s,
+                    _ => panic!("expected JSON data for system properties"),
+                },
             )
             .expect("failed to deserialize system properties"),
         }
@@ -128,8 +142,9 @@ mod tests {
         const USER_PROPERTY_VALUE: &str = "property value";
         const PARTITION_KEY: &str = "partition key";
 
-        let mut data = protocol::TypedData::new();
-        data.set_string(MESSAGE.to_string());
+        let data = TypedData {
+            data: Some(Data::String(MESSAGE.to_string())),
+        };
 
         let mut metadata = HashMap::new();
 
@@ -156,31 +171,46 @@ mod tests {
             enqueued_time: DateTime::<Utc>::from_str(ENQUEUED_TIME).unwrap(),
         };
 
-        let mut value = protocol::TypedData::new();
-        value.set_json(serde_json::to_string(&context).unwrap());
-        metadata.insert(PARTITION_CONTEXT_KEY.to_string(), value);
+        metadata.insert(
+            PARTITION_CONTEXT_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(serde_json::to_string(&context).unwrap())),
+            },
+        );
+        metadata.insert(
+            ENQUEUED_TIME_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(ENQUEUED_TIME.to_string())),
+            },
+        );
+        metadata.insert(
+            OFFSET_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(OFFSET.to_string())),
+            },
+        );
+        metadata.insert(
+            PROPERTIES_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(properties.to_string())),
+            },
+        );
+        metadata.insert(
+            SEQUENCE_NUMBER_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Int(SEQUENCE_NUMBER)),
+            },
+        );
+        metadata.insert(
+            SYSTEM_PROPERTIES_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(
+                    serde_json::to_string(&system_properties).unwrap(),
+                )),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(ENQUEUED_TIME.to_string());
-        metadata.insert(ENQUEUED_TIME_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
-        value.set_string(OFFSET.to_string());
-        metadata.insert(OFFSET_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
-        value.set_json(properties.to_string());
-        metadata.insert(PROPERTIES_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
-        value.set_int(SEQUENCE_NUMBER);
-        metadata.insert(SEQUENCE_NUMBER_KEY.to_string(), value);
-
-        let mut value = protocol::TypedData::new();
-        value.set_json(serde_json::to_string(&system_properties).unwrap());
-        metadata.insert(SYSTEM_PROPERTIES_KEY.to_string(), value);
-
-        let trigger = EventHubTrigger::new(data, &mut metadata);
+        let trigger = EventHubTrigger::new(data, metadata);
 
         assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
         assert_eq!(

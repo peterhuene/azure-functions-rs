@@ -1,0 +1,46 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Launch Azure Functions Application",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "func",
+                "run"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "clear": true,
+                "focus": true
+            },
+            "problemMatcher": [
+                {
+                    "owner": "azureFunctions",
+                    "pattern": [
+                        {
+                            "regexp": "\\b\\B",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": "^Azure Functions Core Tools",
+                        "endsPattern": "^Application started."
+                    }
+                }
+            ],
+            "isBackground": true
+        },
+        {
+            "label": "Terminate Azure Functions Application",
+            "type": "process",
+            "command":"${command:workbench.action.tasks.terminate}",
+            "args": [
+                "Launch Azure Functions Application"
+            ]
+        }
+    ]
+}

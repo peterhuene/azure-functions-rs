@@ -1,7 +1,7 @@
 [package]
 name = "azure-functions-shared"
 license = "MIT"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Peter Huene <peterhuene@protonmail.com>"]
 description = "Implementations shared between the azure-functions-codegen and azure-functions crates."
 repository = "https://github.com/peterhuene/azure-functions-rs/"
@@ -9,20 +9,23 @@ homepage = "https://functions.rs"
 edition = "2018"
 
 [dependencies]
-azure-functions-shared-codegen = { version = "0.7.0", path = "../azure-functions-shared-codegen" }
-protobuf = "2.3.0"
-grpcio = { version = "0.4.4", default-features = false, features = ["protobuf-codec"] }
-futures = "0.1.26"
-serde = "1.0.90"
+azure-functions-shared-codegen = { version = "0.8.1", path = "../azure-functions-shared-codegen" }
+grpcio = { version = "0.5.0-alpha", default-features = false, features = ["prost-codec"] }
+futures = "0.1"
+prost = "0.5"
+prost-types = "0.5"
+bytes = "0.4"
+serde = "1.0.91"
 serde_json = "1.0.39"
-serde_derive = "1.0.90"
+serde_derive = "1.0.91"
 quote = "0.6.12"
-syn = { version = "0.15.30", features = ["full"] }
-proc-macro2 = { version = "0.4.27" }
+syn = { version = "0.15.34", features = ["full"] }
+proc-macro2 = { version = "0.4.30" }
 lazy_static = "1.3.0"
 
 [build-dependencies]
-protoc-grpcio = "1.0.2"
+grpcio-compiler = "0.5.0-alpha"
+protobuf-build = "0.4.2"
 
 [features]
 default = []

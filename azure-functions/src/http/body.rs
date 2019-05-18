@@ -1,6 +1,5 @@
-use crate::rpc::protocol;
-use serde::de::Error;
-use serde::Deserialize;
+use crate::rpc::{typed_data::Data, TypedData};
+use serde::{de::Error, Deserialize};
 use serde_json::{from_str, Result, Value};
 use std::borrow::Cow;
 use std::fmt;
@@ -127,22 +126,15 @@ impl fmt::Display for Body<'_> {
 }
 
 #[doc(hidden)]
-impl<'a> From<&'a protocol::TypedData> for Body<'a> {
-    fn from(data: &'a protocol::TypedData) -> Self {
-        if data.has_string() {
-            return Body::String(Cow::Borrowed(data.get_string()));
+impl<'a> From<&'a TypedData> for Body<'a> {
+    fn from(data: &'a TypedData) -> Self {
+        match &data.data {
+            Some(Data::String(s)) => Body::String(Cow::from(s)),
+            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
+            Some(Data::Bytes(b)) => Body::Bytes(Cow::from(b)),
+            Some(Data::Stream(s)) => Body::Bytes(Cow::from(s)),
+            _ => Body::Empty,
         }
-        if data.has_json() {
-            return Body::Json(Cow::Borrowed(data.get_json()));
-        }
-        if data.has_bytes() {
-            return Body::Bytes(Cow::Borrowed(data.get_bytes()));
-        }
-        if data.has_stream() {
-            return Body::Bytes(Cow::Borrowed(data.get_stream()));
-        }
-
-        Body::Empty
     }
 }
 
@@ -183,18 +175,16 @@ impl From<Vec<u8>> for Body<'_> {
 }
 
 #[doc(hidden)]
-impl Into<protocol::TypedData> for Body<'_> {
-    fn into(self) -> protocol::TypedData {
-        let mut data = protocol::TypedData::new();
-
-        match self {
-            Body::Empty => {}
-            Body::String(s) => data.set_string(s.into_owned()),
-            Body::Json(s) => data.set_json(s.into_owned()),
-            Body::Bytes(b) => data.set_bytes(b.into_owned()),
-        };
-
-        data
+impl Into<TypedData> for Body<'_> {
+    fn into(self) -> TypedData {
+        TypedData {
+            data: match self {
+                Body::Empty => None,
+                Body::String(s) => Some(Data::String(s.into_owned())),
+                Body::Json(s) => Some(Data::Json(s.into_owned())),
+                Body::Bytes(b) => Some(Data::Bytes(b.into_owned())),
+            },
+        }
     }
 }
 
@@ -228,28 +218,31 @@ mod tests {
         let body: Body = BODY.into();
         assert_eq!(body.as_str().unwrap(), BODY);
 
-        let data: protocol::TypedData = body.into();
-        assert_eq!(data.get_string(), BODY);
+        let data: TypedData = body.into();
+        assert_eq!(data.data, Some(Data::String(BODY.to_string())));
     }
 
     #[test]
     fn it_has_a_json_body() {
         #[derive(Serialize, Deserialize)]
-        struct Data {
+        struct SerializedData {
             message: String,
         };
 
         const MESSAGE: &'static str = "test";
 
-        let data = Data {
+        let data = SerializedData {
             message: MESSAGE.to_string(),
         };
 
         let body: Body = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(body.as_json::<Data>().unwrap().message, MESSAGE);
+        assert_eq!(body.as_json::<SerializedData>().unwrap().message, MESSAGE);
 
-        let data: protocol::TypedData = body.into();
-        assert_eq!(data.get_json(), r#"{"message":"test"}"#);
+        let data: TypedData = body.into();
+        assert_eq!(
+            data.data,
+            Some(Data::Json(r#"{"message":"test"}"#.to_string()))
+        );
     }
 
     #[test]
@@ -259,8 +252,8 @@ mod tests {
         let body: Body = BODY.into();
         assert_eq!(body.as_bytes(), BODY);
 
-        let data: protocol::TypedData = body.into();
-        assert_eq!(data.get_bytes(), BODY);
+        let data: TypedData = body.into();
+        assert_eq!(data.data, Some(Data::Bytes(BODY.to_vec())));
     }
 
     #[test]
@@ -277,26 +270,31 @@ mod tests {
 
     #[test]
     fn it_converts_from_typed_data() {
-        let mut data = protocol::TypedData::new();
-        data.set_string("test".to_string());
+        let data = TypedData {
+            data: Some(Data::String("test".to_string())),
+        };
+
         let body: Body = (&data).into();
         assert!(matches!(body, Body::String(_)));
         assert_eq!(body.as_str().unwrap(), "test");
 
-        let mut data = protocol::TypedData::new();
-        data.set_json("test".to_string());
+        let data = TypedData {
+            data: Some(Data::Json("test".to_string())),
+        };
         let body: Body = (&data).into();
         assert!(matches!(body, Body::Json(_)));
         assert_eq!(body.as_str().unwrap(), "test");
 
-        let mut data = protocol::TypedData::new();
-        data.set_bytes(vec![0, 1, 2]);
+        let data = TypedData {
+            data: Some(Data::Bytes([0, 1, 2].to_vec())),
+        };
         let body: Body = (&data).into();
         assert!(matches!(body, Body::Bytes(_)));
         assert_eq!(body.as_bytes(), [0, 1, 2]);
 
-        let mut data = protocol::TypedData::new();
-        data.set_stream(vec![0, 1, 2]);
+        let data = TypedData {
+            data: Some(Data::Stream([0, 1, 2].to_vec())),
+        };
         let body: Body = (&data).into();
         assert!(matches!(body, Body::Bytes(_)));
         assert_eq!(body.as_bytes(), [0, 1, 2]);
@@ -340,22 +338,19 @@ mod tests {
     #[test]
     fn it_converts_to_typed_data() {
         let body = Body::Empty;
-        let data: protocol::TypedData = body.into();
+        let data: TypedData = body.into();
         assert!(data.data.is_none());
 
         let body: Body = "test".into();
-        let data: protocol::TypedData = body.into();
-        assert!(data.has_string());
-        assert_eq!(data.get_string(), "test");
+        let data: TypedData = body.into();
+        assert_eq!(data.data, Some(Data::String("test".to_string())));
 
         let body: Body = to_value("test").unwrap().into();
-        let data: protocol::TypedData = body.into();
-        assert!(data.has_json());
-        assert_eq!(data.get_json(), r#""test""#);
+        let data: TypedData = body.into();
+        assert_eq!(data.data, Some(Data::Json(r#""test""#.to_string())));
 
         let body: Body = vec![1, 2, 3].into();
-        let data: protocol::TypedData = body.into();
-        assert!(data.has_bytes());
-        assert_eq!(data.get_bytes(), [1, 2, 3]);
+        let data: TypedData = body.into();
+        assert_eq!(data.data, Some(Data::Bytes([1, 2, 3].to_vec())));
     }
 }

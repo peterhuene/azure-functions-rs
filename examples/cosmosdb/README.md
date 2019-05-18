@@ -54,6 +54,29 @@ pub fn log_documents(trigger: CosmosDbTrigger) {
 }
 ```
 
+An example HTTP-triggered Azure Function that will query for Cosmos DB documents and return them as a HTTP response:
+
+```rust
+use azure_functions::{
+    bindings::{CosmosDbDocument, HttpRequest, HttpResponse},
+    func,
+};
+
+#[func]
+#[binding(name = "_req", route = "query/{name}")]
+#[binding(
+    name = "documents",
+    connection = "connection",
+    database_name = "exampledb",
+    collection_name = "documents",
+    sql_query="select * from documents d where contains(d.name, {name})",
+    create_collection = true,
+)]
+pub fn query_documents(_req: HttpRequest, documents: Vec<CosmosDbDocument>) -> HttpResponse {
+    documents.into()
+}
+```
+
 An example HTTP-triggered Azure Function that will read a Cosmos DB document and return it as a HTTP response:
 
 ```rust
@@ -162,4 +185,29 @@ With any luck, `curl` should output the JSON of the Cosmos DB document:
   "id": "test",
   "name": "stranger"
 }
+```
+
+## Invoke the `query_documents` function
+
+This function queries documents based on a query for the `name` field.
+
+Simply use `curl` to invoke the `query_documents` function with the name to query:
+
+```
+$ curl http://localhost:8080/api/query/stranger
+```
+
+With any luck, `curl` should output the JSON of any Cosmos DB documents with a `name` field containing "stranger":
+
+```json
+[
+  {
+    "_etag": "\"12005511-0000-0000-0000-5c875c6a0000\"",
+    "_rid": "JeJJAIEVMHMFAAAAAAAAAA==",
+    "_self": "dbs/JeJJAA==/colls/JeJJAIEVMHM=/docs/JeJJAIEVMHMFAAAAAAAAAA==/",
+    "_ts": 1552374890,
+    "id": "test",
+    "name": "stranger"
+  }
+]
 ```

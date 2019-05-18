@@ -43,7 +43,7 @@ fn iter_attribute_args<F>(args: &[NestedMeta], mut callback: F)
 where
     F: FnMut(&Ident, &Lit) -> bool,
 {
-    for arg in args.iter() {
+    for arg in args {
         match arg {
             NestedMeta::Meta(m) => {
                 match m {

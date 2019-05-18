@@ -1,6 +1,8 @@
-use crate::bindings::ServiceBusMessage;
-use crate::rpc::protocol;
-use crate::util::convert_from;
+use crate::{
+    bindings::ServiceBusMessage,
+    rpc::{typed_data::Data, TypedData},
+    util::convert_from,
+};
 use chrono::{DateTime, Utc};
 use serde_json::{from_str, Map, Value};
 use std::collections::HashMap;
@@ -95,10 +97,7 @@ pub struct ServiceBusTrigger {
 
 impl ServiceBusTrigger {
     #[doc(hidden)]
-    pub fn new(
-        data: protocol::TypedData,
-        metadata: &mut HashMap<String, protocol::TypedData>,
-    ) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         ServiceBusTrigger {
             message: data.into(),
             delivery_count: convert_from(
@@ -107,9 +106,12 @@ impl ServiceBusTrigger {
                     .expect("expected a delivery count"),
             )
             .expect("failed to convert delivery count"),
-            dead_letter_source: metadata
-                .get_mut(DEAD_LETTER_SOURCE_KEY)
-                .map(protocol::TypedData::take_string),
+            dead_letter_source: metadata.remove(DEAD_LETTER_SOURCE_KEY).map(|data| {
+                match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for dead letter source"),
+                }
+            }),
             expiration_time: convert_from(
                 metadata
                     .get(EXPIRATION_TIME_KEY)
@@ -123,34 +125,49 @@ impl ServiceBusTrigger {
             )
             .expect("failed to convert enqueued time"),
             message_id: metadata
-                .get_mut(MESSAGE_ID_KEY)
-                .expect("expected a message id")
-                .take_string(),
+                .remove(MESSAGE_ID_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for message id"),
+                })
+                .expect("expected a message id"),
             content_type: metadata
-                .get_mut(CONTENT_TYPE_KEY)
-                .map(protocol::TypedData::take_string),
-            reply_to: metadata
-                .get_mut(REPLY_TO_KEY)
-                .map(protocol::TypedData::take_string),
+                .remove(CONTENT_TYPE_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for content type"),
+                }),
+            reply_to: metadata.remove(REPLY_TO_KEY).map(|data| match data.data {
+                Some(Data::String(s)) => s,
+                _ => panic!("expected a string for reply to"),
+            }),
             sequence_number: convert_from(
                 metadata
                     .get(SEQUENCE_NUMBER_KEY)
                     .expect("expected a sequence number"),
             )
             .expect("failed to convert sequence number"),
-            to: metadata
-                .get_mut(TO_KEY)
-                .map(protocol::TypedData::take_string),
-            label: metadata
-                .get_mut(LABEL_KEY)
-                .map(protocol::TypedData::take_string),
+            to: metadata.remove(TO_KEY).map(|data| match data.data {
+                Some(Data::String(s)) => s,
+                _ => panic!("expected a string for to"),
+            }),
+            label: metadata.remove(LABEL_KEY).map(|data| match data.data {
+                Some(Data::String(s)) => s,
+                _ => panic!("expected a string for label"),
+            }),
             correlation_id: metadata
-                .get_mut(CORRELATION_ID_KEY)
-                .map(protocol::TypedData::take_string),
+                .remove(CORRELATION_ID_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for correlation id"),
+                }),
             user_properties: from_str(
                 metadata
                     .get(USER_PROPERTIES_KEY)
-                    .map(protocol::TypedData::get_json)
+                    .map(|data| match &data.data {
+                        Some(Data::Json(s)) => s.as_str(),
+                        _ => panic!("expected JSON data for user properties"),
+                    })
                     .unwrap_or("{}"),
             )
             .expect("failed to convert user properties"),
@@ -177,60 +194,97 @@ mod tests {
         const MESSAGE: &'static str = "\"hello world\"";
         let now = Utc::now();
 
-        let mut data = protocol::TypedData::new();
-        data.set_json(MESSAGE.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(MESSAGE.to_string())),
+        };
 
         let mut metadata = HashMap::new();
 
-        let mut value = protocol::TypedData::new();
-        value.set_int(DELIVERY_COUNT.into());
-        metadata.insert(DELIVERY_COUNT_KEY.to_string(), value);
+        metadata.insert(
+            DELIVERY_COUNT_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Int(DELIVERY_COUNT as i64)),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(DEAD_LETTER_SOURCE.to_string());
-        metadata.insert(DEAD_LETTER_SOURCE_KEY.to_string(), value);
+        metadata.insert(
+            DEAD_LETTER_SOURCE_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(DEAD_LETTER_SOURCE.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(now.to_rfc3339());
-        metadata.insert(EXPIRATION_TIME_KEY.to_string(), value);
+        metadata.insert(
+            EXPIRATION_TIME_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(now.to_rfc3339())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(now.to_rfc3339());
-        metadata.insert(ENQUEUED_TIME_KEY.to_string(), value);
+        metadata.insert(
+            ENQUEUED_TIME_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(now.to_rfc3339())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(MESSAGE_ID.to_string());
-        metadata.insert(MESSAGE_ID_KEY.to_string(), value);
+        metadata.insert(
+            MESSAGE_ID_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(MESSAGE_ID.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(CONTENT_TYPE.to_string());
-        metadata.insert(CONTENT_TYPE_KEY.to_string(), value);
+        metadata.insert(
+            CONTENT_TYPE_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(CONTENT_TYPE.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(REPLY_TO.to_string());
-        metadata.insert(REPLY_TO_KEY.to_string(), value);
+        metadata.insert(
+            REPLY_TO_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(REPLY_TO.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_int(SEQUENCE_NUMBER);
-        metadata.insert(SEQUENCE_NUMBER_KEY.to_string(), value);
+        metadata.insert(
+            SEQUENCE_NUMBER_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Int(SEQUENCE_NUMBER)),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(TO.to_string());
-        metadata.insert(TO_KEY.to_string(), value);
+        metadata.insert(
+            TO_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(TO.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(LABEL.to_string());
-        metadata.insert(LABEL_KEY.to_string(), value);
+        metadata.insert(
+            LABEL_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(LABEL.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(CORRELATION_ID.to_string());
-        metadata.insert(CORRELATION_ID_KEY.to_string(), value);
+        metadata.insert(
+            CORRELATION_ID_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(CORRELATION_ID.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_json(USER_PROPERTIES.to_string());
-        metadata.insert(USER_PROPERTIES_KEY.to_string(), value);
+        metadata.insert(
+            USER_PROPERTIES_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(USER_PROPERTIES.to_string())),
+            },
+        );
 
-        let trigger = ServiceBusTrigger::new(data, &mut metadata);
+        let trigger = ServiceBusTrigger::new(data, metadata);
 
         assert_eq!(trigger.delivery_count, DELIVERY_COUNT);
         assert_eq!(trigger.dead_letter_source.unwrap(), DEAD_LETTER_SOURCE);

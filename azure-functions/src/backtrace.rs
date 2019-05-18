@@ -26,7 +26,7 @@ impl Backtrace {
                     return None;
                 }
 
-                for symbol in frame.symbols().iter() {
+                for symbol in frame.symbols() {
                     if let Some(name) = symbol.name() {
                         let name = format!("{}", name);
 

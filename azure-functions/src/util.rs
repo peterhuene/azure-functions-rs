@@ -1,48 +1,40 @@
-use crate::rpc::protocol;
+use crate::rpc::{typed_data::Data, TypedData};
 use chrono::{DateTime, FixedOffset, Utc};
 use serde::{de::Error, de::IntoDeserializer, Deserialize, Deserializer};
 use serde_json::from_str;
 use std::str::{from_utf8, FromStr};
 
-pub fn convert_from<'a, T>(data: &'a protocol::TypedData) -> Option<T>
+pub fn convert_from<'a, T>(data: &'a TypedData) -> Option<T>
 where
     T: FromStr + Deserialize<'a>,
 {
-    if data.has_string() {
-        return data.get_string().parse::<T>().ok();
-    }
-
-    if data.has_json() {
-        return from_str(data.get_json()).ok();
-    }
-
-    if data.has_bytes() {
-        if let Ok(s) = from_utf8(data.get_bytes()) {
-            return s.parse::<T>().ok();
+    match &data.data {
+        Some(Data::String(s)) => s.parse::<T>().ok(),
+        Some(Data::Json(s)) => from_str(s).ok(),
+        Some(Data::Bytes(b)) => {
+            if let Ok(s) = from_utf8(b) {
+                return s.parse::<T>().ok();
+            }
+            None
         }
-        return None;
-    }
-
-    if data.has_stream() {
-        if let Ok(s) = from_utf8(data.get_stream()) {
-            return s.parse::<T>().ok();
+        Some(Data::Stream(s)) => {
+            if let Ok(s) = from_utf8(s) {
+                return s.parse::<T>().ok();
+            }
+            None
         }
-        return None;
+        Some(Data::Int(i)) => {
+            let deserializer: ::serde::de::value::I64Deserializer<::serde_json::error::Error> =
+                i.into_deserializer();
+            T::deserialize(deserializer).ok()
+        }
+        Some(Data::Double(d)) => {
+            let deserializer: ::serde::de::value::F64Deserializer<::serde_json::error::Error> =
+                d.into_deserializer();
+            T::deserialize(deserializer).ok()
+        }
+        _ => None,
     }
-
-    if data.has_int() {
-        let deserializer: ::serde::de::value::I64Deserializer<::serde_json::error::Error> =
-            data.get_int().into_deserializer();
-        return T::deserialize(deserializer).ok();
-    }
-
-    if data.has_double() {
-        let deserializer: ::serde::de::value::F64Deserializer<::serde_json::error::Error> =
-            data.get_double().into_deserializer();
-        return T::deserialize(deserializer).ok();
-    }
-
-    None
 }
 
 pub fn deserialize_datetime<'a, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
@@ -70,8 +62,9 @@ mod tests {
     fn it_converts_from_string_data() {
         const DATA: &'static str = "test";
 
-        let mut data = protocol::TypedData::new();
-        data.set_string(DATA.to_string());
+        let data = TypedData {
+            data: Some(Data::String(DATA.to_string())),
+        };
 
         let s: String = convert_from(&data).unwrap();
         assert_eq!(s, DATA);
@@ -79,8 +72,9 @@ mod tests {
 
     #[test]
     fn it_converts_from_json_data() {
-        let mut data = protocol::TypedData::new();
-        data.set_json(r#""hello world""#.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(r#""hello world""#.to_string())),
+        };
 
         let s: String = convert_from(&data).unwrap();
         assert_eq!(s, "hello world");
@@ -88,10 +82,11 @@ mod tests {
 
     #[test]
     fn it_converts_from_bytes_data() {
-        let mut data = protocol::TypedData::new();
-        data.set_bytes(vec![
-            0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72, 0x6C, 0x64,
-        ]);
+        let data = TypedData {
+            data: Some(Data::Bytes(vec![
+                0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72, 0x6C, 0x64,
+            ])),
+        };
 
         let s: String = convert_from(&data).unwrap();
         assert_eq!(s, "hello world");
@@ -99,10 +94,11 @@ mod tests {
 
     #[test]
     fn it_converts_from_stream_data() {
-        let mut data = protocol::TypedData::new();
-        data.set_stream(vec![
-            0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72, 0x6C, 0x64,
-        ]);
+        let data = TypedData {
+            data: Some(Data::Stream(vec![
+                0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72, 0x6C, 0x64,
+            ])),
+        };
 
         let s: String = convert_from(&data).unwrap();
         assert_eq!(s, "hello world");
@@ -112,8 +108,9 @@ mod tests {
     fn it_converts_from_int_data() {
         const DATA: i64 = 42;
 
-        let mut data = protocol::TypedData::new();
-        data.set_int(DATA);
+        let data = TypedData {
+            data: Some(Data::Int(DATA)),
+        };
 
         let d: i64 = convert_from(&data).unwrap();
         assert_eq!(d, DATA);
@@ -123,8 +120,9 @@ mod tests {
     fn it_converts_from_double_data() {
         const DATA: f64 = 42.24;
 
-        let mut data = protocol::TypedData::new();
-        data.set_double(DATA);
+        let data = TypedData {
+            data: Some(Data::Double(DATA)),
+        };
 
         let d: f64 = convert_from(&data).unwrap();
         assert_eq!(d, DATA);

@@ -1,6 +1,8 @@
-use crate::bindings::QueueMessage;
-use crate::rpc::protocol;
-use crate::util::convert_from;
+use crate::{
+    bindings::QueueMessage,
+    rpc::{typed_data::Data, TypedData},
+    util::convert_from,
+};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
@@ -56,16 +58,16 @@ pub struct QueueTrigger {
 
 impl QueueTrigger {
     #[doc(hidden)]
-    pub fn new(
-        data: protocol::TypedData,
-        metadata: &mut HashMap<String, protocol::TypedData>,
-    ) -> Self {
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
         QueueTrigger {
             message: data.into(),
             id: metadata
-                .get_mut(ID_KEY)
-                .expect("expected a message id")
-                .take_string(),
+                .remove(ID_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for message id"),
+                })
+                .expect("expected a message id"),
             dequeue_count: convert_from(
                 metadata
                     .get(DEQUEUE_COUNT_KEY)
@@ -91,9 +93,12 @@ impl QueueTrigger {
             )
             .expect("failed to convert next visible time"),
             pop_receipt: metadata
-                .get_mut(POP_RECEIPT_KEY)
-                .expect("expected a pop receipt")
-                .take_string(),
+                .remove(POP_RECEIPT_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for pop receipt"),
+                })
+                .expect("expected a pop receipt"),
         }
     }
 }
@@ -110,36 +115,55 @@ mod tests {
         const MESSAGE: &'static str = "\"hello world\"";
         let now = Utc::now();
 
-        let mut data = protocol::TypedData::new();
-        data.set_json(MESSAGE.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(MESSAGE.to_string())),
+        };
 
         let mut metadata = HashMap::new();
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(ID.to_string());
-        metadata.insert(ID_KEY.to_string(), value);
+        metadata.insert(
+            ID_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(ID.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_json(DEQUEUE_COUNT.to_string());
-        metadata.insert(DEQUEUE_COUNT_KEY.to_string(), value);
+        metadata.insert(
+            DEQUEUE_COUNT_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json(DEQUEUE_COUNT.to_string())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(now.to_rfc3339());
-        metadata.insert(EXPIRATION_TIME_KEY.to_string(), value);
+        metadata.insert(
+            EXPIRATION_TIME_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(now.to_rfc3339())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(now.to_rfc3339());
-        metadata.insert(INSERTION_TIME_KEY.to_string(), value);
+        metadata.insert(
+            INSERTION_TIME_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(now.to_rfc3339())),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_json("\"".to_string() + &now.to_rfc3339() + "\"");
-        metadata.insert(NEXT_VISIBLE_TIME_KEY.to_string(), value);
+        metadata.insert(
+            NEXT_VISIBLE_TIME_KEY.to_string(),
+            TypedData {
+                data: Some(Data::Json("\"".to_string() + &now.to_rfc3339() + "\"")),
+            },
+        );
 
-        let mut value = protocol::TypedData::new();
-        value.set_string(POP_RECEIPT.to_string());
-        metadata.insert(POP_RECEIPT_KEY.to_string(), value);
+        metadata.insert(
+            POP_RECEIPT_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String(POP_RECEIPT.to_string())),
+            },
+        );
 
-        let trigger = QueueTrigger::new(data, &mut metadata);
+        let trigger = QueueTrigger::new(data, metadata);
         assert_eq!(trigger.id, ID);
         assert_eq!(trigger.dequeue_count, DEQUEUE_COUNT);
         assert_eq!(trigger.expiration_time.to_rfc3339(), now.to_rfc3339());

@@ -5,16 +5,19 @@ mod cosmos_db_trigger;
 mod event_grid_trigger;
 mod event_hub;
 mod event_hub_trigger;
+mod generic;
 mod http;
 mod http_trigger;
 mod queue;
 mod queue_trigger;
+mod send_grid;
 mod service_bus;
 mod service_bus_trigger;
 mod signalr;
 mod signalr_connection_info;
 mod table;
 mod timer_trigger;
+mod twilio_sms;
 
 pub use self::blob::*;
 pub use self::blob_trigger::*;
@@ -23,16 +26,19 @@ pub use self::cosmos_db_trigger::*;
 pub use self::event_grid_trigger::*;
 pub use self::event_hub::*;
 pub use self::event_hub_trigger::*;
+pub use self::generic::*;
 pub use self::http::*;
 pub use self::http_trigger::*;
 pub use self::queue::*;
 pub use self::queue_trigger::*;
+pub use self::send_grid::*;
 pub use self::service_bus::*;
 pub use self::service_bus_trigger::*;
 pub use self::signalr::*;
 pub use self::signalr_connection_info::*;
 pub use self::table::*;
 pub use self::timer_trigger::*;
+pub use self::twilio_sms::*;
 
 use lazy_static::lazy_static;
 use proc_macro2::{Span, TokenStream};
@@ -77,6 +83,10 @@ pub enum Binding {
     SignalR(SignalR),
     ServiceBusTrigger(ServiceBusTrigger),
     ServiceBus(ServiceBus),
+    TwilioSms(TwilioSms),
+    SendGrid(SendGrid),
+    GenericTrigger(Generic),
+    Generic(Generic),
 }
 
 impl Binding {
@@ -100,6 +110,10 @@ impl Binding {
             Binding::SignalR(b) => Some(&b.name),
             Binding::ServiceBusTrigger(b) => Some(&b.name),
             Binding::ServiceBus(b) => Some(&b.name),
+            Binding::TwilioSms(b) => Some(&b.name),
+            Binding::SendGrid(b) => Some(&b.name),
+            Binding::GenericTrigger(b) => Some(&b.name),
+            Binding::Generic(b) => Some(&b.name),
         }
     }
 
@@ -123,6 +137,10 @@ impl Binding {
             Binding::SignalR(_) => Some(SignalR::binding_type()),
             Binding::ServiceBusTrigger(_) => Some(ServiceBusTrigger::binding_type()),
             Binding::ServiceBus(_) => Some(ServiceBus::binding_type()),
+            Binding::TwilioSms(_) => Some(TwilioSms::binding_type()),
+            Binding::SendGrid(_) => Some(SendGrid::binding_type()),
+            Binding::GenericTrigger(b) => Some(b.binding_type()),
+            Binding::Generic(b) => Some(b.binding_type()),
         }
     }
 
@@ -142,7 +160,8 @@ impl Binding {
             | Binding::EventGridTrigger(_)
             | Binding::EventHubTrigger(_)
             | Binding::CosmosDbTrigger(_)
-            | Binding::ServiceBusTrigger(_) => true,
+            | Binding::ServiceBusTrigger(_)
+            | Binding::GenericTrigger(_) => true,
             _ => false,
         }
     }
@@ -154,68 +173,61 @@ impl ToTokens for Binding {
             Binding::Context => panic!("context bindings cannot be tokenized"),
             Binding::HttpTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::HttpTrigger(#b))
-                    .to_tokens(tokens)
             }
-            Binding::Http(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::Http(#b)).to_tokens(tokens)
-            }
+            Binding::Http(b) => quote!(::azure_functions::codegen::bindings::Binding::Http(#b)),
             Binding::TimerTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::TimerTrigger(#b))
-                    .to_tokens(tokens)
             }
             Binding::QueueTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::QueueTrigger(#b))
-                    .to_tokens(tokens)
             }
-            Binding::Queue(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::Queue(#b)).to_tokens(tokens)
-            }
+            Binding::Queue(b) => quote!(::azure_functions::codegen::bindings::Binding::Queue(#b)),
             Binding::BlobTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::BlobTrigger(#b))
-                    .to_tokens(tokens)
             }
-            Binding::Blob(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::Blob(#b)).to_tokens(tokens)
-            }
-            Binding::Table(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::Table(#b)).to_tokens(tokens)
-            }
+            Binding::Blob(b) => quote!(::azure_functions::codegen::bindings::Binding::Blob(#b)),
+            Binding::Table(b) => quote!(::azure_functions::codegen::bindings::Binding::Table(#b)),
             Binding::EventGridTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::EventGridTrigger(#b))
-                    .to_tokens(tokens)
             }
             Binding::EventHubTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::EventHubTrigger(#b))
-                    .to_tokens(tokens)
             }
             Binding::EventHub(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::EventHub(#b))
-                    .to_tokens(tokens)
             }
             Binding::CosmosDbTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::CosmosDbTrigger(#b))
-                    .to_tokens(tokens)
             }
             Binding::CosmosDb(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::CosmosDb(#b))
-                    .to_tokens(tokens)
             }
             Binding::SignalRConnectionInfo(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::SignalRConnectionInfo(#b))
-                    .to_tokens(tokens)
             }
             Binding::SignalR(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::SignalR(#b)).to_tokens(tokens)
+                quote!(::azure_functions::codegen::bindings::Binding::SignalR(#b))
             }
             Binding::ServiceBusTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ServiceBusTrigger(#b))
-                    .to_tokens(tokens)
             }
             Binding::ServiceBus(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ServiceBus(#b))
-                    .to_tokens(tokens)
             }
-        };
+            Binding::TwilioSms(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::TwilioSms(#b))
+            }
+            Binding::SendGrid(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::SendGrid(#b))
+            }
+            Binding::GenericTrigger(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::GenericTrigger(#b))
+            }
+            Binding::Generic(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::Generic(#b))
+            }
+        }
+        .to_tokens(tokens);
     }
 }
 
@@ -249,6 +261,9 @@ lazy_static! {
         map.insert("ServiceBusTrigger", |args, span| {
             Binding::ServiceBusTrigger(ServiceBusTrigger::from((args, span)))
         });
+        map.insert("GenericTrigger", |args, span| {
+            Binding::GenericTrigger(Generic::from((args, span)))
+        });
         map
     };
     pub static ref INPUT_BINDINGS: BindingMap = {
@@ -262,6 +277,9 @@ lazy_static! {
         });
         map.insert("SignalRConnectionInfo", |args, span| {
             Binding::SignalRConnectionInfo(SignalRConnectionInfo::from((args, span)))
+        });
+        map.insert("GenericInput", |args, span| {
+            Binding::Generic(Generic::from((args, span)))
         });
         map
     };
@@ -319,6 +337,17 @@ lazy_static! {
         map.insert("ServiceBusMessage", |args, span| {
             Binding::ServiceBus(ServiceBus::from((args, span)))
         });
+        map.insert("TwilioSmsMessage", |args, span| {
+            Binding::TwilioSms(TwilioSms::from((args, span)))
+        });
+        map.insert("SendGridMessage", |args, span| {
+            Binding::SendGrid(SendGrid::from((args, span)))
+        });
+        map.insert("GenericOutput", |args, span| {
+            let mut binding = Generic::from((args, span));
+            binding.direction = Direction::Out;
+            Binding::Generic(binding)
+        });
         map
     };
     pub static ref VEC_INPUT_BINDINGS: HashSet<&'static str> = {
@@ -334,6 +363,8 @@ lazy_static! {
         set.insert("SignalRMessage");
         set.insert("SignalRGroupAction");
         set.insert("ServiceBusMessage");
+        set.insert("TwilioSmsMessage");
+        set.insert("SendGridMessage");
         set
     };
 }

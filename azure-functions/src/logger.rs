@@ -1,8 +1,10 @@
-use crate::rpc::{protocol, Sender};
+use crate::rpc::{rpc_log, streaming_message::Content, RpcLog, StreamingMessage};
 use log::{Level, Log, Metadata, Record};
 use std::cell::RefCell;
 
 thread_local!(pub static INVOCATION_ID: RefCell<String> = RefCell::new(String::new()));
+
+type Sender = futures::sync::mpsc::UnboundedSender<StreamingMessage>;
 
 pub struct Logger {
     level: Level,
@@ -25,26 +27,31 @@ impl Log for Logger {
             return;
         }
 
-        let mut event = protocol::RpcLog::new();
-        event.set_level(match record.level() {
-            Level::Trace => protocol::RpcLog_Level::Trace,
-            Level::Debug => protocol::RpcLog_Level::Debug,
-            Level::Info => protocol::RpcLog_Level::Information,
-            Level::Warn => protocol::RpcLog_Level::Warning,
-            Level::Error => protocol::RpcLog_Level::Error,
-        });
-        event.set_message(record.args().to_string());
+        let mut event = RpcLog {
+            level: match record.level() {
+                Level::Trace => rpc_log::Level::Trace,
+                Level::Debug => rpc_log::Level::Debug,
+                Level::Info => rpc_log::Level::Information,
+                Level::Warn => rpc_log::Level::Warning,
+                Level::Error => rpc_log::Level::Error,
+            } as i32,
+            message: record.args().to_string(),
+            ..Default::default()
+        };
 
         INVOCATION_ID.with(|id| {
             let id = id.borrow();
             if !id.is_empty() {
-                event.set_invocation_id(id.clone());
+                event.invocation_id = id.clone();
             }
         });
 
-        let mut message = protocol::StreamingMessage::new();
-        message.set_rpc_log(event);
-        self.sender.try_send(message).unwrap();
+        self.sender
+            .unbounded_send(StreamingMessage {
+                content: Some(Content::RpcLog(event)),
+                ..Default::default()
+            })
+            .unwrap_or(());
     }
 
     fn flush(&self) {}

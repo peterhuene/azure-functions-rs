@@ -42,11 +42,17 @@ impl<'a> Invoker<'a> {
 
                 if let Type::Path(tp) = Invoker::deref_arg_type(arg_type) {
                     if get_generic_argument_type(last_segment_in_path(&tp.path), "Vec").is_some() {
-                        return Some(quote!(__param.take_data().into_vec()));
+                        return Some(quote!(__param
+                            .data
+                            .expect("expected parameter binding data")
+                            .into_vec()));
                     }
                 }
 
-                Some(quote!(__param.take_data().into()))
+                Some(quote!(__param
+                    .data
+                    .expect("expected parameter binding data")
+                    .into()))
             })
             .collect()
     }
@@ -138,16 +144,23 @@ impl ToTokens for Invoker<'_> {
         quote!(#[allow(dead_code)]
         fn #invoker(
             __name: &str,
-            __req: &mut ::azure_functions::rpc::protocol::InvocationRequest,
-        ) -> ::azure_functions::rpc::protocol::InvocationResponse {
+            __req: ::azure_functions::rpc::InvocationRequest,
+        ) -> ::azure_functions::rpc::InvocationResponse {
             use azure_functions::{IntoVec, FromVec};
 
             let mut #trigger_arg: Option<#trigger_type> = None;
             #(let mut #args: Option<#types> = None;)*
 
-            for __param in __req.input_data.iter_mut() {
+            let mut __metadata = Some(__req.trigger_metadata);
+
+            for __param in __req.input_data.into_iter() {
                 match __param.name.as_str() {
-                   #trigger_name => #trigger_arg = Some(#trigger_type::new(__param.take_data(), &mut __req.trigger_metadata)),
+                   #trigger_name => #trigger_arg = Some(
+                       #trigger_type::new(
+                           __param.data.expect("expected parameter binding data"),
+                           __metadata.take().expect("expected only one trigger")
+                        )
+                    ),
                    #(#arg_names => #args_for_match = Some(#arg_assignments),)*
                     _ => panic!(format!("unexpected parameter binding '{}'", __param.name)),
                 };
@@ -156,13 +169,19 @@ impl ToTokens for Invoker<'_> {
             let __ctx = ::azure_functions::Context::new(&__req.invocation_id, &__req.function_id, __name);
             let __ret = #target(#(#args_for_call,)*);
 
-            let mut __res = ::azure_functions::rpc::protocol::InvocationResponse::new();
-            __res.set_invocation_id(__req.invocation_id.clone());
+            let mut __res = ::azure_functions::rpc::InvocationResponse {
+                invocation_id: __req.invocation_id,
+                result: Some(::azure_functions::rpc::StatusResult {
+                    status: ::azure_functions::rpc::status_result::Status::Success as i32,
+                    ..Default::default()
+                }),
+                ..Default::default()
+            };
+
             #output_bindings
-            __res.mut_result().status =
-                ::azure_functions::rpc::protocol::StatusResult_Status::Success;
 
             __res
+
         }).to_tokens(tokens);
     }
 }

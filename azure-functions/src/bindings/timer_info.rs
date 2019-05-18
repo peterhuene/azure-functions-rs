@@ -1,5 +1,7 @@
-use crate::rpc::protocol;
-use crate::timer::ScheduleStatus;
+use crate::{
+    rpc::{typed_data::Data, TypedData},
+    timer::ScheduleStatus,
+};
 use serde_derive::Deserialize;
 use serde_json::from_str;
 use std::collections::HashMap;
@@ -43,12 +45,11 @@ pub struct TimerInfo {
 
 impl TimerInfo {
     #[doc(hidden)]
-    pub fn new(data: protocol::TypedData, _: &mut HashMap<String, protocol::TypedData>) -> Self {
-        if !data.has_json() {
-            panic!("expected JSON data for timer trigger binding");
+    pub fn new(data: TypedData, _: HashMap<String, TypedData>) -> Self {
+        match &data.data {
+            Some(Data::Json(s)) => from_str(s).expect("failed to parse timer JSON data"),
+            _ => panic!("expected JSON data for timer trigger binding"),
         }
-
-        from_str(data.get_json()).expect("failed to parse timer JSON data")
     }
 }
 
@@ -60,12 +61,11 @@ mod tests {
     fn it_has_json_data() {
         const JSON: &'static str = r#"{"ScheduleStatus":{"Last":"0001-01-01T00:00:00","Next":"2018-07-24T23:24:00-07:00","LastUpdated":"0001-01-01T00:00:00"},"IsPastDue":true}"#;
 
-        let mut data = protocol::TypedData::new();
-        data.set_json(JSON.to_string());
+        let data = TypedData {
+            data: Some(Data::Json(JSON.to_string())),
+        };
 
-        let mut metadata = HashMap::new();
-
-        let info = TimerInfo::new(data, &mut metadata);
+        let info = TimerInfo::new(data, HashMap::new());
 
         assert!(info.is_past_due);
 
