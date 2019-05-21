@@ -6,5 +6,5 @@ use azure_functions::{
 #[func]
 #[binding(name = "trigger", connection = "connection", event_hub_name = "example")]
 pub fn log_event(trigger: EventHubTrigger) {
-    log::warn!("Event hub message: {}", trigger.message.as_str().unwrap());
+    log::info!("Event hub message: {}", trigger.message.as_str().unwrap());
 }

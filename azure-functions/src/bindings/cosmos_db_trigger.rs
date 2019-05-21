@@ -34,7 +34,7 @@ use std::collections::HashMap;
 ///     bindings::CosmosDbTrigger,
 ///     func,
 /// };
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// #[binding(
@@ -45,7 +45,7 @@ use std::collections::HashMap;
 /// )]
 /// pub fn log_documents(trigger: CosmosDbTrigger) {
 ///     for document in trigger.documents {
-///         warn!("{}", document);
+///         info!("{}", document);
 ///     }
 /// }
 /// ```

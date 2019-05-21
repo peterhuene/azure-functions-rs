@@ -34,11 +34,11 @@ pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument {
 }
 ```
 
-An example Cosmos DB triggered Azure Function that will log warnings for each new Cosmos DB document inserted or updated to a collection:
+An example Cosmos DB triggered Azure Function that will log informational messages for each new Cosmos DB document inserted or updated to a collection:
 
 ```rust
 use azure_functions::{bindings::CosmosDbTrigger, func};
-use log::warn;
+use log::info;
 
 #[func]
 #[binding(
@@ -49,7 +49,7 @@ use log::warn;
 )]
 pub fn log_documents(trigger: CosmosDbTrigger) {
     for document in trigger.documents {
-        warn!("{}", document);
+        info!("{}", document);
     }
 }
 ```
@@ -154,7 +154,7 @@ $ curl http://localhost:8080/api/create/<id>
 
 Where `<id>` is the document identifier.
 
-With any luck, something like the following should be logged by the Azure Functions Host as a warning:
+With any luck, something like the following should be logged by the Azure Functions Host as an informational message:
 
 ```
 [3/12/19 7:14:53 AM] {"_etag":"\"12005511-0000-0000-0000-5c875c6a0000\"","_lsn":10,"_metadata":{},"_rid":"JeJJAIEVMHMFAAAAAAAAAA==","_self":"dbs/JeJJAA==/colls/JeJJAIEVMHM=/docs/JeJJAIEVMHMFAAAAAAAAAA==/","_ts":1552374890,"id":"test","name":"stranger"}
