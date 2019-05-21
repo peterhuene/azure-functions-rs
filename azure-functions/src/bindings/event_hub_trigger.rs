@@ -33,12 +33,12 @@ const SYSTEM_PROPERTIES_KEY: &str = "SystemProperties";
 ///     bindings::EventHubTrigger,
 ///     func,
 /// };
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// #[binding(name = "trigger", connection = "my_connection")]
 /// pub fn log_event(trigger: EventHubTrigger) {
-///     log::warn!("{:?}", trigger);
+///     log::info!("{:?}", trigger);
 /// }
 /// ```
 #[derive(Debug)]

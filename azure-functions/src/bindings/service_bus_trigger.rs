@@ -45,7 +45,7 @@ const USER_PROPERTIES_KEY: &str = "UserProperties";
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example", connection = "connection")]
 /// pub fn log_message(trigger: ServiceBusTrigger) {
-///     log::warn!("{}", trigger.message.as_str().unwrap());
+///     log::info!("{}", trigger.message.as_str().unwrap());
 /// }
 /// ```
 ///
@@ -62,7 +62,7 @@ const USER_PROPERTIES_KEY: &str = "UserProperties";
 ///     connection = "connection"
 /// )]
 /// pub fn log_topic_message(trigger: ServiceBusTrigger) {
-///     log::warn!("{}", trigger.message.as_str().unwrap());
+///     log::info!("{}", trigger.message.as_str().unwrap());
 /// }
 /// ```
 #[derive(Debug)]

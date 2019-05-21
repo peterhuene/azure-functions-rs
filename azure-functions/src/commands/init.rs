@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 pub struct Init<'a> {
     pub script_root: PathBuf,
     pub local_settings: Option<&'a str>,
+    pub host_settings: Option<&'a str>,
     pub sync_extensions: bool,
     pub no_debug_info: bool,
     pub verbose: bool,
@@ -28,13 +29,26 @@ impl<'a> Init<'a> {
                 .arg(
                     Arg::with_name("local_settings")
                         .long("local-settings")
-                        .value_name("SETTINGS_FILE")
+                        .value_name("LOCAL_SETTINGS_FILE")
                         .help("The path to the local settings file to use. Defaults to the `local.settings.json` file in the directory containing `Cargo.toml`, if present.")
                         .validator(|v| {
                             if Path::new(&v).is_file() {
                                 Ok(())
                             } else {
                                 Err(format!("local settings file '{}' does not exist", v))
+                            }
+                        })
+                )
+                .arg(
+                    Arg::with_name("host_settings")
+                        .long("host-settings")
+                        .value_name("HOST_SETTINGS_FILE")
+                        .help("The path to the host settings file to use. Defaults to the `host.json` file in the directory containing `Cargo.toml`, if present.")
+                        .validator(|v| {
+                            if Path::new(&v).is_file() {
+                                Ok(())
+                            } else {
+                                Err(format!("host settings file '{}' does not exist", v))
                             }
                         })
                 )
@@ -64,10 +78,13 @@ impl<'a> Init<'a> {
     ) -> Result<(), String> {
         self.create_script_root();
 
-        self.create_host_file();
+        match self.get_local_path(&self.host_settings, "host.json") {
+            Some(path) => self.copy_host_settings_file(&path),
+            None => self.create_host_settings_file(),
+        };
 
-        match self.get_local_settings_path() {
-            Some(file) => self.copy_local_settings_file(&file),
+        match self.get_local_path(&self.local_settings, "local.settings.json") {
+            Some(path) => self.copy_local_settings_file(&path),
             None => self.create_local_settings_file(),
         };
 
@@ -120,16 +137,16 @@ impl<'a> Init<'a> {
         Ok(())
     }
 
-    fn get_local_settings_path(&self) -> Option<PathBuf> {
-        if let Some(local_settings) = self.local_settings {
-            return Some(local_settings.into());
+    fn get_local_path(&self, path: &Option<&str>, filename: &str) -> Option<PathBuf> {
+        if let Some(path) = path {
+            return Some(path.into());
         }
 
         env::var("CARGO_MANIFEST_DIR")
             .map(|dir| {
-                let settings = PathBuf::from(dir).join("local.settings.json");
-                if settings.is_file() {
-                    Some(settings)
+                let path = PathBuf::from(dir).join(filename);
+                if path.is_file() {
+                    Some(path)
                 } else {
                     None
                 }
@@ -163,21 +180,38 @@ impl<'a> Init<'a> {
         }
     }
 
-    fn create_host_file(&self) {
-        let host_json = self.script_root.join("host.json");
-        if host_json.exists() {
-            return;
-        }
+    fn copy_host_settings_file(&self, local_host_file: &Path) {
+        let output_host_file = self.script_root.join("host.json");
 
         if self.verbose {
             println!(
-                "Creating host configuration file '{}'.",
-                host_json.display()
+                "Copying host settings file '{}' to '{}'.",
+                local_host_file.display(),
+                output_host_file.display()
+            );
+        }
+
+        fs::copy(local_host_file, output_host_file).unwrap_or_else(|e| {
+            panic!(
+                "failed to copy host settings file '{}': {}",
+                local_host_file.display(),
+                e
+            )
+        });
+    }
+
+    fn create_host_settings_file(&self) {
+        let settings = self.script_root.join("host.json");
+
+        if self.verbose {
+            println!(
+                "Creating default host settings file '{}'.",
+                settings.display()
             );
         }
 
         fs::write(
-            &host_json,
+            &settings,
             to_string_pretty(&json!(
             {
                 "version": "2.0",
@@ -189,7 +223,7 @@ impl<'a> Init<'a> {
             }))
             .unwrap(),
         )
-        .unwrap_or_else(|e| panic!("failed to create '{}': {}", host_json.display(), e));
+        .unwrap_or_else(|e| panic!("failed to create '{}': {}", settings.display(), e));
     }
 
     fn copy_local_settings_file(&self, local_settings_file: &Path) {
@@ -503,6 +537,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Init<'a> {
                         .expect("A script root is required."),
                 ),
             local_settings: args.value_of("local_settings"),
+            host_settings: args.value_of("host_settings"),
             sync_extensions: args.is_present("sync_extensions"),
             no_debug_info: args.is_present("no_debug_info"),
             verbose: args.is_present("verbose"),

@@ -30,12 +30,12 @@ const POP_RECEIPT_KEY: &str = "PopReceipt";
 /// ```rust
 /// use azure_functions::bindings::QueueTrigger;
 /// use azure_functions::func;
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
 /// pub fn run_on_message(trigger: QueueTrigger) {
-///     warn!("Rust function ran due to queue message: {}", trigger.message);
+///     info!("Rust function ran due to queue message: {}", trigger.message);
 /// }
 /// ```
 #[derive(Debug)]

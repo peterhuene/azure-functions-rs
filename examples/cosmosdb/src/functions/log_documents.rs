@@ -1,5 +1,5 @@
 use azure_functions::{bindings::CosmosDbTrigger, func};
-use log::warn;
+use log::info;
 
 #[func]
 #[binding(
@@ -11,6 +11,6 @@ use log::warn;
 )]
 pub fn log_documents(trigger: CosmosDbTrigger) {
     for document in trigger.documents {
-        warn!("{:#?}", document);
+        info!("{:#?}", document);
     }
 }

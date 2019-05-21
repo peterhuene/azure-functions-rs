@@ -116,7 +116,7 @@ impl<'a> NewApp<'a> {
                 "Dockerfile",
                 json!({ "crate_version": env!("CARGO_PKG_VERSION") }),
             ),
-            ("appsettings.json", "appsettings.json", json!({})),
+            ("host.json", "host.json", json!({})),
             ("local.settings.json", "local.settings.json", json!({})),
         ];
 
