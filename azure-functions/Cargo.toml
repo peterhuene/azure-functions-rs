@@ -15,7 +15,7 @@ grpcio = { version = "0.5.0-alpha", default-features = false, features = ["prost
 log = { version = "0.4.6", features = ["std"] }
 futures = "0.1.27"
 clap = "2.33.0"
-tokio = "0.1.20"
+tokio = "0.1.21"
 serde = "1.0.91"
 serde_json = "1.0.39"
 serde_derive = "1.0.91"
