@@ -481,68 +481,52 @@ pub struct RpcHttp {
     #[prost(message, repeated, tag = "18")]
     pub identities: ::std::vec::Vec<RpcClaimsIdentity>,
 }
-const METHOD_FUNCTION_RPC_EVENT_STREAM: ::grpcio::Method<StreamingMessage, StreamingMessage> =
-    ::grpcio::Method {
-        ty: ::grpcio::MethodType::Duplex,
-        name: "/AzureFunctionsRpcMessages.FunctionRpc/EventStream",
-        req_mar: ::grpcio::Marshaller {
-            ser: ::grpcio::pr_ser,
-            de: ::grpcio::pr_de,
-        },
-        resp_mar: ::grpcio::Marshaller {
-            ser: ::grpcio::pr_ser,
-            de: ::grpcio::pr_de,
-        },
-    };
-#[derive(Clone)]
-pub struct FunctionRpcClient {
-    client: ::grpcio::Client,
-}
-impl FunctionRpcClient {
-    pub fn new(channel: ::grpcio::Channel) -> Self {
-        FunctionRpcClient {
-            client: ::grpcio::Client::new(channel),
+pub mod client {
+    use super::StreamingMessage;
+    use tower_grpc::codegen::client::*;
+
+    /// Interface exported by the server.
+    #[derive(Debug, Clone)]
+    pub struct FunctionRpc<T> {
+        inner: grpc::Grpc<T>,
+    }
+
+    impl<T> FunctionRpc<T> {
+        pub fn new(inner: T) -> Self {
+            let inner = grpc::Grpc::new(inner);
+            Self { inner }
+        }
+
+        /// Poll whether this client is ready to send another request.
+        pub fn poll_ready<R>(&mut self) -> futures::Poll<(), grpc::Status>
+        where
+            T: grpc::GrpcService<R>,
+        {
+            self.inner.poll_ready()
+        }
+
+        /// Get a `Future` of when this client is ready to send another request.
+        pub fn ready<R>(self) -> impl futures::Future<Item = Self, Error = grpc::Status>
+        where
+            T: grpc::GrpcService<R>,
+        {
+            futures::Future::map(self.inner.ready(), |inner| Self { inner })
+        }
+
+        /// Interface exported by the server.
+        pub fn event_stream<R, B>(
+            &mut self,
+            request: grpc::Request<B>,
+        ) -> grpc::streaming::ResponseFuture<StreamingMessage, T::Future>
+        where
+            T: grpc::GrpcService<R>,
+            B: futures::Stream<Item = StreamingMessage>,
+            B: grpc::Encodable<R>,
+        {
+            let path = http::PathAndQuery::from_static(
+                "/AzureFunctionsRpcMessages.FunctionRpc/EventStream",
+            );
+            self.inner.streaming(request, path)
         }
     }
-    pub fn event_stream_opt(
-        &self,
-        opt: ::grpcio::CallOption,
-    ) -> ::grpcio::Result<(
-        ::grpcio::ClientDuplexSender<StreamingMessage>,
-        ::grpcio::ClientDuplexReceiver<StreamingMessage>,
-    )> {
-        self.client
-            .duplex_streaming(&METHOD_FUNCTION_RPC_EVENT_STREAM, opt)
-    }
-    pub fn event_stream(
-        &self,
-    ) -> ::grpcio::Result<(
-        ::grpcio::ClientDuplexSender<StreamingMessage>,
-        ::grpcio::ClientDuplexReceiver<StreamingMessage>,
-    )> {
-        self.event_stream_opt(::grpcio::CallOption::default())
-    }
-    pub fn spawn<F>(&self, f: F)
-    where
-        F: ::futures::Future<Item = (), Error = ()> + Send + 'static,
-    {
-        self.client.spawn(f)
-    }
-}
-pub trait FunctionRpc {
-    fn event_stream(
-        &mut self,
-        ctx: ::grpcio::RpcContext,
-        stream: ::grpcio::RequestStream<StreamingMessage>,
-        sink: ::grpcio::DuplexSink<StreamingMessage>,
-    );
-}
-pub fn create_function_rpc<S: FunctionRpc + Send + Clone + 'static>(s: S) -> ::grpcio::Service {
-    let mut builder = ::grpcio::ServiceBuilder::new();
-    let mut instance = s.clone();
-    builder = builder
-        .add_duplex_streaming_handler(&METHOD_FUNCTION_RPC_EVENT_STREAM, move |ctx, req, resp| {
-            instance.event_stream(ctx, req, resp)
-        });
-    builder.build()
 }

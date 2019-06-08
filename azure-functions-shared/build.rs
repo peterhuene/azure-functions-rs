@@ -16,12 +16,10 @@ fn format_source(path: &Path) {
 }
 
 fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    grpcio_compiler::prost_codegen::compile_protos(
-        PROTOBUF_INPUT_FILES,
-        &["protobuf/src/proto"],
-        out_dir.to_str().unwrap(),
-    )
-    .unwrap();
+    tower_grpc_build::Config::new()
+        .enable_client(true)
+        .build(PROTOBUF_INPUT_FILES, &["protobuf/src/proto"])
+        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
 
     for file in OUTPUT_FILES {
         let cached_output = cache_dir.join(file);
