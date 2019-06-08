@@ -865,7 +865,7 @@ impl MessageBuilder {
     /// Sets the global "send at" timestamp for all personalizations of the message.
     ///
     /// > Note:
-    /// > This trait uses a Unix timestamp. A handy Unix timestamp converter can be found at [unixtimestamp.com/](https://www.unixtimestamp.com/)
+    /// > This trait uses a Unix timestamp. A handy Unix timestamp converter can be found at [unixtimestamp.com](https://www.unixtimestamp.com/)
     ///
     /// # Examples
     ///
