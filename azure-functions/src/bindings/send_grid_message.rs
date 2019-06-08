@@ -1,8 +1,8 @@
 use crate::{
     rpc::{typed_data::Data, TypedData},
     send_grid::{
-        Attachment, Content, EmailAddress, MailSettings, Personalization, TrackingSettings,
-        UnsubscribeGroup,
+        Attachment, Content, EmailAddress, MailSettings, MessageBuilder, Personalization,
+        TrackingSettings, UnsubscribeGroup,
     },
     FromVec,
 };
@@ -37,11 +37,11 @@ use std::collections::HashMap;
 ///
 ///     (
 ///         "The email was sent.".into(),
-///         MessageBuilder::new()
+///         MessageBuilder::build()
 ///             .to(params.get("to").unwrap().as_str())
 ///             .subject(params.get("subject").unwrap().as_str())
 ///             .content(params.get("content").unwrap().as_str())
-///             .build(),
+///             .finish(),
 ///     )
 /// }
 /// ```
@@ -98,6 +98,29 @@ pub struct SendGridMessage {
     /// The email address and name of the individual who should receive responses to the email message.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reply_to: Option<EmailAddress>,
+}
+
+impl SendGridMessage {
+    /// Creates a new [MessageBuilder](../send_grid/struct.MessageBuilder.html) for building a SendGrid message.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use azure_functions::bindings::SendGridMessage;
+    ///
+    /// let message = SendGridMessage::build()
+    ///     .to("foo@example.com")
+    ///     .subject("The subject of the message")
+    ///     .content("I hope this message finds you well.")
+    ///     .finish();
+    ///
+    /// assert_eq!(message.personalizations[0].to[0].email, "foo@example.com");
+    /// assert_eq!(message.personalizations[0].subject[0].email, "The subject of the message");
+    /// assert_eq!(message.contents[0].value, "I hope this message finds you well.");
+    /// ```
+    pub fn build() -> MessageBuilder {
+        MessageBuilder::new()
+    }
 }
 
 #[doc(hidden)]
