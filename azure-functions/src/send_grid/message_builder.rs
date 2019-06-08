@@ -906,34 +906,22 @@ impl MessageBuilder {
         self.0
     }
 
-    // PRIVATE: Appends a `to` email address to the SendGrid message addresses.
     fn append_to(&mut self, address: EmailAddress) {
         self.append_personalization();
         self.0.personalizations[0].to.push(address);
     }
 
-    // PRIVATE: Appends a `cc` email address to the SendGrid message addresses.
     fn append_cc(&mut self, address: EmailAddress) {
         self.append_personalization();
         self.0.personalizations[0].cc.push(address);
     }
 
-    // PRIVATE: Appends a `bcc` email address to the SendGrid message addresses.
     fn append_bcc(&mut self, address: EmailAddress) {
         self.append_personalization();
         self.0.personalizations[0].bcc.push(address);
     }
 
-    // PRIVATE: Instantiate personalizations for the SendGrid message if none exists.
     fn append_personalization(&mut self) {
-        // if !self.0.personalizations.is_empty() {
-        //     return;
-        // }
-
-        // @peterhuene, I think this more clearly demonstrates the logic. What do you think?
-        // Additionally, though it may not be worth the refactoring, changing this function name from
-        // `append_personalization` to `instantiate_personalization` or `initialize_personalization`
-        // may disambiguate this function from the other `append...` functions.
         if self.0.personalizations.is_empty() {
             self.0.personalizations.push(Personalization {
                 ..Default::default()
