@@ -19,10 +19,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    // @peterhuene, I removed a `#` from this example that I think was included by mistake.
-    // Just checking with you. It is repeated several places, but I think it's just an error propagated by
-    // copy/paste.
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().to("foo@example.com").finish();
     ///
@@ -42,7 +39,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().to_with_name("foo@example.com", "Peter").finish();
     ///
@@ -64,8 +61,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use azure_functions::send_grid::EmailAddress;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::send_grid::EmailAddress;
     ///
     /// let message = SendGridMessage::build().tos(
     ///     vec![
@@ -92,7 +89,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().cc("foo@example.com").finish();
     ///
@@ -112,7 +109,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().cc_with_name("foo@example.com", "Peter").finish();
     ///
@@ -133,8 +130,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use azure_functions::send_grid::EmailAddress;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::send_grid::EmailAddress;
     ///
     /// let message = SendGridMessage::build().ccs(
     ///     vec![
@@ -161,7 +158,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().bcc("foo@example.com").finish();
     ///
@@ -181,7 +178,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().bcc_with_name("foo@example.com", "Peter").finish();
     ///
@@ -202,8 +199,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use azure_functions::send_grid::EmailAddress;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::send_grid::EmailAddress;
     ///
     /// let message = SendGridMessage::build().bccs(
     ///     vec![
@@ -230,7 +227,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().subject("hello world!").finish();
     ///
@@ -250,7 +247,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().header("foo", "bar").finish();
     ///
@@ -273,8 +270,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use std::collections::HashMap;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use std::collections::HashMap;
     ///
     /// let mut headers = HashMap::new();
     /// headers.insert("foo".to_owned(), "bar".to_owned());
@@ -299,7 +296,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().substitution("foo", "bar").finish();
     ///
@@ -322,8 +319,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use std::collections::HashMap;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use std::collections::HashMap;
     ///
     /// let mut substitutions = HashMap::new();
     /// substitutions.insert("foo".to_owned(), "bar".to_owned());
@@ -350,8 +347,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use serde_json::{json, to_string};
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use serde_json::{json, to_string};
     ///
     /// let message = SendGridMessage::build().template_data(json!({ "foo": "bar" })).finish();
     ///
@@ -373,7 +370,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().custom_arg("foo", "bar").finish();
     ///
@@ -396,8 +393,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use std::collections::HashMap;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use std::collections::HashMap;
     ///
     /// let mut args = HashMap::new();
     /// args.insert("foo".to_owned(), "bar".to_owned());
@@ -425,7 +422,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().send_at(1555890183).finish();
     ///
@@ -442,7 +439,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().from("foo@example.com").finish();
     ///
@@ -462,7 +459,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().from_with_name("foo@example.com", "Peter").finish();
     ///
@@ -484,7 +481,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().global_subject("hello world").finish();
     ///
@@ -503,7 +500,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().content("hello world").finish();
     ///
@@ -527,7 +524,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().content_with_type("hello world", "text/plain").finish();
     ///
@@ -552,8 +549,8 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
-    /// use azure_functions::send_grid::Content;
+    /// # use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::send_grid::Content;
     ///
     /// let message = SendGridMessage::build()
     ///     .contents(
@@ -575,19 +572,19 @@ impl MessageBuilder {
 
     /// Adds an attachment to the message.
     ///
+    /// > SendGrid expects the `content` argument to be Base 64 encoded.
+    /// > In this example, "hello world" is encoded as "aGVsbG8gd29ybGQ="
+    ///
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
-    // @peterhuene I changed the content here because when I was reading through and saw the original string
-    // it caused some initial confusion that it might be a secret key or a magical incantation. I don't want others
-    // to pause on that same moment of confusion.
-    /// let message = SendGridMessage::build().attachment("hello.txt", "text/plain", "hello world").finish();
+    /// let message = SendGridMessage::build().attachment("hello.txt", "text/plain", "aGVsbG8gd29ybGQ=").finish();
     ///
     /// assert_eq!(message.attachments[0].filename, "hello.txt");
     /// assert_eq!(message.attachments[0].mime_type, "text/plain");
-    /// assert_eq!(message.attachments[0].content, "hello world");
+    /// assert_eq!(message.attachments[0].content, "aGVsbG8gd29ybGQ=");
     /// ```
     pub fn attachment<T, U, V>(mut self, filename: T, mime_type: U, content: V) -> MessageBuilder
     where
@@ -609,7 +606,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().inline_attachment("hello.jpg", "image/jpeg", "hello world", "img_139db99fdb5c3704").finish();
     ///
@@ -647,7 +644,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     /// use azure_functions::send_grid::Attachment;
     ///
     /// let message = SendGridMessage::build()
@@ -673,7 +670,7 @@ impl MessageBuilder {
     ///
     /// # Examples
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     /// use azure_functions::send_grid::Attachment;
     ///
     /// let message = SendGridMessage::build().template_id("id").finish();
@@ -693,7 +690,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().section("foo", "bar").finish();
     ///
@@ -713,7 +710,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     /// use std::collections::HashMap;
     ///
     /// let mut sections = HashMap::new();
@@ -738,7 +735,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().category("foo").finish();
     ///
@@ -757,7 +754,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().categories(vec!["foo".to_owned(), "bar".to_owned(), "baz".to_owned()]).finish();
     ///
@@ -778,7 +775,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().global_header("foo", "bar").finish();
     ///
@@ -798,7 +795,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     /// use std::collections::HashMap;
     ///
     /// let mut headers = HashMap::new();
@@ -823,7 +820,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().global_custom_arg("foo", "bar").finish();
     ///
@@ -844,7 +841,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     /// use std::collections::HashMap;
     ///
     /// let mut args = HashMap::new();
@@ -873,7 +870,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().global_send_at(1555890183).finish();
     ///
@@ -890,7 +887,7 @@ impl MessageBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::SendGridMessage;
+    /// # use azure_functions::bindings::SendGridMessage;
     ///
     /// let message = SendGridMessage::build().batch_id("HkJ5yLYULb7Rj8GKSx7u025ouWVlMgAi").finish();
     ///
