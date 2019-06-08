@@ -641,6 +641,9 @@ impl MessageBuilder {
 
     /// Adds multiple attachments to the message.
     ///
+    /// > SendGrid expects the `content` argument to be Base 64 encoded.
+    /// > In this example, "hello world" is encoded as "aGVsbG8gd29ybGQ="
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -650,13 +653,13 @@ impl MessageBuilder {
     /// let message = SendGridMessage::build()
     ///     .attachments(
     ///         vec![
-    ///             Attachment{ filename: "hello.txt".to_owned(), mime_type: "text/plain".to_owned(), content: "hello world".to_owned(), ..Default::default() }
+    ///             Attachment{ filename: "hello.txt".to_owned(), mime_type: "text/plain".to_owned(), content: "aGVsbG8gd29ybGQ=".to_owned(), ..Default::default() }
     ///         ])
     ///     .finish();
     ///
     /// assert_eq!(message.attachments[0].filename, "hello.txt");
     /// assert_eq!(message.attachments[0].mime_type, "text/plain");
-    /// assert_eq!(message.attachments[0].content, "hello world");
+    /// assert_eq!(message.attachments[0].content, "aGVsbG8gd29ybGQ=");
     /// ```
     pub fn attachments<T>(mut self, attachments: T) -> MessageBuilder
     where
