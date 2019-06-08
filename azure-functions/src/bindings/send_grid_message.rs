@@ -26,7 +26,6 @@ use std::collections::HashMap;
 /// ```rust
 /// use azure_functions::{
 ///     bindings::{HttpRequest, HttpResponse, SendGridMessage},
-///     send_grid::MessageBuilder,
 ///     func,
 /// };
 ///
@@ -37,7 +36,7 @@ use std::collections::HashMap;
 ///
 ///     (
 ///         "The email was sent.".into(),
-///         MessageBuilder::build()
+///         SendGridMessage::build()
 ///             .to(params.get("to").unwrap().as_str())
 ///             .subject(params.get("subject").unwrap().as_str())
 ///             .content(params.get("content").unwrap().as_str())
@@ -115,7 +114,7 @@ impl SendGridMessage {
     ///     .finish();
     ///
     /// assert_eq!(message.personalizations[0].to[0].email, "foo@example.com");
-    /// assert_eq!(message.personalizations[0].subject[0].email, "The subject of the message");
+    /// assert_eq!(message.personalizations[0].subject, Some("The subject of the message".to_owned()));
     /// assert_eq!(message.contents[0].value, "I hope this message finds you well.");
     /// ```
     pub fn build() -> MessageBuilder {

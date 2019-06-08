@@ -19,9 +19,9 @@ impl ResponseBuilder {
     /// use azure_functions::bindings::HttpResponse;
     /// use azure_functions::http::Status;
     ///
-    /// let response: HttpResponse = HttpResponse::build()
+    /// let response = HttpResponse::build()
     ///     .status(Status::InternalServerError)
-    ///     .into();
+    ///     .finish();
     ///
     /// assert_eq!(response.status(), Status::InternalServerError);
     /// ```
@@ -39,9 +39,9 @@ impl ResponseBuilder {
     ///
     /// let value = "custom header value";
     ///
-    /// let response: HttpResponse = HttpResponse::build()
+    /// let response = HttpResponse::build()
     ///     .header("X-Custom-Header", value)
-    ///     .into();
+    ///     .finish();
     ///
     /// assert_eq!(
     ///     response
