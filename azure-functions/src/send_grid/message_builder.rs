@@ -79,7 +79,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = EmailAddress>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].to.extend(addresses);
         self
     }
@@ -148,7 +148,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = EmailAddress>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].cc.extend(addresses);
         self
     }
@@ -217,7 +217,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = EmailAddress>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].bcc.extend(addresses);
         self
     }
@@ -237,7 +237,7 @@ impl MessageBuilder {
     where
         T: Into<String>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].subject = Some(subject.into());
         self
     }
@@ -258,7 +258,7 @@ impl MessageBuilder {
         T: Into<String>,
         U: Into<String>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0]
             .headers
             .insert(key.into(), value.into());
@@ -286,7 +286,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = (String, String)>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].headers.extend(headers);
         self
     }
@@ -307,7 +307,7 @@ impl MessageBuilder {
         T: Into<String>,
         U: Into<String>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0]
             .substitutions
             .insert(key.into(), value.into());
@@ -335,7 +335,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = (String, String)>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0]
             .substitutions
             .extend(substitutions);
@@ -356,7 +356,7 @@ impl MessageBuilder {
     /// ```
     pub fn template_data(mut self, data: Value) -> MessageBuilder {
         if let Value::Object(map) = data {
-            self.append_personalization();
+            self.initialize_personalization();
             self.0.personalizations[0].template_data = Some(map);
         } else {
             panic!("template data must be a JSON object");
@@ -381,7 +381,7 @@ impl MessageBuilder {
         T: Into<String>,
         U: Into<String>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0]
             .custom_args
             .insert(key.into(), value.into());
@@ -409,7 +409,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = (String, String)>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].custom_args.extend(args);
         self
     }
@@ -429,7 +429,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].send_at, Some(1555890183));
     /// ```
     pub fn send_at(mut self, timestamp: i64) -> MessageBuilder {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].send_at = Some(timestamp);
         self
     }
@@ -834,7 +834,7 @@ impl MessageBuilder {
         T: Into<String>,
         U: Into<String>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.custom_args.insert(key.into(), value.into());
         self
     }
@@ -860,7 +860,7 @@ impl MessageBuilder {
     where
         T: IntoIterator<Item = (String, String)>,
     {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.custom_args.extend(args);
         self
     }
@@ -880,7 +880,7 @@ impl MessageBuilder {
     /// assert_eq!(message.send_at, Some(1555890183));
     /// ```
     pub fn global_send_at(mut self, timestamp: i64) -> MessageBuilder {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.send_at = Some(timestamp);
         self
     }
@@ -910,21 +910,21 @@ impl MessageBuilder {
     }
 
     fn append_to(&mut self, address: EmailAddress) {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].to.push(address);
     }
 
     fn append_cc(&mut self, address: EmailAddress) {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].cc.push(address);
     }
 
     fn append_bcc(&mut self, address: EmailAddress) {
-        self.append_personalization();
+        self.initialize_personalization();
         self.0.personalizations[0].bcc.push(address);
     }
 
-    fn append_personalization(&mut self) {
+    fn initialize_personalization(&mut self) {
         if self.0.personalizations.is_empty() {
             self.0.personalizations.push(Personalization {
                 ..Default::default()
