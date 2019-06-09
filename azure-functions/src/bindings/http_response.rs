@@ -88,7 +88,7 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::bindings::HttpResponse;
     /// use azure_functions::http::Status;
     ///
     /// let response = HttpResponse::build().status(Status::NotFound).finish();
@@ -103,7 +103,7 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::bindings::HttpResponse;
     /// use azure_functions::http::Status;
     ///
     /// let response = HttpResponse::build().status(Status::BadRequest).finish();
@@ -118,8 +118,7 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
-    ///
+    /// # use azure_functions::bindings::HttpResponse;
     /// let response = HttpResponse::build().body("example").finish();
     ///
     /// assert_eq!(response.body().as_str().unwrap(), "example");
@@ -137,8 +136,7 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
-    ///
+    /// # use azure_functions::bindings::HttpResponse;
     /// let response = HttpResponse::build().header("Content-Type", "text/plain").finish();
     ///
     /// assert_eq!(response.headers().get("Content-Type").unwrap(), "text/plain");
