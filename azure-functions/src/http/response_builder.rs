@@ -16,10 +16,10 @@ impl ResponseBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::http::ResponseBuilder;
     /// use azure_functions::http::Status;
     ///
-    /// let response = HttpResponse::build()
+    /// let response = ResponseBuilder::new()
     ///     .status(Status::InternalServerError)
     ///     .finish();
     ///
@@ -35,11 +35,11 @@ impl ResponseBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::http::ResponseBuilder;
     ///
     /// let value = "custom header value";
     ///
-    /// let response = HttpResponse::build()
+    /// let response = ResponseBuilder::new()
     ///     .header("X-Custom-Header", value)
     ///     .finish();
     ///
@@ -63,12 +63,12 @@ impl ResponseBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::http::ResponseBuilder;
     /// use azure_functions::http::{Body, Status};
     ///
     /// let message = "The resouce was created.";
     ///
-    /// let response = HttpResponse::build()
+    /// let response = ResponseBuilder::new()
     ///     .status(Status::Created)
     ///     .body(message)
     ///     .finish();
