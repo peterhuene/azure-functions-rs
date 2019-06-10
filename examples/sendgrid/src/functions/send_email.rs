@@ -1,6 +1,5 @@
 use azure_functions::{
     bindings::{HttpRequest, HttpResponse, SendGridMessage},
-    send_grid::MessageBuilder,
     func,
 };
 
@@ -11,10 +10,10 @@ pub fn send_email(req: HttpRequest) -> (HttpResponse, SendGridMessage) {
 
     (
         "The email was sent.".into(),
-        MessageBuilder::new()
+        SendGridMessage::build()
             .to(params.get("to").unwrap().as_str())
             .subject(params.get("subject").unwrap().as_str())
             .content(params.get("content").unwrap().as_str())
-            .build(),
+            .finish(),
     )
 }

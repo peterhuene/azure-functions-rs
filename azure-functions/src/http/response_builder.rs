@@ -16,12 +16,12 @@ impl ResponseBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::http::ResponseBuilder;
     /// use azure_functions::http::Status;
     ///
-    /// let response: HttpResponse = HttpResponse::build()
+    /// let response = ResponseBuilder::new()
     ///     .status(Status::InternalServerError)
-    ///     .into();
+    ///     .finish();
     ///
     /// assert_eq!(response.status(), Status::InternalServerError);
     /// ```
@@ -35,13 +35,13 @@ impl ResponseBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::http::ResponseBuilder;
     ///
     /// let value = "custom header value";
     ///
-    /// let response: HttpResponse = HttpResponse::build()
+    /// let response = ResponseBuilder::new()
     ///     .header("X-Custom-Header", value)
-    ///     .into();
+    ///     .finish();
     ///
     /// assert_eq!(
     ///     response
@@ -63,15 +63,15 @@ impl ResponseBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::http::ResponseBuilder;
     /// use azure_functions::http::{Body, Status};
     ///
     /// let message = "The resouce was created.";
     ///
-    /// let response: HttpResponse = HttpResponse::build()
+    /// let response = ResponseBuilder::new()
     ///     .status(Status::Created)
     ///     .body(message)
-    ///     .into();
+    ///     .finish();
     ///
     /// assert_eq!(response.status(), Status::Created);
     /// assert_eq!(
@@ -98,6 +98,11 @@ impl ResponseBuilder {
         self.0.data.body = Some(Box::new(body.into()));
         self
     }
+
+    /// Consumes the builder and returns the HTTP response.
+    pub fn finish(self) -> HttpResponse {
+        self.0
+    }
 }
 
 #[cfg(test)]
@@ -106,28 +111,28 @@ mod tests {
 
     #[test]
     fn it_creates_an_empty_response() {
-        let response: HttpResponse = ResponseBuilder::new().into();
+        let response: HttpResponse = ResponseBuilder::new().finish();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(response.body().as_str().unwrap(), "");
     }
 
     #[test]
     fn it_sets_a_status() {
-        let response: HttpResponse = ResponseBuilder::new().status(Status::BadRequest).into();
+        let response: HttpResponse = ResponseBuilder::new().status(Status::BadRequest).finish();
         assert_eq!(response.status(), Status::BadRequest);
         assert_eq!(response.body().as_str().unwrap(), "");
     }
 
     #[test]
     fn it_sets_a_header() {
-        let response: HttpResponse = ResponseBuilder::new().header("foo", "bar").into();
+        let response: HttpResponse = ResponseBuilder::new().header("foo", "bar").finish();
         assert_eq!(response.headers().get("foo").unwrap(), "bar");
         assert_eq!(response.body().as_str().unwrap(), "");
     }
 
     #[test]
     fn it_sets_a_body() {
-        let response: HttpResponse = ResponseBuilder::new().body("test").into();
+        let response: HttpResponse = ResponseBuilder::new().body("test").finish();
         assert_eq!(
             response.headers().get("Content-Type").unwrap(),
             "text/plain"
