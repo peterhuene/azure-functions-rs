@@ -3,7 +3,7 @@
     "peterhuene",
     "rylev",
     "dependabot-bot",
-    "dependabot-preview",
+    "dependabot-preview[bot]",
     "t-eckert",
     "rtyler"
   ]
