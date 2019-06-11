@@ -51,26 +51,17 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
     - [Azure Functions Core Tools](#azure-functions-core-tools)
   - [Installing the Azure Functions for Rust SDK](#installing-the-azure-functions-for-rust-sdk)
 
-- [Azure Functions for Rust](#azure-functions-for-rust)
-  - [Example](#example)
-  - [Get Started](#get-started)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-    - [Requirements](#requirements)
-      - [.NET Core SDK](#net-core-sdk)
-      - [Azure Functions Core Tools](#azure-functions-core-tools)
-    - [Installing the Azure Functions for Rust SDK](#installing-the-azure-functions-for-rust-sdk)
-  - [Creating a new Azure Functions application](#creating-a-new-azure-functions-application)
-  - [Adding a simple HTTP-triggered application](#adding-a-simple-http-triggered-application)
-  - [Building the Azure Functions application](#building-the-azure-functions-application)
-  - [Running the Azure Functions application](#running-the-azure-functions-application)
-  - [Debugging the Azure Functions application](#debugging-the-azure-functions-application)
-  - [Deploying the Azure Functions application](#deploying-the-azure-functions-application)
-  - [Azure Functions Bindings](#azure-functions-bindings)
-    - [Bindings in Rust](#bindings-in-rust)
-      - [Input bindings](#input-bindings)
-      - [Input-output (inout) bindings](#input-output-inout-bindings)
-      - [Output bindings](#output-bindings)
+- [Creating a new Azure Functions application](#creating-a-new-azure-functions-application)
+- [Adding a simple HTTP-triggered application](#adding-a-simple-http-triggered-application)
+- [Building the Azure Functions application](#building-the-azure-functions-application)
+- [Running the Azure Functions application](#running-the-azure-functions-application)
+- [Debugging the Azure Functions application](#debugging-the-azure-functions-application)
+- [Deploying the Azure Functions application](#deploying-the-azure-functions-application)
+- [Azure Functions Bindings](#azure-functions-bindings)
+  - [Bindings in Rust](#bindings-in-rust)
+    - [Input bindings](#input-bindings)
+    - [Input-output (inout) bindings](#input-output-inout-bindings)
+    - [Output bindings](#output-bindings)
 
 ## Installation
 
@@ -367,3 +358,4 @@ pub fn example(...) -> ((), Blob) {
 ```
 
 For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
+
