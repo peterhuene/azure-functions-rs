@@ -13,7 +13,7 @@ use azure_functions::{bindings::ServiceBusTrigger, func};
 #[func]
 #[binding(name = "trigger", queue_name = "example", connection = "connection")]
 pub fn log_queue_message(trigger: ServiceBusTrigger) {
-    log::warn!("{}", trigger.message.as_str().unwrap());
+    log::info!("{}", trigger.message.as_str().unwrap());
 }
 ```
 
@@ -50,7 +50,7 @@ use azure_functions::{bindings::ServiceBusTrigger, func};
     connection = "connection"
 )]
 pub fn log_topic_message(trigger: ServiceBusTrigger) {
-    log::warn!("{}", trigger.message.as_str().unwrap());
+    log::info!("{}", trigger.message.as_str().unwrap());
 }
 ```
 
@@ -124,7 +124,7 @@ Simply use `curl` to invoke the `create_queue_message` function with the desired
 $ curl http://localhost:8080/api/create_queue_message
 ```
 
-With any luck, you should see the following warning printed to your terminal:
+With any luck, you should see the following informational message printed to your terminal:
 
 ```
 [3/26/19 5:29:34 AM] Hello from Rust, stranger!
@@ -140,7 +140,7 @@ Simply use `curl` to invoke the `create_topic_message` function with the desired
 $ curl http://localhost:8080/api/create_topic_message\?name=Peter
 ```
 
-With any luck, you should see the following warning printed to your terminal:
+With any luck, you should see the following informational message printed to your terminal:
 
 ```
 [3/26/19 5:30:29 AM] Hello from Rust, Peter!

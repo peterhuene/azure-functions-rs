@@ -24,12 +24,12 @@ use std::collections::HashMap;
 /// ```rust
 /// use azure_functions::bindings::TimerInfo;
 /// use azure_functions::func;
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// #[binding(name = "_info", schedule = "0 */5 * * * *")]
 /// pub fn timer(_info: TimerInfo) {
-///     warn!("Rust Azure function ran!");
+///     info!("Rust Azure function ran!");
 /// }
 /// ```
 #[derive(Debug, Deserialize)]

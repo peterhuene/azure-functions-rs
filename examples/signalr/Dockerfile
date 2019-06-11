@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile-upstream:experimental
 
-FROM peterhuene/azure-functions-rs-build:0.8.0 AS build-image
+FROM peterhuene/azure-functions-rs-build:0.9.0 AS build-image
 
 WORKDIR /src
 COPY . /src
@@ -22,9 +22,6 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
 
 # Copy the Azure Functions host from the runtime image
 COPY --from=runtime-image [ "/azure-functions-host", "/azure-functions-host" ]
-
-# Copy configuration to the Azure Functions Host
-COPY --from=build-image ["/src/appsettings.json", "/azure-functions-host/appsettings.json"]
 
 # Copy the script root contents from the build image
 COPY --from=build-image ["/home/site/wwwroot", "/home/site/wwwroot"]

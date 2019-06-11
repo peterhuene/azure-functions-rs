@@ -22,11 +22,11 @@ use std::collections::HashMap;
 ///     bindings::EventGridEvent,
 ///     func,
 /// };
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// pub fn log_event(event: EventGridEvent) {
-///     log::warn!("Event Data: {}", event.data);
+///     log::info!("Event Data: {}", event.data);
 /// }
 /// ```
 #[derive(Debug, Deserialize)]

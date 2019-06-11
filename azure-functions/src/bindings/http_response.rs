@@ -66,7 +66,7 @@ use std::collections::HashMap;
 ///         .status(Status::MovedPermanently)
 ///         .header("Location", "http://example.com")
 ///         .body("The requested resource has moved to: http://example.com")
-///         .into()
+///         .finish()
 /// }
 /// ```
 #[derive(Default, Debug)]
@@ -88,10 +88,10 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::bindings::HttpResponse;
     /// use azure_functions::http::Status;
     ///
-    /// let response: HttpResponse = HttpResponse::build().status(Status::NotFound).into();
+    /// let response = HttpResponse::build().status(Status::NotFound).finish();
     /// assert_eq!(response.status(), Status::NotFound);
     /// ```
     pub fn build() -> ResponseBuilder {
@@ -103,10 +103,10 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::bindings::HttpResponse;
     /// use azure_functions::http::Status;
     ///
-    /// let response: HttpResponse = HttpResponse::build().status(Status::BadRequest).into();
+    /// let response = HttpResponse::build().status(Status::BadRequest).finish();
     /// assert_eq!(response.status(), Status::BadRequest);
     /// ```
     pub fn status(&self) -> Status {
@@ -118,9 +118,9 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::bindings::HttpResponse;
+    /// let response = HttpResponse::build().body("example").finish();
     ///
-    /// let response: HttpResponse = HttpResponse::build().body("example").into();
     /// assert_eq!(response.body().as_str().unwrap(), "example");
     /// ```
     pub fn body(&self) -> Body {
@@ -136,9 +136,9 @@ impl HttpResponse {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::bindings::HttpResponse;
+    /// # use azure_functions::bindings::HttpResponse;
+    /// let response = HttpResponse::build().header("Content-Type", "text/plain").finish();
     ///
-    /// let response: HttpResponse = HttpResponse::build().header("Content-Type", "text/plain").into();
     /// assert_eq!(response.headers().get("Content-Type").unwrap(), "text/plain");
     /// ```
     pub fn headers(&self) -> &HashMap<String, String> {
@@ -151,13 +151,7 @@ where
     T: Into<Body<'a>>,
 {
     fn from(data: T) -> Self {
-        HttpResponse::build().body(data).into()
-    }
-}
-
-impl From<ResponseBuilder> for HttpResponse {
-    fn from(builder: ResponseBuilder) -> Self {
-        builder.0
+        HttpResponse::build().body(data).finish()
     }
 }
 
@@ -188,7 +182,7 @@ mod tests {
 
     #[test]
     fn it_is_empty_from_a_builder() {
-        let response: HttpResponse = HttpResponse::build().into();
+        let response: HttpResponse = HttpResponse::build().finish();
 
         assert_eq!(response.status(), Status::Ok);
         assert!(matches!(response.body(), Body::Empty));
@@ -196,7 +190,7 @@ mod tests {
 
     #[test]
     fn it_builds_with_a_status() {
-        let response: HttpResponse = HttpResponse::build().status(Status::Continue).into();
+        let response: HttpResponse = HttpResponse::build().status(Status::Continue).finish();
 
         assert_eq!(response.status(), Status::Continue);
     }
@@ -205,7 +199,7 @@ mod tests {
     fn it_builds_with_a_string_body() {
         const BODY: &'static str = "test body";
 
-        let response: HttpResponse = HttpResponse::build().body(BODY).into();
+        let response: HttpResponse = HttpResponse::build().body(BODY).finish();
 
         assert_eq!(
             response.headers().get("Content-Type").unwrap(),
@@ -227,9 +221,9 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let response: HttpResponse = HttpResponse::build()
+        let response = HttpResponse::build()
             .body(::serde_json::to_value(data).unwrap())
-            .into();
+            .finish();
 
         assert_eq!(
             response.headers().get("Content-Type").unwrap(),
@@ -242,7 +236,7 @@ mod tests {
     fn it_builds_with_a_bytes_body() {
         const BODY: &'static [u8] = &[1, 2, 3];
 
-        let response: HttpResponse = HttpResponse::build().body(BODY).into();
+        let response: HttpResponse = HttpResponse::build().body(BODY).finish();
 
         assert_eq!(
             response.headers().get("Content-Type").unwrap(),
@@ -257,7 +251,7 @@ mod tests {
             .header("header1", "value1")
             .header("header2", "value2")
             .header("header3", "value3")
-            .into();
+            .finish();
 
         assert_eq!(response.headers().get("header1").unwrap(), "value1");
         assert_eq!(response.headers().get("header2").unwrap(), "value2");
@@ -270,7 +264,7 @@ mod tests {
             .status(Status::BadRequest)
             .header("header", "value")
             .body("body")
-            .into();
+            .finish();
 
         let data: TypedData = response.into();
         match data.data {

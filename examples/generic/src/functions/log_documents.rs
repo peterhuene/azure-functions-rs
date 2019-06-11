@@ -1,5 +1,5 @@
 use azure_functions::{bindings::GenericTrigger, func, generic::Value};
-use log::warn;
+use log::info;
 
 #[func]
 #[binding(
@@ -13,7 +13,7 @@ use log::warn;
 pub fn log_documents(trigger: GenericTrigger) {
     match trigger.data {
         Value::Json(v) => {
-            warn!("{}", v);
+            info!("{}", v);
         }
         _ => panic!("expected JSON for Cosmos DB trigger data"),
     }

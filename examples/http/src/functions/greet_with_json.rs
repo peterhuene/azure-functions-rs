@@ -28,5 +28,5 @@ pub fn greet_with_json(req: HttpRequest) -> HttpResponse {
     HttpResponse::build()
         .status(Status::BadRequest)
         .body("Invalid JSON request.")
-        .into()
+        .finish()
 }

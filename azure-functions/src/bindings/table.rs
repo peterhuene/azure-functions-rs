@@ -26,13 +26,13 @@ use std::fmt;
 /// ```rust
 /// use azure_functions::bindings::{QueueTrigger, Table};
 /// use azure_functions::func;
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// #[binding(name = "trigger", queue_name = "example")]
 /// #[binding(name = "table", table_name = "MyTable", partition_key = "MyPartition", row_key = "{queueTrigger}")]
 /// pub fn log_row(trigger: QueueTrigger, table: Table) {
-///     warn!("Row: {:?}", table.rows().nth(0));
+///     info!("Row: {:?}", table.rows().nth(0));
 /// }
 /// ```
 /// Run an Azure Storage table query based on a HTTP request:
@@ -40,13 +40,13 @@ use std::fmt;
 /// ```rust
 /// use azure_functions::bindings::{HttpRequest, Table};
 /// use azure_functions::func;
-/// use log::warn;
+/// use log::info;
 ///
 /// #[func]
 /// #[binding(name = "table", table_name = "MyTable", filter = "{filter}")]
 /// pub fn log_rows(req: HttpRequest, table: Table) {
 ///     for row in table.rows() {
-///         warn!("Row: {:?}", row);
+///         info!("Row: {:?}", row);
 ///     }
 /// }
 #[derive(Default, Debug, Clone)]

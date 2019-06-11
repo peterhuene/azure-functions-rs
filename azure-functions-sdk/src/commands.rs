@@ -19,8 +19,8 @@ lazy_static::lazy_static! {
     static ref TEMPLATES: handlebars::Handlebars = {
         let mut templates = handlebars::Handlebars::new();
 
-        template!(templates, "new-app", "appsettings.json");
         template!(templates, "new-app", "local.settings.json");
+        template!(templates, "new-app", "host.json");
         template!(templates, "new-app", "Dockerfile");
         template!(templates, "new-app", "dockerignore");
         template!(templates, "new-app", "functions_mod.rs");

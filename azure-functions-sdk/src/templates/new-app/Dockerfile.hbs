@@ -23,9 +23,6 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
 # Copy the Azure Functions host from the runtime image
 COPY --from=runtime-image [ "/azure-functions-host", "/azure-functions-host" ]
 
-# Copy configuration to the Azure Functions Host
-COPY --from=build-image ["/src/appsettings.json", "/azure-functions-host/appsettings.json"]
-
 # Copy the script root contents from the build image
 COPY --from=build-image ["/home/site/wwwroot", "/home/site/wwwroot"]
 

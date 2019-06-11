@@ -39,7 +39,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 ## Get Started
 
 - [More Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
-- [Documentation](https://docs.rs/azure-functions/0.8.0/azure_functions/)
+- [Documentation](https://docs.rs/azure-functions/0.9.0/azure_functions/)
 - [Installation](#installation)
 - [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
@@ -47,8 +47,6 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 
 - [Installation](#installation)
   - [Requirements](#requirements)
-    - [CMake](#cmake)
-    - [C++ Compiler](#c-compiler)
     - [.Net Core SDK](#.net-core-sdk)
     - [Azure Functions Core Tools](#azure-functions-core-tools)
   - [Installing the Azure Functions for Rust SDK](#installing-the-azure-functions-for-rust-sdk)
@@ -68,62 +66,6 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 ## Installation
 
 ### Requirements
-
-#### CMake
-
-The `azure-functions` crate has a dependency on the `grpcio` crate that uses [CMake](https://cmake.org) to build and link against the gRPC native library.
-
-CMake must be installed and on the `PATH` to be able to use Azure Functions for Rust.
-
-##### Windows
-
-Install CMake from the [Windows installer](https://cmake.org/download/).
-
-##### macOS
-
-The easiest way to install CMake on macOS is with [Homebrew](https://brew.sh/):
-
-```
-$ brew install cmake
-```
-
-##### Linux
-
-Use your distro's package manager to install a `cmake` (or similar) package.
-
-For example on Debian/Ubuntu:
-
-```
-$ apt-get install cmake
-```
-
-#### C++ Compiler
-
-The `grpcio` crate builds a native library that implements the gRPC runtime.
-
-Therefore, a C++ compiler must be on your PATH.
-
-##### Windows
-
-Install [Visual Studio 2015 or later](https://visualstudio.microsoft.com/).
-
-##### macOS
-
-Ensure the XCode command line utilities are installed, as this will install `clang`:
-
-```
-$ xcode-select --install
-```
-
-##### Linux
-
-Use your distro's package manager to install `g++` (or similar) package:
-
-For example on Debian/Ubuntu:
-
-```
-$ apt-get install g++
-```
 
 #### .NET Core SDK
 
