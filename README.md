@@ -1,4 +1,5 @@
 # Azure Functions for Rust
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
@@ -360,3 +361,15 @@ pub fn example(...) -> ((), Blob) {
 ```
 
 For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
+
+## Contributors
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore -->
+<table><tr><td align="center"><a href="https://github.com/peterhuene"><img src="https://avatars3.githubusercontent.com/u/509666?v=4" width="100px;" alt="Peter Huene"/><br /><sub><b>Peter Huene</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/issues?q=author%3Apeterhuene" title="Bug reports">🐛</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Documentation">📖</a> <a href="#ideas-peterhuene" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-peterhuene" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-peterhuene" title="Maintenance">🚧</a> <a href="#platform-peterhuene" title="Packaging/porting to new platform">📦</a> <a href="#review-peterhuene" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Tests">⚠️</a> <a href="#tutorial-peterhuene" title="Tutorials">✅</a></td></tr></table>
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
