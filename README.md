@@ -1,9 +1,9 @@
 # Azure Functions for Rust
-
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 [![Gitter](https://badges.gitter.im/azure-functions-rs/community.svg)](https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Build Status](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_apis/build/status/peterhuene.azure-functions-rs?branchName=master)](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_build/latest?definitionId=2&branchName=master)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
@@ -64,6 +64,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
     - [Input bindings](#input-bindings)
     - [Input-output (inout) bindings](#input-output-inout-bindings)
     - [Output bindings](#output-bindings)
+- [Contributors](#contributors)
 
 ## Installation
 
@@ -360,3 +361,15 @@ pub fn example(...) -> ((), Blob) {
 ```
 
 For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
+
+## Contributors
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore -->
+<table><tr><td align="center"><a href="https://github.com/peterhuene"><img src="https://avatars3.githubusercontent.com/u/509666?v=4" width="100px;" alt="Peter Huene"/><br /><sub><b>Peter Huene</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/issues?q=author%3Apeterhuene" title="Bug reports">🐛</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Documentation">📖</a> <a href="#ideas-peterhuene" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-peterhuene" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-peterhuene" title="Maintenance">🚧</a> <a href="#platform-peterhuene" title="Packaging/porting to new platform">📦</a> <a href="#review-peterhuene" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Tests">⚠️</a> <a href="#tutorial-peterhuene" title="Tutorials">✅</a></td></tr></table>
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

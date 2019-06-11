@@ -1,0 +1,32 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "peterhuene",
+      "name": "Peter Huene",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/509666?v=4",
+      "profile": "https://github.com/peterhuene",
+      "contributions": [
+        "code",
+        "bug",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "review",
+        "test",
+        "tutorial"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "azure-functions-rs",
+  "projectOwner": "peterhuene",
+  "repoType": "github",
+  "repoHost": "https://github.com"
+}
