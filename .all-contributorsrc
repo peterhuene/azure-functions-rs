@@ -35,6 +35,23 @@
         "review",
         "infra"
       ]
+    },
+    {
+      "login": "t-eckert",
+      "name": "Thomas Eckert",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/29112081?v=4",
+      "profile": "https://thomaseckert.org",
+      "contributions": [
+        "code",
+        "content",
+        "design",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "review",
+        "tutorial"
+      ]
     }
   ],
   "contributorsPerLine": 7,
