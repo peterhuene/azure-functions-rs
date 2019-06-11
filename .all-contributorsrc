@@ -22,6 +22,19 @@
         "test",
         "tutorial"
       ]
+    },
+    {
+      "login": "rylev",
+      "name": "Ryan Levick",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/1327285?v=4",
+      "profile": "https://github.com/rylev",
+      "contributions": [
+        "code",
+        "ideas",
+        "maintenance",
+        "review",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
