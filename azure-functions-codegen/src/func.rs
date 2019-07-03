@@ -7,7 +7,7 @@ use azure_functions_shared::codegen::{
         Binding, BindingFactory, INPUT_BINDINGS, INPUT_OUTPUT_BINDINGS, OUTPUT_BINDINGS, TRIGGERS,
         VEC_INPUT_BINDINGS, VEC_OUTPUT_BINDINGS,
     },
-    get_string_value, iter_attribute_args, last_segment_in_path, macro_panic, Function,
+    get_string_value, iter_attribute_args, last_segment_in_path, macro_panic, Function, InvokerFn,
 };
 use invoker::Invoker;
 use output_bindings::OutputBindings;
@@ -23,7 +23,6 @@ use syn::{
 
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
-const CONTEXT_TYPE_NAME: &str = "Context";
 
 fn validate_function(func: &ItemFn) {
     match func.vis {
@@ -224,19 +223,6 @@ fn bind_input_type(
     has_trigger: bool,
     binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Binding {
-    let last_segment = last_segment_in_path(&tp.path);
-    let type_name = last_segment.ident.to_string();
-
-    if type_name == CONTEXT_TYPE_NAME {
-        if let Some(m) = mutability {
-            macro_panic(
-                m.span(),
-                "context bindings cannot be passed by mutable reference",
-            );
-        }
-        return Binding::Context;
-    }
-
     let factory = get_input_binding_factory(tp, mutability, has_trigger);
 
     match pattern {
@@ -498,7 +484,27 @@ pub fn func_impl(
         func.name = Cow::Owned(target_name.clone());
     }
 
-    func.invoker_name = Some(Cow::Owned(invoker.name()));
+    match target.asyncness {
+        Some(asyncness) => {
+            if cfg!(feature = "unstable") {
+                func.invoker = Some(azure_functions_shared::codegen::Invoker {
+                    name: Cow::Owned(invoker.name()),
+                    invoker_fn: InvokerFn::Async(None),
+                });
+            } else {
+                macro_panic(
+                    asyncness.span(),
+                    "async Azure Functions require a nightly compiler with the 'unstable' feature enabled",
+                );
+            }
+        }
+        None => {
+            func.invoker = Some(azure_functions_shared::codegen::Invoker {
+                name: Cow::Owned(invoker.name()),
+                invoker_fn: InvokerFn::Sync(None),
+            });
+        }
+    }
 
     let const_name = Ident::new(
         &format!("__{}_FUNCTION", target_name.to_uppercase()),

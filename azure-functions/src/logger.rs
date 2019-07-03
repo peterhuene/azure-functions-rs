@@ -1,10 +1,8 @@
-use crate::rpc::{rpc_log, streaming_message::Content, RpcLog, StreamingMessage};
+use crate::{
+    rpc::{rpc_log, streaming_message::Content, RpcLog, StreamingMessage},
+    worker::Sender,
+};
 use log::{Level, Log, Metadata, Record};
-use std::cell::RefCell;
-
-thread_local!(pub static INVOCATION_ID: RefCell<String> = RefCell::new(String::new()));
-
-type Sender = futures::sync::mpsc::UnboundedSender<StreamingMessage>;
 
 pub struct Logger {
     level: Level,
@@ -39,12 +37,7 @@ impl Log for Logger {
             ..Default::default()
         };
 
-        INVOCATION_ID.with(|id| {
-            let id = id.borrow();
-            if !id.is_empty() {
-                event.invocation_id = id.clone();
-            }
-        });
+        event.invocation_id = crate::context::CURRENT.with(|c| c.borrow().invocation_id.clone());
 
         self.sender
             .unbounded_send(StreamingMessage {
