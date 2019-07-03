@@ -17,7 +17,7 @@ tower-grpc = "0.1.0"
 tower-service = "0.2.0"
 tower-util = "0.1.0"
 log = { version = "0.4.6", features = ["std"] }
-futures = "0.1.27"
+futures = "0.1.28"
 clap = "2.33.0"
 tokio = "0.1.21"
 serde = "1.0.93"
