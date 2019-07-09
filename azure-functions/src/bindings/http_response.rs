@@ -170,7 +170,7 @@ impl Into<TypedData> for HttpResponse {
 mod tests {
     use super::*;
     use matches::matches;
-    use serde::{Deserialize, Serialize};
+    use serde_derive::{Deserialize, Serialize};
 
     #[test]
     fn it_is_empty_by_default() {

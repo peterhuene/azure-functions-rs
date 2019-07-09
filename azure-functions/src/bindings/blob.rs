@@ -221,7 +221,7 @@ impl Into<TypedData> for Blob {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Serialize;
+    use serde_derive::{Deserialize, Serialize};
     use serde_json::json;
     use serde_json::to_value;
     use std::fmt::Write;
