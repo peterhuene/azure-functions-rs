@@ -368,30 +368,3 @@ lazy_static! {
         set
     };
 }
-
-#[cfg(test)]
-mod tests {
-    use std::panic::{catch_unwind, UnwindSafe};
-
-    pub fn should_panic<T>(callback: T, msg: &str)
-    where
-        T: FnOnce() + UnwindSafe,
-    {
-        let result = catch_unwind(|| callback());
-        assert!(result.is_err(), "the function did not panic");
-
-        if cfg!(feature = "unstable") {
-            assert_eq!(
-                result.unwrap_err().downcast_ref::<String>().unwrap(),
-                "aborting due to previous error",
-                "the panic message is not the expected one"
-            );
-        } else {
-            assert_eq!(
-                result.unwrap_err().downcast_ref::<String>().unwrap(),
-                msg,
-                "the panic message is not the expected one"
-            );
-        }
-    }
-}

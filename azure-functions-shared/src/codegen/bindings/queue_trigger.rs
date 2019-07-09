@@ -13,7 +13,7 @@ pub struct QueueTrigger {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codegen::bindings::tests::should_panic;
+    use crate::codegen::tests::should_panic;
     use proc_macro2::{Span, TokenStream};
     use quote::ToTokens;
     use serde_json::to_string;

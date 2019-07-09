@@ -1,4 +1,4 @@
-use crate::func::{get_generic_argument_type, OutputBindings, CONTEXT_TYPE_NAME};
+use crate::func::{get_generic_argument_type, OutputBindings};
 use azure_functions_shared::codegen::{bindings::TRIGGERS, last_segment_in_path};
 use azure_functions_shared::util::to_camel_case;
 use proc_macro2::TokenStream;
@@ -21,10 +21,24 @@ impl<'a> Invoker<'a> {
         }
     }
 
+    fn is_trigger_type(ty: &Type) -> bool {
+        match Invoker::deref_arg_type(ty) {
+            Type::Path(tp) => {
+                TRIGGERS.contains_key(last_segment_in_path(&tp.path).ident.to_string().as_str())
+            }
+            Type::Paren(tp) => Invoker::is_trigger_type(&tp.elem),
+            _ => false,
+        }
+    }
+}
+
+struct CommonInvokerTokens<'a>(pub &'a ItemFn);
+
+impl<'a> CommonInvokerTokens<'a> {
     fn get_input_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
         self.iter_args()
             .filter_map(|(name, arg_type)| {
-                if Invoker::is_context_type(arg_type) | Invoker::is_trigger_type(arg_type) {
+                if Invoker::is_trigger_type(arg_type) {
                     return None;
                 }
 
@@ -36,7 +50,7 @@ impl<'a> Invoker<'a> {
     fn get_input_assignments(&self) -> Vec<TokenStream> {
         self.iter_args()
             .filter_map(|(_, arg_type)| {
-                if Invoker::is_context_type(arg_type) | Invoker::is_trigger_type(arg_type) {
+                if Invoker::is_trigger_type(arg_type) {
                     return None;
                 }
 
@@ -66,13 +80,6 @@ impl<'a> Invoker<'a> {
     fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
         self.iter_args()
             .map(|(name, arg_type)| {
-                if Invoker::is_context_type(arg_type) {
-                    if let Type::Reference(_) = arg_type {
-                        return quote!(&__ctx)
-                    }
-                    return quote!(__ctx.clone());
-                }
-
                 let name_str = name.to_string();
 
                 if let Type::Reference(tr) = arg_type {
@@ -99,32 +106,10 @@ impl<'a> Invoker<'a> {
             _ => panic!("expected captured arguments"),
         })
     }
-
-    fn is_context_type(ty: &Type) -> bool {
-        match Invoker::deref_arg_type(ty) {
-            Type::Path(tp) => last_segment_in_path(&tp.path).ident == CONTEXT_TYPE_NAME,
-            Type::Paren(tp) => Invoker::is_context_type(&tp.elem),
-            _ => false,
-        }
-    }
-
-    fn is_trigger_type(ty: &Type) -> bool {
-        match Invoker::deref_arg_type(ty) {
-            Type::Path(tp) => {
-                TRIGGERS.contains_key(last_segment_in_path(&tp.path).ident.to_string().as_str())
-            }
-            Type::Paren(tp) => Invoker::is_trigger_type(&tp.elem),
-            _ => false,
-        }
-    }
 }
 
-impl ToTokens for Invoker<'_> {
+impl ToTokens for CommonInvokerTokens<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
-        let invoker = Ident::new(
-            &format!("{}{}", INVOKER_PREFIX, self.0.ident.to_string()),
-            self.0.ident.span(),
-        );
         let target = &self.0.ident;
 
         let (args, types) = self.get_input_args();
@@ -139,13 +124,7 @@ impl ToTokens for Invoker<'_> {
 
         let args_for_call = self.get_args_for_call();
 
-        let output_bindings = OutputBindings(self.0);
-
-        quote!(#[allow(dead_code)]
-        fn #invoker(
-            __name: &str,
-            __req: ::azure_functions::rpc::InvocationRequest,
-        ) -> ::azure_functions::rpc::InvocationResponse {
+        quote!(
             use azure_functions::{IntoVec, FromVec};
 
             let mut #trigger_arg: Option<#trigger_type> = None;
@@ -155,33 +134,87 @@ impl ToTokens for Invoker<'_> {
 
             for __param in __req.input_data.into_iter() {
                 match __param.name.as_str() {
-                   #trigger_name => #trigger_arg = Some(
-                       #trigger_type::new(
-                           __param.data.expect("expected parameter binding data"),
-                           __metadata.take().expect("expected only one trigger")
+                    #trigger_name => #trigger_arg = Some(
+                        #trigger_type::new(
+                            __param.data.expect("expected parameter binding data"),
+                            __metadata.take().expect("expected only one trigger")
                         )
                     ),
-                   #(#arg_names => #args_for_match = Some(#arg_assignments),)*
+                    #(#arg_names => #args_for_match = Some(#arg_assignments),)*
                     _ => panic!(format!("unexpected parameter binding '{}'", __param.name)),
                 };
             }
 
-            let __ctx = ::azure_functions::Context::new(&__req.invocation_id, &__req.function_id, __name);
             let __ret = #target(#(#args_for_call,)*);
+        )
+        .to_tokens(tokens);
+    }
+}
 
-            let mut __res = ::azure_functions::rpc::InvocationResponse {
-                invocation_id: __req.invocation_id,
-                result: Some(::azure_functions::rpc::StatusResult {
-                    status: ::azure_functions::rpc::status_result::Status::Success as i32,
-                    ..Default::default()
-                }),
-                ..Default::default()
-            };
+impl ToTokens for Invoker<'_> {
+    fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
+        let ident = Ident::new(
+            &format!("{}{}", INVOKER_PREFIX, self.0.ident.to_string()),
+            self.0.ident.span(),
+        );
 
-            #output_bindings
+        let common_tokens = CommonInvokerTokens(&self.0);
 
-            __res
+        let output_bindings = OutputBindings(self.0);
 
-        }).to_tokens(tokens);
+        if self.0.asyncness.is_some() {
+            quote!(
+                #[allow(dead_code)]
+                fn #ident(
+                    __req: ::azure_functions::rpc::InvocationRequest,
+                ) -> ::azure_functions::codegen::InvocationFuture {
+                    #common_tokens
+
+                    use futures::future::FutureExt;
+
+                    let __id = __req.invocation_id;
+
+                    Box::pin(
+                        __ret.then(move |__ret| {
+                            let mut __res = ::azure_functions::rpc::InvocationResponse {
+                                invocation_id: __id,
+                                result: Some(::azure_functions::rpc::StatusResult {
+                                    status: ::azure_functions::rpc::status_result::Status::Success as i32,
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            };
+
+                            #output_bindings
+
+                            ::futures::future::ready(__res)
+                        })
+                    )
+                }
+            ).to_tokens(tokens);
+        } else {
+            quote!(
+                #[allow(dead_code)]
+                fn #ident(
+                    __req: ::azure_functions::rpc::InvocationRequest,
+                ) -> ::azure_functions::rpc::InvocationResponse {
+                    #common_tokens
+
+                    let mut __res = ::azure_functions::rpc::InvocationResponse {
+                        invocation_id: __req.invocation_id,
+                        result: Some(::azure_functions::rpc::StatusResult {
+                            status: ::azure_functions::rpc::status_result::Status::Success as i32,
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    };
+
+                    #output_bindings
+
+                    __res
+                }
+            )
+            .to_tokens(tokens);
+        }
     }
 }
