@@ -111,7 +111,6 @@ pub mod send_grid;
 pub mod signalr;
 pub mod timer;
 #[doc(no_inline)]
-pub use azure_functions_codegen::export;
 pub use azure_functions_shared::rpc;
 
 use crate::commands::{Init, Run, SyncExtensions};
@@ -135,12 +134,8 @@ pub trait FromVec<T> {
 /// # Examples
 ///
 /// ```rust,ignore
-/// azure_functions::export! {
-///     example
-/// }
-///
 /// fn main() {
-///     azure_functions::worker_main(::std::env::args(), FUNCTIONS);
+///     azure_functions::worker_main(::std::env::args(), functions::EXPORTS);
 /// }
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
@@ -154,14 +149,10 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
 /// # Examples
 ///
 /// ```rust,ignore
-/// azure_functions::export! {
-///     example
-/// }
-///
 /// fn main() {
 ///     azure_functions::worker_main_with_extensions(
 ///         ::std::env::args(),
-///         FUNCTIONS,
+///         functions::EXPORTS,
 ///         &[("Microsoft.Azure.WebJobs.Extensions.Kafka", "1.0.0-alpha")]
 ///     );
 /// }

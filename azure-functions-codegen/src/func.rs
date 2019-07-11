@@ -507,7 +507,7 @@ pub fn func_impl(
     }
 
     let const_name = Ident::new(
-        &format!("__{}_FUNCTION", target_name.to_uppercase()),
+        &format!("{}_FUNCTION", target_name.to_uppercase()),
         Span::call_site(),
     );
 
