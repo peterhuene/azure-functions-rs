@@ -11,7 +11,7 @@ use azure_functions::{
     database_name = "exampledb",
     collection_name = "documents",
     id = "{id}",
-    partition_key = "{id}",
+    partition_key = "{id}"
 )]
 pub fn read_document(req: HttpRequest, document: CosmosDbDocument) -> HttpResponse {
     if document.is_null() {

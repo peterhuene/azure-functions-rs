@@ -1,8 +1,6 @@
 use crate::{
     commands::TEMPLATES,
-    util::{
-        create_from_template, last_segment_in_path, print_failure, print_running, print_success,
-    },
+    util::{create_from_template, print_failure, print_running, print_success},
 };
 use atty::Stream;
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
@@ -10,11 +8,12 @@ use colored::Colorize;
 use regex::Regex;
 use serde_json::{json, Value};
 use std::{
+    fmt::Write,
     fs::{remove_file, File},
     io::Read,
     path::Path,
 };
-use syn::{parse::Parser, parse_file, punctuated::Punctuated, Ident, Item, Token};
+use syn::{parse_file, Expr, ExprArray, Item};
 
 fn get_path_for_function(name: &str) -> Result<String, String> {
     if !Regex::new("^[a-zA-Z][a-zA-Z0-9_]*$")
@@ -85,6 +84,46 @@ fn create_function(name: &str, template: &str, data: &Value, quiet: bool) -> Res
     Ok(())
 }
 
+fn format_path(path: &syn::Path) -> String {
+    let mut formatted = String::new();
+    if path.leading_colon.is_some() {
+        formatted.push_str("::");
+    }
+
+    let mut first = true;
+    for segment in &path.segments {
+        if first {
+            first = false;
+        } else {
+            formatted.push_str("::");
+        }
+
+        write!(formatted, "{}", segment.ident).unwrap();
+    }
+
+    formatted
+}
+
+fn parse_array_elements(array: &ExprArray, functions: &mut Vec<String>) -> bool {
+    for elem in &array.elems {
+        match elem {
+            Expr::Reference(r) => match &*r.expr {
+                Expr::Path(p) => {
+                    functions.push(format_path(&p.path));
+                }
+                _ => {
+                    return false;
+                }
+            },
+            _ => {
+                return false;
+            }
+        }
+    }
+
+    true
+}
+
 fn export_function(name: &str) -> Result<(), String> {
     let mut file =
         File::open("src/functions/mod.rs").map_err(|_| "'src/functions/mod.rs' does not exist.")?;
@@ -95,43 +134,62 @@ fn export_function(name: &str) -> Result<(), String> {
 
     let ast = parse_file(&source).map_err(|_| "failed to parse 'src/functions/mod.rs'.")?;
 
-    let mut found = false;
+    let mut modules = Vec::new();
+    let mut exports = None;
+
     for item in ast.items {
-        if let Item::Macro(m) = item {
-            if last_segment_in_path(&m.mac.path).ident == "export" {
-                let mut modules: Vec<String> = Punctuated::<Ident, Token![,]>::parse_terminated
-                    .parse2(m.mac.tts)
-                    .map_err(|_| "failed to parse 'azure_functions::export' macro.")?
-                    .into_iter()
-                    .map(|i| i.to_string())
-                    .collect();
-
-                modules.push(name.to_string());
-
-                modules.sort();
-
-                create_from_template(
-                    &TEMPLATES,
-                    "functions_mod.rs",
-                    "",
-                    "src/functions/mod.rs",
-                    &json!({ "modules": if modules.is_empty() {
-                        String::new()
-                    } else {
-                        format!("    {}", modules.join(",\n    "))
-                    }}),
-                )?;
-
-                found = true;
+        match item {
+            Item::Mod(m) => {
+                modules.push(m.ident.to_string());
             }
+            Item::Const(c) => {
+                if exports.is_some() {
+                    return Err(
+                        "multiple 'EXPORTS' constants found in 'src/functions/mod.rs'.".to_string(),
+                    );
+                }
+
+                if c.ident == "EXPORTS" {
+                    exports = Some(c);
+                }
+            }
+            _ => {}
         }
     }
 
+    let mut functions = Vec::new();
+
+    let found = match &exports {
+        None => false,
+        Some(exports) => match &*exports.expr {
+            Expr::Reference(r) => match &*r.expr {
+                Expr::Array(a) => parse_array_elements(a, &mut functions),
+                _ => false,
+            },
+            _ => false,
+        },
+    };
+
     if !found {
-        return Err("failed to find 'export!' macro in 'src/functions/mod.rs'.".to_string());
+        return Err("failed to find 'EXPORTS' constant in 'src/functions/mod.rs'.".to_string());
     }
 
-    Ok(())
+    modules.push(name.to_string());
+    modules.sort();
+
+    functions.push(format!("{}::{}_FUNCTION", name, name.to_uppercase()));
+    functions.sort();
+
+    create_from_template(
+        &TEMPLATES,
+        "functions_mod.rs",
+        "",
+        "src/functions/mod.rs",
+        &json!({
+            "modules": modules,
+            "functions": functions
+        }),
+    )
 }
 
 pub struct New<'a> {
