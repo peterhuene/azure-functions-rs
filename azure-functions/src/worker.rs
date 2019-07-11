@@ -11,10 +11,8 @@ use crate::{
         WorkerStatusResponse,
     },
 };
-use http::{
-    uri::{Authority, Parts, Scheme, Uri},
-    Request as HttpRequest,
-};
+use futures01::{future::poll_fn, sync::mpsc::unbounded, Async, Future, Poll, Stream};
+use http::uri::Uri;
 use log::error;
 use std::cell::RefCell;
 use std::panic::{catch_unwind, set_hook, AssertUnwindSafe, PanicInfo};
@@ -25,56 +23,10 @@ use tower_hyper::{
     util::{Connector, Destination, HttpConnector},
     Connect,
 };
-use tower_service::Service;
+use tower_request_modifier::Builder as RequestModifierBuilder;
 use tower_util::MakeService;
 
-use futures01::{future::poll_fn, sync::mpsc::unbounded, Async, Future, Poll, Stream};
-
 pub type Sender = futures01::sync::mpsc::UnboundedSender<StreamingMessage>;
-
-// TODO: replace with tower-request-modifier when published (see: https://github.com/tower-rs/tower-http/issues/24)
-struct HttpOriginService<T> {
-    inner: T,
-    scheme: Scheme,
-    authority: Authority,
-}
-
-impl<T> HttpOriginService<T> {
-    pub fn new(inner: T, uri: Uri) -> Self {
-        let parts = Parts::from(uri);
-
-        HttpOriginService {
-            inner,
-            scheme: parts.scheme.unwrap(),
-            authority: parts.authority.unwrap(),
-        }
-    }
-}
-
-impl<T, B> Service<HttpRequest<B>> for HttpOriginService<T>
-where
-    T: Service<HttpRequest<B>>,
-{
-    type Response = T::Response;
-    type Error = T::Error;
-    type Future = T::Future;
-
-    fn poll_ready(&mut self) -> Poll<(), Self::Error> {
-        self.inner.poll_ready()
-    }
-
-    fn call(&mut self, req: HttpRequest<B>) -> Self::Future {
-        let (mut head, body) = req.into_parts();
-        let mut parts = Parts::from(head.uri);
-
-        parts.authority = Some(self.authority.clone());
-        parts.scheme = Some(self.scheme.clone());
-
-        head.uri = Uri::from_parts(parts).expect("valid uri");
-
-        self.inner.call(HttpRequest::from_parts(head, body))
-    }
-}
 
 struct ContextFuture<F> {
     inner: F,
@@ -160,7 +112,14 @@ impl Worker {
             HttpBuilder::new().http2_only(true).clone(),
         )
         .make_service(Destination::try_from_uri(host_uri.clone()).unwrap())
-        .map(move |conn| FunctionRpc::new(HttpOriginService::new(conn, host_uri)))
+        .map(move |conn| {
+            FunctionRpc::new(
+                RequestModifierBuilder::new()
+                    .set_origin(host_uri)
+                    .build(conn)
+                    .unwrap(),
+            )
+        })
         .map_err(|e| panic!("failed to connect to host: {}", e))
         .and_then(|mut client| {
             client
