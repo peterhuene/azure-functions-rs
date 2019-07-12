@@ -17,7 +17,7 @@ bytes = "0.4"
 serde = "1.0.94"
 serde_json = "1.0.40"
 serde_derive = "1.0.94"
-quote = "0.6.12"
+quote = "0.6.13"
 syn = { version = "0.15.39", features = ["full"] }
 proc-macro2 = { version = "0.4.30" }
 lazy_static = "1.3.0"
