@@ -1,9 +1,9 @@
 # Azure Functions for Rust
-
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
+[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors)
 [![Gitter](https://badges.gitter.im/azure-functions-rs/community.svg)](https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Build Status](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_apis/build/status/peterhuene.azure-functions-rs?branchName=master)](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_build/latest?definitionId=2&branchName=master)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
@@ -15,6 +15,8 @@ in [Rust](https://www.rust-lang.org/).
 > :triangular_flag_on_post: **Disclaimer**  
 > Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.  
 > _Microsoft and Azure are registered trademarks of Microsoft Corporation._
+
+*If you would like the Azure Functions team to consider supporting Rust, please [vote up this feedback item](https://feedback.azure.com/forums/355860-azure-functions/suggestions/36818512-support-for-native-rust-azure-functions).*
 
 ## Example
 
@@ -86,6 +88,7 @@ See [Building an async Azure Functions application](#building-an-async-azure-fun
     - [Input bindings](#input-bindings)
     - [Input-output (inout) bindings](#input-output-inout-bindings)
     - [Output bindings](#output-bindings)
+- [Contributors](#contributors)
 
 ## Installation
 
@@ -403,3 +406,15 @@ pub fn example(...) -> ((), Blob) {
 ```
 
 For the above example, there is no `$return` binding and the Azure Function "returns" no value.  Instead, a single output binding named `output1` is used.
+
+## Contributors
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore -->
+<table><tr><td align="center"><a href="https://github.com/peterhuene"><img src="https://avatars3.githubusercontent.com/u/509666?v=4" width="100px;" alt="Peter Huene"/><br /><sub><b>Peter Huene</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/issues?q=author%3Apeterhuene" title="Bug reports">🐛</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Documentation">📖</a> <a href="#ideas-peterhuene" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-peterhuene" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-peterhuene" title="Maintenance">🚧</a> <a href="#platform-peterhuene" title="Packaging/porting to new platform">📦</a> <a href="#review-peterhuene" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=peterhuene" title="Tests">⚠️</a> <a href="#tutorial-peterhuene" title="Tutorials">✅</a></td><td align="center"><a href="https://github.com/rylev"><img src="https://avatars3.githubusercontent.com/u/1327285?v=4" width="100px;" alt="Ryan Levick"/><br /><sub><b>Ryan Levick</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=rylev" title="Code">💻</a> <a href="#ideas-rylev" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-rylev" title="Maintenance">🚧</a> <a href="#review-rylev" title="Reviewed Pull Requests">👀</a> <a href="#infra-rylev" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td><td align="center"><a href="https://thomaseckert.org"><img src="https://avatars3.githubusercontent.com/u/29112081?v=4" width="100px;" alt="Thomas Eckert"/><br /><sub><b>Thomas Eckert</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=t-eckert" title="Code">💻</a> <a href="#content-t-eckert" title="Content">🖋</a> <a href="#design-t-eckert" title="Design">🎨</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=t-eckert" title="Documentation">📖</a> <a href="#ideas-t-eckert" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-t-eckert" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-t-eckert" title="Maintenance">🚧</a> <a href="#review-t-eckert" title="Reviewed Pull Requests">👀</a> <a href="#tutorial-t-eckert" title="Tutorials">✅</a></td><td align="center"><a href="https://brokenco.de/"><img src="https://avatars0.githubusercontent.com/u/26594?v=4" width="100px;" alt="R. Tyler Croy"/><br /><sub><b>R. Tyler Croy</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=rtyler" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=rtyler" title="Documentation">📖</a> <a href="#review-rtyler" title="Reviewed Pull Requests">👀</a> <a href="#ideas-rtyler" title="Ideas, Planning, & Feedback">🤔</a></td></tr></table>
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

@@ -1,0 +1,74 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "peterhuene",
+      "name": "Peter Huene",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/509666?v=4",
+      "profile": "https://github.com/peterhuene",
+      "contributions": [
+        "code",
+        "bug",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "review",
+        "test",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "rylev",
+      "name": "Ryan Levick",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/1327285?v=4",
+      "profile": "https://github.com/rylev",
+      "contributions": [
+        "code",
+        "ideas",
+        "maintenance",
+        "review",
+        "infra"
+      ]
+    },
+    {
+      "login": "t-eckert",
+      "name": "Thomas Eckert",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/29112081?v=4",
+      "profile": "https://thomaseckert.org",
+      "contributions": [
+        "code",
+        "content",
+        "design",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "review",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "rtyler",
+      "name": "R. Tyler Croy",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/26594?v=4",
+      "profile": "https://brokenco.de/",
+      "contributions": [
+        "code",
+        "doc",
+        "review",
+        "ideas"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "azure-functions-rs",
+  "projectOwner": "peterhuene",
+  "repoType": "github",
+  "repoHost": "https://github.com"
+}
