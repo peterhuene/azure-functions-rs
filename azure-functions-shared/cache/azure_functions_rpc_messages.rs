@@ -10,6 +10,42 @@ pub mod nullable_string {
         Value(std::string::String),
     }
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NullableDouble {
+    #[prost(oneof = "nullable_double::Double", tags = "1")]
+    pub double: ::std::option::Option<nullable_double::Double>,
+}
+pub mod nullable_double {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Double {
+        #[prost(double, tag = "1")]
+        Value(f64),
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NullableBool {
+    #[prost(oneof = "nullable_bool::Bool", tags = "1")]
+    pub bool: ::std::option::Option<nullable_bool::Bool>,
+}
+pub mod nullable_bool {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Bool {
+        #[prost(bool, tag = "1")]
+        Value(bool),
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NullableTimestamp {
+    #[prost(oneof = "nullable_timestamp::Timestamp", tags = "1")]
+    pub timestamp: ::std::option::Option<nullable_timestamp::Timestamp>,
+}
+pub mod nullable_timestamp {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Timestamp {
+        #[prost(message, tag = "1")]
+        Value(::prost_types::Timestamp),
+    }
+}
 /// Light-weight representation of a .NET System.Security.Claims.ClaimsIdentity object.
 /// This is the same serialization as found in EasyAuth, and needs to be kept in sync with
 /// its ClaimsIdentitySlim definition, as seen in the WebJobs extension:
@@ -291,6 +327,9 @@ pub struct RpcFunctionMetadata {
     /// Bindings info
     #[prost(map = "string, message", tag = "6")]
     pub bindings: ::std::collections::HashMap<std::string::String, BindingInfo>,
+    /// Is set to true for proxy
+    #[prost(bool, tag = "7")]
+    pub is_proxy: bool,
 }
 /// Host requests worker to invoke a Function
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -457,6 +496,48 @@ pub struct RpcException {
     #[prost(string, tag = "2")]
     pub message: std::string::String,
 }
+/// Http cookie type. Note that only name and value are used for Http requests
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RpcHttpCookie {
+    /// Cookie name
+    #[prost(string, tag = "1")]
+    pub name: std::string::String,
+    /// Cookie value
+    #[prost(string, tag = "2")]
+    pub value: std::string::String,
+    /// Specifies allowed hosts to receive the cookie
+    #[prost(message, optional, tag = "3")]
+    pub domain: ::std::option::Option<NullableString>,
+    /// Specifies URL path that must exist in the requested URL
+    #[prost(message, optional, tag = "4")]
+    pub path: ::std::option::Option<NullableString>,
+    /// Sets the cookie to expire at a specific date instead of when the client closes.
+    /// It is generally recommended that you use "Max-Age" over "Expires".
+    #[prost(message, optional, tag = "5")]
+    pub expires: ::std::option::Option<NullableTimestamp>,
+    /// Sets the cookie to only be sent with an encrypted request
+    #[prost(message, optional, tag = "6")]
+    pub secure: ::std::option::Option<NullableBool>,
+    /// Sets the cookie to be inaccessible to JavaScript's Document.cookie API
+    #[prost(message, optional, tag = "7")]
+    pub http_only: ::std::option::Option<NullableBool>,
+    /// Allows servers to assert that a cookie ought not to be sent along with cross-site requests
+    #[prost(enumeration = "rpc_http_cookie::SameSite", tag = "8")]
+    pub same_site: i32,
+    /// Number of seconds until the cookie expires. A zero or negative number will expire the cookie immediately.
+    #[prost(message, optional, tag = "9")]
+    pub max_age: ::std::option::Option<NullableDouble>,
+}
+pub mod rpc_http_cookie {
+    /// Enum that lets servers require that a cookie shouoldn't be sent with cross-site requests
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SameSite {
+        None = 0,
+        Lax = 1,
+        Strict = 2,
+    }
+}
 /// TODO - solidify this or remove it
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RpcHttp {
@@ -480,6 +561,8 @@ pub struct RpcHttp {
     pub raw_body: ::std::option::Option<::std::boxed::Box<TypedData>>,
     #[prost(message, repeated, tag = "18")]
     pub identities: ::std::vec::Vec<RpcClaimsIdentity>,
+    #[prost(message, repeated, tag = "19")]
+    pub cookies: ::std::vec::Vec<RpcHttpCookie>,
 }
 pub mod client {
     use super::StreamingMessage;

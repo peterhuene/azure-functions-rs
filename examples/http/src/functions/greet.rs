@@ -1,12 +1,10 @@
 use azure_functions::{
     bindings::{HttpRequest, HttpResponse},
-    func, Context,
+    func,
 };
 
 #[func]
-pub fn greet(context: Context, req: HttpRequest) -> HttpResponse {
-    log::info!("Context: {:?}, Request: {:?}", context, req);
-
+pub fn greet(req: HttpRequest) -> HttpResponse {
     format!(
         "Hello from Rust, {}!\n",
         req.query_params().get("name").map_or("stranger", |x| x)

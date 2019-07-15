@@ -9,7 +9,6 @@
 
 #[doc(hidden)]
 pub mod codegen;
-mod context;
 #[doc(hidden)]
 pub mod util;
 
@@ -22,5 +21,3 @@ pub mod rpc {
 
     pub use self::azure_functions_rpc_messages::*;
 }
-
-pub use self::context::*;

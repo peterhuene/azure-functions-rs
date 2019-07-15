@@ -23,25 +23,48 @@ in [Rust](https://www.rust-lang.org/).
 A simple HTTP-triggered Azure Function:
 
 ```rust
-use azure_functions::bindings::{HttpRequest, HttpResponse};
-use azure_functions::func;
+use azure_functions::{
+    bindings::{HttpRequest, HttpResponse},
+    func,
+};
 
 #[func]
 pub fn greet(req: HttpRequest) -> HttpResponse {
-    // Log the message with the Azure Functions Host
-    info!("Request: {:?}", req);
-
     format!(
         "Hello from Rust, {}!\n",
         req.query_params().get("name").map_or("stranger", |x| x)
-    ).into()
+    )
+    .into()
 }
 ```
+
+Azure Functions for Rust supports [async](https://rust-lang.github.io/rfcs/2394-async_await.html) functions when compiled with a nightly compiler and with the `unstable` feature enabled:
+
+```rust
+use azure_functions::{
+    bindings::{HttpRequest, HttpResponse},
+    func,
+};
+use futures::future::ready;
+
+#[func]
+pub async fn greet_async(req: HttpRequest) -> HttpResponse {
+    // Use ready().await to simply demonstrate the async/await feature
+    ready(format!(
+        "Hello from Rust, {}!\n",
+        req.query_params().get("name").map_or("stranger", |x| x)
+    ))
+    .await
+    .into()
+}
+```
+
+See [Building an async Azure Functions application](#building-an-async-azure-functions-application) for more information.
 
 ## Get Started
 
 - [More Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
-- [Documentation](https://docs.rs/azure-functions/0.9.0/azure_functions/)
+- [Documentation](https://docs.rs/azure-functions/0.10.0/azure_functions/)
 - [Installation](#installation)
 - [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
@@ -56,6 +79,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 - [Creating a new Azure Functions application](#creating-a-new-azure-functions-application)
 - [Adding a simple HTTP-triggered application](#adding-a-simple-http-triggered-application)
 - [Building the Azure Functions application](#building-the-azure-functions-application)
+- [Building an async Azure Functions application](#building-an-async-azure-functions-application)
 - [Running the Azure Functions application](#running-the-azure-functions-application)
 - [Debugging the Azure Functions application](#debugging-the-azure-functions-application)
 - [Deploying the Azure Functions application](#deploying-the-azure-functions-application)
@@ -141,12 +165,36 @@ cargo build --features unstable
 
 This enables Azure Functions for Rust to emit diagnostic messages that will include the position of an error within an attribute.
 
+## Building an async Azure Functions application
+
+To build with support for async Azure Functions, add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+futures-preview = { version = "0.3.0-alpha.17", optional = true }
+
+[features]
+unstable = ["azure-functions/unstable", "futures-preview"]
+```
+
+And then build with the `unstable` feature:
+
+```bash
+cargo build --features unstable
+```
+
 ## Running the Azure Functions application
 
 To build and run your Azure Functions application, use `cargo func run`:
 
 ``` bash
 cargo func run
+```
+
+If you need to enable the `unstable` feature, pass the `--features` option to cargo:
+
+```bash
+cargo func run -- --features unstable
 ```
 
 The `cargo func run` command builds and runs your application locally using the Azure Function Host that was
@@ -231,9 +279,6 @@ The current list of supported bindings:
 | [Table](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Table.html)                                 | Input and Ouput Table               | in, out        | No      |
 | [TimerInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TimerInfo.html)                         | Timer Trigger                       | in             | No      |
 | [TwilioSmsMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TwilioSmsMessage.html)           | Twilio SMS Message Output | out     | Yes            | Yes     |
-| [Context](https://docs.rs/azure-functions/latest/azure_functions/struct.Context.html)*                                     | Invocation Context                  | N/A            | N/A     |
-
-\****Note: the `Context` binding is not an Azure Functions binding; it is used to pass information about the function being invoked.***
 
 More bindings will be implemented in the future, including support for retreiving data from custom bindings.
 
