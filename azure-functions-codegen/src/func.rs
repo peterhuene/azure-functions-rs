@@ -23,6 +23,65 @@ use syn::{
 
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
+const ORCHESTRATION_CONTEXT_TYPE: &str = "DurableOrchestrationContext";
+
+fn has_parameter_of_type(func: &ItemFn, type_name: &str) -> bool {
+    func.decl.inputs.iter().any(|arg| {
+        if let FnArg::Captured(arg) = arg {
+            match &arg.ty {
+                Type::Reference(tr) => {
+                    if let Type::Path(tp) = &*tr.elem {
+                        return last_segment_in_path(&tp.path).ident == type_name;
+                    }
+                }
+                Type::Path(tp) => {
+                    return last_segment_in_path(&tp.path).ident == type_name;
+                }
+                _ => {}
+            }
+        }
+        false
+    })
+}
+
+fn validate_orchestration_function(func: &ItemFn) {
+    if func.asyncness.is_none() {
+        macro_panic(func.ident.span(), "orchestration functions must be async");
+    }
+
+    if func.decl.inputs.len() != 1 {
+        macro_panic(
+            func.ident.span(),
+            format!(
+                "orchestration functions must have exactly one parameter of type `{}`",
+                ORCHESTRATION_CONTEXT_TYPE
+            ),
+        );
+    }
+
+    if !match func.decl.inputs.iter().nth(0).unwrap() {
+        FnArg::Captured(arg) => match &arg.ty {
+            Type::Path(tp) => last_segment_in_path(&tp.path).ident == ORCHESTRATION_CONTEXT_TYPE,
+            _ => false,
+        },
+        _ => false,
+    } {
+        macro_panic(
+            func.ident.span(),
+            format!(
+                "orchestration functions must have exactly one parameter of type `{}`",
+                ORCHESTRATION_CONTEXT_TYPE
+            ),
+        );
+    }
+
+    if let ReturnType::Type(_, ty) = &func.decl.output {
+        macro_panic(
+            ty.span(),
+            "orchestration functions cannot have return types",
+        );
+    }
+}
 
 fn validate_function(func: &ItemFn) {
     match func.vis {
@@ -65,6 +124,13 @@ fn validate_function(func: &ItemFn) {
         macro_panic(
             func.decl.variadic.span(),
             "the 'func' attribute cannot be used on variadic functions",
+        );
+    }
+
+    if func.asyncness.is_some() && cfg!(not(feature = "unstable")) {
+        macro_panic(
+            func.asyncness.span(),
+            "async Azure Functions require a nightly compiler with the 'unstable' feature enabled",
         );
     }
 }
@@ -404,6 +470,12 @@ pub fn func_impl(
 
     validate_function(&target);
 
+    let is_orchestration = has_parameter_of_type(&target, ORCHESTRATION_CONTEXT_TYPE);
+
+    if is_orchestration {
+        validate_orchestration_function(&target);
+    }
+
     let mut func = Function::from(match syn::parse_macro_input::parse::<AttributeArgs>(args) {
         Ok(f) => f,
         Err(e) => macro_panic(
@@ -435,17 +507,19 @@ pub fn func_impl(
         );
     }
 
-    for binding in bind_return_type(&target.decl.output, &mut binding_args).into_iter() {
-        if let Some(name) = binding.name() {
-            if !names.insert(name.to_string()) {
-                if let ReturnType::Type(_, ty) = &target.decl.output {
-                    macro_panic(ty.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
+    if !is_orchestration {
+        for binding in bind_return_type(&target.decl.output, &mut binding_args).into_iter() {
+            if let Some(name) = binding.name() {
+                if !names.insert(name.to_string()) {
+                    if let ReturnType::Type(_, ty) = &target.decl.output {
+                        macro_panic(ty.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
+                    }
+                    macro_panic(target.decl.output.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
                 }
-                macro_panic(target.decl.output.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
             }
-        }
 
-        func.bindings.to_mut().push(binding);
+            func.bindings.to_mut().push(binding);
+        }
     }
 
     if let Some((_, args)) = binding_args.iter().nth(0) {
@@ -456,10 +530,17 @@ pub fn func_impl(
 
             if let Lit::Str(s) = v {
                 match s.value().as_ref() {
-                    RETURN_BINDING_NAME => macro_panic(
-                        v.span(),
-                        "cannot bind to a function without a return value",
-                    ),
+                    RETURN_BINDING_NAME => if is_orchestration {
+                        macro_panic(
+                            v.span(),
+                            "cannot bind to the return value of an orchestration function",
+                        )
+                    } else {
+                        macro_panic(
+                            v.span(),
+                            "cannot bind to a function without a return value",
+                        )
+                    },
                     v => macro_panic(
                         v.span(),
                         format!(
@@ -477,33 +558,28 @@ pub fn func_impl(
         });
     }
 
-    let invoker = Invoker(&target);
+    let invoker = Invoker {
+        func: &target,
+        is_orchestration,
+    };
 
     let target_name = target.ident.to_string();
     if func.name.is_empty() {
         func.name = Cow::Owned(target_name.clone());
     }
 
-    match target.asyncness {
-        Some(asyncness) => {
-            if cfg!(feature = "unstable") {
-                func.invoker = Some(azure_functions_shared::codegen::Invoker {
-                    name: Cow::Owned(invoker.name()),
-                    invoker_fn: InvokerFn::Async(None),
-                });
-            } else {
-                macro_panic(
-                    asyncness.span(),
-                    "async Azure Functions require a nightly compiler with the 'unstable' feature enabled",
-                );
-            }
-        }
-        None => {
+    if !is_orchestration && target.asyncness.is_some() {
+        if cfg!(feature = "unstable") {
             func.invoker = Some(azure_functions_shared::codegen::Invoker {
                 name: Cow::Owned(invoker.name()),
-                invoker_fn: InvokerFn::Sync(None),
+                invoker_fn: InvokerFn::Async(None),
             });
         }
+    } else {
+        func.invoker = Some(azure_functions_shared::codegen::Invoker {
+            name: Cow::Owned(invoker.name()),
+            invoker_fn: InvokerFn::Sync(None),
+        });
     }
 
     let const_name = Ident::new(

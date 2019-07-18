@@ -106,6 +106,7 @@ mod worker;
 pub mod bindings;
 pub mod blob;
 pub mod context;
+pub mod durable;
 pub mod event_hub;
 pub mod generic;
 pub mod http;

@@ -354,6 +354,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "durable-functions-example"
+version = "0.1.0"
+dependencies = [
+ "azure-functions 0.10.0",
+ "futures-preview 0.3.0-alpha.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "either"
 version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
