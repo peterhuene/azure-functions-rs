@@ -1,3 +1,4 @@
+mod activity_trigger;
 mod blob;
 mod blob_trigger;
 mod cosmos_db;
@@ -8,6 +9,8 @@ mod event_hub_trigger;
 mod generic;
 mod http;
 mod http_trigger;
+mod orchestration_client;
+mod orchestration_trigger;
 mod queue;
 mod queue_trigger;
 mod send_grid;
@@ -19,6 +22,7 @@ mod table;
 mod timer_trigger;
 mod twilio_sms;
 
+pub use self::activity_trigger::*;
 pub use self::blob::*;
 pub use self::blob_trigger::*;
 pub use self::cosmos_db::*;
@@ -29,6 +33,8 @@ pub use self::event_hub_trigger::*;
 pub use self::generic::*;
 pub use self::http::*;
 pub use self::http_trigger::*;
+pub use self::orchestration_client::*;
+pub use self::orchestration_trigger::*;
 pub use self::queue::*;
 pub use self::queue_trigger::*;
 pub use self::send_grid::*;
@@ -65,7 +71,6 @@ impl Default for Direction {
 #[serde(untagged, rename_all = "camelCase")]
 #[allow(clippy::large_enum_variant)]
 pub enum Binding {
-    Context,
     HttpTrigger(HttpTrigger),
     Http(Http),
     TimerTrigger(TimerTrigger),
@@ -87,12 +92,14 @@ pub enum Binding {
     SendGrid(SendGrid),
     GenericTrigger(Generic),
     Generic(Generic),
+    OrchestrationClient(OrchestrationClient),
+    OrchestrationTrigger(OrchestrationTrigger),
+    ActivityTrigger(ActivityTrigger),
 }
 
 impl Binding {
     pub fn name(&self) -> Option<&str> {
         match self {
-            Binding::Context => None,
             Binding::HttpTrigger(b) => Some(&b.name),
             Binding::Http(b) => Some(&b.name),
             Binding::TimerTrigger(b) => Some(&b.name),
@@ -114,12 +121,14 @@ impl Binding {
             Binding::SendGrid(b) => Some(&b.name),
             Binding::GenericTrigger(b) => Some(&b.name),
             Binding::Generic(b) => Some(&b.name),
+            Binding::OrchestrationClient(b) => Some(&b.name),
+            Binding::OrchestrationTrigger(b) => Some(&b.name),
+            Binding::ActivityTrigger(b) => Some(&b.name),
         }
     }
 
     pub fn binding_type(&self) -> Option<&str> {
         match self {
-            Binding::Context => None,
             Binding::HttpTrigger(_) => Some(HttpTrigger::binding_type()),
             Binding::Http(_) => Some(HttpTrigger::binding_type()),
             Binding::TimerTrigger(_) => Some(TimerTrigger::binding_type()),
@@ -141,13 +150,9 @@ impl Binding {
             Binding::SendGrid(_) => Some(SendGrid::binding_type()),
             Binding::GenericTrigger(b) => Some(b.binding_type()),
             Binding::Generic(b) => Some(b.binding_type()),
-        }
-    }
-
-    pub fn is_context(&self) -> bool {
-        match self {
-            Binding::Context => true,
-            _ => false,
+            Binding::OrchestrationClient(_) => Some(OrchestrationClient::binding_type()),
+            Binding::OrchestrationTrigger(_) => Some(OrchestrationTrigger::binding_type()),
+            Binding::ActivityTrigger(_) => Some(ActivityTrigger::binding_type()),
         }
     }
 
@@ -161,7 +166,9 @@ impl Binding {
             | Binding::EventHubTrigger(_)
             | Binding::CosmosDbTrigger(_)
             | Binding::ServiceBusTrigger(_)
-            | Binding::GenericTrigger(_) => true,
+            | Binding::GenericTrigger(_)
+            | Binding::OrchestrationTrigger(_)
+            | Binding::ActivityTrigger(_) => true,
             _ => false,
         }
     }
@@ -170,7 +177,6 @@ impl Binding {
 impl ToTokens for Binding {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Binding::Context => panic!("context bindings cannot be tokenized"),
             Binding::HttpTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::HttpTrigger(#b))
             }
@@ -226,6 +232,15 @@ impl ToTokens for Binding {
             Binding::Generic(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::Generic(#b))
             }
+            Binding::OrchestrationClient(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::OrchestrationClient(#b))
+            }
+            Binding::OrchestrationTrigger(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::OrchestrationTrigger(#b))
+            }
+            Binding::ActivityTrigger(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::ActivityTrigger(#b))
+            }
         }
         .to_tokens(tokens);
     }
@@ -264,6 +279,12 @@ lazy_static! {
         map.insert("GenericTrigger", |args, span| {
             Binding::GenericTrigger(Generic::from((args, span)))
         });
+        map.insert("DurableOrchestrationContext", |args, span| {
+            Binding::OrchestrationTrigger(OrchestrationTrigger::from((args, span)))
+        });
+        map.insert("DurableActivityContext", |args, span| {
+            Binding::ActivityTrigger(ActivityTrigger::from((args, span)))
+        });
         map
     };
     pub static ref INPUT_BINDINGS: BindingMap = {
@@ -280,6 +301,9 @@ lazy_static! {
         });
         map.insert("GenericInput", |args, span| {
             Binding::Generic(Generic::from((args, span)))
+        });
+        map.insert("DurableOrchestrationClient", |args, span| {
+            Binding::OrchestrationClient(OrchestrationClient::from((args, span)))
         });
         map
     };
