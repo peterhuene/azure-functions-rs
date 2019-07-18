@@ -47,7 +47,7 @@ impl BindingArguments {
                 }
             )
         } else {
-            quote!()
+            TokenStream::new()
         }
     }
 }
@@ -311,7 +311,8 @@ impl Field {
                 }
             }
         }
-        quote!()
+
+        TokenStream::new()
     }
 
     pub fn get_field_assignment(&self) -> TokenStream {
@@ -380,7 +381,7 @@ fn get_default_direction_serialization(
         FieldType::Direction => true,
         _ => false,
     }) {
-        return quote!();
+        return TokenStream::new();
     }
 
     if let Some(direction) = binding_args.direction.as_ref() {
