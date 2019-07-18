@@ -143,7 +143,7 @@ impl ToTokens for Function {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let name = QuotableBorrowedStr(&self.name);
         let disabled = self.disabled;
-        let bindings = self.bindings.iter().filter(|x| !x.is_context());
+        let bindings = self.bindings.iter();
         let invoker = QuotableOption(self.invoker.as_ref());
 
         quote!(
