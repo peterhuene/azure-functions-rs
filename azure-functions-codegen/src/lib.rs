@@ -6,6 +6,7 @@
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 extern crate proc_macro;
 
+mod export;
 mod func;
 
 use azure_functions_shared::codegen::macro_panic;
@@ -36,6 +37,33 @@ fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
         eq_token: Eq { spans: [span] },
         lit: Lit::Str(LitStr::new(name, span)),
     }))]
+}
+
+/// Implements the `export!` macro.
+///
+/// The `export!` macro is used to export a list of modules as Azure Functions.
+///
+/// This macro expects a comma-separated list of module names that implement a
+/// function of the same name with the `#[func]` attribute applied.
+///
+/// A `EXPORTS` constant is declared by the macro.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// mod example;
+///
+/// azure_functions::export! {
+///     example
+/// }
+///
+/// fn main() {
+///     azure_functions::worker_main(::std::env::args(), EXPORTS);
+/// }
+/// ```
+#[proc_macro]
+pub fn export(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    export::export_impl(input)
 }
 
 /// Implements the `func` attribute.

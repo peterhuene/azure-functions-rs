@@ -89,6 +89,8 @@
 #![cfg_attr(test, recursion_limit = "128")]
 
 #[doc(no_inline)]
+pub use azure_functions_codegen::export;
+#[doc(no_inline)]
 pub use azure_functions_codegen::func;
 
 #[doc(hidden)]
@@ -134,8 +136,14 @@ pub trait FromVec<T> {
 /// # Examples
 ///
 /// ```rust,ignore
+/// mod my_function;
+///
+/// azure_functions::export! {
+///     my_function,
+/// }
+///
 /// fn main() {
-///     azure_functions::worker_main(::std::env::args(), functions::EXPORTS);
+///     azure_functions::worker_main(::std::env::args(), EXPORTS);
 /// }
 /// ```
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
