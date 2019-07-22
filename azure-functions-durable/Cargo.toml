@@ -1,0 +1,13 @@
+[package]
+name = "azure-functions-durable"
+license = "MIT"
+version = "0.10.0"
+authors = ["Peter Huene <peterhuene@protonmail.com>"]
+description = "Durable Functions for Rust"
+repository = "https://github.com/peterhuene/azure-functions-rs/"
+homepage = "https://functions.rs"
+edition = "2018"
+
+[dependencies]
+futures-preview = { version = "0.3.0-alpha.17" }
+hyper = { git = "https://github.com/hyperium/hyper", rev = "1d00bb29d4f5d123ddd04d7f78de3b1a98fe7dfb" }
