@@ -2,7 +2,7 @@ use crate::{
     rpc::{typed_data::Data, TypedData},
     FromVec,
 };
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{to_string, to_value, Value};
 
 /// Represents the Twilio SMS message output binding.

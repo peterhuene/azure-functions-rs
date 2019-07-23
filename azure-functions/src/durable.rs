@@ -2,7 +2,7 @@
 use crate::rpc::{
     status_result::Status, typed_data::Data, InvocationResponse, StatusResult, TypedData,
 };
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::to_string;
 use std::{
     cell::RefCell,
