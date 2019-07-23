@@ -247,7 +247,7 @@ impl Into<TypedData> for EventHubMessage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_derive::{Deserialize, Serialize};
+    use serde::{Deserialize, Serialize};
     use serde_json::{json, to_value};
     use std::fmt::Write;
 

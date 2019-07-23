@@ -3,7 +3,7 @@ use crate::{
     signalr::GroupAction,
     FromVec,
 };
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{to_string, to_value, Value};
 
 /// Represents the SignalR group action output binding.

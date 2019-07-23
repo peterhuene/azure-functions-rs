@@ -1,5 +1,5 @@
 //! Module for SignalR types.
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents an action to take on a SignalR group.
 #[derive(Debug, Clone, Serialize, Deserialize)]

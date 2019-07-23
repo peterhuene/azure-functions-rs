@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents the ability to track whether a recipient clicked a link in the email message.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
