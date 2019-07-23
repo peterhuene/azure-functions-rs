@@ -107,7 +107,7 @@ impl DurableOrchestrationContext {
     }
 
     fn find_scheduled_activity(&self, activity_name: &str) -> Option<&HistoryEvent> {
-        self.data.history.and_then(|history| {
+        self.data.history.as_ref().and_then(|history| {
             history.iter().find(|event| {
                 event.name == Some(activity_name.to_owned())
                     && event.event_type == EventType::TaskScheduled
@@ -117,7 +117,7 @@ impl DurableOrchestrationContext {
     }
 
     fn find_completed_activity(&self, scheduled: &HistoryEvent) -> Option<&HistoryEvent> {
-        self.data.history.and_then(|history| {
+        self.data.history.as_ref().and_then(|history| {
             history.iter().find(|event| {
                 event.event_type == EventType::TaskCompleted
                     && event.task_scheduled_id == Some(scheduled.event_id)
@@ -126,7 +126,7 @@ impl DurableOrchestrationContext {
     }
 
     fn find_failed_activity(&self, scheduled: &HistoryEvent) -> Option<&HistoryEvent> {
-        self.data.history.and_then(|history| {
+        self.data.history.as_ref().and_then(|history| {
             history.iter().find(|event| {
                 event.event_type == EventType::TaskFailed
                     && event.task_scheduled_id == Some(scheduled.event_id)
