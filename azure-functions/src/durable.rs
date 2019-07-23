@@ -12,10 +12,12 @@ use std::{
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
+mod actions;
 mod creation_urls;
 mod history;
 mod management_urls;
 
+pub use actions::*;
 pub use creation_urls::*;
 pub use history::*;
 pub use management_urls::*;
@@ -24,7 +26,7 @@ pub use management_urls::*;
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ExecutionResult {
     done: bool,
-    // TODO implements actions
+    actions: Vec<Action>
 }
 
 impl ExecutionResult {
