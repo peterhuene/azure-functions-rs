@@ -7,8 +7,15 @@ edition = "2018"
 [dependencies]
 azure-functions = { path = "../../azure-functions" }
 serde_json = "1.0.40"
+<<<<<<< HEAD
 serde = "1.0.101"
 serde_derive = "1.0.101"
+||||||| merged common ancestors
+serde = "1.0.97"
+serde_derive = "1.0.97"
+=======
+serde = {version = "1.0.97", features = ["derive"] }
+>>>>>>> Remove dependency on serde_derive.
 
 [features]
 unstable = ["azure-functions/unstable"]

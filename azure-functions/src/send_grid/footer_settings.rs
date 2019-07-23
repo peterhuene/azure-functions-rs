@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents footer settings for an email message.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

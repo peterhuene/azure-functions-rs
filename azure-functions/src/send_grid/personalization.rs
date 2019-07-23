@@ -1,5 +1,5 @@
 use crate::send_grid::EmailAddress;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 

@@ -1,4 +1,4 @@
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 /// Represents the Durable Funtions client creation URLs.
 #[derive(Debug, Clone, Deserialize)]

@@ -14,9 +14,20 @@ tower-grpc = "0.1.1"
 prost = "0.5"
 prost-types = "0.5"
 bytes = "0.4"
+<<<<<<< HEAD
 serde = "1.0.101"
+||||||| merged common ancestors
+serde = "1.0.97"
+=======
+serde = {version = "1.0.97", features = ["derive"] }
+>>>>>>> Remove dependency on serde_derive.
 serde_json = "1.0.40"
+<<<<<<< HEAD
 serde_derive = "1.0.101"
+||||||| merged common ancestors
+serde_derive = "1.0.97"
+=======
+>>>>>>> Remove dependency on serde_derive.
 quote = "0.6.13"
 syn = { version = "0.15.44", features = ["full"] }
 proc-macro2 = { version = "0.4.30" }
