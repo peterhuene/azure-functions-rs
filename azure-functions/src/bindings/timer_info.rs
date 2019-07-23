@@ -2,7 +2,7 @@ use crate::{
     rpc::{typed_data::Data, TypedData},
     timer::ScheduleStatus,
 };
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use serde_json::from_str;
 use std::collections::HashMap;
 

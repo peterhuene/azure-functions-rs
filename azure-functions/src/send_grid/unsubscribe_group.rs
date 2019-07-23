@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents an unsubscribe group associated with an email message that specifies how to handle unsubscribes.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

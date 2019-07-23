@@ -1,5 +1,5 @@
 use crate::rpc::TypedData;
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use std::collections::HashMap;
 
 /// Represents the Durable Functions activity context binding.

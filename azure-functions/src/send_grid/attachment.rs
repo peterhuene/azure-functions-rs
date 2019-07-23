@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents an email attachment.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

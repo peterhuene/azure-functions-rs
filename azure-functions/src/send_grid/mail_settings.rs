@@ -1,5 +1,5 @@
 use crate::send_grid::{BccSettings, BypassListManagement, FooterSettings, SandboxMode, SpamCheck};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents a collection of different mail settings that specify how an email message is handled.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
