@@ -143,7 +143,7 @@ impl Default for StandardBlobTier {
 }
 
 /// Represents the properties of an Azure Storage blob.
-#[derive(Default, Debug, serde_derive::Deserialize)]
+#[derive(Default, Debug, serde::Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Properties {
     /// The number of committed blocks, if the blob is an append blob.

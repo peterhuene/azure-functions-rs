@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents the ability to test the email message for spam content.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents an email address containing the email address and name of the sender or recipient.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

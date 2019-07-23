@@ -2,7 +2,7 @@ use crate::{
     durable::{CreationUrls, ManagementUrls},
     rpc::{typed_data::Data, TypedData},
 };
-use serde_derive::Deserialize;
+use serde::Deserialize;
 use serde_json::from_str;
 
 /// Represents the Durable Functions orchestration client input binding.

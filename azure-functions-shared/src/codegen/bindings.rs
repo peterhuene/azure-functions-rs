@@ -49,7 +49,7 @@ pub use self::twilio_sms::*;
 use lazy_static::lazy_static;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use serde_derive::Serialize;
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use syn::AttributeArgs;
 
