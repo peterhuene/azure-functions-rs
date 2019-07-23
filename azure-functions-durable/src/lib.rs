@@ -379,19 +379,10 @@ mod tests {
         assert_eq!(instance_status.custom_status.unwrap().is_object(), true);
     }
 
-<<<<<<< HEAD
-}
-||||||| merged common ancestors
-}
-=======
     #[test]
     fn test_query_builder() {
         let query = InstanceQueryBuilder::default().created_time_from(Utc.ymd(2018, 2, 28).and_hms(5, 18, 49)).build().unwrap();
         assert_eq!(query.created_time_from.is_some(), true);
     }
 
-    #[test]
-    fn test_client() {
-
-    }
-}>>>>>>> Initial structure for orchestration client
+}
