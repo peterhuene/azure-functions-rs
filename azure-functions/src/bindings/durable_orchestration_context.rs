@@ -1,11 +1,12 @@
+use serde::Deserialize;
+use serde_json::{from_str, Value};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+use crate::durable::HistoryEvent;
 use crate::{
     durable::ExecutionResult,
     rpc::{typed_data::Data, TypedData},
 };
-//use chrono::{DateTime, Utc};
-use serde::Deserialize;
-use serde_json::{from_str, Value};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 /// Represents the Durable Functions orchestration context binding.
 ///
@@ -32,7 +33,7 @@ struct DurableOrchestrationContextData {
     is_replaying: bool,
     parent_instance_id: Option<String>,
     input: Value,
-    history: Option<Value>,
+    history: Option<Vec<HistoryEvent>>,
 }
 
 impl DurableOrchestrationContext {
@@ -111,6 +112,8 @@ impl DurableOrchestrationContext {
 mod tests {
     use super::*;
     use crate::rpc::typed_data::Data;
+    use chrono::DateTime;
+    use crate::durable::{HistoryEvent, EventType};
 
     #[test]
     #[should_panic(expected = "expected JSON data for orchestration context data")]
@@ -131,10 +134,43 @@ mod tests {
     }
 
     #[test]
-    fn new_constructs_a_orchestration_context_without_history() {
+    fn new_constructs_an_orchestration_context_without_history() {
         let data = TypedData {
             data: Some(Data::String(
                 r#"{
+                "instanceId":"49497890673e4a75ab380e7a956c607b",
+                "isReplaying":false,
+                "parentInstanceId":"1234123412341234123412341234",
+                "input": []
+            }"#
+                .to_owned(),
+            )),
+        };
+
+        let context = DurableOrchestrationContext::new(data, HashMap::new());
+        assert_eq!(context.instance_id(), "49497890673e4a75ab380e7a956c607b");
+        assert_eq!(
+            context.parent_instance_id(),
+            Some("1234123412341234123412341234")
+        );
+        assert!(!context.is_replaying());
+        assert_eq!(context.data.history, None);
+        assert_eq!(context.input(), &serde_json::Value::Array(vec![]));
+    }
+
+    #[test]
+    fn new_constructs_an_orchestration_context_with_history() {
+        let data = TypedData {
+            data: Some(Data::String(
+                r#"{
+                "history":[
+                    {
+                        "EventType":12,
+                        "EventId":-1,
+                        "IsPlayed":false,
+                        "Timestamp":"2019-07-18T06:22:27.016757Z"
+                    }
+                 ],
                 "instanceId":"49497890673e4a75ab380e7a956c607b",
                 "isReplaying":false,
                 "parentInstanceId":null,
@@ -148,7 +184,20 @@ mod tests {
         assert_eq!(context.instance_id(), "49497890673e4a75ab380e7a956c607b");
         assert_eq!(context.parent_instance_id(), None);
         assert!(!context.is_replaying());
-        assert_eq!(context.data.history, None);
-        assert_eq!(context.input(), &serde_json::Value::Array(vec![]))
+        assert_eq!(context.input(), &serde_json::Value::Array(vec![]));
+        assert_eq!(
+            context.data.history,
+            Some(vec![
+                HistoryEvent {
+                    event_type:EventType::OrchestratorStarted,
+                    event_id: -1,
+                    is_played: false,
+                    timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap(),
+                    is_processed: false,
+                    name: None,
+                    input: None
+                }
+            ])
+        );
     }
 }

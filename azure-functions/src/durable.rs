@@ -14,9 +14,11 @@ use std::{
 
 mod creation_urls;
 mod management_urls;
+mod history;
 
-pub use self::creation_urls::*;
-pub use self::management_urls::*;
+pub use creation_urls::*;
+pub use management_urls::*;
+pub use history::*;
 
 #[doc(hidden)]
 #[derive(Debug, Serialize, Deserialize, Default)]
