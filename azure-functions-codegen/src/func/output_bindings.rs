@@ -15,7 +15,7 @@ impl<'a> OutputBindings<'a> {
             .map(|(name, _)| {
                 let name_str = to_camel_case(&name.to_string());
                 quote!(
-                    __output_data.push(::azure_functions::rpc::ParameterBinding{
+                    __res.output_data.push(::azure_functions::rpc::ParameterBinding{
                         name: #name_str.to_string(),
                         data: Some(#name.unwrap().into()),
                     });
