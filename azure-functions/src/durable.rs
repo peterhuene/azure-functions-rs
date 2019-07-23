@@ -36,6 +36,10 @@ impl ExecutionResult {
     fn mark_done(&mut self) {
         self.done = true;
     }
+
+    pub(crate) fn add_action(&mut self, action: Action) {
+        self.actions.push(action);
+    }
 }
 
 unsafe fn waker_clone(_: *const ()) -> RawWaker {
@@ -59,7 +63,7 @@ unsafe fn waker_drop(_: *const ()) {}
 pub fn orchestrate(
     id: String,
     func: impl Future<Output = ()>,
-    state: Rc<RefCell<ExecutionResult>>,
+    result: Rc<RefCell<ExecutionResult>>,
 ) -> InvocationResponse {
     let waker = unsafe {
         Waker::from_raw(RawWaker::new(
@@ -71,7 +75,7 @@ pub fn orchestrate(
     match Future::poll(Box::pin(func).as_mut(), &mut Context::from_waker(&waker)) {
         Poll::Ready(_) => {
             // Orchestration has completed and the result is ready, return done with output
-            state.borrow_mut().mark_done();
+            result.as_ref().borrow_mut().mark_done();
         }
         Poll::Pending => {
             // Orchestration has not yet completed
@@ -81,7 +85,7 @@ pub fn orchestrate(
     InvocationResponse {
         invocation_id: id,
         return_value: Some(TypedData {
-            data: Some(Data::Json(to_string(&*state.borrow()).unwrap())),
+            data: Some(Data::Json(to_string(&*result.borrow()).unwrap())),
         }),
         result: Some(StatusResult {
             status: Status::Success as i32,
