@@ -27,7 +27,7 @@ pub use management_urls::*;
 pub struct ExecutionResult {
     done: bool,
     actions: Vec<Action>,
-    output: Option<bool>,
+    output: Option<Value>,
     custom_status: Option<Value>,
     error: Option<String>,
 }
