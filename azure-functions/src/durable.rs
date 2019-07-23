@@ -23,6 +23,10 @@ pub use creation_urls::*;
 pub use history::*;
 pub use management_urls::*;
 
+pub use self::activity_output::*;
+pub use self::creation_urls::*;
+pub use self::management_urls::*;
+
 #[doc(hidden)]
 #[derive(Debug, Serialize, Default)]
 pub struct ExecutionResult {
