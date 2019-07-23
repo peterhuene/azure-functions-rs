@@ -125,7 +125,6 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "failed to parse orchestration context data")]
-    fn new_panics_if_no_json_provided() {
         let data = TypedData {
             data: Some(Data::String(r#"{ }"#.to_owned())),
         };
