@@ -1,8 +1,10 @@
 use crate::{
-    durable::OrchestrationState,
+    durable::ExecutionResult,
     rpc::{typed_data::Data, TypedData},
 };
-use serde_json::from_str;
+//use chrono::{DateTime, Utc};
+use serde::Deserialize;
+use serde_json::{from_str, Value};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 /// Represents the Durable Functions orchestration context binding.
@@ -19,24 +21,54 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 /// TODO: IMPLEMENT
 #[derive(Debug)]
 pub struct DurableOrchestrationContext {
-    state: Rc<RefCell<OrchestrationState>>,
+    data: DurableOrchestrationContextData,
+    state: Rc<RefCell<ExecutionResult>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DurableOrchestrationContextData {
+    instance_id: String,
+    is_replaying: bool,
+    parent_instance_id: Option<String>,
+    input: Value,
+    history: Option<Value>,
 }
 
 impl DurableOrchestrationContext {
     #[doc(hidden)]
     pub fn new(data: TypedData, _metadata: HashMap<String, TypedData>) -> Self {
-        DurableOrchestrationContext {
-            state: Rc::new(RefCell::new(match &data.data {
-                Some(Data::String(s)) => {
-                    from_str(s).expect("failed to parse orchestration context data")
-                }
-                _ => panic!("expected JSON data for orchestration context data"),
-            })),
+        match &data.data {
+            Some(Data::String(s)) => DurableOrchestrationContext {
+                data: from_str(s).expect("failed to parse orchestration context data"),
+                state: Rc::new(RefCell::new(ExecutionResult::default())),
+            },
+            _ => panic!("expected JSON data for orchestration context data"),
         }
     }
 
+    /// Gets the instance ID of the currently executing orchestration.
+    pub fn instance_id(&self) -> &str {
+        &self.data.instance_id
+    }
+
+    /// Gets the parent instance ID of the currently executing sub-orchestration.
+    pub fn parent_instance_id(&self) -> Option<&str> {
+        self.data.parent_instance_id.as_ref().map(|id| &**id)
+    }
+
+    /// Gets a value indicating whether the orchestrator function is currently replaying itself.
+    pub fn is_replaying(&self) -> bool {
+        self.data.is_replaying
+    }
+
+    /// The JSON-serializeable input to pass to the orchestrator function.
+    pub fn input(&self) -> &Value {
+        &self.data.input
+    }
+
     #[doc(hidden)]
-    pub fn get_state(&self) -> Rc<RefCell<OrchestrationState>> {
+    pub fn execution_result(&self) -> Rc<RefCell<ExecutionResult>> {
         self.state.clone()
     }
 }
@@ -81,13 +113,42 @@ mod tests {
     use crate::rpc::typed_data::Data;
 
     #[test]
-    fn it_constructs() {
+    #[should_panic(expected = "expected JSON data for orchestration context data")]
+    fn new_panics_if_no_data_provided() {
+        let data = TypedData { data: None };
+
+        let _ = DurableOrchestrationContext::new(data, HashMap::new());
+    }
+
+    #[test]
+    #[should_panic(expected = "failed to parse orchestration context data")]
+    fn new_panics_if_no_json_provided() {
         let data = TypedData {
             data: Some(Data::String(r#"{ }"#.to_owned())),
         };
 
         let _ = DurableOrchestrationContext::new(data, HashMap::new());
+    }
 
-        // TODO: implement
+    #[test]
+    fn new_constructs_a_orchestration_context_without_history() {
+        let data = TypedData {
+            data: Some(Data::String(
+                r#"{
+                "instanceId":"49497890673e4a75ab380e7a956c607b",
+                "isReplaying":false,
+                "parentInstanceId":null,
+                "input": []
+            }"#
+                .to_owned(),
+            )),
+        };
+
+        let context = DurableOrchestrationContext::new(data, HashMap::new());
+        assert_eq!(context.instance_id(), "49497890673e4a75ab380e7a956c607b");
+        assert_eq!(context.parent_instance_id(), None);
+        assert!(!context.is_replaying());
+        assert_eq!(context.data.history, None);
+        assert_eq!(context.input(), &serde_json::Value::Array(vec![]))
     }
 }

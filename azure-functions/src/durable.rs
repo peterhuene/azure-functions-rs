@@ -19,12 +19,13 @@ pub use self::creation_urls::*;
 pub use self::management_urls::*;
 
 #[doc(hidden)]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct OrchestrationState {
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct ExecutionResult {
     done: bool,
+    // TODO implements actions
 }
 
-impl OrchestrationState {
+impl ExecutionResult {
     fn mark_done(&mut self) {
         self.done = true;
     }
@@ -51,7 +52,7 @@ unsafe fn waker_drop(_: *const ()) {}
 pub fn orchestrate(
     id: String,
     func: impl Future<Output = ()>,
-    state: Rc<RefCell<OrchestrationState>>,
+    state: Rc<RefCell<ExecutionResult>>,
 ) -> InvocationResponse {
     let waker = unsafe {
         Waker::from_raw(RawWaker::new(
