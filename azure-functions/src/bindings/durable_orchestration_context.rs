@@ -81,7 +81,7 @@ impl DurableOrchestrationContext {
         &mut self,
         activity_name: &str,
         data: D,
-    ) -> impl Future<Output = Result<Option<Value>, String>>
+    ) -> impl Future<Output = Result<Value, String>>
     where
         D: Into<Value>,
     {
@@ -129,7 +129,7 @@ impl DurableOrchestrationContext {
         })
     }
 
-    fn parse_history_event(&self, event: &HistoryEvent) -> Option<Value> {
+    fn parse_history_event(&self, event: &HistoryEvent) -> Value {
         match event.event_type {
             EventType::EventRaised => event.input.clone(),
             EventType::SubOrchestrationInstanceCompleted | EventType::TaskCompleted => {
@@ -137,6 +137,7 @@ impl DurableOrchestrationContext {
             }
             _ => None,
         }
+        .unwrap_or_default()
     }
 }
 
