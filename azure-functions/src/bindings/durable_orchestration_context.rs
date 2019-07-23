@@ -170,7 +170,24 @@ mod tests {
                         "IsPlayed":false,
                         "Timestamp":"2019-07-18T06:22:27.016757Z"
                     }
-                 ],
+
+                 ,
+                  {
+                     "OrchestrationInstance":{
+                        "InstanceId":"49497890673e4a75ab380e7a956c607b",
+                        "ExecutionId":"5d2025984bef476bbaacefaa499a4f5f"
+                     },
+                     "EventType":0,
+                     "ParentInstance":null,
+                     "Name":"HelloWorld",
+                     "Version":"",
+                     "Input":"{}",
+                     "Tags":null,
+                     "EventId":-1,
+                     "IsPlayed":false,
+                     "Timestamp":"2019-07-18T06:22:26.626966Z"
+                  }
+                  ],
                 "instanceId":"49497890673e4a75ab380e7a956c607b",
                 "isReplaying":false,
                 "parentInstanceId":null,
@@ -195,7 +212,30 @@ mod tests {
                     timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap(),
                     is_processed: false,
                     name: None,
-                    input: None
+                    input: None,
+                    result: None,
+                    task_scheduled_id: None,
+                    instance_id: None,
+                    reason: None,
+                    details: None,
+                    fire_at: None,
+                    timer_id: None
+                },
+                HistoryEvent {
+                    event_type:EventType::ExecutionStarted,
+                    event_id: -1,
+                    is_played: false,
+                    timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:26.626966Z").unwrap(),
+                    is_processed: false,
+                    name: Some("HelloWorld".to_owned()),
+                    input: Some("{}".to_owned()),
+                    result: None,
+                    task_scheduled_id: None,
+                    instance_id: None,
+                    reason: None,
+                    details: None,
+                    fire_at: None,
+                    timer_id: None
                 }
             ])
         );

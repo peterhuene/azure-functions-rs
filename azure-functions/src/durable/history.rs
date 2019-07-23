@@ -2,18 +2,53 @@ use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
 
+// TODO refactor this to make enum HistoryEvent that for each value it will have its own struct
+// enum HistoryEvent { ExecutionStarted(ExecutionStartedEvent), ... }
+// serde now doesn't support elegant conversion from json to tagged enums with custom tag value out of the box.
+// i.e conversion { EventType = 0, EventId = 1, ...} => ExecutionStarted(ExecutionStartedEvent)
+// in future we can implement manual translation
+
 #[doc(hidden)]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct HistoryEvent {
     pub(crate) event_type: EventType,
+
     pub(crate) event_id: i32,
+
     pub(crate) is_played: bool,
+
     pub(crate) timestamp: DateTime<FixedOffset>,
+
     #[serde(default)]
     pub(crate) is_processed: bool,
+
+    // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
     pub(crate) name: Option<String>,
+
+    // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
     pub(crate) input: Option<String>,
+
+    //SubOrchestrationInstanceCompleted, TaskCompleted
+    pub(crate) result: Option<String>,
+
+    // SubOrchestrationInstanceCompleted , SubOrchestrationInstanceFailed, TaskCompleted,TaskFailed
+    pub(crate) task_scheduled_id: Option<i32>,
+
+    // SubOrchestrationInstanceCreated
+    pub(crate) instance_id: Option<String>,
+
+    //SubOrchestrationInstanceFailed, TaskFailed
+    pub(crate) reason: Option<String>,
+
+    // SubOrchestrationInstanceFailed,TaskFailed
+    pub(crate) details: Option<String>,
+
+    //TimerCreated, TimerFired
+    pub(crate) fire_at: Option<DateTime<FixedOffset>>,
+
+    //TimerFired
+    pub(crate) timer_id: Option<i32>,
 }
 
 #[derive(Debug, Clone, Deserialize_repr, PartialEq)]
@@ -34,8 +69,12 @@ pub enum EventType {
     OrchestratorStarted = 12,
     OrchestratorCompleted = 13,
     EventSent = 14,
+    // not supported in js
     EventRaised = 15,
+    // not supported in js
     ContinueAsNew = 16,
+    // not supported in js
     GenericEvent = 17,
+    // not supported in js
     HistoryState = 18,
 }
