@@ -81,6 +81,7 @@ mod tests {
     use crate::rpc::typed_data::Data;
 
     #[test]
+    #[ignore]
     fn it_constructs() {
         let data = TypedData {
             data: Some(Data::String(r#"{ }"#.to_owned())),
