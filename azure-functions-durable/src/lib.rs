@@ -74,27 +74,6 @@ pub struct DurableOrchestrationClientBinding {
     management_urls: ManagementUrls,
 }
 
-impl DurableOrchestrationClientBinding {
-    // Mostly for debugging purposes
-    pub fn new_unserialized(hub:String, create_new:String, create_and_wait:String, id:String, status_query:String, raise:String, terminate:String, rewind:String, purge:String) -> DurableOrchestrationClientBinding {
-        DurableOrchestrationClientBinding {
-            task_hub:hub,
-            creation_urls: CreationUrls { 
-                create_new_instance_url: create_new, 
-                create_new_instance_and_wait_url: create_and_wait 
-            },
-            management_urls: ManagementUrls {
-                id,
-                status_query_url:status_query,
-                raise_event_url:raise,
-                terminate_url:terminate,
-                rewind_url:rewind,
-                purge_history_url:purge
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub enum OrchestrationRuntimeStatus {
     Running,
