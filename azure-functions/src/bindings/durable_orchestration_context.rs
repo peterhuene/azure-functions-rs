@@ -36,7 +36,7 @@ struct DurableOrchestrationContextData {
     is_replaying: bool,
     parent_instance_id: Option<String>,
     input: Value,
-    history: Option<Vec<HistoryEvent>>,
+    history: Vec<HistoryEvent>,
 }
 
 impl DurableOrchestrationContext {
@@ -76,11 +76,12 @@ impl DurableOrchestrationContext {
         self.result.clone()
     }
 
-    fn call_activity<D>(
+    #[doc(hidden)]
+    pub fn call_activity<D>(
         &mut self,
         activity_name: &str,
         data: D,
-    ) -> impl Future<Output = Option<Result<Option<Value>, String>>>
+    ) -> impl Future<Output = Result<Option<Value>, String>>
     where
         D: Into<Value>,
     {
@@ -107,30 +108,24 @@ impl DurableOrchestrationContext {
     }
 
     fn find_scheduled_activity(&self, activity_name: &str) -> Option<&HistoryEvent> {
-        self.data.history.as_ref().and_then(|history| {
-            history.iter().find(|event| {
-                event.name == Some(activity_name.to_owned())
-                    && event.event_type == EventType::TaskScheduled
-                    && !event.is_processed
-            })
+        self.data.history.iter().find(|event| {
+            event.name == Some(activity_name.to_owned())
+                && event.event_type == EventType::TaskScheduled
+                && !event.is_processed
         })
     }
 
     fn find_completed_activity(&self, scheduled: &HistoryEvent) -> Option<&HistoryEvent> {
-        self.data.history.as_ref().and_then(|history| {
-            history.iter().find(|event| {
-                event.event_type == EventType::TaskCompleted
-                    && event.task_scheduled_id == Some(scheduled.event_id)
-            })
+        self.data.history.iter().find(|event| {
+            event.event_type == EventType::TaskCompleted
+                && event.task_scheduled_id == Some(scheduled.event_id)
         })
     }
 
     fn find_failed_activity(&self, scheduled: &HistoryEvent) -> Option<&HistoryEvent> {
-        self.data.history.as_ref().and_then(|history| {
-            history.iter().find(|event| {
-                event.event_type == EventType::TaskFailed
-                    && event.task_scheduled_id == Some(scheduled.event_id)
-            })
+        self.data.history.iter().find(|event| {
+            event.event_type == EventType::TaskFailed
+                && event.task_scheduled_id == Some(scheduled.event_id)
         })
     }
 
@@ -153,7 +148,7 @@ where
 {
     type Output = T;
 
-    fn poll(self: Pin<&mut Self>, context: &mut Context) -> Poll<T> {
+    fn poll(self: Pin<&mut Self>, _context: &mut Context) -> Poll<T> {
         if let Some(v) = self.get_mut().0.take() {
             return Poll::Ready(v);
         }
@@ -229,7 +224,8 @@ mod tests {
                 "instanceId":"49497890673e4a75ab380e7a956c607b",
                 "isReplaying":false,
                 "parentInstanceId":"1234123412341234123412341234",
-                "input": []
+                "input": [],
+                "history": []
             }"#
                 .to_owned(),
             )),
@@ -242,7 +238,7 @@ mod tests {
             Some("1234123412341234123412341234")
         );
         assert!(!context.is_replaying());
-        assert_eq!(context.data.history, None);
+        assert_eq!(context.data.history, vec![]);
         assert_eq!(context.input(), &serde_json::Value::Array(vec![]));
     }
 
@@ -253,29 +249,27 @@ mod tests {
                 r#"{
                 "history":[
                     {
-                        "EventType":12,
+                       "EventType":12,
+                       "EventId":-1,
+                       "IsPlayed":false,
+                       "Timestamp":"2019-07-18T06:22:27.016757Z"
+                    },
+                    {
+                        "OrchestrationInstance":{
+                           "InstanceId":"49497890673e4a75ab380e7a956c607b",
+                           "ExecutionId":"5d2025984bef476bbaacefaa499a4f5f"
+                        },
+                        "EventType":0,
+                        "ParentInstance":null,
+                        "Name":"HelloWorld",
+                        "Version":"",
+                        "Input":"{}",
+                        "Tags":null,
                         "EventId":-1,
                         "IsPlayed":false,
-                        "Timestamp":"2019-07-18T06:22:27.016757Z"
+                       "Timestamp":"2019-07-18T06:22:26.626966Z"
                     }
-
-                 ,
-                  {
-                     "OrchestrationInstance":{
-                        "InstanceId":"49497890673e4a75ab380e7a956c607b",
-                        "ExecutionId":"5d2025984bef476bbaacefaa499a4f5f"
-                     },
-                     "EventType":0,
-                     "ParentInstance":null,
-                     "Name":"HelloWorld",
-                     "Version":"",
-                     "Input":"{}",
-                     "Tags":null,
-                     "EventId":-1,
-                     "IsPlayed":false,
-                     "Timestamp":"2019-07-18T06:22:26.626966Z"
-                  }
-                  ],
+                ],
                 "instanceId":"49497890673e4a75ab380e7a956c607b",
                 "isReplaying":false,
                 "parentInstanceId":null,
@@ -292,7 +286,7 @@ mod tests {
         assert_eq!(context.input(), &serde_json::Value::Array(vec![]));
         assert_eq!(
             context.data.history,
-            Some(vec![
+            vec![
                 HistoryEvent {
                     event_type: EventType::OrchestratorStarted,
                     event_id: -1,
@@ -325,7 +319,7 @@ mod tests {
                     fire_at: None,
                     timer_id: None
                 }
-            ])
+            ]
         );
     }
 }
