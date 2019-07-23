@@ -1,11 +1,10 @@
 use crate::rpc::{typed_data::Data, TypedData};
 use serde_json::Value;
 
-/// # Activity Output
+/// Represents the output of a Durable Functions activity function.
 ///
-/// Type returned by Activity Functions for Durable Functions
-
-struct ActivityOutput(serde_json::Value);
+/// Supports conversion from JSON-compatible types.
+pub struct ActivityOutput(Value);
 
 impl<T> From<T> for ActivityOutput
 where
