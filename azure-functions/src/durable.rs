@@ -2,8 +2,8 @@
 use crate::rpc::{
     status_result::Status, typed_data::Data, InvocationResponse, StatusResult, TypedData,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::to_string;
+use serde::Serialize;
+use serde_json::{to_string, Value};
 use std::{
     cell::RefCell,
     future::Future,
@@ -12,19 +12,24 @@ use std::{
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
+mod actions;
 mod creation_urls;
 mod history;
 mod management_urls;
 
+pub use actions::*;
 pub use creation_urls::*;
 pub use history::*;
 pub use management_urls::*;
 
 #[doc(hidden)]
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Default)]
 pub struct ExecutionResult {
     done: bool,
-    // TODO implements actions
+    actions: Vec<Action>,
+    output: Option<Value>,
+    custom_status: Option<Value>,
+    error: Option<String>,
 }
 
 impl ExecutionResult {
