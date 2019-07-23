@@ -1,5 +1,5 @@
 use crate::event_hub::RuntimeInformation;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Encapsulates information related to an Event Hubs partition.
 #[derive(Debug, Serialize, Deserialize)]

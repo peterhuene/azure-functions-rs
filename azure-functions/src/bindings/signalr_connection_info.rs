@@ -2,7 +2,7 @@ use crate::{
     http::Body,
     rpc::{typed_data::Data, TypedData},
 };
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string};
 use std::borrow::Cow;
 

@@ -85,7 +85,7 @@ impl<'a> CommonInvokerTokens<'a> {
 
     fn get_orchestration_state_arg(&self, trigger: &Ident) -> TokenStream {
         if self.is_orchestration {
-            quote!(let __state = #trigger.as_ref().unwrap().get_state();)
+            quote!(let __state = #trigger.as_ref().unwrap().execution_result();)
         } else {
             TokenStream::new()
         }

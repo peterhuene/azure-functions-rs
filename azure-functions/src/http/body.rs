@@ -93,7 +93,7 @@ impl Body<'_> {
     /// ```rust
     /// use azure_functions::http::Body;
     /// use std::borrow::Cow;
-    /// use serde_derive::Deserialize;
+    /// use serde::Deserialize;
     ///
     /// #[derive(Deserialize)]
     /// struct Data {
@@ -192,7 +192,7 @@ impl Into<TypedData> for Body<'_> {
 mod tests {
     use super::*;
     use matches::matches;
-    use serde_derive::{Deserialize, Serialize};
+    use serde::{Deserialize, Serialize};
     use serde_json::to_value;
     use std::fmt::Write;
 

@@ -2,8 +2,8 @@
 use crate::rpc::{
     status_result::Status, typed_data::Data, InvocationResponse, StatusResult, TypedData,
 };
-use serde_derive::{Deserialize, Serialize};
-use serde_json::to_string;
+use serde::Serialize;
+use serde_json::{to_string, Value};
 use std::{
     cell::RefCell,
     future::Future,
@@ -12,19 +12,27 @@ use std::{
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
+mod actions;
 mod creation_urls;
+mod history;
 mod management_urls;
 
-pub use self::creation_urls::*;
-pub use self::management_urls::*;
+pub use actions::*;
+pub use creation_urls::*;
+pub use history::*;
+pub use management_urls::*;
 
 #[doc(hidden)]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct OrchestrationState {
+#[derive(Debug, Serialize, Default)]
+pub struct ExecutionResult {
     done: bool,
+    actions: Vec<Action>,
+    output: Option<Value>,
+    custom_status: Option<Value>,
+    error: Option<String>,
 }
 
-impl OrchestrationState {
+impl ExecutionResult {
     fn mark_done(&mut self) {
         self.done = true;
     }
@@ -51,7 +59,7 @@ unsafe fn waker_drop(_: *const ()) {}
 pub fn orchestrate(
     id: String,
     func: impl Future<Output = ()>,
-    state: Rc<RefCell<OrchestrationState>>,
+    state: Rc<RefCell<ExecutionResult>>,
 ) -> InvocationResponse {
     let waker = unsafe {
         Waker::from_raw(RawWaker::new(

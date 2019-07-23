@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents the ability to insert a subscription management link at the bottom of the text and html bodies of email messages.
 ///
