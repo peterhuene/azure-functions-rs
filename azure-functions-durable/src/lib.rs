@@ -1,13 +1,34 @@
 //! # Durable Functions for Rust
 #![feature(async_await)]
+#![feature(result_map_or_else)]
 
 #[macro_use]
 extern crate derive_builder;
+extern crate hyper;
+//extern crate hyper_tls;
+extern crate futures;
 
 use std::result::Result::*;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use futures::{future, Future};
+use crate::futures::TryFutureExt;
+use crate::futures::TryStreamExt;
+
+//use hyper_tls::HttpsConnector;
+use hyper::{Body,Client, Uri, Request, client::HttpConnector};
+
+static EVENT_NAME_PLACEHOLDER:&'static str  = "{eventName}";
+static FUNC_NAME_PLACEHOLDER:&'static str   = "{functionName}";
+static INSTANCE_ID_PLACEHOLDER:&'static str = "[/{instanceId}]";
+static REASON_PLACEHOLDER:&'static str      = "{text}";
+static CREATED_TIME_FROM_KEY:&'static str   = "createdTimeFrom";
+static CREATED_TIME_TO_KEY:&'static str     = "createdTimeTo";
+static RUNTIME_STATUS_KEY:&'static str      = "runtimeStatus";
+static SHOW_HISTORY_KEY:&'static str        = "showHistory";
+static SHOW_HISTORY_OUTPUT_KEY:&'static str = "showHistoryOutput";
+static SHOW_INPUT_KEY:&'static str          = "showInput";
 
 /// Represents the Durable Functions client creation URLs.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -55,7 +76,7 @@ pub struct DurableOrchestrationClientBinding {
 
 impl DurableOrchestrationClientBinding {
     // Mostly for debugging purposes
-    pub fn new(hub:String, create_new:String, create_and_wait:String, id:String, status_query:String, raise:String, terminate:String, rewind:String, purge:String) -> DurableOrchestrationClientBinding {
+    pub fn new_unserialized(hub:String, create_new:String, create_and_wait:String, id:String, status_query:String, raise:String, terminate:String, rewind:String, purge:String) -> DurableOrchestrationClientBinding {
         DurableOrchestrationClientBinding {
             task_hub:hub,
             creation_urls: CreationUrls { 
@@ -96,7 +117,9 @@ pub enum OrchestrationClientError
     //400
     BadRaiseEventContent,
     //500
-    UnspecifiedError
+    UnspecifiedError,
+    CommunicationError(String),
+    InvalidResponse,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -122,7 +145,7 @@ pub struct OrchestrationStatus {
 }
 
 #[derive(Default, Builder, Debug)]
-#[builder(setter(strip_option))]
+#[builder(setter(strip_option),default)]
 pub struct InstanceQuery<'a> {
     instance_id:Option<&'a str>,
     created_time_from:Option<DateTime<Utc>>, 
@@ -130,7 +153,7 @@ pub struct InstanceQuery<'a> {
     runtime_status:Option<Vec<OrchestrationRuntimeStatus>>,
     task_hub:Option<&'a str>,
     connection_name:Option<&'a str>,
-    top:u32
+    top:Option<u32>
 }
 
 impl<'a> InstanceQuery<'a> {
@@ -148,10 +171,28 @@ pub struct PurgeHistoryResult {
 type OrchestrationResult<T> = Result<T, OrchestrationClientError>;
 
 pub struct OrchestrationClient {
-    binding: DurableOrchestrationClientBinding
+    binding: DurableOrchestrationClientBinding,
+    client:Client<HttpConnector>
 }
 
 impl OrchestrationClient {
+    pub fn new(binding:DurableOrchestrationClientBinding) -> OrchestrationClient {
+        //let https = HttpsConnector::new(4).unwrap();
+        OrchestrationClient {
+            binding,
+            //client:Client::builder().build::<_, hyper::Body>(https)
+            client:Client::new()
+        }
+    }
+
+    pub fn new_with_client_builder(binding:DurableOrchestrationClientBinding, client_builder:hyper::client::Builder) -> OrchestrationClient {
+        //let https = HttpsConnector::new(4).unwrap();
+        OrchestrationClient {
+            binding,
+            client:client_builder.build_http()
+        }
+    }
+
     pub fn task_hub(&self) -> &str {
         &self.binding.task_hub
     }
@@ -199,7 +240,35 @@ impl OrchestrationClient {
     pub async fn start_new<D>(&self, orchestrator_function_name:&str, instance_id:Option<&str>, input:Option<D>)
         -> OrchestrationResult<String>
         where D: Into<serde_json::Value> {
-        Err(OrchestrationClientError::UnspecifiedError)
+        let instanceid_value = instance_id.map_or("".to_owned(), |i| format!("/{}", i));
+        let creationUri = self.binding.creation_urls.create_new_instance_url.replace(FUNC_NAME_PLACEHOLDER, orchestrator_function_name)
+                                                                            .replace(INSTANCE_ID_PLACEHOLDER, &instanceid_value);
+        let body_value = input.map_or("".to_owned(), |i| i.into().to_string());
+        let mut req = Request::builder()
+                        .method("POST")
+                        .uri(creationUri)
+                        .header("Content-Type", "application/json")
+                        .body(Body::from(body_value))
+                        .unwrap();
+        let ct = Client::new();
+        let res = ct.request(req).await;
+        match res {
+            Ok(response) => {
+                let body = response.into_body().try_concat().await;
+                body.map_or_else(|e| {
+                    Err(OrchestrationClientError::CommunicationError(format!("{:?}", e)))
+                }, |b| {
+                    serde_json::from_slice::<ManagementUrls>(&b).map_or_else(|e2| {
+                        Err(OrchestrationClientError::CommunicationError(format!("{:?}", e2)))
+                    }, |mu| {
+                        Ok(mu.id)
+                    })
+                })
+            },
+            Err(_e) => {
+                Err(OrchestrationClientError::UnspecifiedError)
+            }
+        }
     }
 
     pub async fn terminate<'a>(&self, reason:&str, query:InstanceQuery<'a>) -> OrchestrationResult<()> {
@@ -207,10 +276,18 @@ impl OrchestrationClient {
     }
 }
 
+#[cfg(test)] #[macro_use]
+extern crate yup_hyper_mock as hyper_mock;
 
 #[cfg(test)]
 mod tests {
+    
+
     use super::*;
+    use hyper::{Body, Request, Response, Server};
+    use hyper::rt::Future;
+    static CLIENT_BINDING_JSON:&'static str = r#"{"taskHubName":"test","creationUrls":{"createNewInstancePostUri":"http://localhost:17017/runtime/webhooks/durabletask/orchestrators/{functionName}[/{instanceId}]?code=foo","createAndWaitOnNewInstancePostUri":"http://localhost:17017/runtime/webhooks/durabletask/orchestrators/{functionName}[/{instanceId}]?timeout={timeoutInSeconds}&pollingInterval={intervalInSeconds}&code=foo"},"managementUrls":{"id":"INSTANCEID","statusQueryGetUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=DurableFunctionsHub&connection=Storage&code=foo","sendEventPostUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID/raiseEvent/{eventName}?taskHub=DurableFunctionsHub&connection=Storage&code=foo","terminatePostUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID/terminate?reason={text}&taskHub=DurableFunctionsHub&connection=Storage&code=foo","rewindPostUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID/rewind?reason={text}&taskHub=DurableFunctionsHub&connection=Storage&code=foo","purgeHistoryDeleteUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=DurableFunctionsHub&connection=Storage&code=foo"}}"#;
+    
 
     #[test]
     fn test_instance_history() {
@@ -306,5 +383,10 @@ mod tests {
     fn test_query_builder() {
         let query = InstanceQueryBuilder::default().created_time_from(Utc.ymd(2018, 2, 28).and_hms(5, 18, 49)).build().unwrap();
         assert_eq!(query.created_time_from.is_some(), true);
+    }
+
+    #[test]
+    fn test_client() {
+
     }
 }

@@ -11,9 +11,12 @@ edition = "2018"
 [dependencies]
 futures-preview = { version = "0.3.0-alpha.17" }
 hyper = { git = "https://github.com/hyperium/hyper", rev = "1d00bb29d4f5d123ddd04d7f78de3b1a98fe7dfb" }
-hyper-tls = "0.3.2"
-chrono = { version = "0.4", features = ["serde"] }
-serde = "1.0.97"
+#hyper-tls = { git = "https://github.com/hyperium/hyper-tls", rev = "2e4e2125180342f5c632ea24caed1b60e956691e"}
+serde = { version="1.0.97", features = ["derive"] }
 serde_json = "1.0.40"
-serde_derive = "1.0.97"
 derive_builder = "0.7.2"
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+yup-hyper-mock = "*"
+log = "*"  # log macros are used within yup-hyper-mock
