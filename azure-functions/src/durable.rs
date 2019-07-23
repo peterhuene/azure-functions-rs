@@ -13,12 +13,12 @@ use std::{
 };
 
 mod creation_urls;
-mod management_urls;
 mod history;
+mod management_urls;
 
 pub use creation_urls::*;
-pub use management_urls::*;
 pub use history::*;
+pub use management_urls::*;
 
 #[doc(hidden)]
 #[derive(Debug, Serialize, Deserialize, Default)]

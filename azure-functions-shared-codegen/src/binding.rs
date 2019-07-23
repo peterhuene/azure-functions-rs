@@ -319,9 +319,7 @@ impl Field {
         let ident = &self.ident;
         match &self.ty {
             FieldType::Direction => quote!(#ident: Default::default()),
-            FieldType::OptionalString | FieldType::OptionalBoolean | FieldType::OptionalInteger => {
-                quote!(#ident)
-            }
+            FieldType::OptionalString | FieldType::OptionalBoolean | FieldType::OptionalInteger => quote!(#ident),
             FieldType::StringArray => quote!(#ident: #ident.unwrap_or(Cow::Borrowed(&[]))),
             _ => quote!(#ident: #ident.unwrap()),
         }
@@ -330,23 +328,13 @@ impl Field {
     pub fn get_quotable_decl(&self) -> TokenStream {
         let ident = &self.ident;
         match self.ty {
-            FieldType::String => {
-                quote!(let #ident = crate::codegen::quotable::QuotableBorrowedStr(&self.#ident);)
-            }
-            FieldType::OptionalString => {
-                quote!(let #ident = crate::codegen::quotable::QuotableOption(self.#ident.as_ref().map(|x| crate::codegen::quotable::QuotableBorrowedStr(x)));)
-            }
+            FieldType::String => quote!(let #ident = crate::codegen::quotable::QuotableBorrowedStr(&self.#ident);),
+            FieldType::OptionalString => quote!(let #ident = crate::codegen::quotable::QuotableOption(self.#ident.as_ref().map(|x| crate::codegen::quotable::QuotableBorrowedStr(x)));),
             FieldType::Boolean => quote!(let #ident = self.#ident;),
-            FieldType::Direction => {
-                quote!(let #ident = crate::codegen::quotable::QuotableDirection(self.#ident);)
-            }
-            FieldType::StringArray => {
-                quote!(let #ident = crate::codegen::quotable::QuotableStrArray(self.#ident.as_ref());)
-            }
+            FieldType::Direction => quote!(let #ident = crate::codegen::quotable::QuotableDirection(self.#ident);),
+            FieldType::StringArray => quote!(let #ident = crate::codegen::quotable::QuotableStrArray(self.#ident.as_ref());),
             FieldType::Integer => quote!(let #ident = self.#ident),
-            FieldType::OptionalBoolean | FieldType::OptionalInteger => {
-                quote!(let #ident = crate::codegen::quotable::QuotableOption(self.#ident);)
-            }
+            FieldType::OptionalBoolean | FieldType::OptionalInteger => quote!(let #ident = crate::codegen::quotable::QuotableOption(self.#ident);),
         }
     }
 

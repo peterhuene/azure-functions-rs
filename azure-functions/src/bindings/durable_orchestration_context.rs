@@ -23,7 +23,7 @@ use crate::{
 #[derive(Debug)]
 pub struct DurableOrchestrationContext {
     data: DurableOrchestrationContextData,
-    state: Rc<RefCell<ExecutionResult>>,
+    result: Rc<RefCell<ExecutionResult>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -42,7 +42,7 @@ impl DurableOrchestrationContext {
         match &data.data {
             Some(Data::String(s)) => DurableOrchestrationContext {
                 data: from_str(s).expect("failed to parse orchestration context data"),
-                state: Rc::new(RefCell::new(ExecutionResult::default())),
+                result: Rc::new(RefCell::new(ExecutionResult::default())),
             },
             _ => panic!("expected JSON data for orchestration context data"),
         }
@@ -70,7 +70,7 @@ impl DurableOrchestrationContext {
 
     #[doc(hidden)]
     pub fn execution_result(&self) -> Rc<RefCell<ExecutionResult>> {
-        self.state.clone()
+        self.result.clone()
     }
 }
 
@@ -111,9 +111,9 @@ impl DurableOrchestrationContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::durable::{EventType, HistoryEvent};
     use crate::rpc::typed_data::Data;
     use chrono::DateTime;
-    use crate::durable::{HistoryEvent, EventType};
 
     #[test]
     #[should_panic(expected = "expected JSON data for orchestration context data")]
@@ -206,7 +206,7 @@ mod tests {
             context.data.history,
             Some(vec![
                 HistoryEvent {
-                    event_type:EventType::OrchestratorStarted,
+                    event_type: EventType::OrchestratorStarted,
                     event_id: -1,
                     is_played: false,
                     timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap(),
@@ -222,7 +222,7 @@ mod tests {
                     timer_id: None
                 },
                 HistoryEvent {
-                    event_type:EventType::ExecutionStarted,
+                    event_type: EventType::ExecutionStarted,
                     event_id: -1,
                     is_played: false,
                     timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:26.626966Z").unwrap(),

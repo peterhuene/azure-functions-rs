@@ -51,9 +51,10 @@ pub struct HistoryEvent {
     pub(crate) timer_id: Option<i32>,
 }
 
+#[doc(hidden)]
 #[derive(Debug, Clone, Deserialize_repr, PartialEq)]
 #[repr(u8)]
-pub enum EventType {
+pub(crate) enum EventType {
     ExecutionStarted = 0,
     ExecutionCompleted = 1,
     ExecutionFailed = 2,
