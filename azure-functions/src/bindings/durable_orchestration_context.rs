@@ -114,7 +114,7 @@ impl DurableOrchestrationContext {
             }
         }
 
-        return ActionFuture(None);
+        ActionFuture(None)
     }
 
     fn find_scheduled_activity(&mut self, activity_name: &str) -> Option<&mut HistoryEvent> {

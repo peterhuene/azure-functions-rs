@@ -24,6 +24,7 @@ use syn::{
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
 const ORCHESTRATION_CONTEXT_TYPE: &str = "DurableOrchestrationContext";
+const ORCHESTRATION_OUTPUT_TYPE: &str = "OrchestrationOutput";
 const ACTIVITY_CONTEXT_TYPE: &str = "DurableActivityContext";
 const ACTIVITY_OUTPUT_TYPE: &str = "ActivityOutput";
 
@@ -77,11 +78,27 @@ fn validate_orchestration_function(func: &ItemFn) {
         );
     }
 
-    if let ReturnType::Type(_, ty) = &func.sig.output {
-        macro_panic(
-            ty.span(),
-            "orchestration functions cannot have return types",
-        );
+    if let ReturnType::Type(_, ty) = &func.sig.decl.output {
+        match ty.as_ref() {
+            Type::Path(tp) => {
+                if last_segment_in_path(&tp.path).ident != ORCHESTRATION_OUTPUT_TYPE {
+                    macro_panic(
+                        tp.span(),
+                        format!(
+                            "orchestration functions must have a return type of `{}`",
+                            ORCHESTRATION_OUTPUT_TYPE
+                        ),
+                    );
+                }
+            }
+            _ => macro_panic(
+                ty.span(),
+                format!(
+                    "orchestration functions must have a return type of `{}`",
+                    ORCHESTRATION_OUTPUT_TYPE
+                ),
+            ),
+        }
     }
 }
 
