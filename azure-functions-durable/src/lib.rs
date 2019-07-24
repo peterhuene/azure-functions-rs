@@ -13,11 +13,12 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use futures::{future, Future};
+use crate::futures::FutureExt;
 use crate::futures::TryFutureExt;
 use crate::futures::TryStreamExt;
 
 //use hyper_tls::HttpsConnector;
-use hyper::{Body,Client, Uri, Request, client::HttpConnector};
+use hyper::{Body,Client, Uri, Request, client::HttpConnector, StatusCode};
 
 static EVENT_NAME_PLACEHOLDER:&'static str  = "{eventName}";
 static FUNC_NAME_PLACEHOLDER:&'static str   = "{functionName}";
@@ -233,19 +234,23 @@ impl OrchestrationClient {
         let res = ct.request(req).await;
         match res {
             Ok(response) => {
-                let body = response.into_body().try_concat().await;
-                body.map_or_else(|e| {
-                    Err(OrchestrationClientError::CommunicationError(format!("{:?}", e)))
-                }, |b| {
-                    serde_json::from_slice::<ManagementUrls>(&b).map_or_else(|e2| {
-                        Err(OrchestrationClientError::CommunicationError(format!("{:?}", e2)))
-                    }, |mu| {
-                        Ok(mu.id)
+                if response.status() > StatusCode::ACCEPTED {
+                    Err(OrchestrationClientError::UnspecifiedError)
+                } else {
+                    let body = response.into_body().try_concat().await;
+                    body.map_or_else(|e| {
+                        Err(OrchestrationClientError::CommunicationError(format!("{:?}", e)))
+                    }, |b| {
+                        serde_json::from_slice::<ManagementUrls>(&b).map_or_else(|e2| {
+                            Err(OrchestrationClientError::CommunicationError(format!("{:?}", e2)))
+                        }, |mu| {
+                            Ok(mu.id)
+                        })
                     })
-                })
+                }
             },
-            Err(_e) => {
-                Err(OrchestrationClientError::UnspecifiedError)
+            Err(e) => {
+                Err(OrchestrationClientError::CommunicationError(format!("{:?}", e)))
             }
         }
     }
@@ -255,17 +260,23 @@ impl OrchestrationClient {
     }
 }
 
-#[cfg(test)] #[macro_use]
-extern crate yup_hyper_mock as hyper_mock;
+#[cfg(test)]
+use mockito;
+
+#[cfg(test)]
+extern crate tokio;
 
 #[cfg(test)]
 mod tests {
-    
+    use mockito::mock;
+    use futures::future::lazy;
+    use tokio;
+    use tokio_core::reactor::Core;
 
     use super::*;
     use hyper::{Body, Request, Response, Server};
-    use hyper::rt::Future;
-    static CLIENT_BINDING_JSON:&'static str = r#"{"taskHubName":"test","creationUrls":{"createNewInstancePostUri":"http://localhost:17017/runtime/webhooks/durabletask/orchestrators/{functionName}[/{instanceId}]?code=foo","createAndWaitOnNewInstancePostUri":"http://localhost:17017/runtime/webhooks/durabletask/orchestrators/{functionName}[/{instanceId}]?timeout={timeoutInSeconds}&pollingInterval={intervalInSeconds}&code=foo"},"managementUrls":{"id":"INSTANCEID","statusQueryGetUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=DurableFunctionsHub&connection=Storage&code=foo","sendEventPostUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID/raiseEvent/{eventName}?taskHub=DurableFunctionsHub&connection=Storage&code=foo","terminatePostUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID/terminate?reason={text}&taskHub=DurableFunctionsHub&connection=Storage&code=foo","rewindPostUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID/rewind?reason={text}&taskHub=DurableFunctionsHub&connection=Storage&code=foo","purgeHistoryDeleteUri":"http://localhost:17017/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=DurableFunctionsHub&connection=Storage&code=foo"}}"#;
+    use hyper::rt;
+    static CLIENT_BINDING_JSON:&'static str = r#"{"taskHubName":"test","creationUrls":{"createNewInstancePostUri":"{SERVER}/runtime/webhooks/durabletask/orchestrators/{functionName}[/{instanceId}]?code=foo","createAndWaitOnNewInstancePostUri":"{SERVER}/runtime/webhooks/durabletask/orchestrators/{functionName}[/{instanceId}]?timeout={timeoutInSeconds}&pollingInterval={intervalInSeconds}&code=foo"},"managementUrls":{"id":"INSTANCEID","statusQueryGetUri":"{SERVER}/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=DurableFunctionsHub&connection=Storage&code=foo","sendEventPostUri":"{SERVER}/runtime/webhooks/durabletask/instances/INSTANCEID/raiseEvent/{eventName}?taskHub=DurableFunctionsHub&connection=Storage&code=foo","terminatePostUri":"{SERVER}/runtime/webhooks/durabletask/instances/INSTANCEID/terminate?reason={text}&taskHub=DurableFunctionsHub&connection=Storage&code=foo","rewindPostUri":"{SERVER}/runtime/webhooks/durabletask/instances/INSTANCEID/rewind?reason={text}&taskHub=DurableFunctionsHub&connection=Storage&code=foo","purgeHistoryDeleteUri":"{SERVER}/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=DurableFunctionsHub&connection=Storage&code=foo"}}"#;
     
 
     #[test]
@@ -363,5 +374,4 @@ mod tests {
         let query = InstanceQueryBuilder::default().created_time_from(Utc.ymd(2018, 2, 28).and_hms(5, 18, 49)).build().unwrap();
         assert_eq!(query.created_time_from.is_some(), true);
     }
-
 }
