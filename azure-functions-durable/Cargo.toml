@@ -17,6 +17,8 @@ tokio = "0.1.22"
 tokio-threadpool = "0.1.15"
 derive_builder = "0.7.2"
 chrono = { version = "0.4", features = ["serde"] }
+url = "1.7.2"
+log = "0.4.7"
 
 [dev-dependencies]
 mockito = "0.19.0"
