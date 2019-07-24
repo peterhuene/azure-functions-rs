@@ -23,6 +23,7 @@ pub use actions::*;
 pub use creation_urls::*;
 pub use history::*;
 pub use management_urls::*;
+pub use orchestration_output::*;
 
 pub use self::activity_output::*;
 pub use self::creation_urls::*;
@@ -59,15 +60,27 @@ unsafe fn waker_wake_by_ref(_: *const ()) {
 
 unsafe fn waker_drop(_: *const ()) {}
 
-/// The entrypoint for orchestration functions.
-///
-/// The given future is the user function.
 #[doc(hidden)]
-pub fn orchestrate(
+pub trait IntoValue {
+    fn into_value(self) -> Value;
+}
+
+impl IntoValue for () {
+    fn into_value(self) -> Value {
+        Value::Null
+    }
+}
+
+/// The entrypoint for orchestration functions.
+#[doc(hidden)]
+pub fn orchestrate<T>(
     id: String,
-    func: impl Future<Output = ()>,
+    func: impl Future<Output = T>,
     result: Rc<RefCell<ExecutionResult>>,
-) -> InvocationResponse {
+) -> InvocationResponse
+where
+    T: IntoValue,
+{
     let waker = unsafe {
         Waker::from_raw(RawWaker::new(
             null(),
@@ -76,13 +89,12 @@ pub fn orchestrate(
     };
 
     match Future::poll(Box::pin(func).as_mut(), &mut Context::from_waker(&waker)) {
-        Poll::Ready(_) => {
-            // Orchestration has completed and the result is ready, return done with output
-            result.borrow_mut().done = true;
+        Poll::Ready(output) => {
+            let mut result = result.borrow_mut();
+            result.output = Some(output.into_value());
+            result.done = true;
         }
-        Poll::Pending => {
-            // Orchestration has not yet completed
-        }
+        Poll::Pending => {}
     };
 
     InvocationResponse {
