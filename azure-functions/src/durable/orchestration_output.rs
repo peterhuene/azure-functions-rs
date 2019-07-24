@@ -1,10 +1,10 @@
+use crate::durable::IntoValue;
 use serde_json::Value;
 
-/// # Orchestration Output
+/// Represents the output of a Durable Functions orchestration function.
 ///
-/// Type returned by Orchetrator Functions for Durable Functions
-
-struct OrchestrationOutput(serde_json::Value);
+/// Supports conversion from JSON-compatible types.
+pub struct OrchestrationOutput(Value);
 
 impl<T> From<T> for OrchestrationOutput
 where
@@ -15,8 +15,8 @@ where
     }
 }
 
-impl OrchestrationOutput {
-    pub(crate) fn to_value(self) -> Value {
+impl IntoValue for OrchestrationOutput {
+    fn into_value(self) -> Value {
         self.0
     }
 }
@@ -30,7 +30,7 @@ mod tests {
     fn it_converts_from_json() {
         let orchestration_output: OrchestrationOutput = json!({"foo": "bar"}).into();
 
-        let data: Value = orchestration_output.to_value();
+        let data: Value = orchestration_output.into_value();
         assert_eq!(data, json!({"foo": "bar"}));
     }
 
@@ -38,7 +38,7 @@ mod tests {
     fn it_converts_from_bool() {
         let orchestration_output: OrchestrationOutput = true.into();
 
-        let data: Value = orchestration_output.to_value();
+        let data: Value = orchestration_output.into_value();
         assert_eq!(data, json!(true));
     }
 
@@ -46,7 +46,7 @@ mod tests {
     fn it_converts_from_string() {
         let orchestration_output: OrchestrationOutput = "foo".into();
 
-        let data: Value = orchestration_output.to_value();
-        assert_eq!(data, json!("\"foo\"".to_string()));
+        let data: Value = orchestration_output.into_value();
+        assert_eq!(data, json!("foo"));
     }
 }
