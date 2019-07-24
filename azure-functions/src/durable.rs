@@ -17,7 +17,7 @@ mod activity_output;
 mod creation_urls;
 mod history;
 mod management_urls;
-mod orchestrator_output;
+mod orchestration_output;
 
 pub use actions::*;
 pub use creation_urls::*;
@@ -27,7 +27,7 @@ pub use management_urls::*;
 pub use self::activity_output::*;
 pub use self::creation_urls::*;
 pub use self::management_urls::*;
-pub use self::orchestrator_output::*;
+pub use self::orchestration_output::*;
 
 #[doc(hidden)]
 #[derive(Debug, Serialize, Default)]
