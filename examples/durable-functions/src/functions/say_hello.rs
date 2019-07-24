@@ -1,6 +1,6 @@
 use azure_functions::{bindings::DurableActivityContext, durable::ActivityOutput, func};
 
-#[func(name = "SayHello")]
+#[func]
 pub async fn say_hello(_context: DurableActivityContext) -> ActivityOutput {
     // format!(
     //     "Hello {}!",
