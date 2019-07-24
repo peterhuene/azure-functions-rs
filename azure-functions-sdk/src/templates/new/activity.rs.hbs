@@ -1,6 +1,6 @@
-use azure_functions::{bindings::DurableActivityContext, func};
+use azure_functions::{bindings::DurableActivityContext, durable::ActivityOutput, func};
 
 #[func]
-pub async fn {{name}}(context: DurableActivityContext) {
-    context.set_output("Hello from {{name}}!");
+pub async fn {{name}}(context: DurableActivityContext) -> ActivityOutput {
+    "Hello from {{name}}!".into()
 }

@@ -40,10 +40,6 @@ pub struct ExecutionResult {
 }
 
 impl ExecutionResult {
-    fn mark_done(&mut self) {
-        self.done = true;
-    }
-
     pub(crate) fn add_action(&mut self, action: Action) {
         self.actions.push(action);
     }
@@ -82,7 +78,7 @@ pub fn orchestrate(
     match Future::poll(Box::pin(func).as_mut(), &mut Context::from_waker(&waker)) {
         Poll::Ready(_) => {
             // Orchestration has completed and the result is ready, return done with output
-            result.as_ref().borrow_mut().mark_done();
+            result.borrow_mut().done = true;
         }
         Poll::Pending => {
             // Orchestration has not yet completed
