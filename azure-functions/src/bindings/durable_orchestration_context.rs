@@ -104,7 +104,7 @@ impl DurableOrchestrationContext {
             return ActionFuture(Some(Err(failed.reason.clone().unwrap_or_default())));
         }
 
-        return ActionFuture(None);
+        ActionFuture(None)
     }
 
     fn find_scheduled_activity(&self, activity_name: &str) -> Option<&HistoryEvent> {
