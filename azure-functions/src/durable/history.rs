@@ -1,5 +1,6 @@
 use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
+use serde_json::Value;
 use serde_repr::Deserialize_repr;
 
 // TODO refactor this to make enum HistoryEvent that for each value it will have its own struct
@@ -27,10 +28,10 @@ pub struct HistoryEvent {
     pub(crate) name: Option<String>,
 
     // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
-    pub(crate) input: Option<String>,
+    pub(crate) input: Option<Value>,
 
     //SubOrchestrationInstanceCompleted, TaskCompleted
-    pub(crate) result: Option<String>,
+    pub(crate) result: Option<Value>,
 
     // SubOrchestrationInstanceCompleted , SubOrchestrationInstanceFailed, TaskCompleted,TaskFailed
     pub(crate) task_scheduled_id: Option<i32>,
