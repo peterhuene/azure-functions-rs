@@ -24,6 +24,9 @@ use syn::{
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
 const ORCHESTRATION_CONTEXT_TYPE: &str = "DurableOrchestrationContext";
+const ORCHESTRATION_OUTPUT_TYPE: &str = "OrchestrationOutput";
+const ACTIVITY_CONTEXT_TYPE: &str = "DurableActivityContext";
+const ACTIVITY_OUTPUT_TYPE: &str = "ActivityOutput";
 
 fn has_parameter_of_type(func: &ItemFn, type_name: &str) -> bool {
     func.decl.inputs.iter().any(|arg| {
@@ -76,10 +79,64 @@ fn validate_orchestration_function(func: &ItemFn) {
     }
 
     if let ReturnType::Type(_, ty) = &func.decl.output {
-        macro_panic(
-            ty.span(),
-            "orchestration functions cannot have return types",
-        );
+        match ty.as_ref() {
+            Type::Path(tp) => {
+                if last_segment_in_path(&tp.path).ident != ORCHESTRATION_OUTPUT_TYPE {
+                    macro_panic(
+                        tp.span(),
+                        format!(
+                            "orchestration functions must have a return type of `{}`",
+                            ORCHESTRATION_OUTPUT_TYPE
+                        ),
+                    );
+                }
+            }
+            _ => macro_panic(
+                ty.span(),
+                format!(
+                    "orchestration functions must have a return type of `{}`",
+                    ORCHESTRATION_OUTPUT_TYPE
+                ),
+            ),
+        }
+    }
+}
+
+fn validate_activity_function(func: &ItemFn) {
+    // Activity functions cannot have a $return binding
+    // Default, -> ActivityOutput, and -> (ActivityOutput, ...) are acceptable
+
+    fn validate_return_binding(ty: &Type) {
+        match ty {
+            Type::Tuple(tuple) => {
+                if let Some(first) = tuple.elems.iter().nth(0) {
+                    validate_return_binding(first)
+                }
+            }
+            Type::Paren(tp) => validate_return_binding(&*tp.elem),
+            Type::Path(tp) => {
+                if last_segment_in_path(&tp.path).ident != ACTIVITY_OUTPUT_TYPE {
+                    macro_panic(
+                        tp.span(),
+                        format!(
+                            "activity functions must have a return type of `{}`",
+                            ACTIVITY_OUTPUT_TYPE
+                        ),
+                    );
+                }
+            }
+            _ => macro_panic(
+                ty.span(),
+                format!(
+                    "activity functions must have a return type of `{}`",
+                    ACTIVITY_OUTPUT_TYPE
+                ),
+            ),
+        }
+    }
+
+    if let ReturnType::Type(_, ty) = &func.decl.output {
+        validate_return_binding(&*ty);
     }
 }
 
@@ -375,49 +432,48 @@ fn bind_output_type(
 fn bind_return_type(
     ret: &ReturnType,
     binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
+    is_activity: bool,
 ) -> Vec<Binding> {
-    match ret {
-        ReturnType::Default => Vec::new(),
-        ReturnType::Type(_, ty) => {
-            if let Type::Tuple(tuple) = &**ty {
-                let mut bindings = vec![];
-                for (i, ty) in tuple.elems.iter().enumerate() {
-                    if let Type::Tuple(inner) = ty {
-                        if !inner.elems.is_empty() {
-                            macro_panic(
-                                ty.span(),
-                                "expected an Azure Functions output binding type",
-                            );
-                        }
-                        continue;
+    let mut bindings = Vec::new();
+
+    if let ReturnType::Type(_, ty) = ret {
+        if let Type::Tuple(tuple) = &**ty {
+            for (i, ty) in tuple.elems.iter().enumerate() {
+                if let Type::Tuple(inner) = ty {
+                    if !inner.elems.is_empty() {
+                        macro_panic(ty.span(), "expected an Azure Functions output binding type");
                     }
-                    if i == 0 {
+                    continue;
+                }
+                if i == 0 {
+                    if !is_activity {
                         bindings.push(bind_output_type(
                             &ty,
                             RETURN_BINDING_NAME,
                             binding_args,
                             true,
                         ));
-                    } else {
-                        bindings.push(bind_output_type(
-                            &ty,
-                            &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
-                            binding_args,
-                            true,
-                        ));
                     }
+                } else {
+                    bindings.push(bind_output_type(
+                        &ty,
+                        &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
+                        binding_args,
+                        true,
+                    ));
                 }
-                bindings
-            } else {
-                vec![bind_output_type(
-                    &ty,
-                    RETURN_BINDING_NAME,
-                    binding_args,
-                    true,
-                )]
             }
+        } else if !is_activity {
+            bindings.push(bind_output_type(
+                &ty,
+                RETURN_BINDING_NAME,
+                binding_args,
+                true,
+            ));
         }
     }
+
+    bindings
 }
 
 fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, (AttributeArgs, Span)> {
@@ -471,9 +527,12 @@ pub fn func_impl(
     validate_function(&target);
 
     let is_orchestration = has_parameter_of_type(&target, ORCHESTRATION_CONTEXT_TYPE);
+    let is_activity = has_parameter_of_type(&target, ACTIVITY_CONTEXT_TYPE);
 
     if is_orchestration {
         validate_orchestration_function(&target);
+    } else if is_activity {
+        validate_activity_function(&target);
     }
 
     let mut func = Function::from(match syn::parse_macro_input::parse::<AttributeArgs>(args) {
@@ -508,7 +567,9 @@ pub fn func_impl(
     }
 
     if !is_orchestration {
-        for binding in bind_return_type(&target.decl.output, &mut binding_args).into_iter() {
+        for binding in
+            bind_return_type(&target.decl.output, &mut binding_args, is_activity).into_iter()
+        {
             if let Some(name) = binding.name() {
                 if !names.insert(name.to_string()) {
                     if let ReturnType::Type(_, ty) = &target.decl.output {
@@ -534,6 +595,11 @@ pub fn func_impl(
                         macro_panic(
                             v.span(),
                             "cannot bind to the return value of an orchestration function",
+                        )
+                    } else if is_activity {
+                        macro_panic(
+                            v.span(),
+                            "cannot bind to the return value of an activity function",
                         )
                     } else {
                         macro_panic(
