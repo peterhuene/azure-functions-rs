@@ -17,12 +17,13 @@ pub struct HistoryEvent {
 
     pub(crate) event_id: i32,
 
-    pub(crate) is_played: bool,
+    #[serde(alias = "IsPlayed")]
+    pub(crate) played: bool,
 
     pub(crate) timestamp: DateTime<FixedOffset>,
 
-    #[serde(default)]
-    pub(crate) is_processed: bool,
+    #[serde(default, alias = "IsProcessed")]
+    pub(crate) processed: bool,
 
     // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
     pub(crate) name: Option<String>,

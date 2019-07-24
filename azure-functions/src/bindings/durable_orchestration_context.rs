@@ -33,9 +33,14 @@ pub struct DurableOrchestrationContext {
 #[serde(rename_all = "camelCase")]
 struct DurableOrchestrationContextData {
     instance_id: String,
-    is_replaying: bool,
+
+    #[serde(rename = "isReplaying")]
+    replaying: bool,
+
     parent_instance_id: Option<String>,
+
     input: Value,
+
     history: Vec<HistoryEvent>,
 }
 
@@ -63,7 +68,7 @@ impl DurableOrchestrationContext {
 
     /// Gets a value indicating whether the orchestrator function is currently replaying itself.
     pub fn is_replaying(&self) -> bool {
-        self.data.is_replaying
+        self.data.replaying
     }
 
     /// The JSON-serializeable input to pass to the orchestrator function.
@@ -85,59 +90,52 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        // TODO Assume each of these methods mark found entries as processed
-        // TODO They will also be responsible for moving the "current" timestamp forward as they process the execution history
-        let scheduled = self.find_scheduled_activity(activity_name);
-        let completed = scheduled.and_then(|scheduled| self.find_completed_activity(scheduled));
-        let failed = scheduled.and_then(|scheduled| self.find_failed_activity(scheduled));
-
         self.result.borrow_mut().add_action(Action::CallActivity {
             function_name: activity_name.to_string(),
             input: data.into(),
         });
 
-        if let Some(completed) = completed {
-            return ActionFuture(Some(Ok(self.parse_history_event(completed))));
-        }
+        if let Some(scheduled) = self.find_scheduled_activity(activity_name) {
+            scheduled.processed = true;
 
-        if let Some(failed) = failed {
-            return ActionFuture(Some(Err(failed.reason.clone().unwrap_or_default())));
+            let id = scheduled.event_id;
+            if let Some(completed) = self.find_completed_activity(id) {
+                completed.processed = true;
+
+                let value = completed.result.clone().unwrap_or_default();
+                return ActionFuture(Some(Ok(value)));
+            }
+
+            if let Some(failed) = self.find_failed_activity(id) {
+                failed.processed = true;
+
+                let message = failed.reason.clone().unwrap_or_default();
+                return ActionFuture(Some(Err(message)));
+            }
         }
 
         return ActionFuture(None);
     }
 
-    fn find_scheduled_activity(&self, activity_name: &str) -> Option<&HistoryEvent> {
-        self.data.history.iter().find(|event| {
+    fn find_scheduled_activity(&mut self, activity_name: &str) -> Option<&mut HistoryEvent> {
+        self.data.history.iter_mut().find(|event| {
             event.name == Some(activity_name.to_owned())
                 && event.event_type == EventType::TaskScheduled
-                && !event.is_processed
+                && !event.processed
         })
     }
 
-    fn find_completed_activity(&self, scheduled: &HistoryEvent) -> Option<&HistoryEvent> {
-        self.data.history.iter().find(|event| {
+    fn find_completed_activity(&mut self, event_id: i32) -> Option<&mut HistoryEvent> {
+        self.data.history.iter_mut().find(|event| {
             event.event_type == EventType::TaskCompleted
-                && event.task_scheduled_id == Some(scheduled.event_id)
+                && event.task_scheduled_id == Some(event_id)
         })
     }
 
-    fn find_failed_activity(&self, scheduled: &HistoryEvent) -> Option<&HistoryEvent> {
-        self.data.history.iter().find(|event| {
-            event.event_type == EventType::TaskFailed
-                && event.task_scheduled_id == Some(scheduled.event_id)
+    fn find_failed_activity(&mut self, event_id: i32) -> Option<&mut HistoryEvent> {
+        self.data.history.iter_mut().find(|event| {
+            event.event_type == EventType::TaskFailed && event.task_scheduled_id == Some(event_id)
         })
-    }
-
-    fn parse_history_event(&self, event: &HistoryEvent) -> Value {
-        match event.event_type {
-            EventType::EventRaised => event.input.clone(),
-            EventType::SubOrchestrationInstanceCompleted | EventType::TaskCompleted => {
-                event.result.clone()
-            }
-            _ => None,
-        }
-        .unwrap_or_default()
     }
 }
 
@@ -252,7 +250,7 @@ mod tests {
                     {
                        "EventType":12,
                        "EventId":-1,
-                       "IsPlayed":false,
+                       "IsPlayed":true,
                        "Timestamp":"2019-07-18T06:22:27.016757Z"
                     },
                     {
@@ -291,9 +289,9 @@ mod tests {
                 HistoryEvent {
                     event_type: EventType::OrchestratorStarted,
                     event_id: -1,
-                    is_played: false,
+                    played: true,
                     timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap(),
-                    is_processed: false,
+                    processed: false,
                     name: None,
                     input: None,
                     result: None,
@@ -302,14 +300,14 @@ mod tests {
                     reason: None,
                     details: None,
                     fire_at: None,
-                    timer_id: None
+                    timer_id: None,
                 },
                 HistoryEvent {
                     event_type: EventType::ExecutionStarted,
                     event_id: -1,
-                    is_played: false,
+                    played: false,
                     timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:26.626966Z").unwrap(),
-                    is_processed: false,
+                    processed: false,
                     name: Some("HelloWorld".to_owned()),
                     input: Some("{}".into()),
                     result: None,
@@ -318,7 +316,7 @@ mod tests {
                     reason: None,
                     details: None,
                     fire_at: None,
-                    timer_id: None
+                    timer_id: None,
                 }
             ]
         );
