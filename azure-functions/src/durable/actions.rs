@@ -37,7 +37,9 @@ pub enum Action {
     #[serde(rename_all = "camelCase")]
     CreateTimer {
         fire_at: DateTime<FixedOffset>,
-        is_cancelled: bool,
+
+        #[serde(rename = "isCancelled")]
+        cancelled: bool,
     },
 
     #[serde(rename_all = "camelCase")]
@@ -121,7 +123,7 @@ mod tests {
         (
            Action::CreateTimer {
                 fire_at: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757+00:00").unwrap(),
-                is_cancelled: true,
+                cancelled: true,
            },
            r#"{"actionType":"createTimer","fireAt":"2019-07-18T06:22:27.016757+00:00","isCancelled":true}"#
         ),
