@@ -1,16 +1,204 @@
-use serde::Deserialize;
-use serde_json::{from_str, Value};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
-
 use crate::durable::{Action, EventType, HistoryEvent};
 use crate::{
     durable::ExecutionResult,
     rpc::{typed_data::Data, TypedData},
 };
 use chrono::{DateTime, Utc};
-use std::future::Future;
-use std::pin::Pin;
-use std::task::{Context, Poll};
+use futures::future::join_all;
+use serde::Deserialize;
+use serde_json::{from_str, Value};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    future::Future,
+    pin::Pin,
+    rc::Rc,
+    task::{Context, Poll},
+};
+
+/// Represents a Future returned by the orchestration context.
+pub trait OrchestrationFuture: Future {
+    #[doc(hidden)]
+    fn notify_inner(&mut self);
+}
+
+struct ActionFuture<T> {
+    result: Option<T>,
+    state: Rc<RefCell<OrchestrationState>>,
+    is_inner: bool,
+}
+
+impl<T> ActionFuture<T> {
+    fn new(result: Option<T>, state: Rc<RefCell<OrchestrationState>>) -> Self {
+        ActionFuture {
+            result,
+            state,
+            is_inner: false,
+        }
+    }
+}
+
+impl<T> Future for ActionFuture<T>
+where
+    T: Unpin,
+{
+    type Output = T;
+
+    fn poll(self: Pin<&mut Self>, _context: &mut Context) -> Poll<T> {
+        let this = self.get_mut();
+        if let Some(v) = this.result.take() {
+            if !this.is_inner {
+                this.state.borrow_mut().update();
+            }
+            return Poll::Ready(v);
+        }
+
+        Poll::Pending
+    }
+}
+
+impl<T> OrchestrationFuture for ActionFuture<T>
+where
+    T: Unpin,
+{
+    fn notify_inner(&mut self) {
+        self.is_inner = true;
+    }
+}
+
+/// Future for the `DurableOrchestrationContext::join_all` function.
+#[must_use = "futures do nothing unless you `.await` or poll them"]
+pub struct JoinAll<F>
+where
+    F: OrchestrationFuture,
+{
+    inner: futures::future::JoinAll<F>,
+    state: Rc<RefCell<OrchestrationState>>,
+    is_inner: bool,
+}
+
+impl<F> JoinAll<F>
+where
+    F: OrchestrationFuture,
+{
+    fn new<T>(state: Rc<RefCell<OrchestrationState>>, iter: T) -> Self
+    where
+        T: IntoIterator<Item = F>,
+        F: OrchestrationFuture,
+    {
+        let futs: Vec<_> = iter
+            .into_iter()
+            .map(|mut f| {
+                f.notify_inner();
+                f
+            })
+            .collect();
+
+        JoinAll {
+            inner: join_all(futs),
+            state,
+            is_inner: false,
+        }
+    }
+}
+
+impl<F> Future for JoinAll<F>
+where
+    F: OrchestrationFuture,
+{
+    type Output = <futures::future::JoinAll<F> as Future>::Output;
+
+    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Self::Output> {
+        let result = Future::poll(Pin::new(&mut self.inner), context);
+
+        if !self.is_inner {
+            if let Poll::Ready(_) = &result {
+                self.get_mut().state.borrow_mut().update();
+            }
+        }
+
+        result
+    }
+}
+
+impl<F> OrchestrationFuture for JoinAll<F>
+where
+    F: OrchestrationFuture,
+{
+    fn notify_inner(&mut self) {
+        self.is_inner = true;
+    }
+}
+
+struct OrchestrationState {
+    is_replaying: bool,
+    history: Vec<HistoryEvent>,
+    result: Rc<RefCell<ExecutionResult>>,
+    orchestration_index: usize,
+}
+
+impl OrchestrationState {
+    fn find_scheduled_activity(&mut self, activity_name: &str) -> Option<&mut HistoryEvent> {
+        self.history.iter_mut().find(|event| {
+            event.name == Some(activity_name.to_owned())
+                && event.event_type == EventType::TaskScheduled
+                && !event.is_processed
+        })
+    }
+
+    fn find_completed_activity(&mut self, event_id: i32) -> Option<&mut HistoryEvent> {
+        self.history.iter_mut().find(|event| {
+            event.event_type == EventType::TaskCompleted
+                && event.task_scheduled_id == Some(event_id)
+        })
+    }
+
+    fn find_failed_activity(&mut self, event_id: i32) -> Option<&mut HistoryEvent> {
+        self.history.iter_mut().find(|event| {
+            event.event_type == EventType::TaskFailed && event.task_scheduled_id == Some(event_id)
+        })
+    }
+
+    fn update(&mut self) {
+        fn is_newer_event(event: &HistoryEvent, timestamp: DateTime<Utc>) -> bool {
+            event.event_type == EventType::OrchestratorStarted && event.timestamp > timestamp
+        }
+
+        let start = self.orchestration_index + 1;
+        if start >= self.history.len() {
+            return;
+        }
+
+        let current_timestamp = self.history[self.orchestration_index].timestamp;
+
+        match self.history[start..]
+            .iter()
+            .position(|event| is_newer_event(event, current_timestamp))
+            .map(|pos| pos + start)
+        {
+            Some(next) => {
+                // A new orchestration execution has occurred
+                self.orchestration_index = next;
+                self.result.borrow_mut().notify_new_execution();
+
+                let current_timestamp = self.history[self.orchestration_index].timestamp;
+                let start = self.orchestration_index + 1;
+
+                // Check to see if this is the last execution; if so, no more replaying
+                if start >= self.history.len()
+                    || !self.history[start..]
+                        .iter()
+                        .any(|event| is_newer_event(event, current_timestamp))
+                {
+                    self.is_replaying = false;
+                }
+            }
+            None => {
+                self.is_replaying = false;
+            }
+        }
+    }
+}
 
 /// Represents the Durable Functions orchestration context binding.
 ///
@@ -24,210 +212,127 @@ use std::task::{Context, Poll};
 /// # Examples
 ///
 /// TODO: IMPLEMENT
-#[derive(Debug)]
 pub struct DurableOrchestrationContext {
-    data: DurableOrchestrationContextData,
-
-    result: Rc<RefCell<ExecutionResult>>,
-
-    current_time: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct DurableOrchestrationContextData {
-    instance_id: String,
-
-    #[serde(rename = "isReplaying")]
-    replaying: bool,
-
-    parent_instance_id: Option<String>,
-
-    input: Value,
-
-    history: Vec<HistoryEvent>,
+    /// The orchestration instance identifier.
+    pub instance_id: String,
+    /// The parent orchestration instance identifier.
+    pub parent_instance_id: Option<String>,
+    /// The input value to the orchestration.
+    pub input: Value,
+    state: Rc<RefCell<OrchestrationState>>,
 }
 
 impl DurableOrchestrationContext {
     #[doc(hidden)]
     pub fn new(data: TypedData, _metadata: HashMap<String, TypedData>) -> Self {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct BindingData {
+            instance_id: String,
+            is_replaying: bool,
+            parent_instance_id: Option<String>,
+            input: Value,
+            history: Vec<HistoryEvent>,
+        }
+
         match &data.data {
             Some(Data::String(s)) => {
-                let data: DurableOrchestrationContextData =
+                let data: BindingData =
                     from_str(s).expect("failed to parse orchestration context data");
 
-                let current_time = data
+                let orchestration_index = data
                     .history
                     .iter()
-                    .find(|event| event.event_type == EventType::OrchestratorStarted)
-                    .map(|event| event.timestamp)
-                    .unwrap_or(Utc::now());
+                    .position(|event| event.event_type == EventType::OrchestratorStarted)
+                    .expect("failed to find orchestration started event");
 
                 DurableOrchestrationContext {
-                    data,
-                    result: Rc::new(RefCell::new(ExecutionResult::default())),
-                    current_time,
+                    instance_id: data.instance_id,
+                    parent_instance_id: data.parent_instance_id,
+                    input: data.input,
+                    state: Rc::new(RefCell::new(OrchestrationState {
+                        orchestration_index,
+                        is_replaying: data.is_replaying,
+                        history: data.history,
+                        result: Rc::new(RefCell::new(ExecutionResult::default())),
+                    })),
                 }
             }
             _ => panic!("expected JSON data for orchestration context data"),
         }
     }
 
-    /// Gets the instance ID of the currently executing orchestration.
-    pub fn instance_id(&self) -> &str {
-        &self.data.instance_id
-    }
-
-    /// Gets the parent instance ID of the currently executing sub-orchestration.
-    pub fn parent_instance_id(&self) -> Option<&str> {
-        self.data.parent_instance_id.as_ref().map(|id| &**id)
-    }
-
     /// Gets a value indicating whether the orchestrator function is currently replaying itself.
     pub fn is_replaying(&self) -> bool {
-        self.data.replaying
-    }
-
-    /// The JSON-serializeable input to pass to the orchestrator function.
-    pub fn input(&self) -> &Value {
-        &self.data.input
+        self.state.borrow().is_replaying
     }
 
     /// Gets the current date/time in a way that is safe for use by orchestrator functions.
-    pub fn current_time(&self) -> DateTime<Utc>{
-        self.current_time
+    pub fn current_time(&self) -> DateTime<Utc> {
+        let state = self.state.borrow();
+        state.history[state.orchestration_index].timestamp
     }
 
     #[doc(hidden)]
     pub fn execution_result(&self) -> Rc<RefCell<ExecutionResult>> {
-        self.result.clone()
+        self.state.borrow().result.clone()
     }
 
-    #[doc(hidden)]
+    /// Creates a future which represents a collection of the outputs of the futures given.
+    ///
+    /// The returned future will drive execution for all of its underlying futures,
+    /// collecting the results into a destination `Vec<T>` in the same order as they
+    /// were provided.
+    #[must_use = "futures do nothing unless you `.await` or poll them"]
+    pub fn join_all<I>(&self, iter: I) -> JoinAll<I::Item>
+    where
+        I: IntoIterator,
+        I::Item: OrchestrationFuture,
+    {
+        JoinAll::new(self.state.clone(), iter)
+    }
+
+    /// Schedules an activity function for execution.
+    #[must_use = "futures do nothing unless you `.await` or poll them"]
     pub fn call_activity<D>(
         &mut self,
         activity_name: &str,
         data: D,
-    ) -> impl Future<Output = Result<Value, String>>
+    ) -> impl Future<Output = Result<Value, String>> + OrchestrationFuture
     where
         D: Into<Value>,
     {
-        self.result.borrow_mut().add_action(Action::CallActivity {
+        let mut state = self.state.borrow_mut();
+
+        // Push the action on the execution result
+        state.result.borrow_mut().push_action(Action::CallActivity {
             function_name: activity_name.to_string(),
             input: data.into(),
         });
 
-        let mut event_result = Option::<Result<Value, String>>::None; //ActionFuture(None); //Option::<ActionFuture<Result<Value, String>>>>::None;
+        let mut result: Option<Result<Value, String>> = None;
 
-        if let Some(scheduled) = self.find_scheduled_activity(activity_name) {
-            scheduled.processed = true;
+        // Attempt to resolve the activity
+        if let Some(scheduled) = state.find_scheduled_activity(activity_name) {
+            scheduled.is_processed = true;
 
             let id = scheduled.event_id;
-            if let Some(completed) = self.find_completed_activity(id) {
-                completed.processed = true;
-
-                let value = completed.result.clone().unwrap_or_default();
-                event_result = Some(Ok(value));
-            } else if let Some(failed) = self.find_failed_activity(id) {
-                failed.processed = true;
-
-                let message = failed.reason.clone().unwrap_or_default();
-                event_result = Some(Err(message));
+            if let Some(completed) = state.find_completed_activity(id) {
+                completed.is_processed = true;
+                result = Some(Ok(completed
+                    .result
+                    .as_ref()
+                    .map(|s| from_str(&s).unwrap_or_default())
+                    .unwrap_or(Value::Null)));
+            } else if let Some(failed) = state.find_failed_activity(id) {
+                failed.is_processed = true;
+                result = Some(Err(failed.reason.clone().unwrap_or_default()));
             }
         }
 
-        if let Some(_) = &event_result {
-            self.current_time = self.next_current_time();
-        }
-
-        ActionFuture(event_result)
-    }
-
-    fn find_scheduled_activity(&mut self, activity_name: &str) -> Option<&mut HistoryEvent> {
-        self.data.history.iter_mut().find(|event| {
-            event.name == Some(activity_name.to_owned())
-                && event.event_type == EventType::TaskScheduled
-                && !event.processed
-        })
-    }
-
-    fn find_completed_activity(&mut self, event_id: i32) -> Option<&mut HistoryEvent> {
-        self.data.history.iter_mut().find(|event| {
-            event.event_type == EventType::TaskCompleted
-                && event.task_scheduled_id == Some(event_id)
-        })
-    }
-
-    fn find_failed_activity(&mut self, event_id: i32) -> Option<&mut HistoryEvent> {
-        self.data.history.iter_mut().find(|event| {
-            event.event_type == EventType::TaskFailed && event.task_scheduled_id == Some(event_id)
-        })
-    }
-
-    fn next_current_time(&self) -> DateTime<Utc> {
-        let current_time = self.current_time;
-
-        self.data
-            .history
-            .iter()
-            .find(|event| {
-                event.event_type == EventType::OrchestratorStarted && event.timestamp > current_time
-            })
-            .map(|event| event.timestamp)
-            .unwrap_or(current_time)
+        ActionFuture::new(result, self.state.clone())
     }
 }
-
-struct ActionFuture<T>(Option<T>);
-
-impl<T> Future for ActionFuture<T>
-where
-    T: Unpin,
-{
-    type Output = T;
-
-    fn poll(self: Pin<&mut Self>, _context: &mut Context) -> Poll<T> {
-        if let Some(v) = self.get_mut().0.take() {
-            return Poll::Ready(v);
-        }
-
-        Poll::Pending
-    }
-}
-
-/*
-{
-   "history":[
-      {
-         "EventType":12,
-         "EventId":-1,
-         "IsPlayed":false,
-         "Timestamp":"2019-07-18T06:22:27.016757Z"
-      },
-      {
-         "OrchestrationInstance":{
-            "InstanceId":"49497890673e4a75ab380e7a956c607b",
-            "ExecutionId":"5d2025984bef476bbaacefaa499a4f5f"
-         },
-         "EventType":0,
-         "ParentInstance":null,
-         "Name":"HelloWorld",
-         "Version":"",
-         "Input":"{}",
-         "Tags":null,
-         "EventId":-1,
-         "IsPlayed":false,
-         "Timestamp":"2019-07-18T06:22:26.626966Z"
-      }
-   ],
-   "input":{
-
-   },
-   "instanceId":"49497890673e4a75ab380e7a956c607b",
-   "isReplaying":false,
-   "parentInstanceId":null
-}
-*/
 
 #[cfg(test)]
 mod tests {
@@ -255,7 +360,8 @@ mod tests {
     }
 
     #[test]
-    fn new_constructs_an_orchestration_context_without_history() {
+    #[should_panic(expected = "failed to find orchestration started event")]
+    fn it_panics_if_missing_history() {
         let data = TypedData {
             data: Some(Data::String(
                 r#"{
@@ -269,15 +375,7 @@ mod tests {
             )),
         };
 
-        let context = DurableOrchestrationContext::new(data, HashMap::new());
-        assert_eq!(context.instance_id(), "49497890673e4a75ab380e7a956c607b");
-        assert_eq!(
-            context.parent_instance_id(),
-            Some("1234123412341234123412341234")
-        );
-        assert!(!context.is_replaying());
-        assert_eq!(context.data.history, vec![]);
-        assert_eq!(context.input(), &serde_json::Value::Array(vec![]));
+        DurableOrchestrationContext::new(data, HashMap::new());
     }
 
     #[test]
@@ -318,21 +416,21 @@ mod tests {
         };
 
         let context = DurableOrchestrationContext::new(data, HashMap::new());
-        assert_eq!(context.instance_id(), "49497890673e4a75ab380e7a956c607b");
-        assert_eq!(context.parent_instance_id(), None);
+        assert_eq!(context.instance_id, "49497890673e4a75ab380e7a956c607b");
+        assert_eq!(context.parent_instance_id, None);
         assert!(!context.is_replaying());
-        assert_eq!(context.input(), &serde_json::Value::Array(vec![]));
+        assert_eq!(context.input, serde_json::Value::Array(vec![]));
         assert_eq!(
-            context.data.history,
+            context.state.borrow().history,
             vec![
                 HistoryEvent {
                     event_type: EventType::OrchestratorStarted,
                     event_id: -1,
-                    played: true,
+                    is_played: true,
                     timestamp: DateTime::<Utc>::from(
                         DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap()
                     ),
-                    processed: false,
+                    is_processed: false,
                     name: None,
                     input: None,
                     result: None,
@@ -346,11 +444,11 @@ mod tests {
                 HistoryEvent {
                     event_type: EventType::ExecutionStarted,
                     event_id: -1,
-                    played: false,
+                    is_played: false,
                     timestamp: DateTime::<Utc>::from(
                         DateTime::parse_from_rfc3339("2019-07-18T06:22:26.626966Z").unwrap()
                     ),
-                    processed: false,
+                    is_processed: false,
                     name: Some("HelloWorld".to_owned()),
                     input: Some("{}".into()),
                     result: None,

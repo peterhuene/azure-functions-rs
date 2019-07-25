@@ -11,6 +11,7 @@ edition = "2018"
 [dependencies]
 azure-functions-shared = { version = "0.10.0", path = "../azure-functions-shared" }
 azure-functions-codegen = { version = "0.10.0", path = "../azure-functions-codegen" }
+azure-functions-durable = { version = "0.10.0", path = "../azure-functions-durable" }
 http = "0.1"
 tower-hyper = "0.1.1"
 tower-grpc = "0.1.1"
@@ -19,7 +20,7 @@ tower-util = "0.1.0"
 tower-request-modifier = "0.1.0"
 log = { version = "0.4.8", features = ["std"] }
 futures01 = { package = "futures", version = "0.1.28" }
-futures-preview = { version = "0.3.0-alpha.19", features = ["compat"], optional = true }
+futures-preview = { version = "0.3.0-alpha.19", features = ["compat"] }
 clap = "2.33.0"
 tokio = "0.1.22"
 tokio-threadpool = "0.1.16"
@@ -37,7 +38,7 @@ fs_extra = "1.1.0"
 semver = "0.9.0"
 
 [features]
-unstable = ["azure-functions-codegen/unstable", "azure-functions-shared/unstable", "futures-preview"]
+unstable = ["azure-functions-codegen/unstable", "azure-functions-shared/unstable"]
 
 [dev-dependencies]
 matches = "0.1.8"

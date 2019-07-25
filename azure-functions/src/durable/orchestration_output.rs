@@ -1,5 +1,6 @@
 use crate::durable::IntoValue;
 use serde_json::Value;
+use std::iter::FromIterator;
 
 /// Represents the output of a Durable Functions orchestration function.
 ///
@@ -12,6 +13,15 @@ where
 {
     fn from(t: T) -> Self {
         OrchestrationOutput(t.into())
+    }
+}
+
+impl FromIterator<Value> for OrchestrationOutput {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = Value>,
+    {
+        OrchestrationOutput(Value::from_iter(iter))
     }
 }
 
