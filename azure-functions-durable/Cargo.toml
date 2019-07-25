@@ -10,4 +10,16 @@ edition = "2018"
 
 [dependencies]
 futures-preview = { version = "0.3.0-alpha.17" }
-hyper = { git = "https://github.com/hyperium/hyper", rev = "1d00bb29d4f5d123ddd04d7f78de3b1a98fe7dfb" }
+hyper = { git = "https://github.com/hyperium/hyper", rev = "1d00bb29d4f5d123ddd04d7f78de3b1a98fe7dfb", features=["runtime"] }
+serde = { version="1.0.97", features = ["derive"] }
+serde_json = "1.0.40"
+tokio = "0.1.22"
+tokio-threadpool = "0.1.15"
+derive_builder = "0.7.2"
+chrono = { version = "0.4", features = ["serde"] }
+url = "1.7.2"
+log = "0.4.7"
+
+[dev-dependencies]
+mockito = "0.19.0"
+tokio-core = "0.1.17"
