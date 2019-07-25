@@ -170,6 +170,7 @@ impl<'a> New<'a> {
             .subcommand(CosmosDb::create_subcommand())
             .subcommand(ServiceBus::create_subcommand())
             .subcommand(Activity::create_subcommand())
+            .subcommand(Orchestration::create_subcommand())
     }
 
     fn set_colorization(&self) {
@@ -194,6 +195,7 @@ impl<'a> New<'a> {
             ("cosmos-db", Some(args)) => CosmosDb::from(args).execute(self.quiet),
             ("service-bus", Some(args)) => ServiceBus::from(args).execute(self.quiet),
             ("activity", Some(args)) => Activity::from(args).execute(self.quiet),
+            ("orchestration", Some(args)) => Orchestration::from(args).execute(self.quiet),
             _ => panic!("expected a subcommand for the 'new' command."),
         }
     }
@@ -699,6 +701,41 @@ impl<'a> Activity<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Activity<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Activity {
+            name: args.value_of("name").unwrap(),
+        }
+    }
+}
+
+struct Orchestration<'a> {
+    name: &'a str,
+}
+
+impl<'a> Orchestration<'a> {
+    pub fn create_subcommand<'b>() -> App<'a, 'b> {
+        SubCommand::with_name("orchestration")
+            .about("Creates a new Orchestration Function for Durable Functions.")
+            .arg(
+                Arg::with_name("name")
+                    .long("name")
+                    .short("n")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function.")
+                    .required(true),
+            )
+    }
+
+    pub fn execute(&self, quiet: bool) -> Result<(), String> {
+        let data = json!({
+            "name": self.name,
+        });
+
+        create_function(self.name, "orchestration.rs", &data, quiet)
+    }
+}
+
+impl<'a> From<&'a ArgMatches<'a>> for Orchestration<'a> {
+    fn from(args: &'a ArgMatches<'a>) -> Self {
+        Orchestration {
             name: args.value_of("name").unwrap(),
         }
     }
