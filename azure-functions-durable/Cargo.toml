@@ -9,8 +9,8 @@ homepage = "https://functions.rs"
 edition = "2018"
 
 [dependencies]
-futures-preview = { version = "0.3.0-alpha.17" }
-hyper = { git = "https://github.com/hyperium/hyper", rev = "1d00bb29d4f5d123ddd04d7f78de3b1a98fe7dfb", features=["runtime"] }
+futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
+hyper = "0.12.33"
 serde = { version="1.0.97", features = ["derive"] }
 serde_json = "1.0.40"
 tokio = "0.1.22"

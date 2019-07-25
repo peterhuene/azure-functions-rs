@@ -1,5 +1,6 @@
 use crate::rpc::{typed_data::Data, TypedData};
 use serde_json::Value;
+use std::iter::FromIterator;
 
 /// Represents the output of a Durable Functions activity function.
 ///
@@ -12,6 +13,15 @@ where
 {
     fn from(t: T) -> Self {
         ActivityOutput(t.into())
+    }
+}
+
+impl FromIterator<Value> for ActivityOutput {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = Value>,
+    {
+        ActivityOutput(Value::from_iter(iter))
     }
 }
 
