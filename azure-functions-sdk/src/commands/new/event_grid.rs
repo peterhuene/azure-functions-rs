@@ -1,6 +1,4 @@
-use crate::{
-    commands::new::create_function,
-};
+use crate::commands::new::create_function;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use serde_json::json;
 
