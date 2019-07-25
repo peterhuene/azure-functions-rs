@@ -14,35 +14,36 @@ use std::{
 
 mod actions;
 mod activity_output;
-mod creation_urls;
 mod history;
-mod management_urls;
 mod orchestration_output;
 
-pub use actions::*;
-pub use creation_urls::*;
-pub use history::*;
-pub use management_urls::*;
-pub use orchestration_output::*;
-
+pub use self::actions::*;
 pub use self::activity_output::*;
-pub use self::creation_urls::*;
-pub use self::management_urls::*;
+pub use self::history::*;
 pub use self::orchestration_output::*;
 
 #[doc(hidden)]
 #[derive(Debug, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ExecutionResult {
-    done: bool,
-    actions: Vec<Action>,
+    is_done: bool,
+    actions: Vec<Vec<Action>>,
     output: Option<Value>,
     custom_status: Option<Value>,
     error: Option<String>,
 }
 
 impl ExecutionResult {
-    pub(crate) fn add_action(&mut self, action: Action) {
-        self.actions.push(action);
+    pub(crate) fn notify_new_execution(&mut self) {
+        self.actions.push(Vec::new());
+    }
+
+    pub(crate) fn push_action(&mut self, action: Action) {
+        if self.actions.is_empty() {
+            self.actions.push(Vec::new());
+        }
+
+        self.actions.last_mut().unwrap().push(action);
     }
 }
 
@@ -92,7 +93,7 @@ where
         Poll::Ready(output) => {
             let mut result = result.borrow_mut();
             result.output = Some(output.into_value());
-            result.done = true;
+            result.is_done = true;
         }
         Poll::Pending => {}
     };
