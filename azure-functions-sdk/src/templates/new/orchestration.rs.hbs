@@ -1,6 +1,6 @@
 use azure_functions::{bindings::DurableOrchestrationContext, durable::OrchestrationOutput, func};
 
 #[func]
-pub async fn {{name}}(context: DurableOrchestrationContext) -> OrchestrationOutput {
+pub async fn {{name}}(mut context: DurableOrchestrationContext) -> OrchestrationOutput {
     "Hello from {{name}}!".into()
 }
