@@ -78,7 +78,7 @@ fn validate_orchestration_function(func: &ItemFn) {
         );
     }
 
-    if let ReturnType::Type(_, ty) = &func.sig.decl.output {
+    if let ReturnType::Type(_, ty) = &func.sig.output {
         match ty.as_ref() {
             Type::Path(tp) => {
                 if last_segment_in_path(&tp.path).ident != ORCHESTRATION_OUTPUT_TYPE {
@@ -135,7 +135,7 @@ fn validate_activity_function(func: &ItemFn) {
         }
     }
 
-    if let ReturnType::Type(_, ty) = &func.decl.output {
+    if let ReturnType::Type(_, ty) = &func.sig.output {
         validate_return_binding(&*ty);
     }
 }
