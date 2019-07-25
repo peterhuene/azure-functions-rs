@@ -7,6 +7,7 @@ use crate::{
     durable::ExecutionResult,
     rpc::{typed_data::Data, TypedData},
 };
+use chrono::{DateTime, Utc};
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -26,7 +27,10 @@ use std::task::{Context, Poll};
 #[derive(Debug)]
 pub struct DurableOrchestrationContext {
     data: DurableOrchestrationContextData,
+
     result: Rc<RefCell<ExecutionResult>>,
+
+    current_time: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -48,10 +52,23 @@ impl DurableOrchestrationContext {
     #[doc(hidden)]
     pub fn new(data: TypedData, _metadata: HashMap<String, TypedData>) -> Self {
         match &data.data {
-            Some(Data::String(s)) => DurableOrchestrationContext {
-                data: from_str(s).expect("failed to parse orchestration context data"),
-                result: Rc::new(RefCell::new(ExecutionResult::default())),
-            },
+            Some(Data::String(s)) => {
+                let data: DurableOrchestrationContextData =
+                    from_str(s).expect("failed to parse orchestration context data");
+
+                let current_time = data
+                    .history
+                    .iter()
+                    .find(|event| event.event_type == EventType::OrchestratorStarted)
+                    .map(|event| event.timestamp)
+                    .unwrap_or(Utc::now());
+
+                DurableOrchestrationContext {
+                    data,
+                    result: Rc::new(RefCell::new(ExecutionResult::default())),
+                    current_time,
+                }
+            }
             _ => panic!("expected JSON data for orchestration context data"),
         }
     }
@@ -76,6 +93,11 @@ impl DurableOrchestrationContext {
         &self.data.input
     }
 
+    /// Gets the current date/time in a way that is safe for use by orchestrator functions.
+    pub fn current_time(&self) -> DateTime<Utc>{
+        self.current_time
+    }
+
     #[doc(hidden)]
     pub fn execution_result(&self) -> Rc<RefCell<ExecutionResult>> {
         self.result.clone()
@@ -95,6 +117,8 @@ impl DurableOrchestrationContext {
             input: data.into(),
         });
 
+        let mut event_result = Option::<Result<Value, String>>::None; //ActionFuture(None); //Option::<ActionFuture<Result<Value, String>>>>::None;
+
         if let Some(scheduled) = self.find_scheduled_activity(activity_name) {
             scheduled.processed = true;
 
@@ -103,18 +127,20 @@ impl DurableOrchestrationContext {
                 completed.processed = true;
 
                 let value = completed.result.clone().unwrap_or_default();
-                return ActionFuture(Some(Ok(value)));
-            }
-
-            if let Some(failed) = self.find_failed_activity(id) {
+                event_result = Some(Ok(value));
+            } else if let Some(failed) = self.find_failed_activity(id) {
                 failed.processed = true;
 
                 let message = failed.reason.clone().unwrap_or_default();
-                return ActionFuture(Some(Err(message)));
+                event_result = Some(Err(message));
             }
         }
 
-        ActionFuture(None)
+        if let Some(_) = &event_result {
+            self.current_time = self.next_current_time();
+        }
+
+        ActionFuture(event_result)
     }
 
     fn find_scheduled_activity(&mut self, activity_name: &str) -> Option<&mut HistoryEvent> {
@@ -136,6 +162,19 @@ impl DurableOrchestrationContext {
         self.data.history.iter_mut().find(|event| {
             event.event_type == EventType::TaskFailed && event.task_scheduled_id == Some(event_id)
         })
+    }
+
+    fn next_current_time(&self) -> DateTime<Utc> {
+        let current_time = self.current_time;
+
+        self.data
+            .history
+            .iter()
+            .find(|event| {
+                event.event_type == EventType::OrchestratorStarted && event.timestamp > current_time
+            })
+            .map(|event| event.timestamp)
+            .unwrap_or(current_time)
     }
 }
 
@@ -290,7 +329,9 @@ mod tests {
                     event_type: EventType::OrchestratorStarted,
                     event_id: -1,
                     played: true,
-                    timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap(),
+                    timestamp: DateTime::<Utc>::from(
+                        DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap()
+                    ),
                     processed: false,
                     name: None,
                     input: None,
@@ -306,7 +347,9 @@ mod tests {
                     event_type: EventType::ExecutionStarted,
                     event_id: -1,
                     played: false,
-                    timestamp: DateTime::parse_from_rfc3339("2019-07-18T06:22:26.626966Z").unwrap(),
+                    timestamp: DateTime::<Utc>::from(
+                        DateTime::parse_from_rfc3339("2019-07-18T06:22:26.626966Z").unwrap()
+                    ),
                     processed: false,
                     name: Some("HelloWorld".to_owned()),
                     input: Some("{}".into()),
