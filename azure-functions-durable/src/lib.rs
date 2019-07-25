@@ -119,12 +119,12 @@ impl OrchestrationEndpoint {
 
     pub(crate) fn purge_history_url(
         &self,
-        instance_id: &str,
+        instance_id: Option<&str>,
         task_hub: Option<&str>,
         connection: Option<&str>,
         code: Option<&str>,
     ) -> Url {
-        self.status_query_url(Some(instance_id), task_hub, connection, code)
+        self.status_query_url(instance_id, task_hub, connection, code)
     }
 
     pub(crate) fn rewind_url(
@@ -425,8 +425,9 @@ impl OrchestrationClient {
                 &query.show_history_output.unwrap_or(false).to_string(),
             )
             .append_pair("showInput", &query.show_input.unwrap_or(false).to_string());
+        drop(url_query);
 
-        debug!(target:"azure_functions_durable", "Querying URL {:?}", status_url);
+        debug!(target:"azure_functions_durable", "Querying URL {:?}", &status_url);
 
         let req = Request::builder()
             .method("GET")
@@ -460,6 +461,10 @@ impl OrchestrationClient {
                     )
                 }
             }
+            Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
+                "{:?}",
+                e
+            ))),
         }
     }
 
@@ -467,14 +472,122 @@ impl OrchestrationClient {
         &self,
         query: InstanceQuery<'a>,
     ) -> OrchestrationResult<PurgeHistoryResult> {
-        Err(OrchestrationClientError::UnspecifiedError)
+        let purge_url = self.endpoint.purge_history_url(
+            query.instance_id,
+            query.task_hub,
+            query.connection_name,
+            query.code,
+        );
+
+        debug!(target:"azure_functions_durable", "Querying URL {:?}", purge_url);
+
+        let req = Request::builder()
+            .method("DELETE")
+            .uri(purge_url.into_string())
+            .header("Content-Type", "application/json")
+            .body(Body::empty())
+            .unwrap();
+
+        let res = self.client.request(req).await;
+        match res {
+            Ok(response) => match response.status() {
+                StatusCode::OK => {
+                    let body = response.into_body().try_concat().await;
+                    body.map_or_else(
+                        |e| {
+                            Err(OrchestrationClientError::CommunicationError(format!(
+                                "{:?}",
+                                e
+                            )))
+                        },
+                        |b| {
+                            serde_json::from_slice(&b).map_err(|e2| {
+                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                            })
+                        },
+                    )
+                }
+                StatusCode::NOT_FOUND => Ok(PurgeHistoryResult {
+                    instances_deleted: 0,
+                }),
+                s => Err(OrchestrationClientError::CommunicationError(format!(
+                    "Web hook returned unknown status code {}",
+                    s
+                ))),
+            },
+            Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
+                "{:?}",
+                e
+            ))),
+        }
     }
 
     pub async fn purge_history_by<'a>(
         &self,
         query: InstanceQuery<'a>,
     ) -> OrchestrationResult<PurgeHistoryResult> {
-        Err(OrchestrationClientError::UnspecifiedError)
+        let mut purge_url = self.endpoint.purge_history_url(
+            query.instance_id,
+            query.task_hub,
+            query.connection_name,
+            query.code,
+        );
+
+        let mut url_query = purge_url.query_pairs_mut();
+        query
+            .created_time_from
+            .map(|ctf| url_query.append_pair("createdTimeFrom", &ctf.to_rfc3339()));
+        query
+            .created_time_to
+            .map(|ctt| url_query.append_pair("createdTimeTo", &ctt.to_rfc3339()));
+        query.runtime_status.map(|rsv| {
+            let statuses: Vec<String> = rsv.iter().map(|s| s.to_string()).collect();
+            url_query.append_pair("runtimeStatus", &statuses.join(","))
+        });
+
+        drop(url_query);
+
+        debug!(target:"azure_functions_durable", "Querying URL {:?}", purge_url);
+
+        let req = Request::builder()
+            .method("DELETE")
+            .uri(purge_url.into_string())
+            .header("Content-Type", "application/json")
+            .body(Body::empty())
+            .unwrap();
+
+        let res = self.client.request(req).await;
+        match res {
+            Ok(response) => match response.status() {
+                StatusCode::OK => {
+                    let body = response.into_body().try_concat().await;
+                    body.map_or_else(
+                        |e| {
+                            Err(OrchestrationClientError::CommunicationError(format!(
+                                "{:?}",
+                                e
+                            )))
+                        },
+                        |b| {
+                            serde_json::from_slice(&b).map_err(|e2| {
+                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                            })
+                        },
+                    )
+                }
+                StatusCode::NOT_FOUND => Ok(PurgeHistoryResult {
+                    instances_deleted: 0,
+                }),
+                s => Err(OrchestrationClientError::CommunicationError(format!(
+                    "Web hook returned unknown status code {}",
+                    s
+                ))),
+            },
+            Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
+                "{:?}",
+                e
+            ))),
+        }
     }
 
     pub async fn raise_event<'a, D>(
@@ -486,7 +599,42 @@ impl OrchestrationClient {
     where
         D: Into<serde_json::Value>,
     {
-        Err(OrchestrationClientError::UnspecifiedError)
+        let raise_url = self.endpoint.raise_event_url(
+            query.instance_id.unwrap(),
+            event_name,
+            query.task_hub,
+            query.connection_name,
+            query.code,
+        );
+
+        debug!(target:"azure_functions_durable", "Querying URL {:?}", raise_url);
+
+        let req = Request::builder()
+            .method("POST")
+            .uri(raise_url.into_string())
+            .header("Content-Type", "application/json")
+            .body(Body::from(
+                serde_json::to_string(&event_data.into()).unwrap(),
+            ))
+            .unwrap();
+
+        let res = self.client.request(req).await;
+        match res {
+            Ok(response) => match response.status() {
+                StatusCode::ACCEPTED => Ok(()),
+                StatusCode::NOT_FOUND => Err(OrchestrationClientError::InstanceNotFound),
+                StatusCode::BAD_REQUEST => Err(OrchestrationClientError::BadRaiseEventContent),
+                StatusCode::GONE => Err(OrchestrationClientError::InstanceCompletedOrFailed),
+                s => Err(OrchestrationClientError::CommunicationError(format!(
+                    "Web hook returned unknown status code {}",
+                    s
+                ))),
+            },
+            Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
+                "{:?}",
+                e
+            ))),
+        }
     }
 
     pub async fn rewind<'a>(
@@ -494,7 +642,39 @@ impl OrchestrationClient {
         reason: &str,
         query: InstanceQuery<'a>,
     ) -> OrchestrationResult<()> {
-        Err(OrchestrationClientError::UnspecifiedError)
+        let rewind_url = self.endpoint.rewind_url(
+            query.instance_id.unwrap(),
+            reason,
+            query.task_hub,
+            query.connection_name,
+            query.code,
+        );
+
+        debug!(target:"azure_functions_durable", "Querying URL {:?}", rewind_url);
+
+        let req = Request::builder()
+            .method("POST")
+            .uri(rewind_url.into_string())
+            .header("Content-Type", "application/json")
+            .body(Body::empty())
+            .unwrap();
+
+        let res = self.client.request(req).await;
+        match res {
+            Ok(response) => match response.status() {
+                StatusCode::ACCEPTED => Ok(()),
+                StatusCode::NOT_FOUND => Err(OrchestrationClientError::InstanceNotFound),
+                StatusCode::GONE => Err(OrchestrationClientError::InstanceCompletedOrFailed),
+                s => Err(OrchestrationClientError::CommunicationError(format!(
+                    "Web hook returned unknown status code {}",
+                    s
+                ))),
+            },
+            Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
+                "{:?}",
+                e
+            ))),
+        }
     }
 
     pub async fn start_new<D>(
@@ -572,7 +752,38 @@ impl OrchestrationClient {
         reason: &str,
         query: InstanceQuery<'a>,
     ) -> OrchestrationResult<()> {
-        Err(OrchestrationClientError::UnspecifiedError)
+        let terminate_url = self.endpoint.terminate_url(
+            query.instance_id.unwrap(),
+            reason,
+            query.task_hub,
+            query.connection_name,
+            query.code,
+        );
+
+        debug!(target:"azure_functions_durable", "Querying URL {:?}", terminate_url);
+
+        let req = Request::builder()
+            .method("POST")
+            .uri(terminate_url.into_string())
+            .header("Content-Type", "application/json")
+            .body(Body::empty())
+            .unwrap();
+
+        let res = self.client.request(req).await;
+        match res {
+            Ok(response) => match response.status() {
+                StatusCode::ACCEPTED | StatusCode::GONE => Ok(()),
+                StatusCode::NOT_FOUND => Err(OrchestrationClientError::InstanceNotFound),
+                s => Err(OrchestrationClientError::CommunicationError(format!(
+                    "Web hook returned unknown status code {}",
+                    s
+                ))),
+            },
+            Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
+                "{:?}",
+                e
+            ))),
+        }
     }
 }
 
