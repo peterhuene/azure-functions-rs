@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -36,7 +36,7 @@ pub enum Action {
 
     #[serde(rename_all = "camelCase")]
     CreateTimer {
-        fire_at: DateTime<FixedOffset>,
+        fire_at: DateTime<Utc>,
 
         #[serde(rename = "isCancelled")]
         cancelled: bool,
@@ -57,7 +57,7 @@ pub struct RetryOptions {
 #[cfg(test)]
 mod tests {
     use crate::durable::{Action, RetryOptions};
-    use chrono::DateTime;
+    use chrono::{DateTime, Utc};
 
     macro_rules! it_converts_to_json {
         ($($name:ident: $value:expr,)*) => {
@@ -122,10 +122,10 @@ mod tests {
         create_timer_converts_to_json:
         (
            Action::CreateTimer {
-                fire_at: DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757+00:00").unwrap(),
+                fire_at: DateTime::<Utc>::from(DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap()),
                 cancelled: true,
            },
-           r#"{"actionType":"createTimer","fireAt":"2019-07-18T06:22:27.016757+00:00","isCancelled":true}"#
+           r#"{"actionType":"createTimer","fireAt":"2019-07-18T06:22:27.016757Z","isCancelled":true}"#
         ),
         wait_for_external_event_converts_to_json:
         (

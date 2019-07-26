@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use serde_json::Value;
 use serde_repr::Deserialize_repr;
@@ -20,7 +20,7 @@ pub struct HistoryEvent {
     #[serde(alias = "IsPlayed")]
     pub(crate) played: bool,
 
-    pub(crate) timestamp: DateTime<FixedOffset>,
+    pub(crate) timestamp: DateTime<Utc>,
 
     #[serde(default, alias = "IsProcessed")]
     pub(crate) processed: bool,
@@ -47,7 +47,7 @@ pub struct HistoryEvent {
     pub(crate) details: Option<String>,
 
     //TimerCreated, TimerFired
-    pub(crate) fire_at: Option<DateTime<FixedOffset>>,
+    pub(crate) fire_at: Option<DateTime<Utc>>,
 
     //TimerFired
     pub(crate) timer_id: Option<i32>,
