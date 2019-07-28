@@ -1,14 +1,13 @@
-use azure_functions_shared::codegen::macro_panic;
+use azure_functions_shared::codegen::{last_segment_in_path, macro_panic};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use syn::{
     parse,
     parse::{Parse, ParseStream},
-    parse_str,
     punctuated::Punctuated,
     spanned::Spanned,
-    Path, Token,
+    Ident, Path, Token,
 };
 
 #[derive(Default)]
@@ -45,25 +44,16 @@ impl From<TokenStream> for PathVec {
 
 pub fn export_impl(input: TokenStream) -> TokenStream {
     let mut funcs = Vec::new();
-    for path in PathVec::from(input).into_iter() {
-        if path.leading_colon.is_some() || path.segments.len() > 1 {
-            macro_panic(
-                path.span(),
-                "fully qualified names are not supported for the `export` macro",
-            );
-        }
-
-        let segment = path.segments.first().unwrap();
-        let identifier = segment.value().ident.to_string();
-
-        funcs.push(
-            parse_str::<Path>(&format!(
-                "{}::{}_FUNCTION",
-                identifier,
-                identifier.to_uppercase()
-            ))
-            .unwrap(),
+    for mut path in PathVec::from(input).into_iter() {
+        let last = last_segment_in_path(&path);
+        let identifier = Ident::new(
+            &format!("{}_FUNCTION", last.ident.to_string().to_uppercase()),
+            last.span(),
         );
+
+        path.segments.pop();
+
+        funcs.push(quote!(#path#identifier));
     }
 
     quote!(

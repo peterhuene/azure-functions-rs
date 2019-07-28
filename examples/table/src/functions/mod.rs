@@ -5,6 +5,6 @@ mod read_row;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    create_row,
-    read_row,
+    create_row::create_row,
+    read_row::read_row,
 }

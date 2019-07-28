@@ -4,5 +4,5 @@ mod send_sms;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    send_sms,
+    send_sms::send_sms,
 }

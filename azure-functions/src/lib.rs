@@ -136,10 +136,10 @@ pub trait FromVec<T> {
 /// # Examples
 ///
 /// ```rust,ignore
-/// mod my_function;
+/// mod example;
 ///
 /// azure_functions::export! {
-///     my_function,
+///     example::function,
 /// }
 ///
 /// fn main() {

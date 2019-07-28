@@ -4,5 +4,5 @@ mod timer;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    timer,
+    timer::timer,
 }
