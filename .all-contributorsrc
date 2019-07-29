@@ -64,6 +64,18 @@
         "review",
         "ideas"
       ]
+    },
+    {
+      "login": "slyons",
+      "name": "Scott Lyons",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/41403?v=4",
+      "profile": "https://github.com/slyons",
+      "contributions": [
+        "code",
+        "test",
+        "design",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
