@@ -4,5 +4,5 @@ mod send_email;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    send_email,
+    send_email::send_email,
 }

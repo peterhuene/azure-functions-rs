@@ -8,14 +8,14 @@ mod greet_with_json;
 // Export the Azure Functions here.
 #[cfg(feature = "unstable")]
 azure_functions::export! {
-    greet,
-    greet_async,
-    greet_with_json,
+    greet::greet,
+    greet_async::greet_async,
+    greet_with_json::greet_with_json,
 }
 
 // Export the Azure Functions here.
 #[cfg(not(feature = "unstable"))]
 azure_functions::export! {
-    greet,
-    greet_with_json,
+    greet::greet,
+    greet_with_json::greet_with_json,
 }

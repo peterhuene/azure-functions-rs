@@ -7,8 +7,8 @@ mod read_document;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    create_document,
-    log_documents,
-    query_documents,
-    read_document,
+    create_document::create_document,
+    log_documents::log_documents,
+    query_documents::query_documents,
+    read_document::read_document,
 }

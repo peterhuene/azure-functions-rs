@@ -5,6 +5,6 @@ mod log_event;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    create_event,
-    log_event,
+    create_event::create_event,
+    log_event::log_event,
 }

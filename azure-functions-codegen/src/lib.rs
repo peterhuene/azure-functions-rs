@@ -41,12 +41,11 @@ fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
 
 /// Implements the `export!` macro.
 ///
-/// The `export!` macro is used to export a list of modules as Azure Functions.
+/// The `export!` macro is used to export a list of Rust functions as Azure Functions.
 ///
-/// This macro expects a comma-separated list of module names that implement a
-/// function of the same name with the `#[func]` attribute applied.
+/// This macro expects a comma-separated list of Rust functions with the `#[func]` attribute applied.
 ///
-/// A `EXPORTS` constant is declared by the macro.
+/// An `EXPORTS` constant is declared by the macro.
 ///
 /// # Examples
 ///
@@ -54,7 +53,7 @@ fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
 /// mod example;
 ///
 /// azure_functions::export! {
-///     example
+///     example::function
 /// }
 ///
 /// fn main() {

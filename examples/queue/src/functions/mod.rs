@@ -5,6 +5,6 @@ mod queue_with_output;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    queue,
-    queue_with_output,
+    queue::queue,
+    queue_with_output::queue_with_output,
 }

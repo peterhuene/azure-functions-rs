@@ -7,8 +7,8 @@ mod send_message;
 
 // Export the Azure Functions here.
 azure_functions::export! {
-    add_to_group,
-    negotiate,
-    remove_from_group,
-    send_message,
+    add_to_group::add_to_group,
+    negotiate::negotiate,
+    remove_from_group::remove_from_group,
+    send_message::send_message,
 }

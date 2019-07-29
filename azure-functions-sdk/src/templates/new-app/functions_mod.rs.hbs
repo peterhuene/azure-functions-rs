@@ -6,6 +6,6 @@
 {{/if~}}
 // Export the Azure Functions here.
 azure_functions::export! { {{~#each exports}}
-    {{this}},{{else~}}{{/each~}}{{~#if exports}}
+    {{this}}::{{this}},{{else~}}{{/each~}}{{~#if exports}}
 {{/if~}}
 }
