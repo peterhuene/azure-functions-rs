@@ -64,6 +64,18 @@
         "review",
         "ideas"
       ]
+    },
+    {
+      "login": "dmolokanov",
+      "name": "Denis Molokanov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/6630003?v=4",
+      "profile": "https://github.com/dmolokanov",
+      "contributions": [
+        "code",
+        "test",
+        "design",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
