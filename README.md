@@ -3,7 +3,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
 [![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
-[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors)
 [![Gitter](https://badges.gitter.im/azure-functions-rs/community.svg)](https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Build Status](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_apis/build/status/peterhuene.azure-functions-rs?branchName=master)](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_build/latest?definitionId=2&branchName=master)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
@@ -421,6 +421,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://brokenco.de/"><img src="https://avatars0.githubusercontent.com/u/26594?v=4" width="100px;" alt="R. Tyler Croy"/><br /><sub><b>R. Tyler Croy</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=rtyler" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=rtyler" title="Documentation">📖</a> <a href="#review-rtyler" title="Reviewed Pull Requests">👀</a> <a href="#ideas-rtyler" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/dmolokanov"><img src="https://avatars2.githubusercontent.com/u/6630003?v=4" width="100px;" alt="Denis Molokanov"/><br /><sub><b>Denis Molokanov</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=dmolokanov" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=dmolokanov" title="Tests">⚠️</a> <a href="#design-dmolokanov" title="Design">🎨</a> <a href="#ideas-dmolokanov" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/slyons"><img src="https://avatars3.githubusercontent.com/u/41403?v=4" width="100px;" alt="Scott Lyons"/><br /><sub><b>Scott Lyons</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=slyons" title="Code">💻</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=slyons" title="Tests">⚠️</a> <a href="#design-slyons" title="Design">🎨</a> <a href="#ideas-slyons" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/ajnirp"><img src="https://avatars1.githubusercontent.com/u/1688456?v=4" width="100px;" alt="Rohan Prinja"/><br /><sub><b>Rohan Prinja</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=ajnirp" title="Code">💻</a></td>
   </tr>
 </table>
 
