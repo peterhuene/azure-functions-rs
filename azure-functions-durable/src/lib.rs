@@ -2,37 +2,19 @@
 #![feature(async_await)]
 #![feature(result_map_or_else)]
 
-#[macro_use]
-extern crate derive_builder;
-extern crate hyper;
-//extern crate hyper_tls;
-extern crate futures;
-
-use crate::futures::FutureExt;
-use crate::futures::TryFutureExt;
-use crate::futures::TryStreamExt;
 use chrono::prelude::*;
-use futures::{future, Future};
-use log::{debug, info, warn};
-use serde::{Deserialize, Serialize};
-use serde_json::{from_slice, from_str, Map, Value};
-use std::fmt::{Debug, Display, Formatter};
+use derive_builder::Builder;
+use futures::{
+    compat::{Future01CompatExt, Stream01CompatExt},
+    TryStreamExt,
+};
+use hyper::{client::HttpConnector, Body, Client, Request, StatusCode};
+use log::debug;
+use serde::Deserialize;
+use serde_json::{from_slice, to_string, Map, Value};
+use std::fmt::{Display, Formatter};
 use std::result::Result::*;
 use url::Url;
-
-//use hyper_tls::HttpsConnector;
-use hyper::{client::HttpConnector, Body, Client, Request, StatusCode, Uri};
-
-static EVENT_NAME_PLACEHOLDER: &'static str = "{eventName}";
-static FUNC_NAME_PLACEHOLDER: &'static str = "{functionName}";
-static INSTANCE_ID_PLACEHOLDER: &'static str = "[/{instanceId}]";
-static REASON_PLACEHOLDER: &'static str = "{text}";
-static CREATED_TIME_FROM_KEY: &'static str = "createdTimeFrom";
-static CREATED_TIME_TO_KEY: &'static str = "createdTimeTo";
-static RUNTIME_STATUS_KEY: &'static str = "runtimeStatus";
-static SHOW_HISTORY_KEY: &'static str = "showHistory";
-static SHOW_HISTORY_OUTPUT_KEY: &'static str = "showHistoryOutput";
-static SHOW_INPUT_KEY: &'static str = "showInput";
 
 #[derive(Debug, Clone, Builder)]
 pub(crate) struct OrchestrationEndpoint {
@@ -197,12 +179,10 @@ pub enum OrchestrationRuntimeStatus {
 impl Display for OrchestrationRuntimeStatus {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
     }
 }
 
-#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OrchestrationClientError {
     //400
     InstanceFailedOrTerminated,
@@ -216,6 +196,32 @@ pub enum OrchestrationClientError {
     UnspecifiedError,
     CommunicationError(String),
     InvalidResponse,
+}
+
+impl Display for OrchestrationClientError {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            OrchestrationClientError::InstanceFailedOrTerminated => {
+                write!(f, "instance failed or terminated")
+            }
+            OrchestrationClientError::InstanceCompletedOrFailed => {
+                write!(f, "instance completed or failed")
+            }
+            OrchestrationClientError::InstanceNotFound => write!(f, "instance not found"),
+            OrchestrationClientError::BadRaiseEventContent => write!(f, "bad raise event content"),
+            OrchestrationClientError::UnspecifiedError => write!(f, "unspecified error"),
+            OrchestrationClientError::CommunicationError(msg) => {
+                write!(f, "communication error: {}", msg)
+            }
+            OrchestrationClientError::InvalidResponse => write!(f, "invalid response"),
+        }
+    }
+}
+
+impl std::error::Error for OrchestrationClientError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -272,7 +278,7 @@ pub struct PurgeHistoryResult {
     instances_deleted: u32,
 }
 
-type OrchestrationResult<T> = Result<T, OrchestrationClientError>;
+pub type OrchestrationResult<T> = Result<T, OrchestrationClientError>;
 
 pub struct OrchestrationClient {
     endpoint: OrchestrationEndpoint,
@@ -311,7 +317,7 @@ impl OrchestrationClient {
             ],
         )
         .unwrap();
-        let client_builder = client_builder.unwrap_or(Client::builder());
+        let client_builder = client_builder.unwrap_or_else(Client::builder);
         OrchestrationClient {
             endpoint: OrchestrationEndpoint::new_from_url(end_url),
             client: client_builder.build_http(),
@@ -354,7 +360,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::OK
@@ -362,7 +368,7 @@ impl OrchestrationClient {
                 | StatusCode::BAD_REQUEST
                 | StatusCode::NOT_FOUND
                 | StatusCode::INTERNAL_SERVER_ERROR => {
-                    let body = response.into_body().try_concat().await;
+                    let body = response.into_body().compat().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -371,7 +377,7 @@ impl OrchestrationClient {
                             )))
                         },
                         |b| {
-                            serde_json::from_slice::<OrchestrationStatus>(&b).map_err(|e2| {
+                            from_slice::<OrchestrationStatus>(&b).map_err(|e2| {
                                 OrchestrationClientError::CommunicationError(format!("{:?}", e2))
                             })
                         },
@@ -436,7 +442,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => {
                 if response.status() > StatusCode::ACCEPTED {
@@ -445,7 +451,7 @@ impl OrchestrationClient {
                         response.status()
                     )))
                 } else {
-                    let body = response.into_body().try_concat().await;
+                    let body = response.into_body().compat().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -454,7 +460,7 @@ impl OrchestrationClient {
                             )))
                         },
                         |b| {
-                            serde_json::from_slice(&b).map_err(|e2| {
+                            from_slice(&b).map_err(|e2| {
                                 OrchestrationClientError::CommunicationError(format!("{:?}", e2))
                             })
                         },
@@ -488,11 +494,11 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::OK => {
-                    let body = response.into_body().try_concat().await;
+                    let body = response.into_body().compat().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -501,7 +507,7 @@ impl OrchestrationClient {
                             )))
                         },
                         |b| {
-                            serde_json::from_slice(&b).map_err(|e2| {
+                            from_slice(&b).map_err(|e2| {
                                 OrchestrationClientError::CommunicationError(format!("{:?}", e2))
                             })
                         },
@@ -556,11 +562,11 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::OK => {
-                    let body = response.into_body().try_concat().await;
+                    let body = response.into_body().compat().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -569,7 +575,7 @@ impl OrchestrationClient {
                             )))
                         },
                         |b| {
-                            serde_json::from_slice(&b).map_err(|e2| {
+                            from_slice(&b).map_err(|e2| {
                                 OrchestrationClientError::CommunicationError(format!("{:?}", e2))
                             })
                         },
@@ -597,7 +603,7 @@ impl OrchestrationClient {
         query: InstanceQuery<'a>,
     ) -> OrchestrationResult<()>
     where
-        D: Into<serde_json::Value>,
+        D: Into<Value>,
     {
         let raise_url = self.endpoint.raise_event_url(
             query.instance_id.unwrap(),
@@ -613,12 +619,10 @@ impl OrchestrationClient {
             .method("POST")
             .uri(raise_url.into_string())
             .header("Content-Type", "application/json")
-            .body(Body::from(
-                serde_json::to_string(&event_data.into()).unwrap(),
-            ))
+            .body(Body::from(to_string(&event_data.into()).unwrap()))
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::ACCEPTED => Ok(()),
@@ -659,7 +663,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::ACCEPTED => Ok(()),
@@ -681,30 +685,29 @@ impl OrchestrationClient {
         &self,
         orchestrator_function_name: &str,
         instance_id: Option<&str>,
-        input: Option<D>,
+        input: D,
     ) -> OrchestrationResult<String>
     where
-        D: Into<serde_json::Value>,
+        D: Into<Value>,
     {
-        let creationUri = self
+        let creation_uri = self
             .endpoint
             .create_new_instance_url(orchestrator_function_name, instance_id);
-        let body_value = input.map_or("".to_owned(), |i| i.into().to_string());
 
         let req = Request::builder()
             .method("POST")
-            .uri(creationUri.into_string())
+            .uri(creation_uri.into_string())
             .header("Content-Type", "application/json")
-            .body(Body::from(body_value))
+            .body(Body::from(input.into().to_string()))
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => {
                 if response.status() > StatusCode::ACCEPTED {
                     Err(OrchestrationClientError::UnspecifiedError)
                 } else {
-                    let body = response.into_body().try_concat().await;
+                    let body = response.into_body().compat().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -769,7 +772,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).await;
+        let res = self.client.request(req).compat().await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::ACCEPTED | StatusCode::GONE => Ok(()),
@@ -788,22 +791,15 @@ impl OrchestrationClient {
 }
 
 #[cfg(test)]
-use mockito;
-use std::ops::Deref;
-
-#[cfg(test)]
-extern crate tokio;
-
-#[cfg(test)]
 mod tests {
-    use futures::future::lazy;
-    use mockito::mock;
-    use tokio;
-    use tokio_core::reactor::Core;
-
     use super::*;
+    use futures::future::lazy;
     use hyper::rt;
     use hyper::{Body, Request, Response, Server};
+    use mockito::mock;
+    use serde_json::from_str;
+    use tokio;
+    use tokio_core::reactor::Core;
 
     static EP_GOOD: &'static str = "http://localhost:7071/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=myHub&connection=Storage&code=myCode";
     static EP_BAD: &'static str =
@@ -816,7 +812,6 @@ mod tests {
 
         let rewind_result = "http://localhost:7071/runtime/webhooks/durabletask/instances/1234/rewind?taskHub=myHub&connection=Storage&code=myCode&reason=myReason";
         let rewind_url = endpoint.rewind_url("1234", "myReason", None, None, None);
-        println!("{:?}", rewind_url);
         assert_eq!(rewind_url.to_string(), rewind_result);
     }
 
@@ -836,7 +831,7 @@ mod tests {
 
         let compare_dt = Utc.ymd(2018, 2, 28).and_hms(5, 18, 49);
 
-        let h1_obj: OrchestrationHistoryEvent = serde_json::from_str(&h1).unwrap();
+        let h1_obj: OrchestrationHistoryEvent = from_str(&h1).unwrap();
         assert_eq!(h1_obj.event_type, "ExecutionStarted");
         assert_eq!(h1_obj.timestamp, compare_dt);
 
@@ -852,7 +847,7 @@ mod tests {
         }"#
         .to_owned();
 
-        let h2_obj: OrchestrationHistoryEvent = serde_json::from_str(&h2).unwrap();
+        let h2_obj: OrchestrationHistoryEvent = from_str(&h2).unwrap();
         assert_eq!(h2_obj.orchestration_status.is_some(), true);
         assert_eq!(
             h2_obj.orchestration_status.unwrap(),
@@ -914,7 +909,7 @@ mod tests {
         }"#
         .to_owned();
 
-        let instance_status: OrchestrationStatus = serde_json::from_str(&example).unwrap();
+        let instance_status: OrchestrationStatus = from_str(&example).unwrap();
         assert_eq!(instance_status.history_events.is_some(), true);
         assert_eq!(instance_status.history_events.unwrap().len(), 5);
 
@@ -932,9 +927,9 @@ mod tests {
     }
 
     /*async fn test_the_damn_thing() -> OrchestrationResult<String>{
-        let binding:DurableOrchestrationClientBinding = serde_json::from_str(&CLIENT_BINDING_JSON.replace("{SERVER}", &mockito::server_url())).unwrap();
+        let binding:DurableOrchestrationClientBinding = from_str(&CLIENT_BINDING_JSON.replace("{SERVER}", &mockito::server_url())).unwrap();
         let oc = OrchestrationClient::new(binding);
-        let body:serde_json::Value = serde_json::from_str(r#"{"status":"dope"}"#).unwrap();
+        let body:Value = from_str(r#"{"status":"dope"}"#).unwrap();
 
         oc.start_new("myOrc", None, Some(body)).await
     }

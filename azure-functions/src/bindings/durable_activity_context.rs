@@ -1,6 +1,9 @@
-use crate::rpc::TypedData;
+use crate::rpc::{typed_data::Data, TypedData};
 use serde::Deserialize;
+use serde_json::{from_str, Number, Value};
 use std::collections::HashMap;
+
+const INSTANCE_ID_KEY: &str = "instanceId";
 
 /// Represents the Durable Functions activity context binding.
 ///
@@ -16,14 +19,32 @@ use std::collections::HashMap;
 /// TODO: IMPLEMENT
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DurableActivityContext {}
+pub struct DurableActivityContext {
+    /// The input to the activity function.
+    pub input: Value,
+    /// The orchestration instance identifier.
+    pub instance_id: String,
+}
 
 impl DurableActivityContext {
     #[doc(hidden)]
-    pub fn new(data: TypedData, metadata: HashMap<String, TypedData>) -> Self {
-        println!("{:#?}", data);
-        println!("{:#?}", metadata);
-        DurableActivityContext {}
+    pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
+        DurableActivityContext {
+            input: match data.data {
+                Some(Data::String(s)) => Value::String(s),
+                Some(Data::Json(s)) => from_str(&s).unwrap_or(Value::Null),
+                Some(Data::Int(i)) => Value::Number(i.into()),
+                Some(Data::Double(d)) => Value::Number(Number::from_f64(d).unwrap()),
+                _ => Value::Null,
+            },
+            instance_id: metadata
+                .remove(INSTANCE_ID_KEY)
+                .map(|data| match data.data {
+                    Some(Data::String(s)) => s,
+                    _ => panic!("expected a string for instance id"),
+                })
+                .expect("expected an instance id"),
+        }
     }
 }
 
@@ -35,11 +56,19 @@ mod tests {
     #[test]
     fn it_constructs() {
         let data = TypedData {
-            data: Some(Data::String(r#"{ }"#.to_owned())),
+            data: Some(Data::String("bar".to_string())),
         };
 
-        let _ = DurableActivityContext::new(data, HashMap::new());
+        let mut metadata = HashMap::new();
+        metadata.insert(
+            INSTANCE_ID_KEY.to_string(),
+            TypedData {
+                data: Some(Data::String("foo".to_string())),
+            },
+        );
 
-        // TODO: implement
+        let context = DurableActivityContext::new(data, metadata);
+        assert_eq!(context.instance_id, "foo");
+        assert_eq!(context.input, Value::String("bar".to_string()));
     }
 }

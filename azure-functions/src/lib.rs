@@ -6,6 +6,8 @@
 //!
 //! * [Blob trigger](bindings/struct.BlobTrigger.html)
 //! * [Cosmos DB trigger](bindings/struct.CosmosDbTrigger.html)
+//! * [Durable Activity trigger](bindings/struct.DurableOrchestrationContext.html)
+//! * [Durable Orchestration trigger](bindings/struct.DurableOrchestrationContext.html)
 //! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
 //! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
 //! * [Generic trigger](bindings/struct.GenericTrigger.html)
@@ -18,6 +20,7 @@
 //!
 //! * [Blob input](bindings/struct.Blob.html)
 //! * [Cosmos DB input](bindings/struct.CosmosDbDocument.html)
+//! * [Durable orchestration client input](bindings/struct.DurableOrchestrationClient.html)
 //! * [Generic input](bindings/struct.GenericInput.html)
 //! * [SignalR connection info input](bindings/struct.SignalRConnectionInfo.html)
 //! * [Table input](bindings/struct.Table.html)
@@ -87,6 +90,7 @@
 #![deny(unused_extern_crates)]
 #![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]
+#![feature(async_await)]
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;

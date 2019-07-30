@@ -17,13 +17,12 @@ pub struct HistoryEvent {
 
     pub(crate) event_id: i32,
 
-    #[serde(alias = "IsPlayed")]
-    pub(crate) played: bool,
+    pub(crate) is_played: bool,
 
     pub(crate) timestamp: DateTime<Utc>,
 
-    #[serde(default, alias = "IsProcessed")]
-    pub(crate) processed: bool,
+    #[serde(skip)]
+    pub(crate) is_processed: bool,
 
     // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
     pub(crate) name: Option<String>,
@@ -32,7 +31,7 @@ pub struct HistoryEvent {
     pub(crate) input: Option<Value>,
 
     //SubOrchestrationInstanceCompleted, TaskCompleted
-    pub(crate) result: Option<Value>,
+    pub(crate) result: Option<String>,
 
     // SubOrchestrationInstanceCompleted , SubOrchestrationInstanceFailed, TaskCompleted,TaskFailed
     pub(crate) task_scheduled_id: Option<i32>,
