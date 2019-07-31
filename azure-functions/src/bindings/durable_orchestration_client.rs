@@ -28,12 +28,9 @@ struct ManagementUrls {
     purge_history_url: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct BindingData {
-    #[serde(rename = "taskHubName")]
-    task_hub: String,
-    creation_urls: CreationUrls,
     management_urls: ManagementUrls,
 }
 
