@@ -793,13 +793,7 @@ impl OrchestrationClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use futures::future::lazy;
-    use hyper::rt;
-    use hyper::{Body, Request, Response, Server};
-    use mockito::mock;
     use serde_json::from_str;
-    use tokio;
-    use tokio_core::reactor::Core;
 
     static EP_GOOD: &'static str = "http://localhost:7071/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=myHub&connection=Storage&code=myCode";
     static EP_BAD: &'static str =
