@@ -83,9 +83,9 @@ impl<'a> CommonInvokerTokens<'a> {
             .map(|(name, arg_type)| (name, Invoker::deref_arg_type(arg_type)))
     }
 
-    fn get_execution_result_arg(&self, trigger: &Ident) -> TokenStream {
+    fn get_state_arg(&self, trigger: &Ident) -> TokenStream {
         if self.is_orchestration {
-            quote!(let __result = #trigger.as_ref().unwrap().execution_result();)
+            quote!(let __state = #trigger.as_ref().unwrap().state();)
         } else {
             TokenStream::new()
         }
@@ -138,7 +138,7 @@ impl ToTokens for CommonInvokerTokens<'_> {
 
         let args_for_call = self.get_args_for_call();
 
-        let execution_result = self.get_execution_result_arg(trigger_arg);
+        let state_arg = self.get_state_arg(trigger_arg);
 
         quote!(
             use azure_functions::{IntoVec, FromVec};
@@ -161,7 +161,7 @@ impl ToTokens for CommonInvokerTokens<'_> {
                 };
             }
 
-            #execution_result
+            #state_arg
 
             let __ret = #target(#(#args_for_call,)*);
         )
@@ -197,7 +197,7 @@ impl ToTokens for Invoker<'_> {
                     ::azure_functions::durable::orchestrate(
                         __req.invocation_id,
                         __ret,
-                        __result,
+                        __state,
                     )
                 }
             )
