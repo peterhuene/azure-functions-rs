@@ -99,3 +99,55 @@ where
         ..Default::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::durable::{EventType, HistoryEvent};
+    use chrono::Utc;
+    use futures::future::FutureExt;
+    use std::{
+        future::Future,
+        ptr::null,
+        task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    };
+
+    pub(crate) fn poll<F, T>(mut future: F) -> Poll<T>
+    where
+        F: Future<Output = T> + Unpin,
+    {
+        let waker = unsafe {
+            Waker::from_raw(RawWaker::new(
+                null(),
+                &RawWakerVTable::new(waker_clone, waker_wake, waker_wake_by_ref, waker_drop),
+            ))
+        };
+
+        future.poll_unpin(&mut Context::from_waker(&waker))
+    }
+
+    pub(crate) fn create_event(
+        event_type: EventType,
+        event_id: i32,
+        name: Option<String>,
+        result: Option<String>,
+        task_scheduled_id: Option<i32>,
+    ) -> HistoryEvent {
+        HistoryEvent {
+            event_type,
+            event_id,
+            is_played: true,
+            timestamp: Utc::now(),
+            is_processed: false,
+            name,
+            input: None,
+            result,
+            task_scheduled_id,
+            instance_id: None,
+            reason: None,
+            details: None,
+            fire_at: None,
+            timer_id: None,
+        }
+    }
+}
