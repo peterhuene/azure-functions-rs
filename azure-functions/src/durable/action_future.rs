@@ -64,3 +64,146 @@ where
         self.event_index
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::durable::{
+        tests::{create_event, poll},
+        EventType,
+    };
+    use serde_json::{from_str, json};
+    use std::task::Poll;
+
+    #[test]
+    fn it_polls_pending_without_a_result() {
+        let history = vec![create_event(
+            EventType::OrchestratorStarted,
+            -1,
+            None,
+            None,
+            None,
+        )];
+
+        let state = Rc::new(RefCell::new(OrchestrationState::new(history)));
+        let future = ActionFuture::<()>::new(None, state, None);
+
+        assert_eq!(poll(future), Poll::Pending);
+    }
+
+    #[test]
+    fn it_polls_ready_given_a_result() {
+        let history = vec![
+            create_event(EventType::OrchestratorStarted, -1, None, None, None),
+            create_event(
+                EventType::TaskScheduled,
+                0,
+                Some("hello".to_string()),
+                None,
+                None,
+            ),
+            create_event(
+                EventType::TaskCompleted,
+                -1,
+                Some("hello".to_string()),
+                Some(json!("hello").to_string()),
+                Some(0),
+            ),
+        ];
+
+        let mut state = OrchestrationState::new(history);
+        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        event.is_processed = true;
+
+        let (idx, event) = state.find_finished_task(idx).unwrap();
+        event.is_processed = true;
+
+        let result = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
+        let state = Rc::new(RefCell::new(state));
+        let future = ActionFuture::new(result, state, Some(idx));
+
+        assert_eq!(future.event_index(), Some(idx));
+        assert_eq!(poll(future), Poll::Ready(json!("hello")));
+    }
+
+    #[test]
+    fn it_updates_state() {
+        let history = vec![
+            create_event(EventType::OrchestratorStarted, -1, None, None, None),
+            create_event(
+                EventType::TaskScheduled,
+                0,
+                Some("hello".to_string()),
+                None,
+                None,
+            ),
+            create_event(EventType::OrchestratorCompleted, -1, None, None, None),
+            create_event(EventType::OrchestratorStarted, -1, None, None, None),
+            create_event(
+                EventType::TaskCompleted,
+                -1,
+                Some("hello".to_string()),
+                Some(json!("hello").to_string()),
+                Some(0),
+            ),
+        ];
+
+        let mut state = OrchestrationState::new(history);
+        assert!(state.is_replaying());
+
+        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        event.is_processed = true;
+
+        let (idx, event) = state.find_finished_task(idx).unwrap();
+        event.is_processed = true;
+
+        let result = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
+        let state = Rc::new(RefCell::new(state));
+        let future = ActionFuture::new(result, state.clone(), Some(idx));
+
+        assert_eq!(future.event_index(), Some(idx));
+        assert_eq!(poll(future), Poll::Ready(json!("hello")));
+        assert!(!state.borrow().is_replaying());
+    }
+
+    #[test]
+    fn it_does_not_update_state_when_an_inner_future() {
+        let history = vec![
+            create_event(EventType::OrchestratorStarted, -1, None, None, None),
+            create_event(
+                EventType::TaskScheduled,
+                0,
+                Some("hello".to_string()),
+                None,
+                None,
+            ),
+            create_event(EventType::OrchestratorCompleted, -1, None, None, None),
+            create_event(EventType::OrchestratorStarted, -1, None, None, None),
+            create_event(
+                EventType::TaskCompleted,
+                -1,
+                Some("hello".to_string()),
+                Some(json!("hello").to_string()),
+                Some(0),
+            ),
+        ];
+
+        let mut state = OrchestrationState::new(history);
+        assert!(state.is_replaying());
+
+        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        event.is_processed = true;
+
+        let (idx, event) = state.find_finished_task(idx).unwrap();
+        event.is_processed = true;
+
+        let result = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
+        let state = Rc::new(RefCell::new(state));
+        let mut future = ActionFuture::new(result, state.clone(), Some(idx));
+        future.notify_inner();
+
+        assert_eq!(future.event_index(), Some(idx));
+        assert_eq!(poll(future), Poll::Ready(json!("hello")));
+        assert!(state.borrow().is_replaying());
+    }
+}
