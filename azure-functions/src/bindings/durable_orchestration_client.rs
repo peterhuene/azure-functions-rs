@@ -3,37 +3,6 @@ use azure_functions_durable::{OrchestrationClient, OrchestrationResult};
 use serde::Deserialize;
 use serde_json::{from_str, Value};
 
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CreationUrls {
-    #[serde(rename = "createNewInstancePostUri")]
-    create_new_instance_url: String,
-    #[serde(rename = "createAndWaitOnNewInstancePostUri")]
-    create_new_instance_and_wait_url: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ManagementUrls {
-    id: String,
-    #[serde(rename = "statusQueryGetUri")]
-    status_query_url: String,
-    #[serde(rename = "sendEventPostUri")]
-    raise_event_url: String,
-    #[serde(rename = "terminatePostUri")]
-    terminate_url: String,
-    #[serde(rename = "rewindPostUri")]
-    rewind_url: String,
-    #[serde(rename = "purgeHistoryDeleteUri")]
-    purge_history_url: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct BindingData {
-    management_urls: ManagementUrls,
-}
-
 /// Represents the Durable Functions orchestration client input binding.
 ///
 /// The following binding attributes are supported:
@@ -73,6 +42,19 @@ impl DurableOrchestrationClient {
 #[doc(hidden)]
 impl From<TypedData> for DurableOrchestrationClient {
     fn from(data: TypedData) -> Self {
+        #[derive(Debug, Clone, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct ManagementUrls {
+            #[serde(rename = "statusQueryGetUri")]
+            status_query_url: String,
+        }
+
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct BindingData {
+            management_urls: ManagementUrls,
+        }
+
         let data: BindingData = match &data.data {
             Some(Data::String(s)) => {
                 from_str(s).expect("failed to parse durable orchestration client data")
