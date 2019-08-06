@@ -328,9 +328,9 @@ impl OrchestrationClient {
         &self.endpoint.task_hub
     }
 
-    pub async fn get_status<'a>(
+    pub async fn get_status(
         &self,
-        query: InstanceQuery<'a>,
+        query: InstanceQuery<'_>,
     ) -> OrchestrationResult<OrchestrationStatus> {
         let mut status_url = self.endpoint.status_query_url(
             query.instance_id,
@@ -395,9 +395,9 @@ impl OrchestrationClient {
         }
     }
 
-    pub async fn get_statuses_by<'a>(
+    pub async fn get_statuses_by(
         &self,
-        query: InstanceQuery<'a>,
+        query: InstanceQuery<'_>,
     ) -> OrchestrationResult<Vec<OrchestrationStatus>> {
         let mut status_url = self.endpoint.status_query_url(
             query.instance_id,
@@ -474,9 +474,9 @@ impl OrchestrationClient {
         }
     }
 
-    pub async fn purge_instance_history<'a>(
+    pub async fn purge_instance_history(
         &self,
-        query: InstanceQuery<'a>,
+        query: InstanceQuery<'_>,
     ) -> OrchestrationResult<PurgeHistoryResult> {
         let purge_url = self.endpoint.purge_history_url(
             query.instance_id,
@@ -528,9 +528,9 @@ impl OrchestrationClient {
         }
     }
 
-    pub async fn purge_history_by<'a>(
+    pub async fn purge_history_by(
         &self,
-        query: InstanceQuery<'a>,
+        query: InstanceQuery<'_>,
     ) -> OrchestrationResult<PurgeHistoryResult> {
         let mut purge_url = self.endpoint.purge_history_url(
             query.instance_id,
@@ -596,11 +596,11 @@ impl OrchestrationClient {
         }
     }
 
-    pub async fn raise_event<'a, D>(
+    pub async fn raise_event<D>(
         &self,
         event_name: &str,
         event_data: D,
-        query: InstanceQuery<'a>,
+        query: InstanceQuery<'_>,
     ) -> OrchestrationResult<()>
     where
         D: Into<Value>,
@@ -641,11 +641,7 @@ impl OrchestrationClient {
         }
     }
 
-    pub async fn rewind<'a>(
-        &self,
-        reason: &str,
-        query: InstanceQuery<'a>,
-    ) -> OrchestrationResult<()> {
+    pub async fn rewind(&self, reason: &str, query: InstanceQuery<'_>) -> OrchestrationResult<()> {
         let rewind_url = self.endpoint.rewind_url(
             query.instance_id.unwrap(),
             reason,
@@ -750,10 +746,10 @@ impl OrchestrationClient {
         }
     }
 
-    pub async fn terminate<'a>(
+    pub async fn terminate(
         &self,
         reason: &str,
-        query: InstanceQuery<'a>,
+        query: InstanceQuery<'_>,
     ) -> OrchestrationResult<()> {
         let terminate_url = self.endpoint.terminate_url(
             query.instance_id.unwrap(),
@@ -793,13 +789,7 @@ impl OrchestrationClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use futures::future::lazy;
-    use hyper::rt;
-    use hyper::{Body, Request, Response, Server};
-    use mockito::mock;
     use serde_json::from_str;
-    use tokio;
-    use tokio_core::reactor::Core;
 
     static EP_GOOD: &'static str = "http://localhost:7071/runtime/webhooks/durabletask/instances/INSTANCEID?taskHub=myHub&connection=Storage&code=myCode";
     static EP_BAD: &'static str =

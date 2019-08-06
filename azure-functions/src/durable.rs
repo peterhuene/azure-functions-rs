@@ -2,8 +2,7 @@
 use crate::rpc::{
     status_result::Status, typed_data::Data, InvocationResponse, StatusResult, TypedData,
 };
-use serde::Serialize;
-use serde_json::{to_string, Value};
+use serde_json::Value;
 use std::{
     cell::RefCell,
     future::Future,
@@ -12,39 +11,31 @@ use std::{
     task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
+mod action_future;
 mod actions;
 mod activity_output;
 mod history;
+mod join_all;
 mod orchestration_output;
+mod orchestration_state;
+mod select_all;
 
+pub(crate) use self::action_future::*;
 pub use self::actions::*;
 pub use self::activity_output::*;
 pub use self::history::*;
+pub use self::join_all::*;
 pub use self::orchestration_output::*;
+pub use self::orchestration_state::*;
+pub use self::select_all::*;
 
-#[doc(hidden)]
-#[derive(Debug, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct ExecutionResult {
-    is_done: bool,
-    actions: Vec<Vec<Action>>,
-    output: Option<Value>,
-    custom_status: Option<Value>,
-    error: Option<String>,
-}
+/// Represents a Future returned by the orchestration context.
+pub trait OrchestrationFuture: Future {
+    #[doc(hidden)]
+    fn notify_inner(&mut self);
 
-impl ExecutionResult {
-    pub(crate) fn notify_new_execution(&mut self) {
-        self.actions.push(Vec::new());
-    }
-
-    pub(crate) fn push_action(&mut self, action: Action) {
-        if self.actions.is_empty() {
-            self.actions.push(Vec::new());
-        }
-
-        self.actions.last_mut().unwrap().push(action);
-    }
+    #[doc(hidden)]
+    fn event_index(&self) -> Option<usize>;
 }
 
 unsafe fn waker_clone(_: *const ()) -> RawWaker {
@@ -77,7 +68,7 @@ impl IntoValue for () {
 pub fn orchestrate<T>(
     id: String,
     func: impl Future<Output = T>,
-    result: Rc<RefCell<ExecutionResult>>,
+    state: Rc<RefCell<OrchestrationState>>,
 ) -> InvocationResponse
 where
     T: IntoValue,
@@ -91,9 +82,7 @@ where
 
     match Future::poll(Box::pin(func).as_mut(), &mut Context::from_waker(&waker)) {
         Poll::Ready(output) => {
-            let mut result = result.borrow_mut();
-            result.output = Some(output.into_value());
-            result.is_done = true;
+            state.borrow_mut().set_output(output.into_value());
         }
         Poll::Pending => {}
     };
@@ -101,12 +90,64 @@ where
     InvocationResponse {
         invocation_id: id,
         return_value: Some(TypedData {
-            data: Some(Data::Json(to_string(&*result.borrow()).unwrap())),
+            data: Some(Data::Json(state.borrow().result())),
         }),
         result: Some(StatusResult {
             status: Status::Success as i32,
             ..Default::default()
         }),
         ..Default::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::durable::{EventType, HistoryEvent};
+    use chrono::Utc;
+    use futures::future::FutureExt;
+    use std::{
+        future::Future,
+        ptr::null,
+        task::{Context, Poll, RawWaker, RawWakerVTable, Waker},
+    };
+
+    pub(crate) fn poll<F, T>(mut future: F) -> Poll<T>
+    where
+        F: Future<Output = T> + Unpin,
+    {
+        let waker = unsafe {
+            Waker::from_raw(RawWaker::new(
+                null(),
+                &RawWakerVTable::new(waker_clone, waker_wake, waker_wake_by_ref, waker_drop),
+            ))
+        };
+
+        future.poll_unpin(&mut Context::from_waker(&waker))
+    }
+
+    pub(crate) fn create_event(
+        event_type: EventType,
+        event_id: i32,
+        name: Option<String>,
+        result: Option<String>,
+        task_scheduled_id: Option<i32>,
+    ) -> HistoryEvent {
+        HistoryEvent {
+            event_type,
+            event_id,
+            is_played: true,
+            timestamp: Utc::now(),
+            is_processed: false,
+            name,
+            input: None,
+            result,
+            task_scheduled_id,
+            instance_id: None,
+            reason: None,
+            details: None,
+            fire_at: None,
+            timer_id: None,
+        }
     }
 }
