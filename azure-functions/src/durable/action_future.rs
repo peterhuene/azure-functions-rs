@@ -7,7 +7,8 @@ use std::{
     task::{Context, Poll},
 };
 
-pub(crate) struct ActionFuture<T> {
+/// Future returned by various `DurableOrchestrationContext` functions.
+pub struct ActionFuture<T> {
     result: Option<T>,
     state: Rc<RefCell<OrchestrationState>>,
     event_index: Option<usize>,
