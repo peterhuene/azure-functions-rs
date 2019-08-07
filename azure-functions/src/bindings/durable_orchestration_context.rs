@@ -1,14 +1,14 @@
 use crate::{
     durable::{
         Action, ActionFuture, EventType, HistoryEvent, JoinAll, OrchestrationFuture,
-        OrchestrationState, SelectAll,
+        OrchestrationState, RetryOptions, SelectAll,
     },
     rpc::{typed_data::Data, TypedData},
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use serde_json::{from_str, Value};
-use std::{cell::RefCell, collections::HashMap, future::Future, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 /// Represents the Durable Functions orchestration context binding.
 ///
@@ -112,16 +112,48 @@ impl DurableOrchestrationContext {
         &self,
         activity_name: &str,
         data: D,
-    ) -> impl Future<Output = Result<Value, String>> + OrchestrationFuture
+    ) -> ActionFuture<Result<Value, String>>
     where
         D: Into<Value>,
     {
+        self.call_activity_impl(
+            Action::CallActivity {
+                function_name: activity_name.to_string(),
+                input: data.into(),
+            },
+            activity_name,
+        )
+    }
+
+    /// Schedules an activity function for execution with retry options.
+    #[must_use = "futures do nothing unless you `.await` or poll them"]
+    pub fn call_activity_with_retry<D>(
+        &self,
+        activity_name: &str,
+        data: D,
+        retry_options: RetryOptions,
+    ) -> ActionFuture<Result<Value, String>>
+    where
+        D: Into<Value>,
+    {
+        self.call_activity_impl(
+            Action::CallActivityWithRetry {
+                function_name: activity_name.to_string(),
+                retry_options,
+                input: data.into(),
+            },
+            activity_name,
+        )
+    }
+
+    fn call_activity_impl(
+        &self,
+        action: Action,
+        activity_name: &str,
+    ) -> ActionFuture<Result<Value, String>> {
         let mut state = self.state.borrow_mut();
 
-        state.push_action(Action::CallActivity {
-            function_name: activity_name.to_string(),
-            input: data.into(),
-        });
+        state.push_action(action);
 
         let mut result: Option<Result<Value, String>> = None;
         let mut event_index = None;

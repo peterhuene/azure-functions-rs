@@ -2,10 +2,37 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_json::Value;
 
-#[doc(hidden)]
+/// Defines retry policies that can be passed as parameters to various Durable Functions operations.
+#[derive(Debug, Clone, Default, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RetryOptions {
+    /// The first retry interval in milliseconds.
+    #[serde(rename = "firstRetryIntervalInMilliseconds")]
+    pub first_retry_interval_ms: i32,
+    /// The maximum number of retry attempts.
+    #[serde(rename = "maxNumberOfAttempts")]
+    pub max_attempts: i32,
+    /// The backoff coefficient used to determine rate of increase of backoff. Defaults to 1.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backoff_coefficient: Option<f64>,
+    /// The max retry interval in milliseconds.
+    #[serde(
+        rename = "maxRetryIntervalInMilliseconds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub max_retry_interval_ms: Option<i32>,
+    /// The timeout for retries in milliseconds.
+    #[serde(
+        rename = "retryTimeoutInMilliseconds",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub retry_timeout_ms: Option<i32>,
+}
+
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(tag = "actionType", rename_all = "camelCase")]
-pub enum Action {
+pub(crate) enum Action {
     #[serde(rename_all = "camelCase")]
     CallActivity { function_name: String, input: Value },
 
@@ -44,14 +71,6 @@ pub enum Action {
 
     #[serde(rename_all = "camelCase")]
     WaitForExternalEvent { external_event_name: String },
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct RetryOptions {
-    first_retry_interval_in_milliseconds: i32,
-    max_number_of_attempts: i32,
 }
 
 #[cfg(test)]

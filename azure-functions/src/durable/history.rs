@@ -9,50 +9,48 @@ use serde_repr::Deserialize_repr;
 // i.e conversion { EventType = 0, EventId = 1, ...} => ExecutionStarted(ExecutionStartedEvent)
 // in future we can implement manual translation
 
-#[doc(hidden)]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 #[serde(rename_all = "PascalCase")]
-pub struct HistoryEvent {
-    pub(crate) event_type: EventType,
+pub(crate) struct HistoryEvent {
+    pub event_type: EventType,
 
-    pub(crate) event_id: i32,
+    pub event_id: i32,
 
-    pub(crate) is_played: bool,
+    pub is_played: bool,
 
-    pub(crate) timestamp: DateTime<Utc>,
+    pub timestamp: DateTime<Utc>,
 
     #[serde(skip)]
-    pub(crate) is_processed: bool,
+    pub is_processed: bool,
 
     // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
-    pub(crate) name: Option<String>,
+    pub name: Option<String>,
 
     // EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
-    pub(crate) input: Option<Value>,
+    pub input: Option<Value>,
 
     //SubOrchestrationInstanceCompleted, TaskCompleted
-    pub(crate) result: Option<String>,
+    pub result: Option<String>,
 
     // SubOrchestrationInstanceCompleted , SubOrchestrationInstanceFailed, TaskCompleted,TaskFailed
-    pub(crate) task_scheduled_id: Option<i32>,
+    pub task_scheduled_id: Option<i32>,
 
     // SubOrchestrationInstanceCreated
-    pub(crate) instance_id: Option<String>,
+    pub instance_id: Option<String>,
 
     //SubOrchestrationInstanceFailed, TaskFailed
-    pub(crate) reason: Option<String>,
+    pub reason: Option<String>,
 
     // SubOrchestrationInstanceFailed,TaskFailed
-    pub(crate) details: Option<String>,
+    pub details: Option<String>,
 
     //TimerCreated, TimerFired
-    pub(crate) fire_at: Option<DateTime<Utc>>,
+    pub fire_at: Option<DateTime<Utc>>,
 
     //TimerFired
-    pub(crate) timer_id: Option<i32>,
+    pub timer_id: Option<i32>,
 }
 
-#[doc(hidden)]
 #[derive(Debug, Clone, Deserialize_repr, PartialEq)]
 #[repr(u8)]
 pub(crate) enum EventType {
