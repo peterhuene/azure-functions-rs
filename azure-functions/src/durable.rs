@@ -20,10 +20,10 @@ mod orchestration_output;
 mod orchestration_state;
 mod select_all;
 
-pub(crate) use self::action_future::*;
+pub use self::action_future::*;
 pub use self::actions::*;
 pub use self::activity_output::*;
-pub use self::history::*;
+pub(crate) use self::history::*;
 pub use self::join_all::*;
 pub use self::orchestration_output::*;
 pub use self::orchestration_state::*;
