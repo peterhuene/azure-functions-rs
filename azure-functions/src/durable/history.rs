@@ -51,7 +51,7 @@ pub struct HistoryEvent {
     pub timer_id: Option<i32>,
 }
 
-#[derive(Debug, Clone, Deserialize_repr, PartialEq)]
+#[derive(Debug, Copy, Clone, Deserialize_repr, PartialEq)]
 #[repr(u8)]
 pub enum EventType {
     ExecutionStarted = 0,

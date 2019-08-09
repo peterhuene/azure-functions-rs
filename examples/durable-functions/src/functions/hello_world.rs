@@ -1,5 +1,5 @@
 use azure_functions::{bindings::DurableOrchestrationContext, durable::OrchestrationOutput, func};
-use log::warn;
+use log::{error, warn};
 use serde_json::Value;
 
 #[func]
@@ -18,15 +18,21 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
         warn!("Joining all activities.");
     }
 
-    let result: Vec<_> = context
+    let result: Value = context
         .join_all(activities)
         .await
         .into_iter()
-        .map(|r| r.unwrap_or_else(|e| Value::from(format!("Activity failed: {}", e))))
-        .collect();
+        .filter_map(|r| {
+            r.map(|v| Some(v)).unwrap_or_else(|e| {
+                error!("Activity failed: {}", e);
+                None
+            })
+        })
+        .collect::<Vec<_>>()
+        .into();
 
     if !context.is_replaying() {
-        warn!("Result is: {:#?}.", result);
+        warn!("Result is: {}.", result);
     }
 
     let mut activities = vec![
@@ -47,7 +53,10 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
         completed += 1;
 
         if !context.is_replaying() {
-            warn!("Result #{} is: {:#?}.", completed, r);
+            match r {
+                Ok(output) => warn!("Activity #{} completed with output: {}", completed, output),
+                Err(e) => error!("Activity #{} failed: {}", completed, e),
+            };
         }
 
         activities = remaining;
