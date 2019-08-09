@@ -9,18 +9,22 @@ pub struct RetryOptions {
     /// The first retry interval in milliseconds.
     #[serde(rename = "firstRetryIntervalInMilliseconds")]
     pub first_retry_interval_ms: i32,
+
     /// The maximum number of retry attempts.
     #[serde(rename = "maxNumberOfAttempts")]
     pub max_attempts: i32,
+
     /// The backoff coefficient used to determine rate of increase of backoff. Defaults to 1.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backoff_coefficient: Option<f64>,
+
     /// The max retry interval in milliseconds.
     #[serde(
         rename = "maxRetryIntervalInMilliseconds",
         skip_serializing_if = "Option::is_none"
     )]
     pub max_retry_interval_ms: Option<i32>,
+
     /// The timeout for retries in milliseconds.
     #[serde(
         rename = "retryTimeoutInMilliseconds",
