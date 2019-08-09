@@ -11,7 +11,7 @@ use serde_repr::Deserialize_repr;
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 #[serde(rename_all = "PascalCase")]
-pub(crate) struct HistoryEvent {
+pub struct HistoryEvent {
     pub event_type: EventType,
 
     pub event_id: i32,
@@ -53,7 +53,7 @@ pub(crate) struct HistoryEvent {
 
 #[derive(Debug, Clone, Deserialize_repr, PartialEq)]
 #[repr(u8)]
-pub(crate) enum EventType {
+pub enum EventType {
     ExecutionStarted = 0,
     ExecutionCompleted = 1,
     ExecutionFailed = 2,
