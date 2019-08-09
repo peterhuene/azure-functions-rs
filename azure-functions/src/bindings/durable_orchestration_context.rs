@@ -116,12 +116,15 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        self.call_activity_impl(
+        self.perform_action(
             Action::CallActivity {
                 function_name: activity_name.to_string(),
                 input: data.into(),
             },
             activity_name,
+            EventType::TaskScheduled,
+            EventType::TaskCompleted,
+            EventType::TaskFailed,
         )
     }
 
@@ -136,20 +139,76 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        self.call_activity_impl(
+        self.perform_action(
             Action::CallActivityWithRetry {
                 function_name: activity_name.to_string(),
                 retry_options,
                 input: data.into(),
             },
             activity_name,
+            EventType::TaskScheduled,
+            EventType::TaskCompleted,
+            EventType::TaskFailed,
         )
     }
 
-    fn call_activity_impl(
+    /// Schedules an orchestration function for execution.
+    #[must_use = "futures do nothing unless you `.await` or poll them"]
+    pub fn call_sub_orchestrator<D>(
+        &self,
+        function_name: &str,
+        instance_id: Option<String>,
+        data: D,
+    ) -> ActionFuture<Result<Value, String>>
+    where
+        D: Into<Value>,
+    {
+        self.perform_action(
+            Action::CallSubOrchestrator {
+                function_name: function_name.to_string(),
+                instance_id,
+                input: data.into(),
+            },
+            function_name,
+            EventType::SubOrchestrationInstanceCreated,
+            EventType::SubOrchestrationInstanceCompleted,
+            EventType::SubOrchestrationInstanceFailed,
+        )
+    }
+
+    /// Schedules an orchestration function for execution with retry.
+    #[must_use = "futures do nothing unless you `.await` or poll them"]
+    pub fn call_sub_orchestrator_with_retry<D>(
+        &self,
+        function_name: &str,
+        instance_id: Option<String>,
+        data: D,
+        retry_options: RetryOptions,
+    ) -> ActionFuture<Result<Value, String>>
+    where
+        D: Into<Value>,
+    {
+        self.perform_action(
+            Action::CallSubOrchestratorWithRetry {
+                function_name: function_name.to_string(),
+                retry_options,
+                instance_id,
+                input: data.into(),
+            },
+            function_name,
+            EventType::SubOrchestrationInstanceCreated,
+            EventType::SubOrchestrationInstanceCompleted,
+            EventType::SubOrchestrationInstanceFailed,
+        )
+    }
+
+    fn perform_action(
         &self,
         action: Action,
-        activity_name: &str,
+        name: &str,
+        started_type: EventType,
+        completed_type: EventType,
+        failed_type: EventType,
     ) -> ActionFuture<Result<Value, String>> {
         let mut state = self.state.borrow_mut();
 
@@ -158,23 +217,26 @@ impl DurableOrchestrationContext {
         let mut result: Option<Result<Value, String>> = None;
         let mut event_index = None;
 
-        // Attempt to resolve the activity
-        if let Some((idx, scheduled)) = state.find_scheduled_task(activity_name) {
+        if let Some((idx, scheduled)) = state.find_start_event(name, started_type) {
             scheduled.is_processed = true;
 
-            if let Some((idx, finished)) = state.find_finished_task(idx) {
+            if let Some((idx, finished)) =
+                state.find_end_event(idx, completed_type, Some(failed_type))
+            {
                 finished.is_processed = true;
                 event_index = Some(idx);
 
-                result = Some(match finished.event_type {
-                    EventType::TaskCompleted => Ok(finished
+                if finished.event_type == completed_type {
+                    result = Some(Ok(finished
                         .result
                         .as_ref()
                         .map(|s| from_str(&s).unwrap_or_default())
-                        .unwrap_or(Value::Null)),
-                    EventType::TaskFailed => Err(finished.reason.clone().unwrap_or_default()),
-                    _ => panic!("task must either complete or fail"),
-                });
+                        .unwrap_or(Value::Null)));
+                } else if finished.event_type == failed_type {
+                    result = Some(Err(finished.reason.clone().unwrap_or_default()));
+                } else {
+                    panic!("event must be a completion or a failure");
+                }
             }
         }
 

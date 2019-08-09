@@ -158,19 +158,27 @@ mod tests {
 
         let mut state = OrchestrationState::new(history);
 
-        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        let (idx, event) = state
+            .find_start_event("hello", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result1 = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
         let idx1 = Some(idx);
 
-        let (idx, event) = state.find_scheduled_task("world").unwrap();
+        let (idx, event) = state
+            .find_start_event("world", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result2 = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
@@ -229,19 +237,27 @@ mod tests {
         let mut state = OrchestrationState::new(history);
         assert!(state.is_replaying());
 
-        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        let (idx, event) = state
+            .find_start_event("hello", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result1 = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
         let idx1 = Some(idx);
 
-        let (idx, event) = state.find_scheduled_task("world").unwrap();
+        let (idx, event) = state
+            .find_start_event("world", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result2 = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
@@ -301,19 +317,27 @@ mod tests {
         let mut state = OrchestrationState::new(history);
         assert!(state.is_replaying());
 
-        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        let (idx, event) = state
+            .find_start_event("hello", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result1 = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
         let idx1 = Some(idx);
 
-        let (idx, event) = state.find_scheduled_task("world").unwrap();
+        let (idx, event) = state
+            .find_start_event("world", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result2 = Some(from_str(&event.result.as_ref().unwrap()).unwrap());

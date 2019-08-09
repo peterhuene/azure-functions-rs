@@ -113,10 +113,14 @@ mod tests {
         ];
 
         let mut state = OrchestrationState::new(history);
-        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        let (idx, event) = state
+            .find_start_event("hello", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
@@ -152,10 +156,14 @@ mod tests {
         let mut state = OrchestrationState::new(history);
         assert!(state.is_replaying());
 
-        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        let (idx, event) = state
+            .find_start_event("hello", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
@@ -192,10 +200,14 @@ mod tests {
         let mut state = OrchestrationState::new(history);
         assert!(state.is_replaying());
 
-        let (idx, event) = state.find_scheduled_task("hello").unwrap();
+        let (idx, event) = state
+            .find_start_event("hello", EventType::TaskScheduled)
+            .unwrap();
         event.is_processed = true;
 
-        let (idx, event) = state.find_finished_task(idx).unwrap();
+        let (idx, event) = state
+            .find_end_event(idx, EventType::TaskCompleted, Some(EventType::TaskFailed))
+            .unwrap();
         event.is_processed = true;
 
         let result = Some(from_str(&event.result.as_ref().unwrap()).unwrap());
