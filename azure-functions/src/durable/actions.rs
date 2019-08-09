@@ -108,8 +108,9 @@ mod tests {
             Action::CallActivityWithRetry {
                 function_name: "hello".to_owned(),
                 retry_options: RetryOptions {
-                    first_retry_interval_in_milliseconds: 1000,
-                    max_number_of_attempts: 3,
+                    first_retry_interval_ms: 1000,
+                    max_attempts: 3,
+                    ..Default::default()
                 },
                 input: "World".into(),
             },
@@ -129,8 +130,9 @@ mod tests {
             Action::CallSubOrchestratorWithRetry {
                 function_name: "hello".to_string(),
                 retry_options: RetryOptions {
-                    first_retry_interval_in_milliseconds: 1000,
-                    max_number_of_attempts: 3,
+                    first_retry_interval_ms: 1000,
+                    max_attempts: 3,
+                    ..Default::default()
                 },
                 instance_id: Some("1231232144".to_string()),
                 input: "World".into()

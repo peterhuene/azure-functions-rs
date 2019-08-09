@@ -218,9 +218,9 @@ fn get_input_binding_factory_for_vec(tp: &TypePath, mutability: Option<Mut>) -> 
     let last_segment = last_segment_in_path(&tp.path);
     let type_name = last_segment.ident.to_string();
 
-    if mutability.is_some() {
+    if let Some(mutability) = mutability {
         macro_panic(
-            mutability.unwrap().span(),
+            mutability.span(),
             "vector bindings cannot be passed by mutable reference",
         );
     }

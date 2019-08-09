@@ -66,37 +66,41 @@ impl OrchestrationState {
         to_string(&self.result).unwrap()
     }
 
-    pub(crate) fn find_scheduled_task(
+    pub(crate) fn find_start_event(
         &mut self,
-        activity_name: &str,
+        name: &str,
+        event_type: EventType,
     ) -> Option<(usize, &mut HistoryEvent)> {
         let index = self.history.iter().position(|event| {
             !event.is_processed
-                && event.event_type == EventType::TaskScheduled
-                && event.name == Some(activity_name.to_owned())
+                && event.event_type == event_type
+                && event.name.as_ref().map(|n| n.as_ref()) == Some(name)
         })?;
 
         Some((index, &mut self.history[index]))
     }
 
-    pub(crate) fn find_finished_task(
+    pub(crate) fn find_end_event(
         &mut self,
-        scheduled_index: usize,
+        start_index: usize,
+        completed_type: EventType,
+        failed_type: Option<EventType>,
     ) -> Option<(usize, &mut HistoryEvent)> {
-        if scheduled_index + 1 >= self.history.len() {
+        if start_index + 1 >= self.history.len() {
             return None;
         }
 
-        let id = self.history[scheduled_index].event_id;
+        let id = self.history[start_index].event_id;
 
-        let index = self.history[scheduled_index + 1..]
+        let index = self.history[start_index + 1..]
             .iter()
             .position(|event| {
-                (event.event_type == EventType::TaskCompleted
-                    || event.event_type == EventType::TaskFailed)
+                (event.event_type == completed_type
+                    || (failed_type.is_some()
+                        && event.event_type == *failed_type.as_ref().unwrap()))
                     && event.task_scheduled_id == Some(id)
             })
-            .map(|p| p + scheduled_index + 1)?;
+            .map(|p| p + start_index + 1)?;
 
         Some((index, &mut self.history[index]))
     }
@@ -241,7 +245,10 @@ mod tests {
 
         let mut state = OrchestrationState::new(history);
 
-        assert_eq!(state.find_scheduled_task("foo"), None);
+        assert_eq!(
+            state.find_start_event("foo", EventType::TaskScheduled),
+            None
+        );
     }
 
     #[test]
@@ -259,7 +266,7 @@ mod tests {
 
         let mut state = OrchestrationState::new(history);
 
-        match state.find_scheduled_task("foo") {
+        match state.find_start_event("foo", EventType::TaskScheduled) {
             Some((idx, entry)) => {
                 assert_eq!(idx, 1);
                 assert_eq!(entry.event_type, EventType::TaskScheduled);
@@ -283,11 +290,18 @@ mod tests {
 
         let mut state = OrchestrationState::new(history);
 
-        match state.find_scheduled_task("foo") {
+        match state.find_start_event("foo", EventType::TaskScheduled) {
             Some((idx, entry)) => {
                 assert_eq!(idx, 1);
                 assert_eq!(entry.event_type, EventType::TaskScheduled);
-                assert_eq!(state.find_finished_task(idx), None);
+                assert_eq!(
+                    state.find_end_event(
+                        idx,
+                        EventType::TaskCompleted,
+                        Some(EventType::TaskFailed)
+                    ),
+                    None
+                );
             }
             None => assert!(false),
         }
@@ -315,11 +329,15 @@ mod tests {
 
         let mut state = OrchestrationState::new(history);
 
-        match state.find_scheduled_task("foo") {
+        match state.find_start_event("foo", EventType::TaskScheduled) {
             Some((idx, entry)) => {
                 assert_eq!(idx, 1);
                 assert_eq!(entry.event_type, EventType::TaskScheduled);
-                match state.find_finished_task(idx) {
+                match state.find_end_event(
+                    idx,
+                    EventType::TaskCompleted,
+                    Some(EventType::TaskFailed),
+                ) {
                     Some((idx, entry)) => {
                         assert_eq!(idx, 2);
                         assert_eq!(entry.event_type, EventType::TaskCompleted);
@@ -354,11 +372,15 @@ mod tests {
 
         let mut state = OrchestrationState::new(history);
 
-        match state.find_scheduled_task("foo") {
+        match state.find_start_event("foo", EventType::TaskScheduled) {
             Some((idx, entry)) => {
                 assert_eq!(idx, 1);
                 assert_eq!(entry.event_type, EventType::TaskScheduled);
-                match state.find_finished_task(idx) {
+                match state.find_end_event(
+                    idx,
+                    EventType::TaskCompleted,
+                    Some(EventType::TaskFailed),
+                ) {
                     Some((idx, entry)) => {
                         assert_eq!(idx, 2);
                         assert_eq!(entry.event_type, EventType::TaskFailed);
