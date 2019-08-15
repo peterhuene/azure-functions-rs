@@ -13,12 +13,18 @@ impl<'a> EventHub<'a> {
         SubCommand::with_name("event-hub")
             .about("Creates a new Event Hub triggered Azure Function.")
             .arg(
+                Arg::with_name("positional-name")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function. You may specify this as --name <NAME> instead.")
+                    .conflicts_with("name")
+                    .required(true),
+            )
+            .arg(
                 Arg::with_name("name")
                     .long("name")
                     .short("n")
                     .value_name("NAME")
-                    .help("The name of the new Azure Function.")
-                    .required(true),
+                    .help("The name of the new Azure Function. You may specify this as <NAME> instead (i.e., without typing --name).")
             )
             .arg(
                 Arg::with_name("connection")
@@ -51,7 +57,9 @@ impl<'a> EventHub<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for EventHub<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         EventHub {
-            name: args.value_of("name").unwrap(),
+            name: args.value_of("positional-name")
+                    .unwrap_or_else(|| args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")),
             connection: args.value_of("connection").unwrap(),
             hub_name: args.value_of("hub_name").unwrap_or(""),
         }

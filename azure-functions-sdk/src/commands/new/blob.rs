@@ -12,12 +12,18 @@ impl<'a> Blob<'a> {
         SubCommand::with_name("blob")
             .about("Creates a new blob triggered Azure Function.")
             .arg(
+                Arg::with_name("positional-name")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function. You may specify this as --name <NAME> instead.")
+                    .conflicts_with("name")
+                    .required(true),
+            )
+            .arg(
                 Arg::with_name("name")
                     .long("name")
                     .short("n")
                     .value_name("NAME")
-                    .help("The name of the new Azure Function.")
-                    .required(true),
+                    .help("The name of the new Azure Function. You may specify this as <NAME> instead (i.e., without typing --name).")
             )
             .arg(
                 Arg::with_name("path")
@@ -42,7 +48,9 @@ impl<'a> Blob<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Blob<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Blob {
-            name: args.value_of("name").unwrap(),
+            name: args.value_of("positional-name")
+                    .unwrap_or_else(|| args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")),
             path: args.value_of("path").unwrap(),
         }
     }
