@@ -47,9 +47,10 @@ impl<'a> Http<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Http<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Http {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
             auth_level: match args.value_of("auth-level") {
                 Some(level) => {
                     if level == "function" {

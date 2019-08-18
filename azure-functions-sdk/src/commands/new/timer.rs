@@ -48,9 +48,10 @@ impl<'a> Timer<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Timer<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Timer {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
             schedule: args.value_of("schedule").unwrap(),
         }
     }

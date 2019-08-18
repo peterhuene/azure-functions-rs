@@ -68,9 +68,10 @@ impl<'a> CosmosDb<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for CosmosDb<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         CosmosDb {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
             connection: args.value_of("connection").unwrap(),
             database: args.value_of("database").unwrap(),
             collection: args.value_of("collection").unwrap(),

@@ -81,9 +81,10 @@ impl<'a> ServiceBus<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for ServiceBus<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         ServiceBus {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
             connection: args.value_of("connection").unwrap(),
             queue: args.value_of("queue"),
             topic: args.value_of("topic"),

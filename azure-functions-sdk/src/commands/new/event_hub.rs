@@ -57,9 +57,10 @@ impl<'a> EventHub<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for EventHub<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         EventHub {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
             connection: args.value_of("connection").unwrap(),
             hub_name: args.value_of("hub_name").unwrap_or(""),
         }

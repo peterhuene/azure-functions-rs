@@ -76,9 +76,10 @@ impl<'a> Queue<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Queue<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Queue {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
             queue_name: args.value_of("queue_name").unwrap(),
         }
     }

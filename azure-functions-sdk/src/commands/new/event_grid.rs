@@ -38,9 +38,10 @@ impl<'a> EventGrid<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for EventGrid<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         EventGrid {
-            name: args.value_of("positional-name")
-                    .unwrap_or_else(|| args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")),
+            name: args.value_of("positional-name").unwrap_or_else(|| {
+                args.value_of("name")
+                    .unwrap_or("Default fallback - never reached")
+            }),
         }
     }
 }
