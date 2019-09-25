@@ -19,7 +19,7 @@ tower-util = "0.1.0"
 tower-request-modifier = "0.1.0"
 log = { version = "0.4.8", features = ["std"] }
 futures01 = { package = "futures", version = "0.1.28" }
-futures-preview = { version = "0.3.0-alpha.17", features = ["compat"], optional = true }
+futures-preview = { version = "0.3.0-alpha.18", features = ["compat"], optional = true }
 clap = "2.33.0"
 tokio = "0.1.22"
 tokio-threadpool = "0.1.15"
