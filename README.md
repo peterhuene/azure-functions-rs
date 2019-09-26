@@ -13,7 +13,8 @@ A framework for implementing [Azure Functions](https://azure.microsoft.com/en-us
 in [Rust](https://www.rust-lang.org/).
 
 > :triangular_flag_on_post: **Disclaimer**  
-> Although the maintainer of this project is a Microsoft employee, this project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.  
+> This project is not an officially recognized Microsoft product and is not an endorsement of any future product offering from Microsoft.
+>
 > _Microsoft and Azure are registered trademarks of Microsoft Corporation._
 
 *If you would like the Azure Functions team to consider supporting Rust, please [vote up this feedback item](https://feedback.azure.com/forums/355860-azure-functions/suggestions/36818512-support-for-native-rust-azure-functions).*
