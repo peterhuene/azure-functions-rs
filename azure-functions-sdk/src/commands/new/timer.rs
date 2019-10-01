@@ -50,7 +50,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Timer<'a> {
         Timer {
             name: args.value_of("positional-name").unwrap_or_else(|| {
                 args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")
+                    .expect("A NAME argument is needed")
             }),
             schedule: args.value_of("schedule").unwrap(),
         }

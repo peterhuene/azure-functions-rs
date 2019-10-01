@@ -83,7 +83,7 @@ impl<'a> From<&'a ArgMatches<'a>> for ServiceBus<'a> {
         ServiceBus {
             name: args.value_of("positional-name").unwrap_or_else(|| {
                 args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")
+                    .expect("A NAME argument is needed")
             }),
             connection: args.value_of("connection").unwrap(),
             queue: args.value_of("queue"),

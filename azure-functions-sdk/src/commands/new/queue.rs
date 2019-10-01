@@ -78,7 +78,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Queue<'a> {
         Queue {
             name: args.value_of("positional-name").unwrap_or_else(|| {
                 args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")
+                    .expect("A NAME argument is needed")
             }),
             queue_name: args.value_of("queue_name").unwrap(),
         }

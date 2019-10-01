@@ -49,7 +49,7 @@ impl<'a> From<&'a ArgMatches<'a>> for Http<'a> {
         Http {
             name: args.value_of("positional-name").unwrap_or_else(|| {
                 args.value_of("name")
-                    .unwrap_or("Default fallback - never reached")
+                    .expect("A NAME argument is needed")
             }),
             auth_level: match args.value_of("auth-level") {
                 Some(level) => {
