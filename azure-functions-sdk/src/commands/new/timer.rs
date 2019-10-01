@@ -48,10 +48,9 @@ impl<'a> Timer<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Timer<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Timer {
-            name: args.value_of("positional-name").unwrap_or_else(|| {
-                args.value_of("name")
-                    .expect("A NAME argument is needed")
-            }),
+            name: args
+                .value_of("positional-name")
+                .unwrap_or_else(|| args.value_of("name").expect("A NAME argument is needed")),
             schedule: args.value_of("schedule").unwrap(),
         }
     }
