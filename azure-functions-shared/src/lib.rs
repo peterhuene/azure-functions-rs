@@ -13,7 +13,7 @@ pub mod codegen;
 pub mod util;
 
 #[doc(hidden)]
-#[allow(renamed_and_removed_lints)]
+#[allow(clippy::type_repetition_in_bounds)]
 pub mod rpc {
     use azure_functions_shared_codegen::generated_mod;
 
