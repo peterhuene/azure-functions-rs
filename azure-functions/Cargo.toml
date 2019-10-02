@@ -13,7 +13,7 @@ azure-functions-shared = { version = "0.10.0", path = "../azure-functions-shared
 azure-functions-codegen = { version = "0.10.0", path = "../azure-functions-codegen" }
 http = "0.1"
 tower-hyper = "0.1.1"
-tower-grpc = "0.1.0"
+tower-grpc = "0.1.1"
 tower-service = "0.2.0"
 tower-util = "0.1.0"
 tower-request-modifier = "0.1.0"
