@@ -12,12 +12,18 @@ impl<'a> Http<'a> {
         SubCommand::with_name("http")
             .about("Creates a new HTTP triggered Azure Function.")
             .arg(
+                Arg::with_name("positional-name")
+                    .value_name("NAME")
+                    .help("The name of the new Azure Function. You may specify this as --name <NAME> instead.")
+                    .conflicts_with("name")
+                    .required(true),
+            )
+            .arg(
                 Arg::with_name("name")
                     .long("name")
                     .short("n")
                     .value_name("NAME")
-                    .help("The name of the new Azure Function.")
-                    .required(true),
+                    .help("The name of the new Azure Function. You may specify this as <NAME> instead (i.e., without typing --name).")
             )
             .arg(
                 Arg::with_name("auth-level")
@@ -41,7 +47,9 @@ impl<'a> Http<'a> {
 impl<'a> From<&'a ArgMatches<'a>> for Http<'a> {
     fn from(args: &'a ArgMatches<'a>) -> Self {
         Http {
-            name: args.value_of("name").unwrap(),
+            name: args
+                .value_of("positional-name")
+                .unwrap_or_else(|| args.value_of("name").expect("A NAME argument is needed")),
             auth_level: match args.value_of("auth-level") {
                 Some(level) => {
                     if level == "function" {

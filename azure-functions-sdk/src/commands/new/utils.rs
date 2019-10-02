@@ -1,6 +1,4 @@
-use crate::{
-    util::{create_from_template, print_failure, print_running, print_success},
-};
+use crate::util::{create_from_template, print_failure, print_running, print_success};
 use regex::Regex;
 use serde_json::{json, Value};
 use std::{
