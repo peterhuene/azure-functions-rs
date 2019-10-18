@@ -1,5 +1,4 @@
 //! # Durable Functions for Rust
-#![feature(async_await)]
 #![feature(result_map_or_else)]
 
 use chrono::prelude::*;
