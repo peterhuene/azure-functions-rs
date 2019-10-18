@@ -74,6 +74,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::EventGridTrigger{name:::std::borrow::Cow::Borrowed("foo"),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::EventGridTrigger{name:::std::borrow::Cow::Borrowed("foo"),}"#
+        );
     }
 }

@@ -49,7 +49,10 @@ fn has_parameter_of_type(func: &ItemFn, type_name: &str) -> bool {
 
 fn validate_orchestration_function(func: &ItemFn) {
     if func.sig.asyncness.is_none() {
-        macro_panic(func.sig.ident.span(), "orchestration functions must be async");
+        macro_panic(
+            func.sig.ident.span(),
+            "orchestration functions must be async",
+        );
     }
 
     if func.sig.inputs.len() != 1 {
@@ -181,13 +184,6 @@ fn validate_function(func: &ItemFn) {
         macro_panic(
             func.sig.variadic.span(),
             "the 'func' attribute cannot be used on variadic functions",
-        );
-    }
-
-    if func.sig.asyncness.is_some() && cfg!(not(feature = "unstable")) {
-        macro_panic(
-            func.sig.asyncness.span(),
-            "async Azure Functions require a nightly compiler with the 'unstable' feature enabled",
         );
     }
 }
@@ -628,12 +624,10 @@ pub fn func_impl(
     }
 
     if !is_orchestration && target.sig.asyncness.is_some() {
-        if cfg!(feature = "unstable") {
-            func.invoker = Some(azure_functions_shared::codegen::Invoker {
-                name: Cow::Owned(invoker.name()),
-                invoker_fn: InvokerFn::Async(None),
-            });
-        }
+        func.invoker = Some(azure_functions_shared::codegen::Invoker {
+            name: Cow::Owned(invoker.name()),
+            invoker_fn: InvokerFn::Async(None),
+        });
     } else {
         func.invoker = Some(azure_functions_shared::codegen::Invoker {
             name: Cow::Owned(invoker.name()),

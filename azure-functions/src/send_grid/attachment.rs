@@ -59,6 +59,9 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(json, r#"{"content":"aGVsbG8gd29ybGQ=","type":"text/plain","filename":"foo.txt","disposition":"inline","content_id":"123456"}"#);
+        assert_eq!(
+            json,
+            r#"{"content":"aGVsbG8gd29ybGQ=","type":"text/plain","filename":"foo.txt","disposition":"inline","content_id":"123456"}"#
+        );
     }
 }

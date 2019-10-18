@@ -60,6 +60,7 @@ fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
 ///     azure_functions::worker_main(::std::env::args(), EXPORTS);
 /// }
 /// ```
+#[allow(clippy::needless_doctest_main)]
 #[proc_macro]
 pub fn export(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     export::export_impl(input)

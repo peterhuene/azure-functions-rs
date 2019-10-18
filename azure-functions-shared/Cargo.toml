@@ -10,7 +10,7 @@ edition = "2018"
 
 [dependencies]
 azure-functions-shared-codegen = { version = "0.10.0", path = "../azure-functions-shared-codegen" }
-tower-grpc = "0.1.1"
+tonic = "0.1.0-alpha.5"
 prost = "0.5"
 prost-types = "0.5"
 bytes = "0.4"
@@ -22,7 +22,7 @@ proc-macro2 = { version = "1.0.6" }
 lazy_static = "1.4.0"
 
 [build-dependencies]
-tower-grpc-build = "0.1.0"
+tonic-build = "0.1.0-alpha.3"
 
 [features]
 default = []

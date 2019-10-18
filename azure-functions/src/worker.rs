@@ -1,32 +1,31 @@
 use crate::{
     backtrace::Backtrace,
-    codegen::{AsyncFn, Function, InvokerFn},
+    codegen::{Function, InvokerFn},
     context::Context,
     logger,
     registry::Registry,
     rpc::{
-        client::FunctionRpc, status_result::Status, streaming_message::Content,
+        client::FunctionRpcClient, status_result::Status, streaming_message::Content,
         FunctionLoadRequest, FunctionLoadResponse, InvocationRequest, InvocationResponse,
         StartStream, StatusResult, StreamingMessage, WorkerInitResponse, WorkerStatusRequest,
         WorkerStatusResponse,
     },
 };
-use futures01::{future::poll_fn, sync::mpsc::unbounded, Async, Future, Poll, Stream};
+use futures::{channel::mpsc::unbounded, future::FutureExt, stream::StreamExt};
 use http::uri::Uri;
 use log::error;
-use std::cell::RefCell;
-use std::panic::{catch_unwind, set_hook, AssertUnwindSafe, PanicInfo};
-use tokio_threadpool::blocking;
-use tower_grpc::Request;
-use tower_hyper::{
-    client::Builder as HttpBuilder,
-    util::{Connector, Destination, HttpConnector},
-    Connect,
+use std::{
+    cell::RefCell,
+    future::Future,
+    panic::{catch_unwind, set_hook, AssertUnwindSafe, PanicInfo},
+    pin::Pin,
+    task::Poll,
 };
-use tower_request_modifier::Builder as RequestModifierBuilder;
-use tower_util::MakeService;
+use tokio::future::poll_fn;
+use tokio_executor::threadpool::blocking;
+use tonic::Request;
 
-pub type Sender = futures01::sync::mpsc::UnboundedSender<StreamingMessage>;
+pub type Sender = futures::channel::mpsc::UnboundedSender<StreamingMessage>;
 
 struct ContextFuture<F> {
     inner: F,
@@ -54,18 +53,16 @@ impl<F> ContextFuture<F> {
     }
 }
 
-// TODO: migrate this to std::future::Future when Tokio supports it
-impl<F: Future<Item = InvocationResponse>> Future for ContextFuture<F> {
-    type Item = ();
-    type Error = F::Error;
+impl<F: Future<Output = InvocationResponse> + Unpin> Future for ContextFuture<F> {
+    type Output = ();
 
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context) -> Poll<Self::Output> {
         let _guard = Context::set(&self.invocation_id, &self.function_id, self.function_name);
 
-        let res = match catch_unwind(AssertUnwindSafe(|| self.inner.poll())) {
-            Ok(p) => match p? {
-                Async::Ready(res) => res,
-                Async::NotReady => return Ok(Async::NotReady),
+        let res = match catch_unwind(AssertUnwindSafe(|| self.inner.poll_unpin(cx))) {
+            Ok(p) => match p {
+                Poll::Ready(res) => res,
+                Poll::Pending => return Poll::Pending,
             },
             Err(_) => InvocationResponse {
                 invocation_id: self.invocation_id.clone(),
@@ -85,7 +82,7 @@ impl<F: Future<Item = InvocationResponse>> Future for ContextFuture<F> {
             })
             .expect("failed to send invocation response");
 
-        Ok(Async::Ready(()))
+        Poll::Ready(())
     }
 }
 
@@ -96,62 +93,53 @@ impl Worker {
         let host_uri: Uri = format!("http://{0}:{1}", host, port).parse().unwrap();
         let (sender, receiver) = unbounded::<StreamingMessage>();
 
-        // Start by sending a start stream message to the channel
-        // This will be sent to the host upon connection
-        sender
-            .unbounded_send(StreamingMessage {
-                content: Some(Content::StartStream(StartStream {
-                    worker_id: worker_id.to_owned(),
-                })),
-                ..Default::default()
-            })
-            .unwrap();
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let mut client = FunctionRpcClient::connect(host_uri)
+                .await
+                .map_err(|e| panic!("failed to connect to host: {}", e))
+                .unwrap();
 
-        let run = Connect::with_builder(
-            Connector::new(HttpConnector::new(1)),
-            HttpBuilder::new().http2_only(true).clone(),
-        )
-        .make_service(Destination::try_from_uri(host_uri.clone()).unwrap())
-        .map(move |conn| {
-            FunctionRpc::new(
-                RequestModifierBuilder::new()
-                    .set_origin(host_uri)
-                    .build(conn)
-                    .unwrap(),
-            )
-        })
-        .map_err(|e| panic!("failed to connect to host: {}", e))
-        .and_then(|mut client| {
-            client
-                .event_stream(Request::new(
-                    receiver.map_err(|_| panic!("failed to receive from channel")),
-                ))
-                .map_err(|e| panic!("failed to start event stream: {}", e))
-        })
-        .and_then(move |stream| {
-            stream
-                .into_inner()
-                .into_future()
-                .map_err(|(e, _)| panic!("failed to read worker init request: {}", e))
-                .and_then(move |(init_req, stream)| {
-                    Worker::handle_worker_init_request(
-                        sender.clone(),
-                        init_req.expect("expected a worker init request"),
-                    );
-
-                    stream
-                        .for_each(move |req| {
-                            Worker::handle_request(&mut registry, sender.clone(), req);
-                            Ok(())
-                        })
-                        .map_err(|e| panic!("fail to read request: {}", e))
+            // Start by sending a start stream message to the channel
+            // This will be sent to the host upon connection
+            sender
+                .unbounded_send(StreamingMessage {
+                    content: Some(Content::StartStream(StartStream {
+                        worker_id: worker_id.to_owned(),
+                    })),
+                    ..Default::default()
                 })
-        });
+                .unwrap();
 
-        tokio::run(run);
+            let mut stream = client
+                .event_stream(Request::new(receiver))
+                .await
+                .map_err(|e| panic!("failed to start event stream: {}", e))
+                .unwrap()
+                .into_inner();
+
+            let init_req = stream
+                .next()
+                .await
+                .expect("expected a worker init request")
+                .map_err(|e| panic!("failed to read event stream response: {}", e))
+                .unwrap();
+
+            Worker::handle_worker_init_request(sender.clone(), init_req).await;
+
+            stream
+                .for_each(move |req| {
+                    Worker::handle_request(
+                        &mut registry,
+                        sender.clone(),
+                        req.expect("expected a request"),
+                    );
+                    futures::future::ready(())
+                })
+                .await;
+        });
     }
 
-    fn handle_worker_init_request(sender: Sender, req: StreamingMessage) {
+    async fn handle_worker_init_request(sender: Sender, req: StreamingMessage) {
         match req.content {
             Some(Content::WorkerInitRequest(req)) => {
                 println!(
@@ -292,14 +280,14 @@ impl Worker {
                 let req = RefCell::new(Some(req));
 
                 tokio::spawn(ContextFuture::new(
-                    poll_fn(move || {
+                    poll_fn(move |_| {
                         blocking(|| {
                             invoker_fn.expect("invoker must have a callback")(
                                 req.replace(None).expect("only a single call to invoker"),
                             )
                         })
                     })
-                    .map_err(|_| ()),
+                    .map(|r| r.expect("expected a response")),
                     id,
                     func_id,
                     &func.name,
@@ -307,40 +295,18 @@ impl Worker {
                 ));
             }
             InvokerFn::Async(invoker_fn) => {
-                Worker::invoke_function_async(
-                    invoker_fn.expect("invoker must have a callback"),
-                    func,
+                let id = req.invocation_id.clone();
+                let func_id = req.function_id.clone();
+
+                tokio::spawn(ContextFuture::new(
+                    invoker_fn.expect("invoker must have a callback")(req),
+                    id,
+                    func_id,
+                    &func.name,
                     sender,
-                    req,
-                );
+                ));
             }
         };
-    }
-
-    #[cfg(feature = "unstable")]
-    fn invoke_function_async(
-        invoker_fn: AsyncFn,
-        func: &'static Function,
-        sender: Sender,
-        req: InvocationRequest,
-    ) {
-        use futures::future::{FutureExt, TryFutureExt};
-
-        let id = req.invocation_id.clone();
-        let func_id = req.function_id.clone();
-
-        tokio::spawn(ContextFuture::new(
-            invoker_fn(req).unit_error().compat(),
-            id,
-            func_id,
-            &func.name,
-            sender,
-        ));
-    }
-
-    #[cfg(not(feature = "unstable"))]
-    fn invoke_function_async(_: AsyncFn, _: &'static Function, _: Sender, _: InvocationRequest) {
-        unimplemented!()
     }
 
     fn handle_panic(info: &PanicInfo) {

@@ -429,6 +429,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::CosmosDbTrigger{name:::std::borrow::Cow::Borrowed("name"),connection:::std::borrow::Cow::Borrowed("connection"),database_name:::std::borrow::Cow::Borrowed("database"),collection_name:::std::borrow::Cow::Borrowed("collection"),lease_connection:Some(::std::borrow::Cow::Borrowed("lease-connection")),lease_database_name:Some(::std::borrow::Cow::Borrowed("lease-database")),lease_collection_name:Some(::std::borrow::Cow::Borrowed("lease-collection")),create_lease_collection:Some(true),lease_collection_throughput:Some(54321i64),lease_collection_prefix:Some(::std::borrow::Cow::Borrowed("lease-prefix")),feed_poll_delay:Some(12345i64),lease_acquire_interval:Some(12121i64),lease_expiration_interval:Some(10101i64),lease_renew_interval:Some(11111i64),checkpoint_frequency:Some(0i64),max_items_per_invocation:Some(42i64),start_from_beginning:Some(false),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::CosmosDbTrigger{name:::std::borrow::Cow::Borrowed("name"),connection:::std::borrow::Cow::Borrowed("connection"),database_name:::std::borrow::Cow::Borrowed("database"),collection_name:::std::borrow::Cow::Borrowed("collection"),lease_connection:Some(::std::borrow::Cow::Borrowed("lease-connection")),lease_database_name:Some(::std::borrow::Cow::Borrowed("lease-database")),lease_collection_name:Some(::std::borrow::Cow::Borrowed("lease-collection")),create_lease_collection:Some(true),lease_collection_throughput:Some(54321i64),lease_collection_prefix:Some(::std::borrow::Cow::Borrowed("lease-prefix")),feed_poll_delay:Some(12345i64),lease_acquire_interval:Some(12121i64),lease_expiration_interval:Some(10101i64),lease_renew_interval:Some(11111i64),checkpoint_frequency:Some(0i64),max_items_per_invocation:Some(42i64),start_from_beginning:Some(false),}"#
+        );
     }
 }
