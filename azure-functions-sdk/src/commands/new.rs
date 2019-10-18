@@ -125,7 +125,7 @@ fn export_function(name: &str) -> Result<(), String> {
                 if last_segment_in_path(&m.mac.path).ident == "export" {
                     exports.extend(
                         Punctuated::<Ident, Token![,]>::parse_terminated
-                            .parse2(m.mac.tts)
+                            .parse2(m.mac.tokens)
                             .map_err(|_| "failed to parse 'export!' macro.")?
                             .into_iter()
                             .map(|i| i.to_string()),

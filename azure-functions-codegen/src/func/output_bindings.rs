@@ -66,7 +66,7 @@ impl<'a> OutputBindings<'a> {
     }
 
     fn iter_output_return_bindings(&self) -> Vec<TokenStream> {
-        match &self.0.decl.output {
+        match &self.0.sig.output {
             ReturnType::Default => vec![],
             ReturnType::Type(_, ty) => match &**ty {
                 Type::Tuple(tuple) => tuple
@@ -82,17 +82,17 @@ impl<'a> OutputBindings<'a> {
     }
 
     fn iter_mut_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
-        self.0.decl.inputs.iter().filter_map(|x| match x {
-            FnArg::Captured(arg) => {
-                if let Type::Reference(tr) = &arg.ty {
+        self.0.sig.inputs.iter().filter_map(|x| match x {
+            FnArg::Typed(arg) => {
+                if let Type::Reference(tr) = &*arg.ty {
                     tr.mutability?;
 
-                    let name = match &arg.pat {
+                    let name = match &*arg.pat {
                         Pat::Ident(name) => &name.ident,
                         _ => panic!("expected ident argument pattern"),
                     };
 
-                    return Some((name, &arg.ty));
+                    return Some((name, &*arg.ty));
                 }
                 None
             }
@@ -175,7 +175,7 @@ impl ToTokens for OutputBindings<'_> {
             binding.to_tokens(tokens);
         }
 
-        match &self.0.decl.output {
+        match &self.0.sig.output {
             ReturnType::Default => {}
             ReturnType::Type(_, ty) => {
                 if let Some(binding) = OutputBindings::get_return_binding(ty, false) {

@@ -69,7 +69,10 @@ impl From<(AttributeArgs, Span)> for Generic {
                             values.push((Cow::from(key_name), Value::String(Cow::from(s.value()))));
                         }
                         Lit::Int(i) => {
-                            values.push((Cow::from(key_name), Value::Integer(i.value() as i64)));
+                            values.push((
+                                Cow::from(key_name),
+                                Value::Integer(i.base10_parse::<i64>().unwrap()),
+                            ));
                         }
                         Lit::Bool(b) => values.push((Cow::from(key_name), Value::Boolean(b.value))),
                         _ => macro_panic(value.span(), "expected a string, integer, or boolean"),

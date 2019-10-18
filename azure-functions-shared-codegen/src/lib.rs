@@ -26,7 +26,7 @@ fn last_segment_in_path(path: &Path) -> &PathSegment {
 
 fn parse_attribute_args(attr: &Attribute) -> AttributeArgs {
     let span = attr.span();
-    let stream: proc_macro::TokenStream = match TokenBuffer::new2(attr.tts.clone())
+    let stream: proc_macro::TokenStream = match TokenBuffer::new2(attr.tokens.clone())
         .begin()
         .group(Delimiter::Parenthesis)
     {
@@ -48,7 +48,7 @@ where
             NestedMeta::Meta(m) => {
                 match m {
                     Meta::NameValue(nvp) => {
-                        if !callback(&nvp.ident, &nvp.lit) {
+                        if !callback(&last_segment_in_path(&nvp.path).ident, &nvp.lit) {
                             return;
                         }
                     }

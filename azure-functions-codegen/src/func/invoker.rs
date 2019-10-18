@@ -11,7 +11,7 @@ pub struct Invoker<'a>(pub &'a ItemFn);
 
 impl<'a> Invoker<'a> {
     pub fn name(&self) -> String {
-        format!("{}{}", INVOKER_PREFIX, self.0.ident)
+        format!("{}{}", INVOKER_PREFIX, self.0.sig.ident)
     }
 
     fn deref_arg_type(ty: &Type) -> &Type {
@@ -95,13 +95,13 @@ impl<'a> CommonInvokerTokens<'a> {
     }
 
     fn iter_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
-        self.0.decl.inputs.iter().map(|x| match x {
-            FnArg::Captured(arg) => (
-                match &arg.pat {
+        self.0.sig.inputs.iter().map(|x| match x {
+            FnArg::Typed(arg) => (
+                match &*arg.pat {
                     Pat::Ident(name) => &name.ident,
                     _ => panic!("expected ident argument pattern"),
                 },
-                &arg.ty,
+                &*arg.ty,
             ),
             _ => panic!("expected captured arguments"),
         })
@@ -110,7 +110,7 @@ impl<'a> CommonInvokerTokens<'a> {
 
 impl ToTokens for CommonInvokerTokens<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
-        let target = &self.0.ident;
+        let target = &self.0.sig.ident;
 
         let (args, types) = self.get_input_args();
         let args_for_match = args.clone();
@@ -154,15 +154,15 @@ impl ToTokens for CommonInvokerTokens<'_> {
 impl ToTokens for Invoker<'_> {
     fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
         let ident = Ident::new(
-            &format!("{}{}", INVOKER_PREFIX, self.0.ident.to_string()),
-            self.0.ident.span(),
+            &format!("{}{}", INVOKER_PREFIX, self.0.sig.ident.to_string()),
+            self.0.sig.ident.span(),
         );
 
         let common_tokens = CommonInvokerTokens(&self.0);
 
         let output_bindings = OutputBindings(self.0);
 
-        if self.0.asyncness.is_some() {
+        if self.0.sig.asyncness.is_some() {
             quote!(
                 #[allow(dead_code)]
                 fn #ident(

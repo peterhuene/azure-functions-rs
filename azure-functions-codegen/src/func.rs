@@ -28,42 +28,42 @@ fn validate_function(func: &ItemFn) {
     match func.vis {
         Visibility::Public(_) => {}
         _ => macro_panic(
-            func.decl.fn_token.span(),
+            func.sig.fn_token.span(),
             "the 'func' attribute can only be used on public functions",
         ),
     };
 
-    if func.abi.is_some() {
+    if func.sig.abi.is_some() {
         macro_panic(
-            func.abi.as_ref().unwrap().extern_token.span(),
+            func.sig.abi.as_ref().unwrap().extern_token.span(),
             "the 'func' attribute cannot be used on extern \"C\" functions",
         );
     }
 
-    if func.constness.is_some() {
+    if func.sig.constness.is_some() {
         macro_panic(
-            func.constness.as_ref().unwrap().span,
+            func.sig.constness.as_ref().unwrap().span,
             "the 'func' attribute cannot be used on const functions",
         );
     }
 
-    if func.unsafety.is_some() {
+    if func.sig.unsafety.is_some() {
         macro_panic(
-            func.unsafety.as_ref().unwrap().span,
+            func.sig.unsafety.as_ref().unwrap().span,
             "the 'func' attribute cannot be used on unsafe functions",
         );
     }
 
-    if !func.decl.generics.params.is_empty() {
+    if !func.sig.generics.params.is_empty() {
         macro_panic(
-            func.decl.generics.params.span(),
+            func.sig.generics.params.span(),
             "the 'func' attribute cannot be used on generic functions",
         );
     }
 
-    if func.decl.variadic.is_some() {
+    if func.sig.variadic.is_some() {
         macro_panic(
-            func.decl.variadic.span(),
+            func.sig.variadic.span(),
             "the 'func' attribute cannot be used on variadic functions",
         );
     }
@@ -246,31 +246,24 @@ fn bind_argument(
     binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Binding {
     match arg {
-        FnArg::Captured(arg) => match &arg.ty {
+        FnArg::Typed(arg) => match &*arg.ty {
             Type::Reference(tr) => match &*tr.elem {
                 Type::Path(tp) => {
-                    bind_input_type(&arg.pat, tp, tr.mutability, has_trigger, binding_args)
+                    bind_input_type(&*arg.pat, tp, tr.mutability, has_trigger, binding_args)
                 }
                 _ => macro_panic(
                     arg.ty.span(),
                     "expected an Azure Functions trigger or input binding type",
                 ),
             },
-            Type::Path(tp) => bind_input_type(&arg.pat, tp, None, has_trigger, binding_args),
+            Type::Path(tp) => bind_input_type(&*arg.pat, tp, None, has_trigger, binding_args),
             _ => macro_panic(
                 arg.ty.span(),
                 "expected an Azure Functions trigger or input binding type",
             ),
         },
-        FnArg::SelfRef(_) | FnArg::SelfValue(_) => {
+        FnArg::Receiver(_) => {
             macro_panic(arg.span(), "Azure Functions cannot have self parameters")
-        }
-        FnArg::Inferred(_) => macro_panic(
-            arg.span(),
-            "Azure Functions cannot have inferred parameters",
-        ),
-        FnArg::Ignored(_) => {
-            macro_panic(arg.span(), "Azure Functions cannot have ignored parameters")
         }
     }
 }
@@ -415,7 +408,7 @@ pub fn func_impl(
     let mut binding_args = drain_binding_attributes(&mut target.attrs);
     let mut names = HashSet::new();
     let mut has_trigger = false;
-    for arg in &target.decl.inputs {
+    for arg in &target.sig.inputs {
         let binding = bind_argument(&arg, has_trigger, &mut binding_args);
         has_trigger |= binding.is_trigger();
 
@@ -430,18 +423,18 @@ pub fn func_impl(
 
     if !has_trigger {
         macro_panic(
-            target.ident.span(),
+            target.sig.ident.span(),
             "Azure Functions must have exactly one trigger input binding",
         );
     }
 
-    for binding in bind_return_type(&target.decl.output, &mut binding_args).into_iter() {
+    for binding in bind_return_type(&target.sig.output, &mut binding_args).into_iter() {
         if let Some(name) = binding.name() {
             if !names.insert(name.to_string()) {
-                if let ReturnType::Type(_, ty) = &target.decl.output {
+                if let ReturnType::Type(_, ty) = &target.sig.output {
                     macro_panic(ty.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
                 }
-                macro_panic(target.decl.output.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
+                macro_panic(target.sig.output.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
             }
         }
 
@@ -479,12 +472,12 @@ pub fn func_impl(
 
     let invoker = Invoker(&target);
 
-    let target_name = target.ident.to_string();
+    let target_name = target.sig.ident.to_string();
     if func.name.is_empty() {
         func.name = Cow::Owned(target_name.clone());
     }
 
-    match target.asyncness {
+    match target.sig.asyncness {
         Some(asyncness) => {
             if cfg!(feature = "unstable") {
                 func.invoker = Some(azure_functions_shared::codegen::Invoker {
