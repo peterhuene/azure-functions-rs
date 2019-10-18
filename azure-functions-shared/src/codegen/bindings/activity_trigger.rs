@@ -95,6 +95,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::ActivityTrigger{name:::std::borrow::Cow::Borrowed("foo"),activity:Some(::std::borrow::Cow::Borrowed("bar")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::ActivityTrigger{name:::std::borrow::Cow::Borrowed("foo"),activity:Some(::std::borrow::Cow::Borrowed("bar")),}"#
+        );
     }
 }

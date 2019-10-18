@@ -172,6 +172,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::SendGrid{name:::std::borrow::Cow::Borrowed("foo"),api_key:Some(::std::borrow::Cow::Borrowed("bar")),to:Some(::std::borrow::Cow::Borrowed("baz")),from:Some(::std::borrow::Cow::Borrowed("jam")),subject:Some(::std::borrow::Cow::Borrowed("cake")),text:Some(::std::borrow::Cow::Borrowed("lie")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::SendGrid{name:::std::borrow::Cow::Borrowed("foo"),api_key:Some(::std::borrow::Cow::Borrowed("bar")),to:Some(::std::borrow::Cow::Borrowed("baz")),from:Some(::std::borrow::Cow::Borrowed("jam")),subject:Some(::std::borrow::Cow::Borrowed("cake")),text:Some(::std::borrow::Cow::Borrowed("lie")),}"#
+        );
     }
 }

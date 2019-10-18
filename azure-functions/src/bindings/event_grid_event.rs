@@ -82,7 +82,10 @@ mod tests {
             "2017-06-26T18:41:00.958410300+00:00"
         );
         assert_eq!(event.id, "831e1650-001e-001b-66ab-eeb76e069631");
-        assert_eq!(event.data.to_string(), r#"{"api":"PutBlockList","blobType":"BlockBlob","clientRequestId":"6d79dbfb-0e37-4fc4-981f-442c9ca65760","contentLength":524288,"contentType":"application/octet-stream","eTag":"0x8D4BCC2E4835CD0","requestId":"831e1650-001e-001b-66ab-eeb76e000000","sequencer":"00000000000004420000000000028963","storageDiagnostics":{"batchId":"b68529f3-68cd-4744-baa4-3c0498ec19f0"},"url":"https://oc2d2817345i60006.blob.core.windows.net/oc2d2817345i200097container/oc2d2817345i20002296blob"}"#);
+        assert_eq!(
+            event.data.to_string(),
+            r#"{"api":"PutBlockList","blobType":"BlockBlob","clientRequestId":"6d79dbfb-0e37-4fc4-981f-442c9ca65760","contentLength":524288,"contentType":"application/octet-stream","eTag":"0x8D4BCC2E4835CD0","requestId":"831e1650-001e-001b-66ab-eeb76e000000","sequencer":"00000000000004420000000000028963","storageDiagnostics":{"batchId":"b68529f3-68cd-4744-baa4-3c0498ec19f0"},"url":"https://oc2d2817345i60006.blob.core.windows.net/oc2d2817345i200097container/oc2d2817345i20002296blob"}"#
+        );
         assert_eq!(event.data_version, "1");
         assert_eq!(event.metadata_version, "1");
     }

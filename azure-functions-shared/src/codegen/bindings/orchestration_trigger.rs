@@ -95,6 +95,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::OrchestrationTrigger{name:::std::borrow::Cow::Borrowed("foo"),orchestration:Some(::std::borrow::Cow::Borrowed("bar")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::OrchestrationTrigger{name:::std::borrow::Cow::Borrowed("foo"),orchestration:Some(::std::borrow::Cow::Borrowed("bar")),}"#
+        );
     }
 }

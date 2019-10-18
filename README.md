@@ -185,16 +185,13 @@ To build with support for async Azure Functions, add the following to your `Carg
 
 ```toml
 [dependencies]
-futures-preview = { version = "0.3.0-alpha.17", optional = true }
-
-[features]
-unstable = ["azure-functions/unstable", "futures-preview"]
+futures-preview = "0.3.0-alpha.19"
 ```
 
-And then build with the `unstable` feature:
+And then build:
 
 ```bash
-cargo build --features unstable
+cargo build
 ```
 
 ## Running the Azure Functions application

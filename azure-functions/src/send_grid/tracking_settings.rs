@@ -51,6 +51,9 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(json, r#"{"click_tracking":{"enable":true,"enable_text":false},"open_tracking":{"enable":true,"substitution_tag":"foo"},"subscription_tracking":{"enable":true,"text":"foo","html":"bar","substitution_tag":"baz"},"ganalytics":{"enable":true,"utm_source":"foo","utm_medium":"bar","utm_term":"baz","utm_content":"jam","utm_campaign":"cake"}}"#);
+        assert_eq!(
+            json,
+            r#"{"click_tracking":{"enable":true,"enable_text":false},"open_tracking":{"enable":true,"substitution_tag":"foo"},"subscription_tracking":{"enable":true,"text":"foo","html":"bar","substitution_tag":"baz"},"ganalytics":{"enable":true,"utm_source":"foo","utm_medium":"bar","utm_term":"baz","utm_content":"jam","utm_campaign":"cake"}}"#
+        );
     }
 }

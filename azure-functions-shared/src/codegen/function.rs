@@ -8,19 +8,13 @@ use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::borrow::Cow;
+use std::future::Future;
+use std::pin::Pin;
 use syn::{parse_str, spanned::Spanned, AttributeArgs, Ident};
 
+pub type InvocationFuture = Pin<Box<dyn Future<Output = rpc::InvocationResponse> + Send>>;
 pub type SyncFn = fn(rpc::InvocationRequest) -> rpc::InvocationResponse;
-
-#[cfg(feature = "unstable")]
-pub type InvocationFuture =
-    std::pin::Pin<Box<dyn std::future::Future<Output = rpc::InvocationResponse> + Send>>;
-
-#[cfg(feature = "unstable")]
 pub type AsyncFn = fn(rpc::InvocationRequest) -> InvocationFuture;
-
-#[cfg(not(feature = "unstable"))]
-pub type AsyncFn = fn(rpc::InvocationRequest) -> !;
 
 pub enum InvokerFn {
     Sync(Option<SyncFn>),
@@ -278,6 +272,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::Function{name:::std::borrow::Cow::Borrowed("name"),disabled:false,bindings:::std::borrow::Cow::Borrowed(&[::azure_functions::codegen::bindings::Binding::HttpTrigger(::azure_functions::codegen::bindings::HttpTrigger{name:::std::borrow::Cow::Borrowed("foo"),auth_level:Some(::std::borrow::Cow::Borrowed("bar")),methods:::std::borrow::Cow::Borrowed(&[::std::borrow::Cow::Borrowed("foo"),::std::borrow::Cow::Borrowed("bar"),::std::borrow::Cow::Borrowed("baz"),]),route:Some(::std::borrow::Cow::Borrowed("baz")),}),::azure_functions::codegen::bindings::Binding::Http(::azure_functions::codegen::bindings::Http{name:::std::borrow::Cow::Borrowed("bar"),})]),invoker:Some(::azure_functions::codegen::Invoker{name:::std::borrow::Cow::Borrowed("invoker"),invoker_fn:::azure_functions::codegen::InvokerFn::Async(Some(invoker)),}),manifest_dir:Some(::std::borrow::Cow::Borrowed(env!("CARGO_MANIFEST_DIR"))),file:Some(::std::borrow::Cow::Borrowed(file!())),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::Function{name:::std::borrow::Cow::Borrowed("name"),disabled:false,bindings:::std::borrow::Cow::Borrowed(&[::azure_functions::codegen::bindings::Binding::HttpTrigger(::azure_functions::codegen::bindings::HttpTrigger{name:::std::borrow::Cow::Borrowed("foo"),auth_level:Some(::std::borrow::Cow::Borrowed("bar")),methods:::std::borrow::Cow::Borrowed(&[::std::borrow::Cow::Borrowed("foo"),::std::borrow::Cow::Borrowed("bar"),::std::borrow::Cow::Borrowed("baz"),]),route:Some(::std::borrow::Cow::Borrowed("baz")),}),::azure_functions::codegen::bindings::Binding::Http(::azure_functions::codegen::bindings::Http{name:::std::borrow::Cow::Borrowed("bar"),})]),invoker:Some(::azure_functions::codegen::Invoker{name:::std::borrow::Cow::Borrowed("invoker"),invoker_fn:::azure_functions::codegen::InvokerFn::Async(Some(invoker)),}),manifest_dir:Some(::std::borrow::Cow::Borrowed(env!("CARGO_MANIFEST_DIR"))),file:Some(::std::borrow::Cow::Borrowed(file!())),}"#
+        );
     }
 }
