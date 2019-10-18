@@ -212,6 +212,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::Table{direction:::azure_functions::codegen::bindings::Direction::In,name:::std::borrow::Cow::Borrowed("foo"),table_name:::std::borrow::Cow::Borrowed("bar"),partition_key:Some(::std::borrow::Cow::Borrowed("baz")),row_key:Some(::std::borrow::Cow::Borrowed("cake")),filter:Some(::std::borrow::Cow::Borrowed("is")),take:Some(10i64),connection:Some(::std::borrow::Cow::Borrowed("alie")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::Table{direction:::azure_functions::codegen::bindings::Direction::In,name:::std::borrow::Cow::Borrowed("foo"),table_name:::std::borrow::Cow::Borrowed("bar"),partition_key:Some(::std::borrow::Cow::Borrowed("baz")),row_key:Some(::std::borrow::Cow::Borrowed("cake")),filter:Some(::std::borrow::Cow::Borrowed("is")),take:Some(10i64),connection:Some(::std::borrow::Cow::Borrowed("alie")),}"#
+        );
     }
 }

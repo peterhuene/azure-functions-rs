@@ -103,6 +103,9 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(json, r#"{"to":[{"email":"foo@example.com"},{"email":"bar@example.com","name":"Bar Baz"}],"cc":[{"email":"baz@example.com"},{"email":"jam@example.com","name":"Jam"}],"bcc":[{"email":"cake@example.com"},{"email":"lie@example.com","name":"Lie"}],"subject":"hello world","headers":{"foo":"bar"},"substitutions":{"key":"value"},"custom_args":{"baz":"jam"},"send_at":12345,"dynamic_template_data":{"hello":"world"}}"#);
+        assert_eq!(
+            json,
+            r#"{"to":[{"email":"foo@example.com"},{"email":"bar@example.com","name":"Bar Baz"}],"cc":[{"email":"baz@example.com"},{"email":"jam@example.com","name":"Jam"}],"bcc":[{"email":"cake@example.com"},{"email":"lie@example.com","name":"Lie"}],"subject":"hello world","headers":{"foo":"bar"},"substitutions":{"key":"value"},"custom_args":{"baz":"jam"},"send_at":12345,"dynamic_template_data":{"hello":"world"}}"#
+        );
     }
 }

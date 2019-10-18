@@ -564,52 +564,65 @@ pub struct RpcHttp {
     #[prost(message, repeated, tag = "19")]
     pub cookies: ::std::vec::Vec<RpcHttpCookie>,
 }
+#[doc = r" Generated client implementations."]
 pub mod client {
-    use super::StreamingMessage;
-    use tower_grpc::codegen::client::*;
-
-    /// Interface exported by the server.
-    #[derive(Debug, Clone)]
-    pub struct FunctionRpc<T> {
-        inner: grpc::Grpc<T>,
+    #![allow(unused_variables, dead_code, missing_docs)]
+    use tonic::codegen::*;
+    #[doc = " Interface exported by the server."]
+    pub struct FunctionRpcClient<T> {
+        inner: tonic::client::Grpc<T>,
     }
-
-    impl<T> FunctionRpc<T> {
+    impl FunctionRpcClient<tonic::transport::Channel> {
+        #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
+        pub fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
+        where
+            D: std::convert::TryInto<tonic::transport::Endpoint>,
+            D::Error: Into<StdError>,
+        {
+            tonic::transport::Endpoint::new(dst).map(|c| Self::new(c.channel()))
+        }
+    }
+    impl<T> FunctionRpcClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as HttpBody>::Data: Into<bytes::Bytes> + Send,
+    {
         pub fn new(inner: T) -> Self {
-            let inner = grpc::Grpc::new(inner);
+            let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-
-        /// Poll whether this client is ready to send another request.
-        pub fn poll_ready<R>(&mut self) -> futures::Poll<(), grpc::Status>
-        where
-            T: grpc::GrpcService<R>,
-        {
-            self.inner.poll_ready()
+        #[doc = r" Check if the service is ready."]
+        pub async fn ready(&mut self) -> Result<(), tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })
         }
-
-        /// Get a `Future` of when this client is ready to send another request.
-        pub fn ready<R>(self) -> impl futures::Future<Item = Self, Error = grpc::Status>
-        where
-            T: grpc::GrpcService<R>,
-        {
-            futures::Future::map(self.inner.ready(), |inner| Self { inner })
-        }
-
-        /// Interface exported by the server.
-        pub fn event_stream<R, B>(
+        pub async fn event_stream<S>(
             &mut self,
-            request: grpc::Request<B>,
-        ) -> grpc::streaming::ResponseFuture<StreamingMessage, T::Future>
+            request: tonic::Request<S>,
+        ) -> Result<tonic::Response<tonic::codec::Streaming<super::StreamingMessage>>, tonic::Status>
         where
-            T: grpc::GrpcService<R>,
-            B: futures::Stream<Item = StreamingMessage>,
-            B: grpc::Encodable<R>,
+            S: Stream<Item = Result<super::StreamingMessage, tonic::Status>> + Send + 'static,
         {
-            let path = http::PathAndQuery::from_static(
+            self.ready().await?;
+            let codec = tonic::codec::ProstCodec::new();
+            let path = http::uri::PathAndQuery::from_static(
                 "/AzureFunctionsRpcMessages.FunctionRpc/EventStream",
             );
-            self.inner.streaming(request, path)
+            self.inner.streaming(request, path, codec).await
+        }
+    }
+    impl<T: Clone> Clone for FunctionRpcClient<T> {
+        fn clone(&self) -> Self {
+            Self {
+                inner: self.inner.clone(),
+            }
         }
     }
 }

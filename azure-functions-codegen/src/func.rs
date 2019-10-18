@@ -183,13 +183,6 @@ fn validate_function(func: &ItemFn) {
             "the 'func' attribute cannot be used on variadic functions",
         );
     }
-
-    if func.asyncness.is_some() && cfg!(not(feature = "unstable")) {
-        macro_panic(
-            func.asyncness.span(),
-            "async Azure Functions require a nightly compiler with the 'unstable' feature enabled",
-        );
-    }
 }
 
 fn get_generic_argument_type<'a>(
@@ -635,12 +628,10 @@ pub fn func_impl(
     }
 
     if !is_orchestration && target.asyncness.is_some() {
-        if cfg!(feature = "unstable") {
-            func.invoker = Some(azure_functions_shared::codegen::Invoker {
-                name: Cow::Owned(invoker.name()),
-                invoker_fn: InvokerFn::Async(None),
-            });
-        }
+        func.invoker = Some(azure_functions_shared::codegen::Invoker {
+            name: Cow::Owned(invoker.name()),
+            invoker_fn: InvokerFn::Async(None),
+        });
     } else {
         func.invoker = Some(azure_functions_shared::codegen::Invoker {
             name: Cow::Owned(invoker.name()),

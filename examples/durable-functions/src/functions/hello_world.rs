@@ -23,7 +23,7 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
         .await
         .into_iter()
         .filter_map(|r| {
-            r.map(|v| Some(v)).unwrap_or_else(|e| {
+            r.map(Some).unwrap_or_else(|e| {
                 error!("Activity failed: {}", e);
                 None
             })

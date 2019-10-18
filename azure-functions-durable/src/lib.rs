@@ -3,10 +3,7 @@
 
 use chrono::prelude::*;
 use derive_builder::Builder;
-use futures::{
-    compat::{Future01CompatExt, Stream01CompatExt},
-    TryStreamExt,
-};
+use futures::TryStreamExt;
 use hyper::{client::HttpConnector, Body, Client, Request, StatusCode};
 use log::debug;
 use serde::Deserialize;
@@ -359,7 +356,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::OK
@@ -367,7 +364,7 @@ impl OrchestrationClient {
                 | StatusCode::BAD_REQUEST
                 | StatusCode::NOT_FOUND
                 | StatusCode::INTERNAL_SERVER_ERROR => {
-                    let body = response.into_body().compat().try_concat().await;
+                    let body = response.into_body().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -441,7 +438,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => {
                 if response.status() > StatusCode::ACCEPTED {
@@ -450,7 +447,7 @@ impl OrchestrationClient {
                         response.status()
                     )))
                 } else {
-                    let body = response.into_body().compat().try_concat().await;
+                    let body = response.into_body().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -493,11 +490,11 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::OK => {
-                    let body = response.into_body().compat().try_concat().await;
+                    let body = response.into_body().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -561,11 +558,11 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::OK => {
-                    let body = response.into_body().compat().try_concat().await;
+                    let body = response.into_body().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -621,7 +618,7 @@ impl OrchestrationClient {
             .body(Body::from(to_string(&event_data.into()).unwrap()))
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::ACCEPTED => Ok(()),
@@ -658,7 +655,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::ACCEPTED => Ok(()),
@@ -696,13 +693,13 @@ impl OrchestrationClient {
             .body(Body::from(input.into().to_string()))
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => {
                 if response.status() > StatusCode::ACCEPTED {
                     Err(OrchestrationClientError::UnspecifiedError)
                 } else {
-                    let body = response.into_body().compat().try_concat().await;
+                    let body = response.into_body().try_concat().await;
                     body.map_or_else(
                         |e| {
                             Err(OrchestrationClientError::CommunicationError(format!(
@@ -767,7 +764,7 @@ impl OrchestrationClient {
             .body(Body::empty())
             .unwrap();
 
-        let res = self.client.request(req).compat().await;
+        let res = self.client.request(req).await;
         match res {
             Ok(response) => match response.status() {
                 StatusCode::ACCEPTED | StatusCode::GONE => Ok(()),

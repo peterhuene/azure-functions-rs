@@ -40,10 +40,10 @@ impl Log for Logger {
         event.invocation_id = crate::context::CURRENT.with(|c| c.borrow().invocation_id.clone());
 
         self.sender
-            .unbounded_send(StreamingMessage {
+            .unbounded_send(Ok(StreamingMessage {
                 content: Some(Content::RpcLog(event)),
                 ..Default::default()
-            })
+            }))
             .unwrap_or(());
     }
 
