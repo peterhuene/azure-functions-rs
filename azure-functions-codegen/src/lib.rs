@@ -18,7 +18,7 @@ use syn::{
 
 fn parse_attribute_args(attr: &Attribute) -> AttributeArgs {
     let span = attr.span();
-    let stream: proc_macro::TokenStream = match TokenBuffer::new2(attr.tts.clone())
+    let stream: proc_macro::TokenStream = match TokenBuffer::new2(attr.tokens.clone())
         .begin()
         .group(Delimiter::Parenthesis)
     {
@@ -33,7 +33,7 @@ fn parse_attribute_args(attr: &Attribute) -> AttributeArgs {
 
 fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
     vec![NestedMeta::Meta(Meta::NameValue(MetaNameValue {
-        ident: Ident::new("name", span),
+        path: Ident::new("name", span).into(),
         eq_token: Eq { spans: [span] },
         lit: Lit::Str(LitStr::new(name, span)),
     }))]

@@ -13,8 +13,8 @@ proc-macro = true
 
 [dependencies]
 quote = "1.0.2"
-syn = { version = "0.15.44", features = ["full"] }
-proc-macro2 = { version = "0.4.30" }
+syn = { version = "1.0.5", features = ["full"] }
+proc-macro2 = { version = "1.0.5" }
 
 [features]
 unstable = []
