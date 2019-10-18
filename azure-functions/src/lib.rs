@@ -90,7 +90,6 @@
 #![deny(unused_extern_crates)]
 #![deny(missing_docs)]
 #![cfg_attr(test, recursion_limit = "128")]
-#![feature(async_await)]
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;
