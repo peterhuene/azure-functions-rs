@@ -1,5 +1,4 @@
 //! # Durable Functions for Rust
-#![feature(async_await)]
 #![feature(result_map_or_else)]
 
 use chrono::prelude::*;
@@ -907,11 +906,6 @@ mod tests {
         assert_eq!(instance_status.custom_status.unwrap().is_object(), true);
     }
 
-<<<<<<< HEAD
-}
-||||||| merged common ancestors
-}
-=======
     #[test]
     fn test_query_builder() {
         let query = InstanceQueryBuilder::default()
@@ -920,36 +914,4 @@ mod tests {
             .unwrap();
         assert_eq!(query.created_time_from.is_some(), true);
     }
-
-    /*async fn test_the_damn_thing() -> OrchestrationResult<String>{
-        let binding:DurableOrchestrationClientBinding = from_str(&CLIENT_BINDING_JSON.replace("{SERVER}", &mockito::server_url())).unwrap();
-        let oc = OrchestrationClient::new(binding);
-        let body:Value = from_str(r#"{"status":"dope"}"#).unwrap();
-
-        oc.start_new("myOrc", None, Some(body)).await
-    }
-
-    #[test]
-    fn test_start_new() {
-        let mut core = Core::new().unwrap();
-        let handle = core.handle();
-
-        let _m_ideal = mock("POST", "/runtime/webhooks/durabletask/orchestrators/myOrc?code=foo")
-            .with_status(202)
-            .with_body("PRETENDIMAGUID")
-            .create();
-
-        let res = futures::executor::block_on(test_the_damn_thing());
-
-        println!("{:?}", res);
-        assert_ne!(res.is_err(), true);
-<<<<<<< HEAD
-    }
-}>>>>>>> Initial structure for orchestration client
-||||||| merged common ancestors
-    }
 }
-=======
-    }*/
-}
->>>>>>> Orchestration client refactor+more implementation
