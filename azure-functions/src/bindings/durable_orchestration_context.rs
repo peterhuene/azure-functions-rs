@@ -1,7 +1,7 @@
 use crate::{
     durable::{
         Action, ActionFuture, EventType, HistoryEvent, JoinAll, OrchestrationFuture,
-        OrchestrationState, RetryOptions, SelectAll,
+        OrchestrationOutput, OrchestrationState, RetryOptions, SelectAll,
     },
     rpc::{typed_data::Data, TypedData},
 };
@@ -202,6 +202,25 @@ impl DurableOrchestrationContext {
         )
     }
 
+    /// Restarts the orchestration by clearing its history.
+    pub fn continue_as_new<D>(
+        &self,
+        input: D,
+        preserve_unprocessed_events: bool,
+    ) -> OrchestrationOutput
+    where
+        D: Into<Value>,
+    {
+        let mut state = self.state.borrow_mut();
+
+        state.push_action(Action::ContinueAsNew {
+            input: input.into(),
+            preserve_unprocessed_events,
+        });
+
+        Value::Null.into()
+    }
+
     fn perform_action(
         &self,
         action: Action,
@@ -270,7 +289,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "failed to find orchestration started event")]
+    #[should_panic(expected = "failed to find orchestrator started event")]
     fn it_panics_if_missing_history() {
         let data = TypedData {
             data: Some(Data::String(

@@ -71,7 +71,6 @@ pub enum EventType {
     EventSent = 14,
     // not supported in js
     EventRaised = 15,
-    // not supported in js
     ContinueAsNew = 16,
     // not supported in js
     GenericEvent = 17,
