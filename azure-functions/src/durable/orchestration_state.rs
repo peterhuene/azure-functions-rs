@@ -26,7 +26,7 @@ impl OrchestrationState {
         let started_index = history
             .iter()
             .position(|event| event.event_type == EventType::OrchestratorStarted)
-            .expect("failed to find orchestration started event");
+            .expect("failed to find orchestrator started event");
 
         let completed_index = history[started_index..]
             .iter()
@@ -42,7 +42,10 @@ impl OrchestrationState {
     }
 
     pub(crate) fn is_replaying(&self) -> bool {
-        self.completed_index.is_some()
+        match self.completed_index {
+            Some(i) => self.history.len() != (i + 1),
+            None => false,
+        }
     }
 
     pub(crate) fn current_time(&self) -> DateTime<Utc> {
@@ -143,7 +146,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    #[should_panic(expected = "failed to find orchestration started event")]
+    #[should_panic(expected = "failed to find orchestrator started event")]
     fn it_requires_an_orchestration_start_event() {
         OrchestrationState::new(Vec::new());
     }
