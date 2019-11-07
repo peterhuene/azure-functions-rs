@@ -63,7 +63,10 @@ pub(crate) enum Action {
     },
 
     #[serde(rename_all = "camelCase")]
-    ContinueAsNew { input: Value },
+    ContinueAsNew {
+        input: Value,
+        preserve_unprocessed_events: bool,
+    },
 
     #[serde(rename_all = "camelCase")]
     CreateTimer {
@@ -141,8 +144,8 @@ mod tests {
         ),
         continue_as_new_converts_to_json:
         (
-            Action::ContinueAsNew { input: "World".into() },
-            r#"{"actionType":"continueAsNew","input":"World"}"#
+            Action::ContinueAsNew { input: "World".into(), preserve_unprocessed_events: true, },
+            r#"{"actionType":"continueAsNew","input":"World","preserveUnprocessedEvents":true}"#
         ),
         create_timer_converts_to_json:
         (
