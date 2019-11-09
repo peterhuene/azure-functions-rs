@@ -6,6 +6,7 @@ mod looping;
 mod say_hello;
 mod start;
 mod start_looping;
+mod timer;
 
 // Export the Azure Functions here.
 azure_functions::export! {
@@ -15,4 +16,5 @@ azure_functions::export! {
     start::start,
     looping::looping,
     start_looping::start_looping,
+    timer::timer,
 }

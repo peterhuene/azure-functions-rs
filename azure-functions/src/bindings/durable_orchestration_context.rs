@@ -1,7 +1,7 @@
 use crate::{
     durable::{
         Action, ActionFuture, EventType, HistoryEvent, JoinAll, OrchestrationFuture,
-        OrchestrationOutput, OrchestrationState, RetryOptions, SelectAll,
+        OrchestrationState, RetryOptions, SelectAll,
     },
     rpc::{typed_data::Data, TypedData},
 };
@@ -203,11 +203,7 @@ impl DurableOrchestrationContext {
     }
 
     /// Restarts the orchestration by clearing its history.
-    pub fn continue_as_new<D>(
-        &self,
-        input: D,
-        preserve_unprocessed_events: bool,
-    ) -> OrchestrationOutput
+    pub fn continue_as_new<D>(&self, input: D, preserve_unprocessed_events: bool)
     where
         D: Into<Value>,
     {
@@ -217,8 +213,32 @@ impl DurableOrchestrationContext {
             input: input.into(),
             preserve_unprocessed_events,
         });
+    }
 
-        Value::Null.into()
+    /// Creates a durable timer that expires at a specified time.
+    #[must_use = "futures do nothing unless you `.await` or poll them"]
+    pub fn create_timer(&self, fire_at: DateTime<Utc>) -> ActionFuture<()> {
+        let mut state = self.state.borrow_mut();
+
+        state.push_action(Action::CreateTimer {
+            fire_at,
+            canceled: false,
+        });
+
+        let mut result = None;
+        let mut event_index = None;
+
+        if let Some((idx, created)) = state.find_timer_created() {
+            created.is_processed = true;
+
+            if let Some((idx, fired)) = state.find_timer_fired(idx) {
+                fired.is_processed = true;
+                event_index = Some(idx);
+                result = Some(());
+            }
+        }
+
+        ActionFuture::new(result, self.state.clone(), event_index)
     }
 
     fn perform_action(

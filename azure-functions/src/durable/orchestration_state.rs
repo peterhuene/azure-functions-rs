@@ -98,12 +98,44 @@ impl OrchestrationState {
         let index = self.history[start_index + 1..]
             .iter()
             .position(|event| {
-                (event.event_type == completed_type
-                    || (failed_type.is_some()
-                        && event.event_type == *failed_type.as_ref().unwrap()))
+                !event.is_processed
+                    && (event.event_type == completed_type
+                        || (failed_type.is_some()
+                            && event.event_type == *failed_type.as_ref().unwrap()))
                     && event.task_scheduled_id == Some(id)
             })
             .map(|p| p + start_index + 1)?;
+
+        Some((index, &mut self.history[index]))
+    }
+
+    pub(crate) fn find_timer_created(&mut self) -> Option<(usize, &mut HistoryEvent)> {
+        let index = self
+            .history
+            .iter()
+            .position(|event| !event.is_processed && event.event_type == EventType::TimerCreated)?;
+
+        Some((index, &mut self.history[index]))
+    }
+
+    pub(crate) fn find_timer_fired(
+        &mut self,
+        created_index: usize,
+    ) -> Option<(usize, &mut HistoryEvent)> {
+        if created_index + 1 >= self.history.len() {
+            return None;
+        }
+
+        let id = self.history[created_index].event_id;
+
+        let index = self.history[created_index + 1..]
+            .iter()
+            .position(|event| {
+                !event.is_processed
+                    && event.event_type == EventType::TimerFired
+                    && event.timer_id == Some(id)
+            })
+            .map(|p| p + created_index + 1)?;
 
         Some((index, &mut self.history[index]))
     }
