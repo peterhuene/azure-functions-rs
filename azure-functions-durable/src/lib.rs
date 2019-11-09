@@ -1,5 +1,4 @@
 //! # Durable Functions for Rust
-#![feature(result_map_or_else)]
 
 use chrono::prelude::*;
 use derive_builder::Builder;
@@ -365,19 +364,17 @@ impl OrchestrationClient {
                 | StatusCode::NOT_FOUND
                 | StatusCode::INTERNAL_SERVER_ERROR => {
                     let body = response.into_body().try_concat().await;
-                    body.map_or_else(
-                        |e| {
-                            Err(OrchestrationClientError::CommunicationError(format!(
-                                "{:?}",
-                                e
-                            )))
-                        },
-                        |b| {
-                            from_slice::<OrchestrationStatus>(&b).map_err(|e2| {
-                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
-                            })
-                        },
-                    )
+                    body.map(|b| {
+                        from_slice::<OrchestrationStatus>(&b).map_err(|e2| {
+                            OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                        })
+                    })
+                    .unwrap_or_else(|e| {
+                        Err(OrchestrationClientError::CommunicationError(format!(
+                            "{:?}",
+                            e
+                        )))
+                    })
                 }
                 s => Err(OrchestrationClientError::CommunicationError(format!(
                     "Web hook returned unknown status code {}",
@@ -448,19 +445,17 @@ impl OrchestrationClient {
                     )))
                 } else {
                     let body = response.into_body().try_concat().await;
-                    body.map_or_else(
-                        |e| {
-                            Err(OrchestrationClientError::CommunicationError(format!(
-                                "{:?}",
-                                e
-                            )))
-                        },
-                        |b| {
-                            from_slice(&b).map_err(|e2| {
-                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
-                            })
-                        },
-                    )
+                    body.map(|b| {
+                        from_slice(&b).map_err(|e2| {
+                            OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                        })
+                    })
+                    .unwrap_or_else(|e| {
+                        Err(OrchestrationClientError::CommunicationError(format!(
+                            "{:?}",
+                            e
+                        )))
+                    })
                 }
             }
             Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
@@ -495,19 +490,17 @@ impl OrchestrationClient {
             Ok(response) => match response.status() {
                 StatusCode::OK => {
                     let body = response.into_body().try_concat().await;
-                    body.map_or_else(
-                        |e| {
-                            Err(OrchestrationClientError::CommunicationError(format!(
-                                "{:?}",
-                                e
-                            )))
-                        },
-                        |b| {
-                            from_slice(&b).map_err(|e2| {
-                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
-                            })
-                        },
-                    )
+                    body.map(|b| {
+                        from_slice(&b).map_err(|e2| {
+                            OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                        })
+                    })
+                    .unwrap_or_else(|e| {
+                        Err(OrchestrationClientError::CommunicationError(format!(
+                            "{:?}",
+                            e
+                        )))
+                    })
                 }
                 StatusCode::NOT_FOUND => Ok(PurgeHistoryResult {
                     instances_deleted: 0,
@@ -563,19 +556,17 @@ impl OrchestrationClient {
             Ok(response) => match response.status() {
                 StatusCode::OK => {
                     let body = response.into_body().try_concat().await;
-                    body.map_or_else(
-                        |e| {
-                            Err(OrchestrationClientError::CommunicationError(format!(
-                                "{:?}",
-                                e
-                            )))
-                        },
-                        |b| {
-                            from_slice(&b).map_err(|e2| {
-                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
-                            })
-                        },
-                    )
+                    body.map(|b| {
+                        from_slice(&b).map_err(|e2| {
+                            OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                        })
+                    })
+                    .unwrap_or_else(|e| {
+                        Err(OrchestrationClientError::CommunicationError(format!(
+                            "{:?}",
+                            e
+                        )))
+                    })
                 }
                 StatusCode::NOT_FOUND => Ok(PurgeHistoryResult {
                     instances_deleted: 0,
@@ -700,39 +691,34 @@ impl OrchestrationClient {
                     Err(OrchestrationClientError::UnspecifiedError)
                 } else {
                     let body = response.into_body().try_concat().await;
-                    body.map_or_else(
-                        |e| {
-                            Err(OrchestrationClientError::CommunicationError(format!(
-                                "{:?}",
-                                e
-                            )))
-                        },
-                        |b| {
-                            from_slice::<Map<String, Value>>(&b)
-                                .map_err(|e2| {
-                                    OrchestrationClientError::CommunicationError(format!(
-                                        "{:?}",
-                                        e2
-                                    ))
-                                })
-                                .map(|create_response| {
-                                    create_response.get("id").map_or(
-                                        Err(OrchestrationClientError::CommunicationError(
-                                            "No `id` in response".to_owned(),
-                                        )),
-                                        |id| {
-                                            id.as_str().map_or(
-                                                Err(OrchestrationClientError::CommunicationError(
-                                                    "Id in response is not a string".to_owned(),
-                                                )),
-                                                |id_str| Ok(id_str.to_owned()),
-                                            )
-                                        },
-                                    )
-                                })
-                                .unwrap()
-                        },
-                    )
+                    body.map(|b| {
+                        from_slice::<Map<String, Value>>(&b)
+                            .map_err(|e2| {
+                                OrchestrationClientError::CommunicationError(format!("{:?}", e2))
+                            })
+                            .map(|create_response| {
+                                create_response.get("id").map_or(
+                                    Err(OrchestrationClientError::CommunicationError(
+                                        "No `id` in response".to_owned(),
+                                    )),
+                                    |id| {
+                                        id.as_str().map_or(
+                                            Err(OrchestrationClientError::CommunicationError(
+                                                "Id in response is not a string".to_owned(),
+                                            )),
+                                            |id_str| Ok(id_str.to_owned()),
+                                        )
+                                    },
+                                )
+                            })
+                            .unwrap()
+                    })
+                    .unwrap_or_else(|e| {
+                        Err(OrchestrationClientError::CommunicationError(format!(
+                            "{:?}",
+                            e
+                        )))
+                    })
                 }
             }
             Err(e) => Err(OrchestrationClientError::CommunicationError(format!(
