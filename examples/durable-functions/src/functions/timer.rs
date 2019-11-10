@@ -1,11 +1,11 @@
 use azure_functions::{bindings::DurableOrchestrationContext, func};
 use chrono::Duration;
-use log::warn;
+use log::info;
 
 #[func]
 pub async fn timer(context: DurableOrchestrationContext) {
     if !context.is_replaying() {
-        warn!("Waiting 5 seconds.");
+        info!("Waiting 5 seconds.");
     }
 
     context
@@ -13,6 +13,6 @@ pub async fn timer(context: DurableOrchestrationContext) {
         .await;
 
     if !context.is_replaying() {
-        warn!("Timer has fired.");
+        info!("Timer has fired.");
     }
 }

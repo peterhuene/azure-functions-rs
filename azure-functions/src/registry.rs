@@ -21,7 +21,7 @@ const TWILIO_PACKAGE_VERSION: &str = "3.0.0";
 const SEND_GRID_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.sendgrid";
 const SEND_GRID_PACKAGE_VERSION: &str = "3.0.0";
 const DURABLE_TASK_PACKAGE_NAME: &str = "microsoft.azure.webjobs.extensions.durabletask";
-const DURABLE_TASK_PACKAGE_VERSION: &str = "1.8.3";
+const DURABLE_TASK_PACKAGE_VERSION: &str = "2.0.0";
 
 lazy_static! {
     // This comes from https://github.com/Azure/azure-functions-core-tools/blob/master/src/Azure.Functions.Cli/Common/Constants.cs#L63
@@ -92,7 +92,7 @@ lazy_static! {
             (SEND_GRID_PACKAGE_NAME, SEND_GRID_PACKAGE_VERSION),
         );
         map.insert(
-            bindings::OrchestrationClient::binding_type(),
+            bindings::DurableClient::binding_type(),
             (DURABLE_TASK_PACKAGE_NAME, DURABLE_TASK_PACKAGE_VERSION),
         );
         map.insert(

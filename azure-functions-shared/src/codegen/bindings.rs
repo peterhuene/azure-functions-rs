@@ -3,13 +3,13 @@ mod blob;
 mod blob_trigger;
 mod cosmos_db;
 mod cosmos_db_trigger;
+mod durable_client;
 mod event_grid_trigger;
 mod event_hub;
 mod event_hub_trigger;
 mod generic;
 mod http;
 mod http_trigger;
-mod orchestration_client;
 mod orchestration_trigger;
 mod queue;
 mod queue_trigger;
@@ -27,13 +27,13 @@ pub use self::blob::*;
 pub use self::blob_trigger::*;
 pub use self::cosmos_db::*;
 pub use self::cosmos_db_trigger::*;
+pub use self::durable_client::*;
 pub use self::event_grid_trigger::*;
 pub use self::event_hub::*;
 pub use self::event_hub_trigger::*;
 pub use self::generic::*;
 pub use self::http::*;
 pub use self::http_trigger::*;
-pub use self::orchestration_client::*;
 pub use self::orchestration_trigger::*;
 pub use self::queue::*;
 pub use self::queue_trigger::*;
@@ -92,7 +92,7 @@ pub enum Binding {
     SendGrid(SendGrid),
     GenericTrigger(Generic),
     Generic(Generic),
-    OrchestrationClient(OrchestrationClient),
+    DurableClient(DurableClient),
     OrchestrationTrigger(OrchestrationTrigger),
     ActivityTrigger(ActivityTrigger),
 }
@@ -121,7 +121,7 @@ impl Binding {
             Binding::SendGrid(b) => Some(&b.name),
             Binding::GenericTrigger(b) => Some(&b.name),
             Binding::Generic(b) => Some(&b.name),
-            Binding::OrchestrationClient(b) => Some(&b.name),
+            Binding::DurableClient(b) => Some(&b.name),
             Binding::OrchestrationTrigger(b) => Some(&b.name),
             Binding::ActivityTrigger(b) => Some(&b.name),
         }
@@ -150,7 +150,7 @@ impl Binding {
             Binding::SendGrid(_) => Some(SendGrid::binding_type()),
             Binding::GenericTrigger(b) => Some(b.binding_type()),
             Binding::Generic(b) => Some(b.binding_type()),
-            Binding::OrchestrationClient(_) => Some(OrchestrationClient::binding_type()),
+            Binding::DurableClient(_) => Some(DurableClient::binding_type()),
             Binding::OrchestrationTrigger(_) => Some(OrchestrationTrigger::binding_type()),
             Binding::ActivityTrigger(_) => Some(ActivityTrigger::binding_type()),
         }
@@ -232,8 +232,8 @@ impl ToTokens for Binding {
             Binding::Generic(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::Generic(#b))
             }
-            Binding::OrchestrationClient(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::OrchestrationClient(#b))
+            Binding::DurableClient(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::DurableClient(#b))
             }
             Binding::OrchestrationTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::OrchestrationTrigger(#b))
@@ -303,7 +303,7 @@ lazy_static! {
             Binding::Generic(Generic::from((args, span)))
         });
         map.insert("DurableOrchestrationClient", |args, span| {
-            Binding::OrchestrationClient(OrchestrationClient::from((args, span)))
+            Binding::DurableClient(DurableClient::from((args, span)))
         });
         map
     };

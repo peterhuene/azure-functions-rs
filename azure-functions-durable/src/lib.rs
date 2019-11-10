@@ -188,7 +188,7 @@ pub enum OrchestrationClientError {
     //400
     BadRaiseEventContent,
     //500
-    UnspecifiedError,
+    InternalServerError,
     CommunicationError(String),
     InvalidResponse,
 }
@@ -204,7 +204,9 @@ impl Display for OrchestrationClientError {
             }
             OrchestrationClientError::InstanceNotFound => write!(f, "instance not found"),
             OrchestrationClientError::BadRaiseEventContent => write!(f, "bad raise event content"),
-            OrchestrationClientError::UnspecifiedError => write!(f, "unspecified error"),
+            OrchestrationClientError::InternalServerError => {
+                write!(f, "instance failed with an unhandled exception")
+            }
             OrchestrationClientError::CommunicationError(msg) => {
                 write!(f, "communication error: {}", msg)
             }
@@ -688,7 +690,7 @@ impl OrchestrationClient {
         match res {
             Ok(response) => {
                 if response.status() > StatusCode::ACCEPTED {
-                    Err(OrchestrationClientError::UnspecifiedError)
+                    Err(OrchestrationClientError::InternalServerError)
                 } else {
                     let body = response.into_body().try_concat().await;
                     body.map(|b| {

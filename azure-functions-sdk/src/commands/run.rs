@@ -73,6 +73,8 @@ impl<'a> Run<'a> {
     }
 
     pub fn execute(&self) -> Result<(), String> {
+        ctrlc::set_handler(|| {}).expect("failed setting SIGINT handler");
+
         self.set_colorization();
 
         let (_temp_dir, script_root) = match self.script_root {
