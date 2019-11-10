@@ -1,8 +1,8 @@
 use azure_functions_shared_codegen::binding;
 use std::borrow::Cow;
 
-#[binding(name = "orchestrationClient", direction = "in")]
-pub struct OrchestrationClient {
+#[binding(name = "durableClient", direction = "in")]
+pub struct DurableClient {
     #[field(camel_case_value = true)]
     pub name: Cow<'static, str>,
     #[field(name = "taskHub")]
@@ -22,7 +22,7 @@ mod tests {
 
     #[test]
     fn it_serializes_to_json() {
-        let binding = OrchestrationClient {
+        let binding = DurableClient {
             name: Cow::from("foo"),
             task_hub: Some(Cow::from("bar")),
             connection: Some(Cow::from("baz")),
@@ -30,13 +30,13 @@ mod tests {
 
         assert_eq!(
             to_string(&binding).unwrap(),
-            r#"{"type":"orchestrationClient","direction":"in","name":"foo","taskHub":"bar","connectionName":"baz"}"#
+            r#"{"type":"durableClient","direction":"in","name":"foo","taskHub":"bar","connectionName":"baz"}"#
         );
     }
 
     #[test]
     fn it_parses_attribute_arguments() {
-        let binding: OrchestrationClient = (
+        let binding: DurableClient = (
             vec![
                 parse_str::<NestedMeta>(r#"name = "foo""#).unwrap(),
                 parse_str::<NestedMeta>(r#"task_hub = "bar""#).unwrap(),
@@ -55,7 +55,7 @@ mod tests {
     fn it_requires_the_name_attribute_argument() {
         should_panic(
             || {
-                let _: OrchestrationClient = (vec![], Span::call_site()).into();
+                let _: DurableClient = (vec![], Span::call_site()).into();
             },
             "the 'name' argument is required for this binding",
         );
@@ -65,7 +65,7 @@ mod tests {
     fn it_requires_the_name_attribute_be_a_string() {
         should_panic(
             || {
-                let _: OrchestrationClient = (
+                let _: DurableClient = (
                     vec![parse_str::<NestedMeta>(r#"name = false"#).unwrap()],
                     Span::call_site(),
                 )
@@ -79,7 +79,7 @@ mod tests {
     fn it_requires_the_task_hub_attribute_be_a_string() {
         should_panic(
             || {
-                let _: OrchestrationClient = (
+                let _: DurableClient = (
                     vec![parse_str::<NestedMeta>(r#"task_hub = false"#).unwrap()],
                     Span::call_site(),
                 )
@@ -93,7 +93,7 @@ mod tests {
     fn it_requires_the_connection_attribute_be_a_string() {
         should_panic(
             || {
-                let _: OrchestrationClient = (
+                let _: DurableClient = (
                     vec![parse_str::<NestedMeta>(r#"connection = false"#).unwrap()],
                     Span::call_site(),
                 )
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn it_converts_to_tokens() {
-        let binding = OrchestrationClient {
+        let binding = DurableClient {
             name: Cow::from("foo"),
             task_hub: Some(Cow::from("bar")),
             connection: Some(Cow::from("baz")),
@@ -118,7 +118,7 @@ mod tests {
 
         assert_eq!(
             tokens,
-            r#"::azure_functions::codegen::bindings::OrchestrationClient{name:::std::borrow::Cow::Borrowed("foo"),task_hub:Some(::std::borrow::Cow::Borrowed("bar")),connection:Some(::std::borrow::Cow::Borrowed("baz")),}"#
+            r#"::azure_functions::codegen::bindings::DurableClient{name:::std::borrow::Cow::Borrowed("foo"),task_hub:Some(::std::borrow::Cow::Borrowed("bar")),connection:Some(::std::borrow::Cow::Borrowed("baz")),}"#
         );
     }
 }

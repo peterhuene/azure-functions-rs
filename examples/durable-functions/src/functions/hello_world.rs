@@ -1,11 +1,11 @@
 use azure_functions::{bindings::DurableOrchestrationContext, durable::OrchestrationOutput, func};
-use log::{error, warn};
+use log::{error, info};
 use serde_json::Value;
 
 #[func]
 pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationOutput {
     if !context.is_replaying() {
-        warn!("Orchestration started at {}.", context.current_time());
+        info!("Orchestration started at {}.", context.current_time());
     }
 
     let activities = vec![
@@ -15,7 +15,7 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
     ];
 
     if !context.is_replaying() {
-        warn!("Joining all activities.");
+        info!("Joining all activities.");
     }
 
     let result: Value = context
@@ -32,7 +32,7 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
         .into();
 
     if !context.is_replaying() {
-        warn!("Result is: {}.", result);
+        info!("Result is: {}.", result);
     }
 
     let mut activities = vec![
@@ -42,7 +42,7 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
     ];
 
     if !context.is_replaying() {
-        warn!("Selecting all activities.");
+        info!("Selecting all activities.");
     }
 
     let mut completed = 0;
@@ -54,7 +54,7 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
 
         if !context.is_replaying() {
             match r {
-                Ok(output) => warn!("Activity #{} completed with output: {}", completed, output),
+                Ok(output) => info!("Activity #{} completed with output: {}", completed, output),
                 Err(e) => error!("Activity #{} failed: {}", completed, e),
             };
         }
@@ -63,7 +63,7 @@ pub async fn hello_world(context: DurableOrchestrationContext) -> OrchestrationO
     }
 
     if !context.is_replaying() {
-        warn!("Orchestration completed at {}.", context.current_time());
+        info!("Orchestration completed at {}.", context.current_time());
     }
 
     result.into()
