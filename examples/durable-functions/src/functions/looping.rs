@@ -1,9 +1,8 @@
-use azure_functions::{bindings::DurableOrchestrationContext, durable::OrchestrationOutput, func};
+use azure_functions::{bindings::DurableOrchestrationContext, func};
 use log::warn;
-use serde_json::Value;
 
 #[func]
-pub async fn looping(context: DurableOrchestrationContext) -> OrchestrationOutput {
+pub async fn looping(context: DurableOrchestrationContext) {
     let value = context.input.as_i64().expect("expected a number for input");
 
     if !context.is_replaying() {
@@ -11,12 +10,11 @@ pub async fn looping(context: DurableOrchestrationContext) -> OrchestrationOutpu
     }
 
     if value < 10 {
-        return context.continue_as_new(value + 1, true);
+        context.continue_as_new(value + 1, true);
+        return;
     }
 
     if !context.is_replaying() {
         warn!("Loop has completed.");
     }
-
-    Value::Null.into()
 }

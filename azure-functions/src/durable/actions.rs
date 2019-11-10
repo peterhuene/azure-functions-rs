@@ -72,8 +72,8 @@ pub(crate) enum Action {
     CreateTimer {
         fire_at: DateTime<Utc>,
 
-        #[serde(rename = "isCancelled")]
-        cancelled: bool,
+        #[serde(rename = "isCanceled")]
+        canceled: bool,
     },
 
     #[serde(rename_all = "camelCase")]
@@ -151,9 +151,9 @@ mod tests {
         (
            Action::CreateTimer {
                 fire_at: DateTime::<Utc>::from(DateTime::parse_from_rfc3339("2019-07-18T06:22:27.016757Z").unwrap()),
-                cancelled: true,
+                canceled: true,
            },
-           r#"{"actionType":"createTimer","fireAt":"2019-07-18T06:22:27.016757Z","isCancelled":true}"#
+           r#"{"actionType":"createTimer","fireAt":"2019-07-18T06:22:27.016757Z","isCanceled":true}"#
         ),
         wait_for_external_event_converts_to_json:
         (
