@@ -1,12 +1,12 @@
 use azure_functions::{bindings::DurableOrchestrationContext, func};
-use log::warn;
+use log::info;
 
 #[func]
 pub async fn looping(context: DurableOrchestrationContext) {
     let value = context.input.as_i64().expect("expected a number for input");
 
     if !context.is_replaying() {
-        warn!("The current value is: {}.", value);
+        info!("The current value is: {}.", value);
     }
 
     if value < 10 {
@@ -15,6 +15,6 @@ pub async fn looping(context: DurableOrchestrationContext) {
     }
 
     if !context.is_replaying() {
-        warn!("Loop has completed.");
+        info!("Loop has completed.");
     }
 }

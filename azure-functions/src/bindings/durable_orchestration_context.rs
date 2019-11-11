@@ -70,6 +70,14 @@ impl DurableOrchestrationContext {
         self.state.borrow().current_time()
     }
 
+    /// Sets the custom status of the orchestration.
+    pub fn set_custom_status<S>(&self, status: S)
+    where
+        S: Into<Value>,
+    {
+        self.state.borrow_mut().set_custom_status(status.into());
+    }
+
     #[doc(hidden)]
     pub fn state(&self) -> Rc<RefCell<OrchestrationState>> {
         self.state.clone()
