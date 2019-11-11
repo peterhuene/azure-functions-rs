@@ -1,5 +1,5 @@
 use crate::rpc::{typed_data::Data, TypedData};
-use azure_functions_durable::{OrchestrationClient, OrchestrationResult};
+use azure_functions_durable::{Client, OrchestrationData, Result};
 use serde::Deserialize;
 use serde_json::{from_str, Value};
 
@@ -17,7 +17,7 @@ use serde_json::{from_str, Value};
 ///
 /// TODO: IMPLEMENT
 pub struct DurableOrchestrationClient {
-    client: OrchestrationClient,
+    client: Client,
 }
 
 impl DurableOrchestrationClient {
@@ -26,15 +26,15 @@ impl DurableOrchestrationClient {
     /// TODO: provide example
     pub async fn start_new<D>(
         &self,
-        orchestrator_function_name: &str,
+        function_name: &str,
         instance_id: Option<&str>,
         input: D,
-    ) -> OrchestrationResult<String>
+    ) -> Result<OrchestrationData>
     where
         D: Into<Value>,
     {
         self.client
-            .start_new(orchestrator_function_name, instance_id, input)
+            .start_new(function_name, instance_id, input)
             .await
     }
 }
@@ -63,7 +63,7 @@ impl From<TypedData> for DurableOrchestrationClient {
         };
 
         DurableOrchestrationClient {
-            client: OrchestrationClient::new(&data.management_urls.status_query_url),
+            client: Client::new(&data.management_urls.status_query_url),
         }
     }
 }
