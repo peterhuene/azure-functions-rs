@@ -148,6 +148,16 @@ impl OrchestrationState {
         Some((index, &mut self.history[index]))
     }
 
+    pub(crate) fn find_event_raised(&mut self, name: &str) -> Option<(usize, &mut HistoryEvent)> {
+        let index = self.history.iter().position(|event| {
+            !event.is_processed
+                && event.event_type == EventType::EventRaised
+                && event.name.as_ref().map(|n| n.as_ref()) == Some(name)
+        })?;
+
+        Some((index, &mut self.history[index]))
+    }
+
     pub(crate) fn update(&mut self, event_index: usize) {
         // Check for end of history
         if self.started_index + 1 >= self.history.len() || self.completed_index.is_none() {

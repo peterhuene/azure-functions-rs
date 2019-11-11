@@ -4,7 +4,7 @@ use crate::Result;
 use chrono::{DateTime, Utc};
 use futures::TryStreamExt;
 use hyper::{self, Body, Request, StatusCode};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{from_slice, to_string, Value};
 use std::fmt::{Display, Formatter};
 use url::Url;
@@ -69,7 +69,7 @@ pub struct OrchestrationStatus {
 }
 
 /// Represents new orchestration data.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrchestrationData {
     /// The orchestration instance id.

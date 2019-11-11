@@ -130,7 +130,7 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        self.perform_action(
+        self.perform_call_action(
             Action::CallActivity {
                 function_name: activity_name.to_string(),
                 input: data.into(),
@@ -138,7 +138,7 @@ impl DurableOrchestrationContext {
             activity_name,
             EventType::TaskScheduled,
             EventType::TaskCompleted,
-            EventType::TaskFailed,
+            Some(EventType::TaskFailed),
         )
     }
 
@@ -153,7 +153,7 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        self.perform_action(
+        self.perform_call_action(
             Action::CallActivityWithRetry {
                 function_name: activity_name.to_string(),
                 retry_options,
@@ -162,7 +162,7 @@ impl DurableOrchestrationContext {
             activity_name,
             EventType::TaskScheduled,
             EventType::TaskCompleted,
-            EventType::TaskFailed,
+            Some(EventType::TaskFailed),
         )
     }
 
@@ -177,7 +177,7 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        self.perform_action(
+        self.perform_call_action(
             Action::CallSubOrchestrator {
                 function_name: function_name.to_string(),
                 instance_id,
@@ -186,7 +186,7 @@ impl DurableOrchestrationContext {
             function_name,
             EventType::SubOrchestrationInstanceCreated,
             EventType::SubOrchestrationInstanceCompleted,
-            EventType::SubOrchestrationInstanceFailed,
+            Some(EventType::SubOrchestrationInstanceFailed),
         )
     }
 
@@ -202,7 +202,7 @@ impl DurableOrchestrationContext {
     where
         D: Into<Value>,
     {
-        self.perform_action(
+        self.perform_call_action(
             Action::CallSubOrchestratorWithRetry {
                 function_name: function_name.to_string(),
                 retry_options,
@@ -212,7 +212,7 @@ impl DurableOrchestrationContext {
             function_name,
             EventType::SubOrchestrationInstanceCreated,
             EventType::SubOrchestrationInstanceCompleted,
-            EventType::SubOrchestrationInstanceFailed,
+            Some(EventType::SubOrchestrationInstanceFailed),
         )
     }
 
@@ -255,13 +255,42 @@ impl DurableOrchestrationContext {
         ActionFuture::new(result, self.state.clone(), event_index)
     }
 
-    fn perform_action(
+    /// Wait for an external event of the given name.
+    pub fn wait_for_event(&self, name: &str) -> ActionFuture<Result<Value, String>> {
+        let mut state = self.state.borrow_mut();
+
+        state.push_action(Action::WaitForExternalEvent {
+            external_event_name: name.to_string(),
+        });
+
+        let mut input = None;
+        let mut event_index = None;
+
+        if let Some((idx, raised)) = state.find_event_raised(name) {
+            raised.is_processed = true;
+            // For some reason, the data comes through as stringified JSON, so parse it
+            input = Some(Ok(raised
+                .input
+                .as_ref()
+                .map(|v| {
+                    v.as_str()
+                        .map(|s| from_str(&s).unwrap_or_default())
+                        .unwrap_or_default()
+                })
+                .unwrap_or_default()));
+            event_index = Some(idx);
+        }
+
+        ActionFuture::new(input, self.state.clone(), event_index)
+    }
+
+    fn perform_call_action(
         &self,
         action: Action,
         name: &str,
         started_type: EventType,
         completed_type: EventType,
-        failed_type: EventType,
+        failed_type: Option<EventType>,
     ) -> ActionFuture<Result<Value, String>> {
         let mut state = self.state.borrow_mut();
 
@@ -273,9 +302,7 @@ impl DurableOrchestrationContext {
         if let Some((idx, scheduled)) = state.find_start_event(name, started_type) {
             scheduled.is_processed = true;
 
-            if let Some((idx, finished)) =
-                state.find_end_event(idx, completed_type, Some(failed_type))
-            {
+            if let Some((idx, finished)) = state.find_end_event(idx, completed_type, failed_type) {
                 finished.is_processed = true;
                 event_index = Some(idx);
 
@@ -284,9 +311,11 @@ impl DurableOrchestrationContext {
                         .result
                         .as_ref()
                         .map(|s| from_str(&s).unwrap_or_default())
-                        .unwrap_or(Value::Null)));
-                } else if finished.event_type == failed_type {
-                    result = Some(Err(finished.reason.clone().unwrap_or_default()));
+                        .unwrap_or_default()));
+                } else if let Some(failed_type) = failed_type {
+                    if finished.event_type == failed_type {
+                        result = Some(Err(finished.reason.clone().unwrap_or_default()));
+                    }
                 } else {
                     panic!("event must be a completion or a failure");
                 }
