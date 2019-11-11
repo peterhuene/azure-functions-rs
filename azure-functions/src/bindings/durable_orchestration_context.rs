@@ -78,6 +78,12 @@ impl DurableOrchestrationContext {
         self.state.borrow_mut().set_custom_status(status.into());
     }
 
+    /// Create a new deterministic GUID suitable for use with orchestrations.
+    pub fn new_guid(&self) -> uuid::Uuid {
+        let mut state = self.state.borrow_mut();
+        state.new_guid(&self.instance_id)
+    }
+
     #[doc(hidden)]
     pub fn state(&self) -> Rc<RefCell<OrchestrationState>> {
         self.state.clone()
