@@ -2,6 +2,8 @@ use crate::durable::{Action, EventType, HistoryEvent};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_json::{to_string, Value};
+use sha1::Sha1;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -19,6 +21,7 @@ pub struct OrchestrationState {
     result: ExecutionResult,
     started_index: usize,
     completed_index: Option<usize>,
+    guid_counter: u32,
 }
 
 impl OrchestrationState {
@@ -38,6 +41,7 @@ impl OrchestrationState {
             result: ExecutionResult::default(),
             started_index,
             completed_index,
+            guid_counter: 0,
         }
     }
 
@@ -172,6 +176,28 @@ impl OrchestrationState {
                 return;
             }
         }
+    }
+
+    pub(crate) fn new_guid(&mut self, instance_id: &str) -> uuid::Uuid {
+        const GUID_NAMESPACE: &str = "9e952958-5e33-4daf-827f-2fa12937b875";
+
+        let mut hasher = Sha1::new();
+        hasher.update(
+            format!(
+                "{}_{}_{}",
+                instance_id,
+                self.current_time().to_string(),
+                self.guid_counter
+            )
+            .as_bytes(),
+        );
+
+        self.guid_counter += 1;
+
+        Uuid::new_v5(
+            &Uuid::parse_str(GUID_NAMESPACE).expect("failed to parse namespace GUID"),
+            &hasher.digest().bytes(),
+        )
     }
 }
 
