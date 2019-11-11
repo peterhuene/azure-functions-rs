@@ -65,6 +65,10 @@ impl OrchestrationState {
         self.result.is_done = true;
     }
 
+    pub(crate) fn set_custom_status(&mut self, value: Value) {
+        self.result.custom_status = Some(value);
+    }
+
     pub(crate) fn result(&self) -> String {
         to_string(&self.result).unwrap()
     }
