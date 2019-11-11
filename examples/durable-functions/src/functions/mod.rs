@@ -3,20 +3,24 @@
 mod call_join;
 mod join;
 mod looping;
+mod raise_event;
 mod say_hello;
 mod select;
 mod start;
 mod start_looping;
 mod timer;
+mod wait_for_event;
 
 // Export the Azure Functions here.
 azure_functions::export! {
     call_join::call_join,
     join::join,
-    say_hello::say_hello,
-    start::start,
     looping::looping,
+    raise_event::raise_event,
+    say_hello::say_hello,
+    select::select,
+    start::start,
     start_looping::start_looping,
     timer::timer,
-    select::select,
+    wait_for_event::wait_for_event,
 }

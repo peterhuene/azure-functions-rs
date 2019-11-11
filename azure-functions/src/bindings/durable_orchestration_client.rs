@@ -1,7 +1,11 @@
+use crate::http::Body;
 use crate::rpc::{typed_data::Data, TypedData};
-use azure_functions_durable::{Client, OrchestrationData, Result};
+use azure_functions_durable::{
+    Client, OrchestrationData, OrchestrationRuntimeStatus, OrchestrationStatus, Result,
+};
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use serde_json::{from_str, Value};
+use serde_json::{from_str, to_value, Value};
 
 /// Represents the Durable Functions orchestration client input binding.
 ///
@@ -21,9 +25,88 @@ pub struct DurableOrchestrationClient {
 }
 
 impl DurableOrchestrationClient {
-    /// Starts a new orchestration.
-    ///
-    /// TODO: provide example
+    /// Gets the status of an orchestration instance.
+    pub async fn instance_status(
+        &self,
+        instance_id: &str,
+        show_history: bool,
+        show_history_output: bool,
+        show_input: bool,
+    ) -> Result<OrchestrationStatus> {
+        self.client
+            .instance_status(instance_id, show_history, show_history_output, show_input)
+            .await
+    }
+
+    /// Queries the status for instances in a given date range or with runtime status.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn query_instances<I>(
+        &self,
+        created_time_from: Option<DateTime<Utc>>,
+        created_time_to: Option<DateTime<Utc>>,
+        runtime_statuses: Option<I>,
+        top: Option<u32>,
+        show_history: bool,
+        show_history_output: bool,
+        show_input: bool,
+    ) -> Result<Vec<OrchestrationStatus>>
+    where
+        I: Iterator<Item = OrchestrationRuntimeStatus>,
+    {
+        self.client
+            .query_instances(
+                created_time_from,
+                created_time_to,
+                runtime_statuses,
+                top,
+                show_history,
+                show_history_output,
+                show_input,
+            )
+            .await
+    }
+
+    /// Purges the history of the given orchestration instance.
+    pub async fn purge_history(&self, instance_id: &str) -> Result<()> {
+        self.client.purge_history(instance_id).await
+    }
+
+    /// Purges the history of orchestrations matching the given date range or runtime statuses.
+    pub async fn purge_history_by_query<I>(
+        &self,
+        created_time_from: Option<DateTime<Utc>>,
+        created_time_to: Option<DateTime<Utc>>,
+        runtime_statuses: Option<I>,
+    ) -> Result<u32>
+    where
+        I: Iterator<Item = OrchestrationRuntimeStatus>,
+    {
+        self.client
+            .purge_history_by_query(created_time_from, created_time_to, runtime_statuses)
+            .await
+    }
+
+    /// Raises an event for the given orchestration instance.
+    pub async fn raise_event<D>(
+        &self,
+        instance_id: &str,
+        event_name: &str,
+        event_data: D,
+    ) -> Result<()>
+    where
+        D: Into<Value>,
+    {
+        self.client
+            .raise_event(instance_id, event_name, event_data)
+            .await
+    }
+
+    /// Restores a failed orchestration instance into a running state by replaying the most recent failed operations.
+    pub async fn rewind(&self, instance_id: &str, reason: &str) -> Result<()> {
+        self.client.rewind(instance_id, reason).await
+    }
+
+    /// Starts a new orchestration by calling the given orchestration function.
     pub async fn start_new<D>(
         &self,
         function_name: &str,
@@ -36,6 +119,11 @@ impl DurableOrchestrationClient {
         self.client
             .start_new(function_name, instance_id, input)
             .await
+    }
+
+    /// Terminates a running orchestration instance.
+    pub async fn terminate(&self, instance_id: &str, reason: &str) -> Result<()> {
+        self.client.terminate(instance_id, reason).await
     }
 }
 
@@ -65,6 +153,12 @@ impl From<TypedData> for DurableOrchestrationClient {
         DurableOrchestrationClient {
             client: Client::new(&data.management_urls.status_query_url),
         }
+    }
+}
+
+impl<'a> Into<Body<'a>> for OrchestrationData {
+    fn into(self) -> Body<'a> {
+        to_value(&self).unwrap().into()
     }
 }
 

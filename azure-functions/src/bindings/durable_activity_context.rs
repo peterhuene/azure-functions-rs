@@ -32,7 +32,7 @@ impl DurableActivityContext {
         DurableActivityContext {
             input: match data.data {
                 Some(Data::String(s)) => Value::String(s),
-                Some(Data::Json(s)) => from_str(&s).unwrap_or(Value::Null),
+                Some(Data::Json(s)) => from_str(&s).unwrap_or_default(),
                 Some(Data::Int(i)) => Value::Number(i.into()),
                 Some(Data::Double(d)) => Value::Number(Number::from_f64(d).unwrap()),
                 _ => Value::Null,
