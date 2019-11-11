@@ -6,7 +6,7 @@ use azure_functions::{
 #[func]
 pub async fn start_looping(_req: HttpRequest, client: DurableOrchestrationClient) -> HttpResponse {
     match client.start_new("looping", None, 0).await {
-        Ok(_) => "Orchestration started.".into(),
+        Ok(data) => format!("Orchestration started: {}", data.status_query_get_uri).into(),
         Err(e) => format!("Failed to start orchestration: {}", e).into(),
     }
 }
