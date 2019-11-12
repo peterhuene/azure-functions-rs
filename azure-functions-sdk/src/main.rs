@@ -17,7 +17,7 @@
 //! Create a HTTP-triggered function:
 //!
 //! ```bash
-//! $ cargo func new http -n hello
+//! $ cargo func new http hello
 //! ```
 //!
 //! This generates `src/functions/hello.rs` with the following contents:

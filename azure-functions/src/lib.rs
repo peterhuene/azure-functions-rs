@@ -6,7 +6,7 @@
 //!
 //! * [Blob trigger](bindings/struct.BlobTrigger.html)
 //! * [Cosmos DB trigger](bindings/struct.CosmosDbTrigger.html)
-//! * [Durable Activity trigger](bindings/struct.DurableOrchestrationContext.html)
+//! * [Durable Activity trigger](bindings/struct.DurableActivityContext.html)
 //! * [Durable Orchestration trigger](bindings/struct.DurableOrchestrationContext.html)
 //! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
 //! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
@@ -59,7 +59,7 @@
 //! Create a HTTP-triggered function:
 //!
 //! ```bash
-//! $ cargo func new http -n hello
+//! $ cargo func new http hello
 //! ```
 //!
 //! This generates `src/functions/hello.rs` with the following contents:
