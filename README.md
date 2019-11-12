@@ -8,8 +8,8 @@
 [all-contributors-status]: https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square
 [gitter-status]: https://badges.gitter.im/azure-functions-rs/community.svg
 [gitter-url]: https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-[build-status]: https://github.com/peterhuene/azure-functions-rs/workflows/CI/badge.svg?branch=dev
-[build-url]: https://github.com/peterhuene/azure-functions-rs/actions?query=workflow%3ACI%20branch%3Adev
+[build-status]: https://github.com/peterhuene/azure-functions-rs/workflows/CI/badge.svg?branch=master
+[build-url]: https://github.com/peterhuene/azure-functions-rs/actions?query=workflow%3ACI%20branch%3Amaster
 [dependabot-status]: https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs
 [dependabot-url]: https://dependabot.com
 [license-status]: https://img.shields.io/crates/l/azure-functions.svg
