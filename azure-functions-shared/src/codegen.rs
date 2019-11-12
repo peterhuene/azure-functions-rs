@@ -25,7 +25,7 @@ where
             NestedMeta::Meta(m) => {
                 match m {
                     Meta::NameValue(nvp) => {
-                        if !callback(&nvp.ident, &nvp.lit) {
+                        if !callback(&last_segment_in_path(&nvp.path).ident, &nvp.lit) {
                             return;
                         }
                     }
@@ -67,7 +67,7 @@ pub fn get_boolean_value(name: &str, value: &Lit) -> bool {
 
 pub fn get_integer_value(name: &str, value: &Lit) -> i64 {
     if let Lit::Int(i) = value {
-        return i.value() as i64;
+        return i.base10_parse::<i64>().unwrap();
     }
 
     macro_panic(

@@ -1,6 +1,6 @@
 use crate::util::deserialize_datetime;
 use chrono::{DateTime, Utc};
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 /// Represents a timer binding schedule status.
 #[derive(Debug, Deserialize)]

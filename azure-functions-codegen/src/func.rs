@@ -23,47 +23,166 @@ use syn::{
 
 pub const OUTPUT_BINDING_PREFIX: &str = "output";
 const RETURN_BINDING_NAME: &str = "$return";
+const ORCHESTRATION_CONTEXT_TYPE: &str = "DurableOrchestrationContext";
+const ORCHESTRATION_OUTPUT_TYPE: &str = "OrchestrationOutput";
+const ACTIVITY_CONTEXT_TYPE: &str = "DurableActivityContext";
+const ACTIVITY_OUTPUT_TYPE: &str = "ActivityOutput";
+
+fn has_parameter_of_type(func: &ItemFn, type_name: &str) -> bool {
+    func.sig.inputs.iter().any(|arg| {
+        if let FnArg::Typed(arg) = arg {
+            match &*arg.ty {
+                Type::Reference(tr) => {
+                    if let Type::Path(tp) = &*tr.elem {
+                        return last_segment_in_path(&tp.path).ident == type_name;
+                    }
+                }
+                Type::Path(tp) => {
+                    return last_segment_in_path(&tp.path).ident == type_name;
+                }
+                _ => {}
+            }
+        }
+        false
+    })
+}
+
+fn validate_orchestration_function(func: &ItemFn) {
+    if func.sig.asyncness.is_none() {
+        macro_panic(
+            func.sig.ident.span(),
+            "orchestration functions must be async",
+        );
+    }
+
+    if func.sig.inputs.len() != 1 {
+        macro_panic(
+            func.sig.ident.span(),
+            format!(
+                "orchestration functions must have exactly one parameter of type `{}`",
+                ORCHESTRATION_CONTEXT_TYPE
+            ),
+        );
+    }
+
+    if !match func.sig.inputs.iter().nth(0).unwrap() {
+        FnArg::Typed(arg) => match &*arg.ty {
+            Type::Path(tp) => last_segment_in_path(&tp.path).ident == ORCHESTRATION_CONTEXT_TYPE,
+            _ => false,
+        },
+        _ => false,
+    } {
+        macro_panic(
+            func.sig.ident.span(),
+            format!(
+                "orchestration functions must have exactly one parameter of type `{}`",
+                ORCHESTRATION_CONTEXT_TYPE
+            ),
+        );
+    }
+
+    if let ReturnType::Type(_, ty) = &func.sig.output {
+        match ty.as_ref() {
+            Type::Path(tp) => {
+                if last_segment_in_path(&tp.path).ident != ORCHESTRATION_OUTPUT_TYPE {
+                    macro_panic(
+                        tp.span(),
+                        format!(
+                            "orchestration functions must have a return type of `{}`",
+                            ORCHESTRATION_OUTPUT_TYPE
+                        ),
+                    );
+                }
+            }
+            _ => macro_panic(
+                ty.span(),
+                format!(
+                    "orchestration functions must have a return type of `{}`",
+                    ORCHESTRATION_OUTPUT_TYPE
+                ),
+            ),
+        }
+    }
+}
+
+fn validate_activity_function(func: &ItemFn) {
+    // Activity functions cannot have a $return binding
+    // Default, -> ActivityOutput, and -> (ActivityOutput, ...) are acceptable
+
+    fn validate_return_binding(ty: &Type) {
+        match ty {
+            Type::Tuple(tuple) => {
+                if let Some(first) = tuple.elems.iter().nth(0) {
+                    validate_return_binding(first)
+                }
+            }
+            Type::Paren(tp) => validate_return_binding(&*tp.elem),
+            Type::Path(tp) => {
+                if last_segment_in_path(&tp.path).ident != ACTIVITY_OUTPUT_TYPE {
+                    macro_panic(
+                        tp.span(),
+                        format!(
+                            "activity functions must have a return type of `{}`",
+                            ACTIVITY_OUTPUT_TYPE
+                        ),
+                    );
+                }
+            }
+            _ => macro_panic(
+                ty.span(),
+                format!(
+                    "activity functions must have a return type of `{}`",
+                    ACTIVITY_OUTPUT_TYPE
+                ),
+            ),
+        }
+    }
+
+    if let ReturnType::Type(_, ty) = &func.sig.output {
+        validate_return_binding(&*ty);
+    }
+}
 
 fn validate_function(func: &ItemFn) {
     match func.vis {
         Visibility::Public(_) => {}
         _ => macro_panic(
-            func.decl.fn_token.span(),
+            func.sig.fn_token.span(),
             "the 'func' attribute can only be used on public functions",
         ),
     };
 
-    if func.abi.is_some() {
+    if func.sig.abi.is_some() {
         macro_panic(
-            func.abi.as_ref().unwrap().extern_token.span(),
+            func.sig.abi.as_ref().unwrap().extern_token.span(),
             "the 'func' attribute cannot be used on extern \"C\" functions",
         );
     }
 
-    if func.constness.is_some() {
+    if func.sig.constness.is_some() {
         macro_panic(
-            func.constness.as_ref().unwrap().span,
+            func.sig.constness.as_ref().unwrap().span,
             "the 'func' attribute cannot be used on const functions",
         );
     }
 
-    if func.unsafety.is_some() {
+    if func.sig.unsafety.is_some() {
         macro_panic(
-            func.unsafety.as_ref().unwrap().span,
+            func.sig.unsafety.as_ref().unwrap().span,
             "the 'func' attribute cannot be used on unsafe functions",
         );
     }
 
-    if !func.decl.generics.params.is_empty() {
+    if !func.sig.generics.params.is_empty() {
         macro_panic(
-            func.decl.generics.params.span(),
+            func.sig.generics.params.span(),
             "the 'func' attribute cannot be used on generic functions",
         );
     }
 
-    if func.decl.variadic.is_some() {
+    if func.sig.variadic.is_some() {
         macro_panic(
-            func.decl.variadic.span(),
+            func.sig.variadic.span(),
             "the 'func' attribute cannot be used on variadic functions",
         );
     }
@@ -95,9 +214,9 @@ fn get_input_binding_factory_for_vec(tp: &TypePath, mutability: Option<Mut>) -> 
     let last_segment = last_segment_in_path(&tp.path);
     let type_name = last_segment.ident.to_string();
 
-    if mutability.is_some() {
+    if let Some(mutability) = mutability {
         macro_panic(
-            mutability.unwrap().span(),
+            mutability.span(),
             "vector bindings cannot be passed by mutable reference",
         );
     }
@@ -246,31 +365,24 @@ fn bind_argument(
     binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Binding {
     match arg {
-        FnArg::Captured(arg) => match &arg.ty {
+        FnArg::Typed(arg) => match &*arg.ty {
             Type::Reference(tr) => match &*tr.elem {
                 Type::Path(tp) => {
-                    bind_input_type(&arg.pat, tp, tr.mutability, has_trigger, binding_args)
+                    bind_input_type(&*arg.pat, tp, tr.mutability, has_trigger, binding_args)
                 }
                 _ => macro_panic(
                     arg.ty.span(),
                     "expected an Azure Functions trigger or input binding type",
                 ),
             },
-            Type::Path(tp) => bind_input_type(&arg.pat, tp, None, has_trigger, binding_args),
+            Type::Path(tp) => bind_input_type(&*arg.pat, tp, None, has_trigger, binding_args),
             _ => macro_panic(
                 arg.ty.span(),
                 "expected an Azure Functions trigger or input binding type",
             ),
         },
-        FnArg::SelfRef(_) | FnArg::SelfValue(_) => {
+        FnArg::Receiver(_) => {
             macro_panic(arg.span(), "Azure Functions cannot have self parameters")
-        }
-        FnArg::Inferred(_) => macro_panic(
-            arg.span(),
-            "Azure Functions cannot have inferred parameters",
-        ),
-        FnArg::Ignored(_) => {
-            macro_panic(arg.span(), "Azure Functions cannot have ignored parameters")
         }
     }
 }
@@ -309,49 +421,48 @@ fn bind_output_type(
 fn bind_return_type(
     ret: &ReturnType,
     binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
+    is_activity: bool,
 ) -> Vec<Binding> {
-    match ret {
-        ReturnType::Default => Vec::new(),
-        ReturnType::Type(_, ty) => {
-            if let Type::Tuple(tuple) = &**ty {
-                let mut bindings = vec![];
-                for (i, ty) in tuple.elems.iter().enumerate() {
-                    if let Type::Tuple(inner) = ty {
-                        if !inner.elems.is_empty() {
-                            macro_panic(
-                                ty.span(),
-                                "expected an Azure Functions output binding type",
-                            );
-                        }
-                        continue;
+    let mut bindings = Vec::new();
+
+    if let ReturnType::Type(_, ty) = ret {
+        if let Type::Tuple(tuple) = &**ty {
+            for (i, ty) in tuple.elems.iter().enumerate() {
+                if let Type::Tuple(inner) = ty {
+                    if !inner.elems.is_empty() {
+                        macro_panic(ty.span(), "expected an Azure Functions output binding type");
                     }
-                    if i == 0 {
+                    continue;
+                }
+                if i == 0 {
+                    if !is_activity {
                         bindings.push(bind_output_type(
                             &ty,
                             RETURN_BINDING_NAME,
                             binding_args,
                             true,
                         ));
-                    } else {
-                        bindings.push(bind_output_type(
-                            &ty,
-                            &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
-                            binding_args,
-                            true,
-                        ));
                     }
+                } else {
+                    bindings.push(bind_output_type(
+                        &ty,
+                        &format!("{}{}", OUTPUT_BINDING_PREFIX, i),
+                        binding_args,
+                        true,
+                    ));
                 }
-                bindings
-            } else {
-                vec![bind_output_type(
-                    &ty,
-                    RETURN_BINDING_NAME,
-                    binding_args,
-                    true,
-                )]
             }
+        } else if !is_activity {
+            bindings.push(bind_output_type(
+                &ty,
+                RETURN_BINDING_NAME,
+                binding_args,
+                true,
+            ));
         }
     }
+
+    bindings
 }
 
 fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, (AttributeArgs, Span)> {
@@ -404,6 +515,15 @@ pub fn func_impl(
 
     validate_function(&target);
 
+    let is_orchestration = has_parameter_of_type(&target, ORCHESTRATION_CONTEXT_TYPE);
+    let is_activity = has_parameter_of_type(&target, ACTIVITY_CONTEXT_TYPE);
+
+    if is_orchestration {
+        validate_orchestration_function(&target);
+    } else if is_activity {
+        validate_activity_function(&target);
+    }
+
     let mut func = Function::from(match syn::parse_macro_input::parse::<AttributeArgs>(args) {
         Ok(f) => f,
         Err(e) => macro_panic(
@@ -415,7 +535,7 @@ pub fn func_impl(
     let mut binding_args = drain_binding_attributes(&mut target.attrs);
     let mut names = HashSet::new();
     let mut has_trigger = false;
-    for arg in &target.decl.inputs {
+    for arg in &target.sig.inputs {
         let binding = bind_argument(&arg, has_trigger, &mut binding_args);
         has_trigger |= binding.is_trigger();
 
@@ -430,22 +550,26 @@ pub fn func_impl(
 
     if !has_trigger {
         macro_panic(
-            target.ident.span(),
+            target.sig.ident.span(),
             "Azure Functions must have exactly one trigger input binding",
         );
     }
 
-    for binding in bind_return_type(&target.decl.output, &mut binding_args).into_iter() {
-        if let Some(name) = binding.name() {
-            if !names.insert(name.to_string()) {
-                if let ReturnType::Type(_, ty) = &target.decl.output {
-                    macro_panic(ty.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
+    if !is_orchestration {
+        for binding in
+            bind_return_type(&target.sig.output, &mut binding_args, is_activity).into_iter()
+        {
+            if let Some(name) = binding.name() {
+                if !names.insert(name.to_string()) {
+                    if let ReturnType::Type(_, ty) = &target.sig.output {
+                        macro_panic(ty.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
+                    }
+                    macro_panic(target.sig.output.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
                 }
-                macro_panic(target.decl.output.span(), format!("output binding has a name of '{}' that conflicts with a parameter's binding name; the corresponding parameter must be renamed.", name));
             }
-        }
 
-        func.bindings.to_mut().push(binding);
+            func.bindings.to_mut().push(binding);
+        }
     }
 
     if let Some((_, args)) = binding_args.iter().nth(0) {
@@ -456,10 +580,22 @@ pub fn func_impl(
 
             if let Lit::Str(s) = v {
                 match s.value().as_ref() {
-                    RETURN_BINDING_NAME => macro_panic(
-                        v.span(),
-                        "cannot bind to a function without a return value",
-                    ),
+                    RETURN_BINDING_NAME => if is_orchestration {
+                        macro_panic(
+                            v.span(),
+                            "cannot bind to the return value of an orchestration function",
+                        )
+                    } else if is_activity {
+                        macro_panic(
+                            v.span(),
+                            "cannot bind to the return value of an activity function",
+                        )
+                    } else {
+                        macro_panic(
+                            v.span(),
+                            "cannot bind to a function without a return value",
+                        )
+                    },
                     v => macro_panic(
                         v.span(),
                         format!(
@@ -477,33 +613,26 @@ pub fn func_impl(
         });
     }
 
-    let invoker = Invoker(&target);
+    let invoker = Invoker {
+        func: &target,
+        is_orchestration,
+    };
 
-    let target_name = target.ident.to_string();
+    let target_name = target.sig.ident.to_string();
     if func.name.is_empty() {
         func.name = Cow::Owned(target_name.clone());
     }
 
-    match target.asyncness {
-        Some(asyncness) => {
-            if cfg!(feature = "unstable") {
-                func.invoker = Some(azure_functions_shared::codegen::Invoker {
-                    name: Cow::Owned(invoker.name()),
-                    invoker_fn: InvokerFn::Async(None),
-                });
-            } else {
-                macro_panic(
-                    asyncness.span(),
-                    "async Azure Functions require a nightly compiler with the 'unstable' feature enabled",
-                );
-            }
-        }
-        None => {
-            func.invoker = Some(azure_functions_shared::codegen::Invoker {
-                name: Cow::Owned(invoker.name()),
-                invoker_fn: InvokerFn::Sync(None),
-            });
-        }
+    if !is_orchestration && target.sig.asyncness.is_some() {
+        func.invoker = Some(azure_functions_shared::codegen::Invoker {
+            name: Cow::Owned(invoker.name()),
+            invoker_fn: InvokerFn::Async(None),
+        });
+    } else {
+        func.invoker = Some(azure_functions_shared::codegen::Invoker {
+            name: Cow::Owned(invoker.name()),
+            invoker_fn: InvokerFn::Sync(None),
+        });
     }
 
     let const_name = Ident::new(

@@ -3,6 +3,7 @@
 members = [
     "azure-functions",
     "azure-functions-codegen",
+    "azure-functions-durable",
     "azure-functions-sdk",
     "azure-functions-shared",
     "azure-functions-shared-codegen",
@@ -19,4 +20,5 @@ members = [
     "examples/twilio",
     "examples/sendgrid",
     "examples/generic",
+    "examples/durable-functions",
 ]

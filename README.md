@@ -1,13 +1,27 @@
 # Azure Functions for Rust
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
-[![crates.io](https://img.shields.io/crates/v/azure-functions.svg)](https://crates.io/crates/azure-functions)
-[![docs.rs](https://docs.rs/azure-functions/badge.svg)](https://docs.rs/azure-functions)
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors)
-[![Gitter](https://badges.gitter.im/azure-functions-rs/community.svg)](https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Build Status](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_apis/build/status/peterhuene.azure-functions-rs?branchName=master)](https://dev.azure.com/azure-functions-rs/Azure%20Functions%20for%20Rust/_build/latest?definitionId=2&branchName=master)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs)](https://dependabot.com)
-[![license](https://img.shields.io/crates/l/azure-functions.svg)](https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE)
+[crates-status]: https://img.shields.io/crates/v/azure-functions.svg
+[crates-url]: https://crates.io/crates/azure-functions
+[docs-status]: https://docs.rs/azure-functions/badge.svg
+[docs-url]: https://docs.rs/azure-functions
+[all-contributors-status]: https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square
+[gitter-status]: https://badges.gitter.im/azure-functions-rs/community.svg
+[gitter-url]: https://gitter.im/azure-functions-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+[build-status]: https://github.com/peterhuene/azure-functions-rs/workflows/CI/badge.svg?branch=dev
+[build-url]: https://github.com/peterhuene/azure-functions-rs/actions?query=workflow%3ACI%20branch%3Adev
+[dependabot-status]: https://api.dependabot.com/badges/status?host=github&repo=peterhuene/azure-functions-rs
+[dependabot-url]: https://dependabot.com
+[license-status]: https://img.shields.io/crates/l/azure-functions.svg
+[license-url]: https://github.com/peterhuene/azure-functions-rs/blob/master/LICENSE
+
+[![crates-status]][crates-url]
+[![docs-status]][docs-url]
+[![all-contributors-status]](#contributors)
+[![gitter-status]][gitter-url]
+[![build-status]][build-url]
+[![dependabot-status]][dependabot-url]
+[![license-status]][license-url]
 
 A framework for implementing [Azure Functions](https://azure.microsoft.com/en-us/services/functions/)
 in [Rust](https://www.rust-lang.org/).
@@ -39,7 +53,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 }
 ```
 
-Azure Functions for Rust supports [async](https://rust-lang.github.io/rfcs/2394-async_await.html) functions when compiled with a nightly compiler and with the `unstable` feature enabled:
+Azure Functions for Rust also supports [async](https://rust-lang.github.io/async-book/01_getting_started/04_async_await_primer.html) functions:
 
 ```rust
 use azure_functions::{
@@ -65,7 +79,7 @@ See [Building an async Azure Functions application](#building-an-async-azure-fun
 ## Get Started
 
 - [More Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
-- [Documentation](https://docs.rs/azure-functions/0.10.0/azure_functions/)
+- [Documentation](https://docs.rs/azure-functions/0.11.0/azure_functions/)
 - [Installation](#installation)
 - [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
@@ -172,16 +186,13 @@ To build with support for async Azure Functions, add the following to your `Carg
 
 ```toml
 [dependencies]
-futures-preview = { version = "0.3.0-alpha.17", optional = true }
-
-[features]
-unstable = ["azure-functions/unstable", "futures-preview"]
+futures-preview = "0.3.0-alpha.19"
 ```
 
-And then build with the `unstable` feature:
+And then build:
 
 ```bash
-cargo build --features unstable
+cargo build
 ```
 
 ## Running the Azure Functions application
@@ -255,31 +266,34 @@ The `#[func]` attribute is used to turn an ordinary Rust function into an Azure 
 
 The current list of supported bindings:
 
-| Rust Type                                                                                                                  | Azure Functions Binding             | Direction      | Vec\<T> |
-|----------------------------------------------------------------------------------------------------------------------------|-------------------------------------|----------------|---------|
-| [Blob](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Blob.html)                                   | Input and Ouput Blob                | in, inout, out | No      |
-| [BlobTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.BlobTrigger.html)                     | Blob Trigger                        | in, inout      | No      |
-| [CosmosDbDocument](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbDocument.html)           | Input and Output Cosmos DB Document | in, out        | Yes     |
-| [CosmosDbTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbTrigger.html)             | Cosmos DB Trigger                   | in             | No      |
-| [EventGridEvent](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventGridEvent.html)               | Event Grid Trigger                  | in             | No      |
-| [EventHubMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubMessage.html)             | Event Hub Output Message            | out            | Yes     |
-| [EventHubTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubTrigger.html)             | Event Hub Trigger                   | in             | No      |
-| [GenericInput](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericInput.html)                   | Generic Input                       | in             | No      |
-| [GenericOutput](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericOutput.html)                 | Generic Output                      | out            | No      |
-| [GenericTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericTrigger.html)               | Generic Trigger                     | in             | No      |
-| [HttpRequest](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpRequest.html)                     | HTTP Trigger                        | in             | No      |
-| [HttpResponse](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpResponse.html)                   | Output HTTP Response                | out            | No      |
-| [QueueMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueMessage.html)                   | Output Queue Message                | out            | Yes     |
-| [QueueTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueTrigger.html)                   | Queue Trigger                       | in             | No      |
-| [SendGridMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SendGridMessage.html)             | SendGrid Email Message              | out            | Yes     |
-| [ServiceBusMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusMessage.html)         | Service Bus Output Message          | out            | Yes     |
-| [ServiceBusTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusTrigger.html)         | Service Bus Trigger                 | in             | No      |
-| [SignalRConnectionInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRConnectionInfo.html) | SignalR Connection Info             | in             | No      |
-| [SignalRGroupAction](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRGroupAction.html)       | SignalR Group Action                | out            | Yes     |
-| [SignalRMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRMessage.html)               | SignalR Message                     | out            | Yes     |
-| [Table](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Table.html)                                 | Input and Ouput Table               | in, out        | No      |
-| [TimerInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TimerInfo.html)                         | Timer Trigger                       | in             | No      |
-| [TwilioSmsMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TwilioSmsMessage.html)           | Twilio SMS Message Output | out     | Yes            | Yes     |
+| Rust Type                                                                                                                              | Azure Functions Binding             | Direction      | Vec\<T> |
+|----------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------|----------------|---------|
+| [Blob](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Blob.html)                                               | Input and Ouput Blob                | in, inout, out | No      |
+| [BlobTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.BlobTrigger.html)                                 | Blob Trigger                        | in, inout      | No      |
+| [CosmosDbDocument](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbDocument.html)                       | Input and Output Cosmos DB Document | in, out        | Yes     |
+| [CosmosDbTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.CosmosDbTrigger.html)                         | Cosmos DB Trigger                   | in             | No      |
+| [DurableActivityContext](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.DurableActivityContext.html)           | Durable Activity Trigger            | in             | No      |
+| [DurableOrchestrationClient](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.DurableOrchestrationClient.html)   | Durable Orchestration Client        | in             | No      |
+| [DurableOrchestrationContext](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.DurableOrchestrationContext.html) | Durable Orchestration Trigger       | in             | No      |
+| [EventGridEvent](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventGridEvent.html)                           | Event Grid Trigger                  | in             | No      |
+| [EventHubMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubMessage.html)                         | Event Hub Output Message            | out            | Yes     |
+| [EventHubTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.EventHubTrigger.html)                         | Event Hub Trigger                   | in             | No      |
+| [GenericInput](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericInput.html)                               | Generic Input                       | in             | No      |
+| [GenericOutput](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericOutput.html)                             | Generic Output                      | out            | No      |
+| [GenericTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.GenericTrigger.html)                           | Generic Trigger                     | in             | No      |
+| [HttpRequest](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpRequest.html)                                 | HTTP Trigger                        | in             | No      |
+| [HttpResponse](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.HttpResponse.html)                               | Output HTTP Response                | out            | No      |
+| [QueueMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueMessage.html)                               | Output Queue Message                | out            | Yes     |
+| [QueueTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.QueueTrigger.html)                               | Queue Trigger                       | in             | No      |
+| [SendGridMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SendGridMessage.html)                         | SendGrid Email Message              | out            | Yes     |
+| [ServiceBusMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusMessage.html)                     | Service Bus Output Message          | out            | Yes     |
+| [ServiceBusTrigger](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.ServiceBusTrigger.html)                     | Service Bus Trigger                 | in             | No      |
+| [SignalRConnectionInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRConnectionInfo.html)             | SignalR Connection Info             | in             | No      |
+| [SignalRGroupAction](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRGroupAction.html)                   | SignalR Group Action                | out            | Yes     |
+| [SignalRMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.SignalRMessage.html)                           | SignalR Message                     | out            | Yes     |
+| [Table](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.Table.html)                                             | Input and Ouput Table               | in, out        | No      |
+| [TimerInfo](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TimerInfo.html)                                     | Timer Trigger                       | in             | No      |
+| [TwilioSmsMessage](https://docs.rs/azure-functions/latest/azure_functions/bindings/struct.TwilioSmsMessage.html)                       | Twilio SMS Message Output | out     | Yes            | Yes     |
 
 More bindings will be implemented in the future, including support for retreiving data from custom bindings.
 

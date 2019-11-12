@@ -129,6 +129,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::Queue{name:::std::borrow::Cow::Borrowed("foo"),queue_name:::std::borrow::Cow::Borrowed("bar"),connection:Some(::std::borrow::Cow::Borrowed("baz")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::Queue{name:::std::borrow::Cow::Borrowed("foo"),queue_name:::std::borrow::Cow::Borrowed("bar"),connection:Some(::std::borrow::Cow::Borrowed("baz")),}"#
+        );
     }
 }

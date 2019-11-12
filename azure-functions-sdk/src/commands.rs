@@ -36,6 +36,8 @@ lazy_static::lazy_static! {
         template!(templates, "new", "eventhub.rs");
         template!(templates, "new", "cosmosdb.rs");
         template!(templates, "new", "servicebus.rs");
+        template!(templates, "new", "activity.rs");
+        template!(templates, "new", "orchestration.rs");
 
         templates
     };

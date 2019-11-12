@@ -1,0 +1,142 @@
+name: CI
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  rustfmt:
+    name: Check source formatting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@master
+      with:
+        submodules: true
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        default: true
+        components: rustfmt
+    - name: Run rustfmt
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+
+  test:
+    name: Build and test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [stable, beta, nightly, windows, macos]
+        include:
+        - build: stable
+          os: ubuntu-latest
+          toolchain: stable
+        - build: beta
+          os: ubuntu-latest
+          toolchain: beta
+        - build: nightly
+          os: ubuntu-latest
+          toolchain: nightly
+        - build: macos
+          os: macos-latest
+          toolchain: stable
+        - build: windows
+          os: windows-latest
+          toolchain: stable
+    steps:
+    - name: Checkout out source
+      uses: actions/checkout@master
+      with:
+        submodules: true
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        default: true
+    - name: Build and test
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --all
+      env:
+        RUST_BACKTRACE: 1
+
+  unstable:
+    name: Build and test (unstable feature)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@master
+      with:
+        submodules: true
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        default: true
+    - name: Build and test
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --features unstable --manifest-path azure-functions/Cargo.toml
+      env:
+        RUST_BACKTRACE: 1
+
+  clippy:
+    name: Lint source code
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@master
+      with:
+        submodules: true
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        default: true
+        components: clippy
+    - name: Run clippy
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: -- -Dwarnings
+
+  protobufs:
+    name: Build protobufs
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@master
+      with:
+        submodules: true
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        default: true
+    - name: Install Protocol Buffers
+      run: |
+        mkdir /tmp/protoc
+        cd /tmp/protoc
+        curl -Lo protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOBUF_VERSION/protoc-$PROTOBUF_VERSION-$PROTOBUF_PLATFORM.zip
+        unzip protoc.zip
+        echo ::add-path::/tmp/protoc/bin
+      env:
+        PROTOBUF_VERSION: 3.9.2
+        PROTOBUF_PLATFORM: linux-x86_64
+    - name: Build protobufs
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --features compile_protobufs --manifest-path azure-functions-shared/Cargo.toml
+    - name: Check for source differences
+      run: |
+        cd azure-functions-shared
+        git diff --exit-code -- cache

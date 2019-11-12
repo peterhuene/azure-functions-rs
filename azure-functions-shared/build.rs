@@ -16,9 +16,9 @@ fn format_source(path: &Path) {
 }
 
 fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
-    tower_grpc_build::Config::new()
-        .enable_client(true)
-        .build(PROTOBUF_INPUT_FILES, &["protobuf/src/proto"])
+    tonic_build::configure()
+        .build_server(false)
+        .compile(PROTOBUF_INPUT_FILES, &["protobuf/src/proto"])
         .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
 
     for file in OUTPUT_FILES {

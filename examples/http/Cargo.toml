@@ -6,10 +6,10 @@ edition = "2018"
 
 [dependencies]
 azure-functions = { path = "../../azure-functions" }
-log = "0.4.6"
-serde = { version = "1.0.94", features = ["derive"] }
-serde_json = "1.0.40"
-futures-preview = { version = "0.3.0-alpha.17", optional = true }
+log = "0.4.8"
+serde = { version = "1.0.102", features = ["derive"] }
+serde_json = "1.0.41"
+futures-preview = "0.3.0-alpha.19"
 
 [features]
-unstable = ["azure-functions/unstable", "futures-preview"]
+unstable = ["azure-functions/unstable"]

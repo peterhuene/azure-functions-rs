@@ -69,7 +69,10 @@ impl From<(AttributeArgs, Span)> for Generic {
                             values.push((Cow::from(key_name), Value::String(Cow::from(s.value()))));
                         }
                         Lit::Int(i) => {
-                            values.push((Cow::from(key_name), Value::Integer(i.value() as i64)));
+                            values.push((
+                                Cow::from(key_name),
+                                Value::Integer(i.base10_parse::<i64>().unwrap()),
+                            ));
                         }
                         Lit::Bool(b) => values.push((Cow::from(key_name), Value::Boolean(b.value))),
                         _ => macro_panic(value.span(), "expected a string, integer, or boolean"),
@@ -251,6 +254,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::Generic{ty:::std::borrow::Cow::Borrowed("test"),direction:::azure_functions::codegen::bindings::Direction::InOut,name:::std::borrow::Cow::Borrowed("foo"),values:::std::borrow::Cow::Borrowed(&[(::std::borrow::Cow::Borrowed("bar"),::azure_functions::codegen::Value::String(::std::borrow::Cow::Borrowed("hello"))),(::std::borrow::Cow::Borrowed("baz"),::azure_functions::codegen::Value::Integer(42i64)),(::std::borrow::Cow::Borrowed("jam"),::azure_functions::codegen::Value::Boolean(true)),]),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::Generic{ty:::std::borrow::Cow::Borrowed("test"),direction:::azure_functions::codegen::bindings::Direction::InOut,name:::std::borrow::Cow::Borrowed("foo"),values:::std::borrow::Cow::Borrowed(&[(::std::borrow::Cow::Borrowed("bar"),::azure_functions::codegen::Value::String(::std::borrow::Cow::Borrowed("hello"))),(::std::borrow::Cow::Borrowed("baz"),::azure_functions::codegen::Value::Integer(42i64)),(::std::borrow::Cow::Borrowed("jam"),::azure_functions::codegen::Value::Boolean(true)),]),}"#
+        );
     }
 }

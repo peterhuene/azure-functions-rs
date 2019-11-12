@@ -7,11 +7,14 @@ use syn::{FnArg, Ident, ItemFn, Pat, Type};
 
 const INVOKER_PREFIX: &str = "__invoke_";
 
-pub struct Invoker<'a>(pub &'a ItemFn);
+pub struct Invoker<'a> {
+    pub func: &'a ItemFn,
+    pub is_orchestration: bool,
+}
 
 impl<'a> Invoker<'a> {
     pub fn name(&self) -> String {
-        format!("{}{}", INVOKER_PREFIX, self.0.ident)
+        format!("{}{}", INVOKER_PREFIX, self.func.sig.ident)
     }
 
     fn deref_arg_type(ty: &Type) -> &Type {
@@ -32,7 +35,10 @@ impl<'a> Invoker<'a> {
     }
 }
 
-struct CommonInvokerTokens<'a>(pub &'a ItemFn);
+struct CommonInvokerTokens<'a> {
+    pub func: &'a ItemFn,
+    pub is_orchestration: bool,
+}
 
 impl<'a> CommonInvokerTokens<'a> {
     fn get_input_args(&self) -> (Vec<&'a Ident>, Vec<&'a Type>) {
@@ -77,7 +83,15 @@ impl<'a> CommonInvokerTokens<'a> {
             .map(|(name, arg_type)| (name, Invoker::deref_arg_type(arg_type)))
     }
 
-    fn get_args_for_call(&self) -> Vec<::proc_macro2::TokenStream> {
+    fn get_state_arg(&self, trigger: &Ident) -> TokenStream {
+        if self.is_orchestration {
+            quote!(let __state = #trigger.as_ref().unwrap().state();)
+        } else {
+            TokenStream::new()
+        }
+    }
+
+    fn get_args_for_call(&self) -> Vec<TokenStream> {
         self.iter_args()
             .map(|(name, arg_type)| {
                 let name_str = name.to_string();
@@ -95,13 +109,13 @@ impl<'a> CommonInvokerTokens<'a> {
     }
 
     fn iter_args(&self) -> impl Iterator<Item = (&'a Ident, &'a Type)> {
-        self.0.decl.inputs.iter().map(|x| match x {
-            FnArg::Captured(arg) => (
-                match &arg.pat {
+        self.func.sig.inputs.iter().map(|x| match x {
+            FnArg::Typed(arg) => (
+                match &*arg.pat {
                     Pat::Ident(name) => &name.ident,
                     _ => panic!("expected ident argument pattern"),
                 },
-                &arg.ty,
+                &*arg.ty,
             ),
             _ => panic!("expected captured arguments"),
         })
@@ -109,8 +123,8 @@ impl<'a> CommonInvokerTokens<'a> {
 }
 
 impl ToTokens for CommonInvokerTokens<'_> {
-    fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
-        let target = &self.0.ident;
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let target = &self.func.sig.ident;
 
         let (args, types) = self.get_input_args();
         let args_for_match = args.clone();
@@ -123,6 +137,8 @@ impl ToTokens for CommonInvokerTokens<'_> {
         let trigger_name = to_camel_case(&trigger_arg.to_string());
 
         let args_for_call = self.get_args_for_call();
+
+        let state_arg = self.get_state_arg(trigger_arg);
 
         quote!(
             use azure_functions::{IntoVec, FromVec};
@@ -137,13 +153,15 @@ impl ToTokens for CommonInvokerTokens<'_> {
                     #trigger_name => #trigger_arg = Some(
                         #trigger_type::new(
                             __param.data.expect("expected parameter binding data"),
-                            __metadata.take().expect("expected only one trigger")
+                            __metadata.take().expect("expected only one trigger"),
                         )
                     ),
                     #(#arg_names => #args_for_match = Some(#arg_assignments),)*
                     _ => panic!(format!("unexpected parameter binding '{}'", __param.name)),
                 };
             }
+
+            #state_arg
 
             let __ret = #target(#(#args_for_call,)*);
         )
@@ -152,17 +170,39 @@ impl ToTokens for CommonInvokerTokens<'_> {
 }
 
 impl ToTokens for Invoker<'_> {
-    fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         let ident = Ident::new(
-            &format!("{}{}", INVOKER_PREFIX, self.0.ident.to_string()),
-            self.0.ident.span(),
+            &format!("{}{}", INVOKER_PREFIX, self.func.sig.ident.to_string()),
+            self.func.sig.ident.span(),
         );
 
-        let common_tokens = CommonInvokerTokens(&self.0);
+        let common_tokens = CommonInvokerTokens {
+            func: &self.func,
+            is_orchestration: self.is_orchestration,
+        };
 
-        let output_bindings = OutputBindings(self.0);
+        let output_bindings = OutputBindings {
+            func: self.func,
+            is_orchestration: self.is_orchestration,
+        };
 
-        if self.0.asyncness.is_some() {
+        if self.is_orchestration {
+            quote!(
+                #[allow(dead_code)]
+                fn #ident(
+                    __req: ::azure_functions::rpc::InvocationRequest,
+                ) -> ::azure_functions::rpc::InvocationResponse {
+                    #common_tokens
+
+                    ::azure_functions::durable::orchestrate(
+                        __req.invocation_id,
+                        __ret,
+                        __state,
+                    )
+                }
+            )
+            .to_tokens(tokens);
+        } else if self.func.sig.asyncness.is_some() {
             quote!(
                 #[allow(dead_code)]
                 fn #ident(

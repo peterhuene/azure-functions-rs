@@ -51,3 +51,10 @@ pub fn create_from_template(
 
     Ok(())
 }
+
+pub fn last_segment_in_path(path: &syn::Path) -> &syn::PathSegment {
+    path.segments
+        .iter()
+        .last()
+        .expect("expected at least one segment in path")
+}
