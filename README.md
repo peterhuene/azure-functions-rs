@@ -150,7 +150,7 @@ This will create a new application in the `./hello` directory with a module name
 Use the `cargo func new` command to create a new HTTP-triggered Azure Function named `hello`:
 
 ``` bash
-cargo func new http -n hello
+cargo func new http hello
 ```
 
 The source for the function will be in `src/functions/hello.rs`.
