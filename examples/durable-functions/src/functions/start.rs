@@ -16,7 +16,7 @@ pub async fn start(req: HttpRequest, client: DurableOrchestrationClient) -> Http
         )
         .await
     {
-        Ok(data) => format!("Orchestration started: {}", data.status_query_get_uri).into(),
+        Ok(data) => data.into(),
         Err(e) => format!("Failed to start orchestration: {}", e).into(),
     }
 }
