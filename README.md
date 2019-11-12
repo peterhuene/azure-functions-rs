@@ -52,7 +52,7 @@ pub fn greet(req: HttpRequest) -> HttpResponse {
 }
 ```
 
-Azure Functions for Rust supports [async](https://rust-lang.github.io/rfcs/2394-async_await.html) functions when compiled with a nightly compiler and with the `unstable` feature enabled:
+Azure Functions for Rust also supports [async](https://rust-lang.github.io/async-book/01_getting_started/04_async_await_primer.html) functions:
 
 ```rust
 use azure_functions::{
