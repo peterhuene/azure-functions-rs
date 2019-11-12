@@ -21,7 +21,41 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 ///
 /// # Examples
 ///
-/// TODO: IMPLEMENT
+/// Calling multiple activities and waiting for them all to complete:
+///
+/// ```rust
+/// use azure_functions::{bindings::DurableOrchestrationContext, durable::OrchestrationOutput, func};
+/// use serde_json::Value;
+/// use log::error;
+///
+/// #[func]
+/// pub async fn run(context: DurableOrchestrationContext) -> OrchestrationOutput {
+///     let activities = vec![
+///         context.call_activity("say_hello", "Tokyo"),
+///         context.call_activity("say_hello", "London"),
+///         context.call_activity("say_hello", "Seattle"),
+///     ];
+///
+///     context.set_custom_status("Waiting for all activities to complete.");
+///
+///     let result: Value = context
+///         .join_all(activities)
+///         .await
+///         .into_iter()
+///         .filter_map(|r| {
+///             r.map(Some).unwrap_or_else(|e| {
+///                 error!("Activity failed: {}", e);
+///                 None
+///             })
+///         })
+///         .collect::<Vec<_>>()
+///         .into();
+///
+///     context.set_custom_status("All activities have completed.");
+///
+///     result.into()
+/// }
+/// ```
 pub struct DurableOrchestrationContext {
     /// The orchestration instance identifier.
     pub instance_id: String,

@@ -19,7 +19,30 @@ use serde_json::{from_str, to_value, Value};
 ///
 /// # Examples
 ///
-/// TODO: IMPLEMENT
+/// Starting a new orchestration:
+///
+/// ```rust
+/// use azure_functions::{
+///     bindings::{DurableOrchestrationClient, HttpRequest, HttpResponse},
+///     func,
+/// };
+/// use serde_json::Value;
+///
+/// #[func]
+/// pub async fn start(_req: HttpRequest, client: DurableOrchestrationClient) -> HttpResponse {
+///     match client
+///         .start_new(
+///             "orchestration",
+///             None,
+///             Value::Null,
+///         )
+///         .await
+///     {
+///         Ok(data) => data.into(),
+///         Err(e) => format!("Failed to start orchestration: {}", e).into(),
+///     }
+/// }
+/// ```
 pub struct DurableOrchestrationClient {
     client: Client,
 }

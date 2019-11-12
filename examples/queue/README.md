@@ -37,17 +37,27 @@ pub fn queue_with_output(trigger: QueueTrigger) -> QueueMessage {
 
 # Running the example locally
 
-Because this example relies on Azure Storage to function, the `AzureWebJobsStorage` environment
-variable must be set to a connection string that the Azure Functions Host will use for the default
-storage connection.
+Because this example relies on Azure Storage to function, the `AzureWebJobsStorage`
+setting must be set to a connection string that the Azure Functions Host will use for
+the default storage connection.
 
-To run with the `AzureWebJobsStorage` environment variable set:
+Add a setting for `AzureWebJobsStorage` into `local.settings.json`:
 
-```bash
-$ AzureWebJobsStorage="<insert connection string here>" cargo func run
+```
+$ func settings add AzureWebJobsStorage <storage_connection_string>
 ```
 
-_Note: the syntax above works on macOS and Linux; on Windows, set the environment variables before running `cargo func run`._
+You may encrypt `local.settings.json`, if desired:
+
+```
+$ func settings encrypt
+```
+
+Finally, start the Azure Functions application:
+
+```
+$ cargo func run
+```
 
 # Invoking the functions
 

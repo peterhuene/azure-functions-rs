@@ -16,7 +16,20 @@ const INSTANCE_ID_KEY: &str = "instanceId";
 ///
 /// # Examples
 ///
-/// TODO: IMPLEMENT
+/// An activity that outputs a string:
+///
+/// ```rust
+/// use azure_functions::{bindings::DurableActivityContext, durable::ActivityOutput, func};
+///
+/// #[func]
+/// pub fn say_hello(context: DurableActivityContext) -> ActivityOutput {
+///     format!(
+///         "Hello {}!",
+///         context.input.as_str().expect("expected a string input")
+///     )
+///     .into()
+/// }
+/// ```
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DurableActivityContext {
