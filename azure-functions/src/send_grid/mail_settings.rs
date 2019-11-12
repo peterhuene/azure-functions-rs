@@ -1,5 +1,5 @@
 use crate::send_grid::{BccSettings, BypassListManagement, FooterSettings, SandboxMode, SpamCheck};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents a collection of different mail settings that specify how an email message is handled.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -48,6 +48,9 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(json, r#"{"bcc":{"enable":true,"email":"foo@example.com"},"bypass_list_management":{"enable":true},"footer":{"enable":true,"text":"hello","html":"world"},"sandbox_mode":{"enable":true},"spam_check":{"enable":true,"threshold":7,"post_to_url":"https://example.com"}}"#);
+        assert_eq!(
+            json,
+            r#"{"bcc":{"enable":true,"email":"foo@example.com"},"bypass_list_management":{"enable":true},"footer":{"enable":true,"text":"hello","html":"world"},"sandbox_mode":{"enable":true},"spam_check":{"enable":true,"threshold":7,"post_to_url":"https://example.com"}}"#
+        );
     }
 }

@@ -296,6 +296,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::CosmosDb{direction:::azure_functions::codegen::bindings::Direction::In,name:::std::borrow::Cow::Borrowed("name"),connection:::std::borrow::Cow::Borrowed("connection"),database_name:::std::borrow::Cow::Borrowed("database"),collection_name:::std::borrow::Cow::Borrowed("collection"),partition_key:Some(::std::borrow::Cow::Borrowed("partition")),create_collection:Some(true),collection_throughput:Some(12345i64),id:Some(::std::borrow::Cow::Borrowed("id")),sql_query:Some(::std::borrow::Cow::Borrowed("query")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::CosmosDb{direction:::azure_functions::codegen::bindings::Direction::In,name:::std::borrow::Cow::Borrowed("name"),connection:::std::borrow::Cow::Borrowed("connection"),database_name:::std::borrow::Cow::Borrowed("database"),collection_name:::std::borrow::Cow::Borrowed("collection"),partition_key:Some(::std::borrow::Cow::Borrowed("partition")),create_collection:Some(true),collection_throughput:Some(12345i64),id:Some(::std::borrow::Cow::Borrowed("id")),sql_query:Some(::std::borrow::Cow::Borrowed("query")),}"#
+        );
     }
 }

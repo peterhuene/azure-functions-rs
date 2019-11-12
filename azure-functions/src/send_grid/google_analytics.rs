@@ -1,4 +1,4 @@
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents the ability to enable tracking provided by Google Analytics.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

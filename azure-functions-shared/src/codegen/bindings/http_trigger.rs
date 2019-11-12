@@ -208,6 +208,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::HttpTrigger{name:::std::borrow::Cow::Borrowed("foo"),auth_level:Some(::std::borrow::Cow::Borrowed("bar")),methods:::std::borrow::Cow::Borrowed(&[::std::borrow::Cow::Borrowed("foo"),::std::borrow::Cow::Borrowed("bar"),::std::borrow::Cow::Borrowed("baz"),]),route:Some(::std::borrow::Cow::Borrowed("baz")),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::HttpTrigger{name:::std::borrow::Cow::Borrowed("foo"),auth_level:Some(::std::borrow::Cow::Borrowed("bar")),methods:::std::borrow::Cow::Borrowed(&[::std::borrow::Cow::Borrowed("foo"),::std::borrow::Cow::Borrowed("bar"),::std::borrow::Cow::Borrowed("baz"),]),route:Some(::std::borrow::Cow::Borrowed("baz")),}"#
+        );
     }
 }

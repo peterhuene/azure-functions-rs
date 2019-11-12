@@ -14,22 +14,26 @@ use std::{
     io::Read,
     path::Path,
 };
-use syn::{parse::Parser, parse_file, punctuated::Punctuated, Ident, Item, Token};
+use syn::{self, parse::Parser, parse_file, punctuated::Punctuated, Item, Token};
 
+mod activity;
 mod blob;
 mod cosmos_db;
 mod event_grid;
 mod event_hub;
 mod http;
+mod orchestration;
 mod queue;
 mod service_bus;
 mod timer;
 
+pub use self::activity::Activity;
 pub use self::blob::Blob;
 pub use self::cosmos_db::CosmosDb;
 pub use self::event_grid::EventGrid;
 pub use self::event_hub::EventHub;
 pub use self::http::Http;
+pub use self::orchestration::Orchestration;
 pub use self::queue::Queue;
 pub use self::service_bus::ServiceBus;
 pub use self::timer::Timer;
@@ -103,6 +107,28 @@ fn create_function(name: &str, template: &str, data: &Value, quiet: bool) -> Res
     Ok(())
 }
 
+fn format_path(path: &syn::Path) -> String {
+    use std::fmt::Write;
+
+    let mut formatted = String::new();
+    if path.leading_colon.is_some() {
+        formatted.push_str("::");
+    }
+
+    let mut first = true;
+    for segment in &path.segments {
+        if first {
+            first = false;
+        } else {
+            formatted.push_str("::");
+        }
+
+        write!(formatted, "{}", segment.ident).unwrap();
+    }
+
+    formatted
+}
+
 fn export_function(name: &str) -> Result<(), String> {
     let mut file =
         File::open("src/functions/mod.rs").map_err(|_| "'src/functions/mod.rs' does not exist.")?;
@@ -124,11 +150,11 @@ fn export_function(name: &str) -> Result<(), String> {
             Item::Macro(m) => {
                 if last_segment_in_path(&m.mac.path).ident == "export" {
                     exports.extend(
-                        Punctuated::<Ident, Token![,]>::parse_terminated
+                        Punctuated::<syn::Path, Token![,]>::parse_terminated
                             .parse2(m.mac.tokens)
-                            .map_err(|_| "failed to parse 'export!' macro.")?
+                            .map_err(|e| format!("failed to parse 'export!' macro: {}", e))?
                             .into_iter()
-                            .map(|i| i.to_string()),
+                            .map(|p| format_path(&p)),
                     );
                 }
             }
@@ -139,7 +165,7 @@ fn export_function(name: &str) -> Result<(), String> {
     modules.push(name.to_string());
     modules.sort();
 
-    exports.push(name.to_string());
+    exports.push(format!("{}::{}", name, name));
     exports.sort();
 
     create_from_template(
@@ -187,6 +213,8 @@ impl<'a> New<'a> {
             .subcommand(EventHub::create_subcommand())
             .subcommand(CosmosDb::create_subcommand())
             .subcommand(ServiceBus::create_subcommand())
+            .subcommand(Activity::create_subcommand())
+            .subcommand(Orchestration::create_subcommand())
     }
 
     fn set_colorization(&self) {
@@ -210,6 +238,8 @@ impl<'a> New<'a> {
             ("event-hub", Some(args)) => EventHub::from(args).execute(self.quiet),
             ("cosmos-db", Some(args)) => CosmosDb::from(args).execute(self.quiet),
             ("service-bus", Some(args)) => ServiceBus::from(args).execute(self.quiet),
+            ("activity", Some(args)) => Activity::from(args).execute(self.quiet),
+            ("orchestration", Some(args)) => Orchestration::from(args).execute(self.quiet),
             _ => panic!("expected a subcommand for the 'new' command."),
         }
     }

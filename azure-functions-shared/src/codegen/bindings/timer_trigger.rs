@@ -149,6 +149,9 @@ mod tests {
         let mut tokens = stream.to_string();
         tokens.retain(|c| c != ' ');
 
-        assert_eq!(tokens, r#"::azure_functions::codegen::bindings::TimerTrigger{name:::std::borrow::Cow::Borrowed("foo"),schedule:::std::borrow::Cow::Borrowed("bar"),run_on_startup:Some(true),use_monitor:Some(false),}"#);
+        assert_eq!(
+            tokens,
+            r#"::azure_functions::codegen::bindings::TimerTrigger{name:::std::borrow::Cow::Borrowed("foo"),schedule:::std::borrow::Cow::Borrowed("bar"),run_on_startup:Some(true),use_monitor:Some(false),}"#
+        );
     }
 }

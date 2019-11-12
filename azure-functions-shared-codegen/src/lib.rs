@@ -7,10 +7,8 @@
 extern crate proc_macro;
 
 mod binding;
-mod generated_mod;
 
 use binding::binding_impl;
-use generated_mod::generated_mod_impl;
 use proc_macro2::{Delimiter, Span};
 use syn::{
     buffer::TokenBuffer, spanned::Spanned, Attribute, AttributeArgs, Ident, Lit, Meta, NestedMeta,
@@ -75,26 +73,6 @@ where
     T: AsRef<str>,
 {
     panic!("{}", message.as_ref());
-}
-
-/// A macro to generate a module from code created in the output directory.
-///
-/// This is a "procedural macro" solution to [https://github.com/rust-lang/rfcs/issues/752](https://github.com/rust-lang/rfcs/issues/752).
-///
-/// # Examples
-///
-/// This example uses $OUT_DIR/MyModule.rs to replace the annotated module with
-/// the generated code in the output directory:
-///
-/// ```rust,ignore
-/// use azure_functions_shared_codegen::generated_mod;
-///
-/// #[generated_mod]
-/// mod MyModule {}
-/// ```
-#[proc_macro]
-pub fn generated_mod(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    generated_mod_impl(input)
 }
 
 #[proc_macro_attribute]

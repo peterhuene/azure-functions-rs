@@ -111,7 +111,7 @@ pub fn read_document(req: HttpRequest, document: CosmosDbDocument) -> HttpRespon
 # Running the example locally
 
 Because this example relies on Azure Storage to function, the `AzureWebJobsStorage`
-setting must be set to a connection string that the Azure Functions Host will use for 
+setting must be set to a connection string that the Azure Functions Host will use for
 the default storage connection.
 
 Add a setting for `AzureWebJobsStorage` into `local.settings.json`:

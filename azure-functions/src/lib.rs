@@ -6,6 +6,8 @@
 //!
 //! * [Blob trigger](bindings/struct.BlobTrigger.html)
 //! * [Cosmos DB trigger](bindings/struct.CosmosDbTrigger.html)
+//! * [Durable Activity trigger](bindings/struct.DurableOrchestrationContext.html)
+//! * [Durable Orchestration trigger](bindings/struct.DurableOrchestrationContext.html)
 //! * [Event Grid trigger](bindings/struct.EventGridEvent.html)
 //! * [Event Hub trigger](bindings/struct.EventHubTrigger.html)
 //! * [Generic trigger](bindings/struct.GenericTrigger.html)
@@ -18,6 +20,7 @@
 //!
 //! * [Blob input](bindings/struct.Blob.html)
 //! * [Cosmos DB input](bindings/struct.CosmosDbDocument.html)
+//! * [Durable orchestration client input](bindings/struct.DurableOrchestrationClient.html)
 //! * [Generic input](bindings/struct.GenericInput.html)
 //! * [SignalR connection info input](bindings/struct.SignalRConnectionInfo.html)
 //! * [Table input](bindings/struct.Table.html)
@@ -106,6 +109,7 @@ mod worker;
 pub mod bindings;
 pub mod blob;
 pub mod context;
+pub mod durable;
 pub mod event_hub;
 pub mod generic;
 pub mod http;

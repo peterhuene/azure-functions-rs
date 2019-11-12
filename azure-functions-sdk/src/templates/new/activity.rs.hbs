@@ -1,0 +1,6 @@
+use azure_functions::{bindings::DurableActivityContext, durable::ActivityOutput, func};
+
+#[func]
+pub async fn {{name}}(context: DurableActivityContext) -> ActivityOutput {
+    "Hello from {{name}}!".into()
+}
