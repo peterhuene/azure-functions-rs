@@ -79,7 +79,7 @@ See [Building an async Azure Functions application](#building-an-async-azure-fun
 ## Get Started
 
 - [More Examples](https://github.com/peterhuene/azure-functions-rs/tree/master/examples)
-- [Documentation](https://docs.rs/azure-functions/0.10.0/azure_functions/)
+- [Documentation](https://docs.rs/azure-functions/0.11.0/azure_functions/)
 - [Installation](#installation)
 - [Contributing](https://github.com/peterhuene/azure-functions-rs/blob/master/CONTRIBUTING.md)
 
