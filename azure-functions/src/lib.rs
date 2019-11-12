@@ -150,7 +150,6 @@ pub trait FromVec<T> {
 ///     azure_functions::worker_main(::std::env::args(), EXPORTS);
 /// }
 /// ```
-#[allow(clippy::needless_doctest_main)]
 pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static codegen::Function]) {
     worker_main_with_extensions(args, functions, &[])
 }
@@ -170,7 +169,6 @@ pub fn worker_main(args: impl Iterator<Item = String>, functions: &[&'static cod
 ///     );
 /// }
 /// ```
-#[allow(clippy::needless_doctest_main)]
 pub fn worker_main_with_extensions(
     args: impl Iterator<Item = String>,
     functions: &[&'static codegen::Function],
