@@ -64,6 +64,39 @@
         "review",
         "ideas"
       ]
+    },
+    {
+      "login": "dmolokanov",
+      "name": "Denis Molokanov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/6630003?v=4",
+      "profile": "https://github.com/dmolokanov",
+      "contributions": [
+        "code",
+        "test",
+        "design",
+        "ideas"
+      ]
+    },
+    {
+      "login": "slyons",
+      "name": "Scott Lyons",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/41403?v=4",
+      "profile": "https://github.com/slyons",
+      "contributions": [
+        "code",
+        "test",
+        "design",
+        "ideas"
+      ]
+    },
+    {
+      "login": "ajnirp",
+      "name": "Rohan Prinja",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1688456?v=4",
+      "profile": "https://github.com/ajnirp",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
