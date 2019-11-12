@@ -126,6 +126,8 @@ mod tests {
         future.poll_unpin(&mut Context::from_waker(&waker))
     }
 
+    static mut TIMESTAMP_COUNTER: i64 = 0;
+
     pub(crate) fn create_event(
         event_type: EventType,
         event_id: i32,
@@ -133,21 +135,27 @@ mod tests {
         result: Option<String>,
         task_scheduled_id: Option<i32>,
     ) -> HistoryEvent {
-        HistoryEvent {
-            event_type,
-            event_id,
-            is_played: true,
-            timestamp: Utc::now(),
-            is_processed: false,
-            name,
-            input: None,
-            result,
-            task_scheduled_id,
-            instance_id: None,
-            reason: None,
-            details: None,
-            fire_at: None,
-            timer_id: None,
+        unsafe {
+            TIMESTAMP_COUNTER += 1;
+
+            let offset = chrono::Duration::nanoseconds(TIMESTAMP_COUNTER);
+
+            HistoryEvent {
+                event_type,
+                event_id,
+                is_played: true,
+                timestamp: Utc::now() + offset,
+                is_processed: false,
+                name,
+                input: None,
+                result,
+                task_scheduled_id,
+                instance_id: None,
+                reason: None,
+                details: None,
+                fire_at: None,
+                timer_id: None,
+            }
         }
     }
 }
