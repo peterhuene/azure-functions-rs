@@ -98,7 +98,7 @@ dependencies = [
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-executor 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "tonic 0.1.0-alpha.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tonic 0.1.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -158,7 +158,7 @@ dependencies = [
  "serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "tonic 0.1.0-alpha.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tonic 0.1.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "tonic-build 0.1.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1689,7 +1689,7 @@ dependencies = [
 
 [[package]]
 name = "tonic"
-version = "0.1.0-alpha.5"
+version = "0.1.0-alpha.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "async-stream 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2257,7 +2257,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum tokio-net 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)" = "a441682cd32f3559383112c4a7f372f5c9fa1950c5cf8c8dd05274a2ce8c2654"
 "checksum tokio-sync 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)" = "4f1aaeb685540f7407ea0e27f1c9757d258c7c6bf4e3eb19da6fc59b747239d2"
 "checksum tokio-timer 0.3.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)" = "b97c1587fe71018eb245a4a9daa13a5a3b681bbc1f7fdadfe24720e141472c13"
-"checksum tonic 0.1.0-alpha.5 (registry+https://github.com/rust-lang/crates.io-index)" = "d68951b701f4b3750dc78b4115f7e030d2835207a9805e47cd6e2e45b2e06410"
+"checksum tonic 0.1.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)" = "95a6b2461ec6cd6d90c562b942893bd6fcbeb81def0348a26331629397be9d48"
 "checksum tonic-build 0.1.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)" = "24a2f25663b822568d660f64a4a9b6af17f51d11a6175781fa2391786a224665"
 "checksum tower 0.3.0-alpha.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b05ce6a5913c351c65d5538545302eceaf3f84e8257654370d298c3ea1a97935"
 "checksum tower-balance 0.3.0-alpha.2 (registry+https://github.com/rust-lang/crates.io-index)" = "38dce028671196b8e89965a7b057b8e4bc99206185c0418ce8d164fe674c9d72"
