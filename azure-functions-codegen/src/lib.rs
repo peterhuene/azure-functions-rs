@@ -31,12 +31,12 @@ fn parse_attribute_args(attr: &Attribute) -> AttributeArgs {
         .unwrap()
 }
 
-fn attribute_args_from_name(name: &str, span: Span) -> AttributeArgs {
-    vec![NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+fn create_name_attribute_arg(name: &str, span: Span) -> NestedMeta {
+    NestedMeta::Meta(Meta::NameValue(MetaNameValue {
         path: Ident::new("name", span).into(),
         eq_token: Eq { spans: [span] },
         lit: Lit::Str(LitStr::new(name, span)),
-    }))]
+    }))
 }
 
 /// Implements the `export!` macro.

@@ -1,7 +1,7 @@
 mod invoker;
 mod output_bindings;
 
-use crate::{attribute_args_from_name, parse_attribute_args};
+use crate::{create_name_attribute_arg, parse_attribute_args};
 use azure_functions_shared::codegen::{
     bindings::{
         Binding, BindingFactory, INPUT_BINDINGS, INPUT_OUTPUT_BINDINGS, OUTPUT_BINDINGS, TRIGGERS,
@@ -335,47 +335,59 @@ fn get_input_binding_factory(
     }
 }
 
-fn bind_input_type(
-    pattern: &Pat,
-    tp: &TypePath,
-    mutability: Option<Mut>,
-    has_trigger: bool,
-    binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
-) -> Binding {
-    let factory = get_input_binding_factory(tp, mutability, has_trigger);
-
-    match pattern {
-        Pat::Ident(name) => {
-            let name_str = name.ident.to_string();
-            match binding_args.remove(&name_str) {
-                Some(args) => (*factory)(args.0, args.1),
-                None => {
-                    let name_span = name.ident.span();
-                    (*factory)(attribute_args_from_name(&name_str, name_span), name_span)
-                }
-            }
+fn drain_argument_binding_attribute(
+    attrs: &mut Vec<Attribute>,
+    name: &str,
+) -> Option<(AttributeArgs, Span)> {
+    let mut result = None;
+    for attr in attrs
+        .iter()
+        .filter(|a| last_segment_in_path(&a.path).ident == "binding")
+    {
+        if result.is_some() {
+            macro_panic(
+                attr.span(),
+                "parameters cannot have more than one binding attribute",
+            );
         }
-        _ => macro_panic(pattern.span(), "bindings must have a named identifier"),
+
+        let mut args = parse_attribute_args(&attr);
+
+        iter_attribute_args(&args, |key, _| {
+            if key == "name" {
+                macro_panic(
+                    attr.span(),
+                    "parameter binding attributes cannot have a 'name' argument",
+                );
+            }
+            true
+        });
+
+        args.push(create_name_attribute_arg(name, attr.span()));
+
+        result = Some((args, attr.span()));
     }
+
+    attrs.retain(|a| last_segment_in_path(&a.path).ident != "binding");
+
+    result
 }
 
 fn bind_argument(
-    arg: &FnArg,
+    arg: &mut FnArg,
     has_trigger: bool,
     binding_args: &mut HashMap<String, (AttributeArgs, Span)>,
 ) -> Binding {
-    match arg {
+    let (pat, tp, mutability, attrs) = match arg {
         FnArg::Typed(arg) => match &*arg.ty {
             Type::Reference(tr) => match &*tr.elem {
-                Type::Path(tp) => {
-                    bind_input_type(&*arg.pat, tp, tr.mutability, has_trigger, binding_args)
-                }
+                Type::Path(tp) => (&*arg.pat, tp, tr.mutability, &mut arg.attrs),
                 _ => macro_panic(
                     arg.ty.span(),
                     "expected an Azure Functions trigger or input binding type",
                 ),
             },
-            Type::Path(tp) => bind_input_type(&*arg.pat, tp, None, has_trigger, binding_args),
+            Type::Path(tp) => (&*arg.pat, tp, None, &mut arg.attrs),
             _ => macro_panic(
                 arg.ty.span(),
                 "expected an Azure Functions trigger or input binding type",
@@ -384,6 +396,40 @@ fn bind_argument(
         FnArg::Receiver(_) => {
             macro_panic(arg.span(), "Azure Functions cannot have self parameters")
         }
+    };
+
+    let factory = get_input_binding_factory(tp, mutability, has_trigger);
+
+    match pat {
+        Pat::Ident(name) => {
+            let name_str = name.ident.to_string();
+            let binding_attr = drain_argument_binding_attribute(attrs, &name_str);
+
+            let binding_args = match binding_args.remove(&name_str) {
+                Some(args) => {
+                    if let Some(binding_attr) = binding_attr {
+                        macro_panic(
+                            binding_attr.1,
+                            "parameter already has a binding attribute at the function level",
+                        );
+                    }
+                    args
+                }
+                None => binding_attr.unwrap_or_else(|| {
+                    let name_span = name.ident.span();
+                    (
+                        vec![create_name_attribute_arg(&name_str, name_span)],
+                        name_span,
+                    )
+                }),
+            };
+
+            (*factory)(binding_args.0, binding_args.1)
+        }
+        _ => macro_panic(
+            pat.span(),
+            "parameter bindings must have a named identifier",
+        ),
     }
 }
 
@@ -409,7 +455,7 @@ fn bind_output_type(
                 Some(args) => (*factory)(args.0, args.1),
                 None => {
                     let span = tp.span();
-                    (*factory)(attribute_args_from_name(name, span), span)
+                    (*factory)(vec![create_name_attribute_arg(name, span)], span)
                 }
             }
         }
@@ -472,10 +518,8 @@ fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, (Attr
         .iter()
         .filter(|a| last_segment_in_path(&a.path).ident == "binding")
     {
-        let attr_span = attr.span();
         let args = parse_attribute_args(&attr);
         let mut name = None;
-        let mut name_span = None;
 
         iter_attribute_args(&args, |key, value| {
             if key != "name" {
@@ -483,16 +527,21 @@ fn drain_binding_attributes(attrs: &mut Vec<Attribute>) -> HashMap<String, (Attr
             }
 
             name = Some(get_string_value("name", value));
-            name_span = Some(key.span());
             false
         });
 
         if name.is_none() {
-            macro_panic(attr_span, "binding attributes must have a 'name' argument");
+            macro_panic(
+                attr.span(),
+                "binding attributes must have a 'name' argument",
+            );
         }
 
         if map.insert(name.unwrap(), (args, attr.span())).is_some() {
-            macro_panic(attr_span, "binding attributes must have a 'name' argument");
+            macro_panic(
+                attr.span(),
+                "binding attributes must have a 'name' argument",
+            );
         }
     }
 
@@ -535,8 +584,8 @@ pub fn func_impl(
     let mut binding_args = drain_binding_attributes(&mut target.attrs);
     let mut names = HashSet::new();
     let mut has_trigger = false;
-    for arg in &target.sig.inputs {
-        let binding = bind_argument(&arg, has_trigger, &mut binding_args);
+    for arg in target.sig.inputs.iter_mut() {
+        let binding = bind_argument(arg, has_trigger, &mut binding_args);
         has_trigger |= binding.is_trigger();
 
         if let Some(name) = binding.name() {
