@@ -3,10 +3,7 @@ use crate::{
     rpc::{typed_data::Data, TypedData},
     FromVec,
 };
-use serde::de::Error;
-use serde::Deserialize;
-use serde_json::{from_str, Result, Value};
-use std::borrow::Cow;
+use serde_json::{from_str, Value};
 use std::fmt;
 use std::str::from_utf8;
 
@@ -37,7 +34,7 @@ use std::str::from_utf8;
 /// pub fn create_queue_message(req: HttpRequest) -> ServiceBusMessage {
 ///     format!(
 ///         "Hello from Rust, {}!\n",
-///         req.query_params().get("name").map_or("stranger", |x| x)
+///         req.query_params.get("name").map_or("stranger", |x| x)
 ///     )
 ///     .into()
 /// }
@@ -61,7 +58,7 @@ use std::str::from_utf8;
 /// pub fn create_topic_message(req: HttpRequest) -> ServiceBusMessage {
 ///     format!(
 ///         "Hello from Rust, {}!\n",
-///         req.query_params().get("name").map_or("stranger", |x| x)
+///         req.query_params.get("name").map_or("stranger", |x| x)
 ///     )
 ///     .into()
 /// }
@@ -73,7 +70,7 @@ impl ServiceBusMessage {
     /// Gets the content of the message as a string.
     ///
     /// Returns None if there is no valid string representation of the message.
-    pub fn as_str(&self) -> Option<&str> {
+    pub fn to_str(&self) -> Option<&str> {
         match &self.0.data {
             Some(Data::String(s)) => Some(s),
             Some(Data::Json(s)) => Some(s),
@@ -93,29 +90,17 @@ impl ServiceBusMessage {
             _ => panic!("unexpected data for service bus message content"),
         }
     }
-
-    /// Deserializes the message as JSON to the requested type.
-    pub fn as_json<'b, T>(&'b self) -> Result<T>
-    where
-        T: Deserialize<'b>,
-    {
-        from_str(
-            self.as_str().ok_or_else(|| {
-                ::serde_json::Error::custom("service bus message is not valid UTF-8")
-            })?,
-        )
-    }
 }
 
 impl fmt::Display for ServiceBusMessage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.as_str().unwrap_or(""))
+        write!(f, "{}", self.to_str().unwrap_or(""))
     }
 }
 
-impl<'a> From<&'a str> for ServiceBusMessage {
-    fn from(content: &'a str) -> Self {
-        ServiceBusMessage(TypedData {
+impl From<&str> for ServiceBusMessage {
+    fn from(content: &str) -> Self {
+        Self(TypedData {
             data: Some(Data::String(content.to_owned())),
         })
     }
@@ -123,7 +108,7 @@ impl<'a> From<&'a str> for ServiceBusMessage {
 
 impl From<String> for ServiceBusMessage {
     fn from(content: String) -> Self {
-        ServiceBusMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::String(content)),
         })
     }
@@ -131,7 +116,7 @@ impl From<String> for ServiceBusMessage {
 
 impl From<&Value> for ServiceBusMessage {
     fn from(content: &Value) -> Self {
-        ServiceBusMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::Json(content.to_string())),
         })
     }
@@ -139,15 +124,15 @@ impl From<&Value> for ServiceBusMessage {
 
 impl From<Value> for ServiceBusMessage {
     fn from(content: Value) -> Self {
-        ServiceBusMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::Json(content.to_string())),
         })
     }
 }
 
-impl<'a> From<&'a [u8]> for ServiceBusMessage {
-    fn from(content: &'a [u8]) -> Self {
-        ServiceBusMessage(TypedData {
+impl From<&[u8]> for ServiceBusMessage {
+    fn from(content: &[u8]) -> Self {
+        Self(TypedData {
             data: Some(Data::Bytes(content.to_owned())),
         })
     }
@@ -155,7 +140,7 @@ impl<'a> From<&'a [u8]> for ServiceBusMessage {
 
 impl From<Vec<u8>> for ServiceBusMessage {
     fn from(content: Vec<u8>) -> Self {
-        ServiceBusMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::Bytes(content)),
         })
     }
@@ -164,14 +149,14 @@ impl From<Vec<u8>> for ServiceBusMessage {
 #[doc(hidden)]
 impl From<TypedData> for ServiceBusMessage {
     fn from(data: TypedData) -> Self {
-        ServiceBusMessage(data)
+        Self(data)
     }
 }
 
 #[doc(hidden)]
 impl FromVec<ServiceBusMessage> for TypedData {
     fn from_vec(vec: Vec<ServiceBusMessage>) -> Self {
-        TypedData {
+        Self {
             data: Some(Data::Json(
                 Value::Array(vec.into_iter().map(Into::into).collect()).to_string(),
             )),
@@ -228,15 +213,9 @@ impl Into<Vec<u8>> for ServiceBusMessage {
     }
 }
 
-impl<'a> Into<Body<'a>> for ServiceBusMessage {
-    fn into(self) -> Body<'a> {
-        match self.0.data {
-            Some(Data::String(s)) => s.into(),
-            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
-            Some(Data::Bytes(b)) => b.into(),
-            Some(Data::Stream(s)) => s.into(),
-            _ => panic!("unexpected data for service bus message content"),
-        }
+impl Into<Body> for ServiceBusMessage {
+    fn into(self) -> Body {
+        self.0.into()
     }
 }
 
@@ -251,7 +230,7 @@ impl Into<TypedData> for ServiceBusMessage {
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
-    use serde_json::{json, to_value};
+    use serde_json::{from_slice, json, to_value};
     use std::fmt::Write;
 
     #[test]
@@ -259,7 +238,7 @@ mod tests {
         const MESSAGE: &'static str = "test message";
 
         let message: ServiceBusMessage = MESSAGE.into();
-        assert_eq!(message.as_str().unwrap(), MESSAGE);
+        assert_eq!(message.to_str().unwrap(), MESSAGE);
 
         let data: TypedData = message.into();
         assert_eq!(data.data, Some(Data::String(MESSAGE.to_string())));
@@ -278,11 +257,9 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let message: ServiceBusMessage = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(
-            message.as_json::<SerializedData>().unwrap().message,
-            MESSAGE
-        );
+        let message: ServiceBusMessage = to_value(data).unwrap().into();
+        let data: SerializedData = from_slice(message.as_bytes()).unwrap();
+        assert_eq!(data.message, MESSAGE);
 
         let data: TypedData = message.into();
         assert_eq!(
@@ -317,19 +294,19 @@ mod tests {
     #[test]
     fn it_converts_from_str() {
         let message: ServiceBusMessage = "test".into();
-        assert_eq!(message.as_str().unwrap(), "test");
+        assert_eq!(message.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_string() {
         let message: ServiceBusMessage = "test".to_string().into();
-        assert_eq!(message.as_str().unwrap(), "test");
+        assert_eq!(message.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_json() {
         let message: ServiceBusMessage = to_value("hello world").unwrap().into();
-        assert_eq!(message.as_str().unwrap(), r#""hello world""#);
+        assert_eq!(message.to_str().unwrap(), r#""hello world""#);
     }
 
     #[test]
@@ -369,11 +346,11 @@ mod tests {
     fn it_converts_to_body() {
         let message: ServiceBusMessage = "hello world!".into();
         let body: Body = message.into();
-        assert_eq!(body.as_str().unwrap(), "hello world!");
+        assert_eq!(body.to_str().unwrap(), "hello world!");
 
         let message: ServiceBusMessage = json!({"hello": "world"}).into();
         let body: Body = message.into();
-        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
+        assert_eq!(body.to_str().unwrap(), r#"{"hello":"world"}"#);
 
         let message: ServiceBusMessage = vec![1, 2, 3].into();
         let body: Body = message.into();

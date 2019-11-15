@@ -1,7 +1,6 @@
 use azure_functions::{bindings::QueueTrigger, func};
 
 #[func]
-#[binding(name = "trigger", queue_name = "test")]
-pub fn queue(trigger: QueueTrigger) {
+pub fn queue(#[binding(queue_name = "test")] trigger: QueueTrigger) {
     log::info!("Message: {}", trigger.message);
 }

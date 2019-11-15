@@ -1,68 +1,50 @@
 use crate::rpc::{typed_data::Data, TypedData};
-use serde::{de::Error, Deserialize};
-use serde_json::{from_str, Result, Value};
-use std::borrow::Cow;
+use serde_json::{from_slice, Value};
 use std::fmt;
 use std::str::from_utf8;
 
 /// Represents the body of a HTTP request or response.
 #[derive(Clone, Debug)]
-pub enum Body<'a> {
-    /// Represents an empty body.
-    Empty,
-    /// Represents a string body with a default content type of `text/plain`.
-    String(Cow<'a, str>),
-    /// Represents a JSON body with a default content type of `application/json`.
-    Json(Cow<'a, str>),
-    /// Represents a body from a slice of bytes with a default content type of `application/octet-stream`.
-    Bytes(Cow<'a, [u8]>),
-}
+pub struct Body(TypedData);
 
-impl Body<'_> {
+impl Body {
     /// Gets the default content type for a body.
-    ///
-    /// Returns `application/json` for `Body::Json`.
-    ///
-    /// Returns `application/octet-stream` for `Body::Bytes`.
-    ///
-    /// Returns `text/plain` for all other `Body` values.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::http::Body;
-    ///
+    /// # use azure_functions::http::Body;
     /// let body: Body = [1, 2, 3][..].into();
-    ///
     /// assert_eq!(body.default_content_type(), "application/octet-stream");
     /// ```
     pub fn default_content_type(&self) -> &str {
-        match self {
-            Body::Empty | Body::String(_) => "text/plain",
-            Body::Json(_) => "application/json",
-            Body::Bytes(_) => "application/octet-stream",
+        match &self.0.data {
+            Some(Data::Json(_)) => "application/json",
+            Some(Data::Bytes(_)) => "application/octet-stream",
+            Some(Data::Stream(_)) => "application/octet-stream",
+            _ => "text/plain",
         }
     }
 
     /// Gets the body as a string.
     ///
-    /// Returns None if there is no valid string representation of the message.
+    /// Returns None if there is no valid string representation.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::http::Body;
-    /// use std::borrow::Cow;
-    ///
-    /// let body = Body::String(Cow::Borrowed("test"));
-    /// assert_eq!(body.as_str().unwrap(), "test");
+    /// # use azure_functions::http::Body;
+    /// let body: Body = "test".into();
+    /// assert_eq!(body.to_str().unwrap(), "test");
     /// ```
-    pub fn as_str(&self) -> Option<&str> {
-        match self {
-            Body::Empty => Some(""),
-            Body::String(s) => Some(s),
-            Body::Json(s) => Some(s),
-            Body::Bytes(b) => from_utf8(b).map(|s| s).ok(),
+    pub fn to_str(&self) -> Option<&str> {
+        match &self.0.data {
+            None => Some(""),
+            Some(Data::String(s)) => Some(s),
+            Some(Data::Json(s)) => Some(s),
+            Some(Data::Bytes(b)) => from_utf8(b).ok(),
+            Some(Data::Stream(s)) => from_utf8(s).ok(),
+            _ => None,
         }
     }
 
@@ -71,143 +53,146 @@ impl Body<'_> {
     /// # Examples
     ///
     /// ```rust
-    /// use azure_functions::http::Body;
-    /// use std::borrow::Cow;
-    ///
-    /// let body = Body::String(Cow::Borrowed("test"));
-    /// assert_eq!(body.as_bytes(), "test".as_bytes());
+    /// # use azure_functions::http::Body;
+    /// let body: Body = "example".into();
+    /// assert_eq!(body.as_bytes(), "example".as_bytes());
     /// ```
     pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            Body::Empty => &[],
-            Body::String(s) => s.as_bytes(),
-            Body::Json(s) => s.as_bytes(),
-            Body::Bytes(b) => b,
-        }
-    }
-
-    /// Deserializes the body as JSON to the requested type.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use azure_functions::http::Body;
-    /// use std::borrow::Cow;
-    /// use serde::Deserialize;
-    ///
-    /// #[derive(Deserialize)]
-    /// struct Data {
-    ///     message: String
-    /// }
-    ///
-    /// let body = Body::String(Cow::Borrowed(r#"{ "message": "hello" }"#));
-    /// let data = body.as_json::<Data>().unwrap();
-    /// assert_eq!(data.message, "hello");
-    /// ```
-    pub fn as_json<'b, T>(&'b self) -> Result<T>
-    where
-        T: Deserialize<'b>,
-    {
-        match self {
-            Body::Empty => from_str(""),
-            Body::String(s) => from_str(s.as_ref()),
-            Body::Json(s) => from_str(s.as_ref()),
-            Body::Bytes(b) => from_str(from_utf8(b).map_err(|e| {
-                ::serde_json::Error::custom(format!("body is not valid UTF-8: {}", e))
-            })?),
+        match &self.0.data {
+            None => &[],
+            Some(Data::String(s)) => s.as_bytes(),
+            Some(Data::Json(s)) => s.as_bytes(),
+            Some(Data::Bytes(b)) => b,
+            Some(Data::Stream(s)) => s,
+            _ => panic!("unexpected data type for body"),
         }
     }
 }
 
-impl fmt::Display for Body<'_> {
+impl Default for Body {
+    fn default() -> Self {
+        Self(TypedData { data: None })
+    }
+}
+
+impl fmt::Display for Body {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.as_str().unwrap_or(""))
+        write!(f, "{}", self.to_str().unwrap_or("<invalid-ut8>"))
     }
 }
 
 #[doc(hidden)]
-impl<'a> From<&'a TypedData> for Body<'a> {
-    fn from(data: &'a TypedData) -> Self {
-        match &data.data {
-            Some(Data::String(s)) => Body::String(Cow::from(s)),
-            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
-            Some(Data::Bytes(b)) => Body::Bytes(Cow::from(b)),
-            Some(Data::Stream(s)) => Body::Bytes(Cow::from(s)),
-            _ => Body::Empty,
+impl From<TypedData> for Body {
+    fn from(data: TypedData) -> Self {
+        Self(data)
+    }
+}
+
+impl From<&str> for Body {
+    fn from(s: &str) -> Self {
+        Self(TypedData {
+            data: Some(Data::String(s.to_owned())),
+        })
+    }
+}
+
+impl From<String> for Body {
+    fn from(s: String) -> Self {
+        Self(TypedData {
+            data: Some(Data::String(s)),
+        })
+    }
+}
+
+impl From<&Value> for Body {
+    fn from(v: &Value) -> Self {
+        Self(TypedData {
+            data: Some(Data::Json(v.to_string())),
+        })
+    }
+}
+
+impl From<Value> for Body {
+    fn from(v: Value) -> Self {
+        Self(TypedData {
+            data: Some(Data::Json(v.to_string())),
+        })
+    }
+}
+
+impl From<&[u8]> for Body {
+    fn from(d: &[u8]) -> Self {
+        Self(TypedData {
+            data: Some(Data::Bytes(d.to_owned())),
+        })
+    }
+}
+
+impl From<Vec<u8>> for Body {
+    fn from(d: Vec<u8>) -> Self {
+        Self(TypedData {
+            data: Some(Data::Bytes(d)),
+        })
+    }
+}
+
+impl Into<String> for Body {
+    fn into(self) -> String {
+        match self.0.data {
+            Some(Data::String(s)) => s,
+            Some(Data::Json(s)) => s,
+            Some(Data::Bytes(b)) => {
+                String::from_utf8(b).expect("body does not contain valid UTF-8 bytes")
+            }
+            Some(Data::Stream(s)) => {
+                String::from_utf8(s).expect("body does not contain valid UTF-8 bytes")
+            }
+            _ => panic!("unexpected data for body content"),
         }
     }
 }
 
-impl<'a> From<&'a str> for Body<'a> {
-    fn from(data: &'a str) -> Self {
-        Body::String(Cow::Borrowed(data))
+impl Into<Value> for Body {
+    fn into(self) -> Value {
+        from_slice(self.as_bytes()).expect("body does not contain valid JSON data")
     }
 }
 
-impl From<String> for Body<'_> {
-    fn from(data: String) -> Self {
-        Body::String(Cow::Owned(data))
-    }
-}
-
-impl From<&Value> for Body<'_> {
-    fn from(data: &Value) -> Self {
-        Body::Json(Cow::Owned(data.to_string()))
-    }
-}
-
-impl From<Value> for Body<'_> {
-    fn from(data: Value) -> Self {
-        Body::Json(Cow::Owned(data.to_string()))
-    }
-}
-
-impl<'a> From<&'a [u8]> for Body<'a> {
-    fn from(data: &'a [u8]) -> Self {
-        Body::Bytes(Cow::Borrowed(data))
-    }
-}
-
-impl From<Vec<u8>> for Body<'_> {
-    fn from(data: Vec<u8>) -> Self {
-        Body::Bytes(Cow::Owned(data))
+impl Into<Vec<u8>> for Body {
+    fn into(self) -> Vec<u8> {
+        match self.0.data {
+            Some(Data::String(s)) => s.into_bytes(),
+            Some(Data::Json(s)) => s.into_bytes(),
+            Some(Data::Bytes(b)) => b,
+            Some(Data::Stream(s)) => s,
+            _ => panic!("unexpected data for body content"),
+        }
     }
 }
 
 #[doc(hidden)]
-impl Into<TypedData> for Body<'_> {
+impl Into<TypedData> for Body {
     fn into(self) -> TypedData {
-        TypedData {
-            data: match self {
-                Body::Empty => None,
-                Body::String(s) => Some(Data::String(s.into_owned())),
-                Body::Json(s) => Some(Data::Json(s.into_owned())),
-                Body::Bytes(b) => Some(Data::Bytes(b.into_owned())),
-            },
-        }
+        self.0
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use matches::matches;
     use serde::{Deserialize, Serialize};
     use serde_json::to_value;
     use std::fmt::Write;
 
     #[test]
     fn it_has_a_default_content_type() {
-        let body = Body::Empty;
+        let body: Body = "test".into();
         assert_eq!(body.default_content_type(), "text/plain");
 
-        let body = Body::String(Cow::Borrowed("test"));
-        assert_eq!(body.default_content_type(), "text/plain");
-
-        let body = Body::Json(Cow::Borrowed("1"));
+        let body: Body = to_value(1).unwrap().into();
         assert_eq!(body.default_content_type(), "application/json");
 
-        let body = Body::Bytes(Cow::Borrowed(&[]));
+        let body: Body = (&[] as &[u8]).into();
         assert_eq!(body.default_content_type(), "application/octet-stream");
     }
 
@@ -216,7 +201,7 @@ mod tests {
         const BODY: &'static str = "test body";
 
         let body: Body = BODY.into();
-        assert_eq!(body.as_str().unwrap(), BODY);
+        assert_eq!(body.to_str().unwrap(), BODY);
 
         let data: TypedData = body.into();
         assert_eq!(data.data, Some(Data::String(BODY.to_string())));
@@ -235,8 +220,9 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let body: Body = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(body.as_json::<SerializedData>().unwrap().message, MESSAGE);
+        let body: Body = to_value(data).unwrap().into();
+        let data: SerializedData = from_slice(body.as_bytes()).unwrap();
+        assert_eq!(data.message, MESSAGE);
 
         let data: TypedData = body.into();
         assert_eq!(
@@ -274,73 +260,60 @@ mod tests {
             data: Some(Data::String("test".to_string())),
         };
 
-        let body: Body = (&data).into();
-        assert!(matches!(body, Body::String(_)));
-        assert_eq!(body.as_str().unwrap(), "test");
+        let body: Body = data.into();
+        assert_eq!(body.to_str().unwrap(), "test");
 
         let data = TypedData {
             data: Some(Data::Json("test".to_string())),
         };
-        let body: Body = (&data).into();
-        assert!(matches!(body, Body::Json(_)));
-        assert_eq!(body.as_str().unwrap(), "test");
+        let body: Body = data.into();
+        assert_eq!(body.to_str().unwrap(), "test");
 
         let data = TypedData {
             data: Some(Data::Bytes([0, 1, 2].to_vec())),
         };
-        let body: Body = (&data).into();
-        assert!(matches!(body, Body::Bytes(_)));
+        let body: Body = data.into();
         assert_eq!(body.as_bytes(), [0, 1, 2]);
 
         let data = TypedData {
             data: Some(Data::Stream([0, 1, 2].to_vec())),
         };
-        let body: Body = (&data).into();
-        assert!(matches!(body, Body::Bytes(_)));
+        let body: Body = data.into();
         assert_eq!(body.as_bytes(), [0, 1, 2]);
     }
 
     #[test]
     fn it_converts_from_str() {
         let body: Body = "test".into();
-        assert!(matches!(body, Body::String(Cow::Borrowed(_))));
-        assert_eq!(body.as_str().unwrap(), "test");
+        assert_eq!(body.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_string() {
         let body: Body = "test".to_string().into();
-        assert!(matches!(body, Body::String(Cow::Owned(_))));
-        assert_eq!(body.as_str().unwrap(), "test");
+        assert_eq!(body.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_json() {
         let body: Body = to_value("hello world").unwrap().into();
-        assert!(matches!(body, Body::Json(Cow::Owned(_))));
-        assert_eq!(body.as_str().unwrap(), r#""hello world""#);
+        assert_eq!(body.to_str().unwrap(), "\"hello world\"");
     }
 
     #[test]
     fn it_converts_from_u8_slice() {
         let body: Body = [0, 1, 2][..].into();
-        assert!(matches!(body, Body::Bytes(Cow::Borrowed(_))));
         assert_eq!(body.as_bytes(), [0, 1, 2]);
     }
 
     #[test]
     fn it_converts_from_u8_vec() {
         let body: Body = vec![0, 1, 2].into();
-        assert!(matches!(body, Body::Bytes(Cow::Owned(_))));
         assert_eq!(body.as_bytes(), [0, 1, 2]);
     }
 
     #[test]
     fn it_converts_to_typed_data() {
-        let body = Body::Empty;
-        let data: TypedData = body.into();
-        assert!(data.data.is_none());
-
         let body: Body = "test".into();
         let data: TypedData = body.into();
         assert_eq!(data.data, Some(Data::String("test".to_string())));

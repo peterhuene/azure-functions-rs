@@ -122,7 +122,7 @@ impl From<AttributeArgs> for Function {
             true
         });
 
-        Function {
+        Self {
             name: name.unwrap_or(Cow::Borrowed("")),
             disabled: disabled.unwrap_or(false),
             bindings: Cow::Owned(Vec::new()),

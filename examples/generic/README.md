@@ -17,21 +17,22 @@ use azure_functions::{
 use serde_json::json;
 
 #[func]
-#[binding(name = "req", route = "create/{id}")]
 #[binding(
     type = "cosmosDB",
     name = "output1",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents",
-    create_collection = true
+    connectionStringSetting = "connection",
+    databaseName = "exampledb",
+    collectionName = "documents",
+    createIfNotExists = true
 )]
-pub fn create_document(req: HttpRequest) -> (HttpResponse, GenericOutput) {
+pub fn create_document(
+    #[binding(route = "create/{id}")] mut req: HttpRequest,
+) -> (HttpResponse, GenericOutput) {
     (
         "Document was created.".into(),
         json!({
-            "id": req.route_params().get("id").unwrap(),
-            "name": req.query_params().get("name").map_or("stranger", |x| x)
+            "id": req.route_params.remove("id").unwrap(),
+            "name": req.query_params.remove("name").expect("expected a 'name' query parameter"),
         })
         .into(),
     )
@@ -41,20 +42,26 @@ pub fn create_document(req: HttpRequest) -> (HttpResponse, GenericOutput) {
 An example Cosmos DB triggered Azure Function that will log informational messages for each new Cosmos DB document inserted or updated to a collection:
 
 ```rust
-use azure_functions::{bindings::GenericTrigger, func};
+use azure_functions::{bindings::GenericTrigger, func, generic::Value};
 use log::info;
 
 #[func]
-#[binding(
-    type = "cosmosDBTrigger",
-    name = "trigger",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents",
-    create_lease_collection = true
-)]
-pub fn log_documents(trigger: GenericTrigger) {
-    info!("{:#?}", trigger.data)
+pub fn log_documents(
+    #[binding(
+        type = "cosmosDBTrigger",
+        connectionStringSetting = "connection",
+        databaseName = "exampledb",
+        collectionName = "documents",
+        createLeaseCollectionIfNotExists = true
+    )]
+    trigger: GenericTrigger,
+) {
+    match trigger.data {
+        Value::Json(v) => {
+            info!("{}", v);
+        }
+        _ => panic!("expected JSON for Cosmos DB trigger data"),
+    }
 }
 ```
 
@@ -67,17 +74,18 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "query/{name}")]
-#[binding(
-    type = "cosmosDB",
-    name = "documents",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents",
-    sql_query="select * from documents d where contains(d.name, {name})",
-    create_collection = true,
-)]
-pub fn query_documents(_req: HttpRequest, documents: GenericInput) -> HttpResponse {
+pub fn query_documents(
+    #[binding(route = "query/{name}")] _req: HttpRequest,
+    #[binding(
+        type = "cosmosDB",
+        connectionStringSetting = "connection",
+        databaseName = "exampledb",
+        collectionName = "documents",
+        sqlQuery = "select * from documents d where contains(d.name, {name})",
+        createIfNotExists = true
+    )]
+    documents: GenericInput,
+) -> HttpResponse {
     documents.into()
 }
 ```
@@ -90,32 +98,35 @@ use azure_functions::{
     func,
     generic::Value,
 };
+use serde_json::from_str;
 
 #[func]
-#[binding(name = "req", route = "read/{id}")]
-#[binding(
-    type = "cosmosDB",
-    name = "document",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents",
-    id = "{id}",
-    partition_key = "{id}"
-)]
-pub fn read_document(req: HttpRequest, document: GenericInput) -> HttpResponse {
+pub fn read_document(
+    #[binding(route = "read/{id}")] req: HttpRequest,
+    #[binding(
+        type = "cosmosDB",
+        connectionStringSetting = "connection",
+        databaseName = "exampledb",
+        collectionName = "documents",
+        id = "{id}",
+        partitionKey = "{id}"
+    )]
+    document: GenericInput,
+) -> HttpResponse {
     match document.data {
-        Value::Json(v) => {
+        Value::String(s) => {
+            let v: serde_json::Value = from_str(&s).expect("expected JSON data");
             if v.is_null() {
                 format!(
                     "Document with id '{}' does not exist.",
-                    req.route_params().get("id").unwrap()
+                    req.route_params.get("id").unwrap()
                 )
                 .into()
             } else {
                 v.into()
             }
         }
-        _ => panic!("expected JSON for CosmosDB document"),
+        _ => panic!("expected string for CosmosDB document data"),
     }
 }
 ```

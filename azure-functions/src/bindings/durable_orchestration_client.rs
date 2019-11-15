@@ -173,14 +173,14 @@ impl From<TypedData> for DurableOrchestrationClient {
             _ => panic!("expected string data for durable orchestration client"),
         };
 
-        DurableOrchestrationClient {
+        Self {
             client: Client::new(&data.management_urls.status_query_url),
         }
     }
 }
 
-impl<'a> Into<Body<'a>> for OrchestrationData {
-    fn into(self) -> Body<'a> {
+impl Into<Body> for OrchestrationData {
+    fn into(self) -> Body {
         to_value(&self).unwrap().into()
     }
 }

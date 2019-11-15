@@ -17,7 +17,7 @@ impl Parse for PathVec {
     fn parse(input: ParseStream) -> parse::Result<Self> {
         let paths = Punctuated::<Path, Token![,]>::parse_terminated(input)?;
 
-        Ok(PathVec(paths.into_iter().collect()))
+        Ok(Self(paths.into_iter().collect()))
     }
 }
 
@@ -36,7 +36,7 @@ impl From<TokenStream> for PathVec {
             return Self::default();
         }
 
-        parse::<PathVec>(stream)
+        parse::<Self>(stream)
             .map_err(|e| macro_panic(Span::call_site(), e.to_string()))
             .unwrap()
     }

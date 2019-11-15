@@ -4,7 +4,8 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "trigger", schedule = "{{schedule}}")]
-pub fn {{name}}(trigger: TimerInfo) {
+pub fn {{name}}(
+    #[binding(schedule = "{{schedule}}")] trigger: TimerInfo
+) {
     // function will execute at the scheduled interval
 }

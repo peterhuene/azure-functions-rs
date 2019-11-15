@@ -2,22 +2,23 @@ use azure_functions::{
     bindings::{HttpRequest, Table},
     func,
 };
-use serde_json::Value;
+use serde_json::from_slice;
 
 #[func]
-#[binding(name = "req", route = "create/{table}/{partition}/{row}")]
 #[binding(name = "output1", table_name = "{table}")]
-pub fn create_row(req: HttpRequest) -> ((), Table) {
+pub fn create_row(
+    #[binding(route = "create/{table}/{partition}/{row}")] req: HttpRequest,
+) -> ((), Table) {
     let mut table = Table::new();
     {
         let row = table.add_row(
-            req.route_params().get("partition").unwrap(),
-            req.route_params().get("row").unwrap(),
+            req.route_params.get("partition").unwrap(),
+            req.route_params.get("row").unwrap(),
         );
 
         row.insert(
             "body".to_string(),
-            Value::String(req.body().as_str().unwrap().to_owned()),
+            from_slice(req.body.as_bytes()).expect("expected JSON body"),
         );
     }
     ((), table)

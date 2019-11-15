@@ -1,6 +1,6 @@
 use crate::{
-    http::Body,
-    rpc::{typed_data::Data, RpcHttp, TypedData},
+    http::{Body, Cookie},
+    rpc::{typed_data::Data, TypedData},
 };
 use std::collections::HashMap;
 
@@ -29,107 +29,52 @@ use std::collections::HashMap;
 /// pub fn greet(request: HttpRequest) -> HttpResponse {
 ///     format!(
 ///         "Hello, {}!",
-///         request.query_params().get("name").map_or("stranger", |x| x)
+///         request.query_params.get("name").map_or("stranger", |x| x)
 ///     ).into()
 /// }
 /// ```
 #[derive(Debug)]
-pub struct HttpRequest(RpcHttp);
+pub struct HttpRequest {
+    /// The HTTP method (e.g. "GET") for the request.
+    pub method: String,
+    /// The URL of the request.
+    pub url: String,
+    /// The headers of the request.
+    pub headers: HashMap<String, String>,
+    /// The body of the request.
+    pub body: Body,
+    /// The route parameters of the request.
+    pub route_params: HashMap<String, String>,
+    /// The query parameters of the request.
+    pub query_params: HashMap<String, String>,
+    /// The cookies of the request.
+    pub cookies: Vec<Cookie>,
+}
 
 impl HttpRequest {
     #[doc(hidden)]
     pub fn new(data: TypedData, _: HashMap<String, TypedData>) -> Self {
         match data.data {
-            Some(Data::Http(http)) => HttpRequest(*http),
+            Some(Data::Http(http)) => Self {
+                method: http.method,
+                url: http.url,
+                body: http.body.map_or("".into(), |b| Body::from(*b)),
+                headers: http.headers,
+                route_params: http.params,
+                query_params: http.query,
+                cookies: http.cookies.into_iter().map(|c| c.into()).collect(),
+            },
             _ => panic!("unexpected type data for HTTP request."),
         }
-    }
-
-    /// Gets the HTTP method (e.g. "GET") for the request.
-    pub fn method(&self) -> &str {
-        &self.0.method
-    }
-
-    /// Gets the URL of the request.
-    pub fn url(&self) -> &str {
-        &self.0.url
-    }
-
-    /// Gets the headers of the request.
-    ///
-    /// The header keys are lower-cased.
-    pub fn headers(&self) -> &HashMap<String, String> {
-        &self.0.headers
-    }
-
-    /// Gets the route parameters of the request.
-    ///
-    /// Route parameters are specified through the `route` argument of a `HttpRequest` binding attribute.
-    ///
-    /// See [Route Containts](https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2#route-constraints) for syntax.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use azure_functions::func;
-    /// use azure_functions::bindings::{HttpRequest, HttpResponse};
-    ///
-    /// #[func]
-    /// #[binding(name = "request", route = "users/{id:int}")]
-    /// pub fn users(request: HttpRequest) -> HttpResponse {
-    ///     format!(
-    ///         "User ID requested: {}",
-    ///         request.route_params().get("id").unwrap()
-    ///     ).into()
-    /// }
-    /// ```
-    ///
-    /// Invoking the above function as `https://<app-name>.azurewebsites.net/api/users/1234`
-    /// would result in a response of `User ID requested: 1234`.
-    pub fn route_params(&self) -> &HashMap<String, String> {
-        &self.0.params
-    }
-
-    /// Gets the query parameters of the request.
-    ///
-    /// The query parameter keys are case-sensative.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use azure_functions::func;
-    /// use azure_functions::bindings::{HttpRequest, HttpResponse};
-    ///
-    /// #[func]
-    /// pub fn users(request: HttpRequest) -> HttpResponse {
-    ///     format!(
-    ///         "The 'name' query parameter is: {}",
-    ///         request.query_params().get("name").map_or("undefined", |x| x)
-    ///     ).into()
-    /// }
-    /// ```
-    pub fn query_params(&self) -> &HashMap<String, String> {
-        &self.0.query
-    }
-
-    /// Gets the body of the request.
-    pub fn body(&self) -> Body {
-        self.0
-            .body
-            .as_ref()
-            .map(|b| Body::from(&**b))
-            .unwrap_or(Body::Empty)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use matches::matches;
-    use std::borrow::Cow;
-
+    use crate::rpc::RpcHttp;
     #[test]
-    fn it_has_the_method() {
+    fn it_has_a_method() {
         const METHOD: &'static str = "GET";
 
         let mut http = RpcHttp::default();
@@ -140,11 +85,11 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert_eq!(request.method(), METHOD);
+        assert_eq!(request.method, METHOD);
     }
 
     #[test]
-    fn it_has_the_url() {
+    fn it_has_a_url() {
         const URL: &'static str = "http://example.com";
 
         let mut http = RpcHttp::default();
@@ -155,7 +100,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert_eq!(request.url(), URL);
+        assert_eq!(request.url, URL);
     }
 
     #[test]
@@ -171,7 +116,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert_eq!(request.headers().get(KEY).unwrap(), VALUE);
+        assert_eq!(request.headers.get(KEY).unwrap(), VALUE);
     }
 
     #[test]
@@ -187,7 +132,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert_eq!(request.route_params().get(KEY).unwrap(), VALUE);
+        assert_eq!(request.route_params.get(KEY).unwrap(), VALUE);
     }
 
     #[test]
@@ -203,7 +148,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert_eq!(request.query_params().get(KEY).unwrap(), VALUE);
+        assert_eq!(request.query_params.get(KEY).unwrap(), VALUE);
     }
 
     #[test]
@@ -213,7 +158,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert!(matches!(request.body(), Body::Empty));
+        assert_eq!(request.body.to_str().unwrap(), "");
     }
 
     #[test]
@@ -230,7 +175,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert!(matches!(request.body(), Body::String(Cow::Borrowed(BODY))));
+        assert_eq!(request.body.to_str().unwrap(), BODY);
     }
 
     #[test]
@@ -247,7 +192,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert!(matches!(request.body(), Body::Json(Cow::Borrowed(BODY))));
+        assert_eq!(request.body.to_str().unwrap(), BODY);
     }
 
     #[test]
@@ -264,7 +209,7 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert!(matches!(request.body(), Body::Bytes(Cow::Borrowed(BODY))));
+        assert_eq!(request.body.as_bytes(), BODY);
     }
 
     #[test]
@@ -281,6 +226,6 @@ mod tests {
         };
 
         let request = HttpRequest::new(data, HashMap::new());
-        assert!(matches!(request.body(), Body::Bytes(Cow::Borrowed(BODY))));
+        assert_eq!(request.body.as_bytes(), BODY);
     }
 }

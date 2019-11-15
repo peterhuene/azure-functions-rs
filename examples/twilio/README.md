@@ -8,21 +8,24 @@ An example HTTP-triggered Azure Function that outputs a Twilio SMS message:
 
 ```rust
 use azure_functions::{
-    bindings::{HttpRequest, TwilioSmsMessage},
+    bindings::{HttpRequest, HttpResponse, TwilioSmsMessage},
     func,
 };
-use std::borrow::ToOwned;
 
 #[func]
-#[binding(name = "$return", from = "+15555555555")]
-pub fn send_sms(req: HttpRequest) -> TwilioSmsMessage {
-    let params = req.query_params();
-
-    TwilioSmsMessage {
-        to: params.get("to").unwrap().to_owned(),
-        body: params.get("body").map(ToOwned::to_owned),
-        ..Default::default()
-    }
+#[binding(name = "output1", from = "+15555555555")]
+pub fn send_sms(mut req: HttpRequest) -> (HttpResponse, TwilioSmsMessage) {
+    (
+        "Text message sent.".into(),
+        TwilioSmsMessage {
+            to: req
+                .query_params
+                .remove("to")
+                .expect("expected a 'to' query parameter"),
+            body: req.query_params.remove("body"),
+            ..Default::default()
+        },
+    )
 }
 ```
 

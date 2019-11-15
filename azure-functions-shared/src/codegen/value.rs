@@ -17,9 +17,9 @@ impl Serialize for Value {
         S: Serializer,
     {
         match self {
-            Value::String(s) => serializer.serialize_str(s),
-            Value::Integer(i) => serializer.serialize_i64(*i),
-            Value::Boolean(b) => serializer.serialize_bool(*b),
+            Self::String(s) => serializer.serialize_str(s),
+            Self::Integer(i) => serializer.serialize_i64(*i),
+            Self::Boolean(b) => serializer.serialize_bool(*b),
         }
     }
 }
@@ -27,12 +27,12 @@ impl Serialize for Value {
 impl ToTokens for Value {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Value::String(s) => {
+            Self::String(s) => {
                 let s = QuotableBorrowedStr(s);
                 quote!(::azure_functions::codegen::Value::String(#s))
             }
-            Value::Integer(i) => quote!(::azure_functions::codegen::Value::Integer(#i)),
-            Value::Boolean(b) => quote!(::azure_functions::codegen::Value::Boolean(#b)),
+            Self::Integer(i) => quote!(::azure_functions::codegen::Value::Integer(#i)),
+            Self::Boolean(b) => quote!(::azure_functions::codegen::Value::Boolean(#b)),
         }
         .to_tokens(tokens);
     }

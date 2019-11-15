@@ -208,7 +208,7 @@ impl SyncExtensions {
 
 impl<'a> From<&ArgMatches<'a>> for SyncExtensions {
     fn from(args: &ArgMatches<'a>) -> Self {
-        SyncExtensions {
+        Self {
             script_root: current_dir()
                 .expect("failed to get current directory")
                 .join(

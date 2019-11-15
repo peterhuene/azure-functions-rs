@@ -29,9 +29,15 @@ use std::fmt;
 /// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "trigger", queue_name = "example")]
-/// #[binding(name = "table", table_name = "MyTable", partition_key = "MyPartition", row_key = "{queueTrigger}")]
-/// pub fn log_row(trigger: QueueTrigger, table: Table) {
+/// pub fn log_row(
+///     #[binding(queue_name = "example")] trigger: QueueTrigger,
+///     #[binding(
+///         table_name = "MyTable",
+///         partition_key = "MyPartition",
+///         row_key = "{queueTrigger}"
+///     )]
+///     table: Table,
+/// ) {
 ///     info!("Row: {:?}", table.rows().nth(0));
 /// }
 /// ```
@@ -43,8 +49,10 @@ use std::fmt;
 /// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "table", table_name = "MyTable", filter = "{filter}")]
-/// pub fn log_rows(req: HttpRequest, table: Table) {
+/// pub fn log_rows(
+///     req: HttpRequest,
+///     #[binding(table_name = "MyTable", filter = "{filter}")] table: Table
+/// ) {
 ///     for row in table.rows() {
 ///         info!("Row: {:?}", row);
 ///     }
@@ -59,8 +67,8 @@ impl Table {
     /// Creates a new table binding.
     ///
     /// The new table binding can be used for output.
-    pub fn new() -> Table {
-        Table(Value::Array(Vec::new()))
+    pub fn new() -> Self {
+        Self(Value::Array(Vec::new()))
     }
 
     /// Gets whether or not the table binding is empty (no rows).
@@ -134,9 +142,9 @@ impl From<TypedData> for Table {
                     panic!("expected an object or array for table binding data");
                 }
 
-                Table(rows)
+                Self(rows)
             }
-            _ => Table::new(),
+            _ => Self::new(),
         }
     }
 }
@@ -147,8 +155,8 @@ impl Into<Value> for Table {
     }
 }
 
-impl<'a> Into<Body<'a>> for Table {
-    fn into(self) -> Body<'a> {
+impl Into<Body> for Table {
+    fn into(self) -> Body {
         self.0.into()
     }
 }
@@ -303,7 +311,7 @@ mod tests {
         let table: Table = data.into();
         let body: Body = table.into();
         assert_eq!(
-            body.as_str().unwrap(),
+            body.to_str().unwrap(),
             r#"[{"PartitionKey":"partition1","RowKey":"row1","data":"value"}]"#
         );
     }

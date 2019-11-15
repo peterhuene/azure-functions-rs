@@ -17,7 +17,8 @@ jobs:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: stable
+        # Use nightly until rustfmt works for attributes on parameters
+        toolchain: nightly
         default: true
         components: rustfmt
     - name: Run rustfmt

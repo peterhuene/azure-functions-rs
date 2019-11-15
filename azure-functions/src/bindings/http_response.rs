@@ -1,5 +1,5 @@
 use crate::{
-    http::{Body, ResponseBuilder, Status},
+    http::{Body, Cookie, ResponseBuilder, Status},
     rpc::{typed_data::Data, RpcHttp, TypedData},
 };
 use std::collections::HashMap;
@@ -71,15 +71,24 @@ use std::collections::HashMap;
 /// ```
 #[derive(Default, Debug)]
 pub struct HttpResponse {
-    pub(crate) data: RpcHttp,
-    pub(crate) status: Status,
+    /// The status code of the response.
+    pub status: Status,
+    /// The headers of the response.
+    pub headers: HashMap<String, String>,
+    /// The body of the response.
+    pub body: Body,
+    /// Whether or not content negotiation is enabled in the response.
+    pub enable_content_negotiation: bool,
+    /// The cookies of the response.
+    pub cookies: Vec<Cookie>,
 }
 
 impl HttpResponse {
-    pub(crate) fn new() -> Self {
-        HttpResponse {
-            data: RpcHttp::default(),
+    /// Creates a new HttpResponse.
+    pub fn new() -> Self {
+        Self {
             status: Status::Ok,
+            ..Default::default()
         }
     }
 
@@ -92,76 +101,34 @@ impl HttpResponse {
     /// use azure_functions::http::Status;
     ///
     /// let response = HttpResponse::build().status(Status::NotFound).finish();
-    /// assert_eq!(response.status(), Status::NotFound);
+    /// assert_eq!(response.status, Status::NotFound);
     /// ```
     pub fn build() -> ResponseBuilder {
         ResponseBuilder::new()
     }
-
-    /// Gets the status code for the response.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use azure_functions::bindings::HttpResponse;
-    /// use azure_functions::http::Status;
-    ///
-    /// let response = HttpResponse::build().status(Status::BadRequest).finish();
-    /// assert_eq!(response.status(), Status::BadRequest);
-    /// ```
-    pub fn status(&self) -> Status {
-        self.status
-    }
-
-    /// Gets the body of the response.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use azure_functions::bindings::HttpResponse;
-    /// let response = HttpResponse::build().body("example").finish();
-    ///
-    /// assert_eq!(response.body().as_str().unwrap(), "example");
-    /// ```
-    pub fn body(&self) -> Body {
-        self.data
-            .body
-            .as_ref()
-            .map(|b| Body::from(&**b))
-            .unwrap_or(Body::Empty)
-    }
-
-    /// Gets the headers of the response.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use azure_functions::bindings::HttpResponse;
-    /// let response = HttpResponse::build().header("Content-Type", "text/plain").finish();
-    ///
-    /// assert_eq!(response.headers().get("Content-Type").unwrap(), "text/plain");
-    /// ```
-    pub fn headers(&self) -> &HashMap<String, String> {
-        &self.data.headers
-    }
 }
 
-impl<'a, T> From<T> for HttpResponse
+impl<T> From<T> for HttpResponse
 where
-    T: Into<Body<'a>>,
+    T: Into<Body>,
 {
-    fn from(data: T) -> Self {
-        HttpResponse::build().body(data).finish()
+    fn from(body: T) -> Self {
+        Self::build().body(body).finish()
     }
 }
 
 #[doc(hidden)]
 impl Into<TypedData> for HttpResponse {
-    fn into(mut self) -> TypedData {
-        self.data.status_code = self.status.to_string();
-
+    fn into(self) -> TypedData {
         TypedData {
-            data: Some(Data::Http(Box::new(self.data))),
+            data: Some(Data::Http(Box::new(RpcHttp {
+                headers: self.headers,
+                body: Some(Box::new(self.body.into())),
+                status_code: self.status.to_string(),
+                enable_content_negotiation: self.enable_content_negotiation,
+                cookies: self.cookies.into_iter().map(|c| c.into()).collect(),
+                ..Default::default()
+            }))),
         }
     }
 }
@@ -169,30 +136,30 @@ impl Into<TypedData> for HttpResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use matches::matches;
     use serde::{Deserialize, Serialize};
+    use serde_json::{from_slice, to_value};
 
     #[test]
     fn it_is_empty_by_default() {
         let response = HttpResponse::new();
 
-        assert_eq!(response.status(), Status::Ok);
-        assert!(matches!(response.body(), Body::Empty));
+        assert_eq!(response.status, Status::Ok);
+        assert_eq!(response.body.to_str().unwrap(), "");
     }
 
     #[test]
     fn it_is_empty_from_a_builder() {
         let response: HttpResponse = HttpResponse::build().finish();
 
-        assert_eq!(response.status(), Status::Ok);
-        assert!(matches!(response.body(), Body::Empty));
+        assert_eq!(response.status, Status::Ok);
+        assert_eq!(response.body.to_str().unwrap(), "");
     }
 
     #[test]
     fn it_builds_with_a_status() {
         let response: HttpResponse = HttpResponse::build().status(Status::Continue).finish();
 
-        assert_eq!(response.status(), Status::Continue);
+        assert_eq!(response.status, Status::Continue);
     }
 
     #[test]
@@ -201,11 +168,8 @@ mod tests {
 
         let response: HttpResponse = HttpResponse::build().body(BODY).finish();
 
-        assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
-            "text/plain"
-        );
-        assert_eq!(response.body().as_str().unwrap(), BODY);
+        assert_eq!(response.headers.get("Content-Type").unwrap(), "text/plain");
+        assert_eq!(response.body.to_str().unwrap(), BODY);
     }
 
     #[test]
@@ -221,15 +185,15 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let response = HttpResponse::build()
-            .body(::serde_json::to_value(data).unwrap())
-            .finish();
+        let response = HttpResponse::build().body(to_value(data).unwrap()).finish();
 
         assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
+            response.headers.get("Content-Type").unwrap(),
             "application/json"
         );
-        assert_eq!(response.body().as_json::<Data>().unwrap().message, MESSAGE);
+
+        let data: Data = from_slice(response.body.as_bytes()).unwrap();
+        assert_eq!(data.message, MESSAGE);
     }
 
     #[test]
@@ -239,10 +203,10 @@ mod tests {
         let response: HttpResponse = HttpResponse::build().body(BODY).finish();
 
         assert_eq!(
-            response.headers().get("Content-Type").unwrap(),
+            response.headers.get("Content-Type").unwrap(),
             "application/octet-stream"
         );
-        assert_eq!(response.body().as_bytes(), BODY);
+        assert_eq!(response.body.as_bytes(), BODY);
     }
 
     #[test]
@@ -253,9 +217,9 @@ mod tests {
             .header("header3", "value3")
             .finish();
 
-        assert_eq!(response.headers().get("header1").unwrap(), "value1");
-        assert_eq!(response.headers().get("header2").unwrap(), "value2");
-        assert_eq!(response.headers().get("header3").unwrap(), "value3");
+        assert_eq!(response.headers.get("header1").unwrap(), "value1");
+        assert_eq!(response.headers.get("header2").unwrap(), "value2");
+        assert_eq!(response.headers.get("header3").unwrap(), "value3");
     }
 
     #[test]

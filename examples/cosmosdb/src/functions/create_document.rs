@@ -5,7 +5,6 @@ use azure_functions::{
 use serde_json::json;
 
 #[func]
-#[binding(name = "req", route = "create/{id}")]
 #[binding(
     name = "output1",
     connection = "connection",
@@ -13,12 +12,14 @@ use serde_json::json;
     collection_name = "documents",
     create_collection = true
 )]
-pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument) {
+pub fn create_document(
+    #[binding(route = "create/{id}")] mut req: HttpRequest,
+) -> (HttpResponse, CosmosDbDocument) {
     (
         "Document was created.".into(),
         json!({
-            "id": req.route_params().get("id").unwrap(),
-            "name": req.query_params().get("name").map_or("stranger", |x| x)
+            "id": req.route_params.remove("id").unwrap(),
+            "name": req.query_params.remove("name").expect("expected a 'name' query parameter"),
         })
         .into(),
     )

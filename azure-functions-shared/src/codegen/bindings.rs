@@ -63,7 +63,7 @@ pub enum Direction {
 
 impl Default for Direction {
     fn default() -> Self {
-        Direction::In
+        Self::In
     }
 }
 
@@ -100,75 +100,75 @@ pub enum Binding {
 impl Binding {
     pub fn name(&self) -> Option<&str> {
         match self {
-            Binding::HttpTrigger(b) => Some(&b.name),
-            Binding::Http(b) => Some(&b.name),
-            Binding::TimerTrigger(b) => Some(&b.name),
-            Binding::QueueTrigger(b) => Some(&b.name),
-            Binding::Queue(b) => Some(&b.name),
-            Binding::BlobTrigger(b) => Some(&b.name),
-            Binding::Blob(b) => Some(&b.name),
-            Binding::Table(b) => Some(&b.name),
-            Binding::EventGridTrigger(b) => Some(&b.name),
-            Binding::EventHubTrigger(b) => Some(&b.name),
-            Binding::EventHub(b) => Some(&b.name),
-            Binding::CosmosDbTrigger(b) => Some(&b.name),
-            Binding::CosmosDb(b) => Some(&b.name),
-            Binding::SignalRConnectionInfo(b) => Some(&b.name),
-            Binding::SignalR(b) => Some(&b.name),
-            Binding::ServiceBusTrigger(b) => Some(&b.name),
-            Binding::ServiceBus(b) => Some(&b.name),
-            Binding::TwilioSms(b) => Some(&b.name),
-            Binding::SendGrid(b) => Some(&b.name),
-            Binding::GenericTrigger(b) => Some(&b.name),
-            Binding::Generic(b) => Some(&b.name),
-            Binding::DurableClient(b) => Some(&b.name),
-            Binding::OrchestrationTrigger(b) => Some(&b.name),
-            Binding::ActivityTrigger(b) => Some(&b.name),
+            Self::HttpTrigger(b) => Some(&b.name),
+            Self::Http(b) => Some(&b.name),
+            Self::TimerTrigger(b) => Some(&b.name),
+            Self::QueueTrigger(b) => Some(&b.name),
+            Self::Queue(b) => Some(&b.name),
+            Self::BlobTrigger(b) => Some(&b.name),
+            Self::Blob(b) => Some(&b.name),
+            Self::Table(b) => Some(&b.name),
+            Self::EventGridTrigger(b) => Some(&b.name),
+            Self::EventHubTrigger(b) => Some(&b.name),
+            Self::EventHub(b) => Some(&b.name),
+            Self::CosmosDbTrigger(b) => Some(&b.name),
+            Self::CosmosDb(b) => Some(&b.name),
+            Self::SignalRConnectionInfo(b) => Some(&b.name),
+            Self::SignalR(b) => Some(&b.name),
+            Self::ServiceBusTrigger(b) => Some(&b.name),
+            Self::ServiceBus(b) => Some(&b.name),
+            Self::TwilioSms(b) => Some(&b.name),
+            Self::SendGrid(b) => Some(&b.name),
+            Self::GenericTrigger(b) => Some(&b.name),
+            Self::Generic(b) => Some(&b.name),
+            Self::DurableClient(b) => Some(&b.name),
+            Self::OrchestrationTrigger(b) => Some(&b.name),
+            Self::ActivityTrigger(b) => Some(&b.name),
         }
     }
 
     pub fn binding_type(&self) -> Option<&str> {
         match self {
-            Binding::HttpTrigger(_) => Some(HttpTrigger::binding_type()),
-            Binding::Http(_) => Some(HttpTrigger::binding_type()),
-            Binding::TimerTrigger(_) => Some(TimerTrigger::binding_type()),
-            Binding::QueueTrigger(_) => Some(QueueTrigger::binding_type()),
-            Binding::Queue(_) => Some(Queue::binding_type()),
-            Binding::BlobTrigger(_) => Some(BlobTrigger::binding_type()),
-            Binding::Blob(_) => Some(Blob::binding_type()),
-            Binding::Table(_) => Some(Table::binding_type()),
-            Binding::EventGridTrigger(_) => Some(EventGridTrigger::binding_type()),
-            Binding::EventHubTrigger(_) => Some(EventHubTrigger::binding_type()),
-            Binding::EventHub(_) => Some(EventHub::binding_type()),
-            Binding::CosmosDbTrigger(_) => Some(CosmosDbTrigger::binding_type()),
-            Binding::CosmosDb(_) => Some(CosmosDb::binding_type()),
-            Binding::SignalRConnectionInfo(_) => Some(SignalRConnectionInfo::binding_type()),
-            Binding::SignalR(_) => Some(SignalR::binding_type()),
-            Binding::ServiceBusTrigger(_) => Some(ServiceBusTrigger::binding_type()),
-            Binding::ServiceBus(_) => Some(ServiceBus::binding_type()),
-            Binding::TwilioSms(_) => Some(TwilioSms::binding_type()),
-            Binding::SendGrid(_) => Some(SendGrid::binding_type()),
-            Binding::GenericTrigger(b) => Some(b.binding_type()),
-            Binding::Generic(b) => Some(b.binding_type()),
-            Binding::DurableClient(_) => Some(DurableClient::binding_type()),
-            Binding::OrchestrationTrigger(_) => Some(OrchestrationTrigger::binding_type()),
-            Binding::ActivityTrigger(_) => Some(ActivityTrigger::binding_type()),
+            Self::HttpTrigger(_) => Some(HttpTrigger::binding_type()),
+            Self::Http(_) => Some(HttpTrigger::binding_type()),
+            Self::TimerTrigger(_) => Some(TimerTrigger::binding_type()),
+            Self::QueueTrigger(_) => Some(QueueTrigger::binding_type()),
+            Self::Queue(_) => Some(Queue::binding_type()),
+            Self::BlobTrigger(_) => Some(BlobTrigger::binding_type()),
+            Self::Blob(_) => Some(Blob::binding_type()),
+            Self::Table(_) => Some(Table::binding_type()),
+            Self::EventGridTrigger(_) => Some(EventGridTrigger::binding_type()),
+            Self::EventHubTrigger(_) => Some(EventHubTrigger::binding_type()),
+            Self::EventHub(_) => Some(EventHub::binding_type()),
+            Self::CosmosDbTrigger(_) => Some(CosmosDbTrigger::binding_type()),
+            Self::CosmosDb(_) => Some(CosmosDb::binding_type()),
+            Self::SignalRConnectionInfo(_) => Some(SignalRConnectionInfo::binding_type()),
+            Self::SignalR(_) => Some(SignalR::binding_type()),
+            Self::ServiceBusTrigger(_) => Some(ServiceBusTrigger::binding_type()),
+            Self::ServiceBus(_) => Some(ServiceBus::binding_type()),
+            Self::TwilioSms(_) => Some(TwilioSms::binding_type()),
+            Self::SendGrid(_) => Some(SendGrid::binding_type()),
+            Self::GenericTrigger(b) => Some(b.binding_type()),
+            Self::Generic(b) => Some(b.binding_type()),
+            Self::DurableClient(_) => Some(DurableClient::binding_type()),
+            Self::OrchestrationTrigger(_) => Some(OrchestrationTrigger::binding_type()),
+            Self::ActivityTrigger(_) => Some(ActivityTrigger::binding_type()),
         }
     }
 
     pub fn is_trigger(&self) -> bool {
         match self {
-            Binding::HttpTrigger(_)
-            | Binding::TimerTrigger(_)
-            | Binding::QueueTrigger(_)
-            | Binding::BlobTrigger(_)
-            | Binding::EventGridTrigger(_)
-            | Binding::EventHubTrigger(_)
-            | Binding::CosmosDbTrigger(_)
-            | Binding::ServiceBusTrigger(_)
-            | Binding::GenericTrigger(_)
-            | Binding::OrchestrationTrigger(_)
-            | Binding::ActivityTrigger(_) => true,
+            Self::HttpTrigger(_)
+            | Self::TimerTrigger(_)
+            | Self::QueueTrigger(_)
+            | Self::BlobTrigger(_)
+            | Self::EventGridTrigger(_)
+            | Self::EventHubTrigger(_)
+            | Self::CosmosDbTrigger(_)
+            | Self::ServiceBusTrigger(_)
+            | Self::GenericTrigger(_)
+            | Self::OrchestrationTrigger(_)
+            | Self::ActivityTrigger(_) => true,
             _ => false,
         }
     }
@@ -177,68 +177,64 @@ impl Binding {
 impl ToTokens for Binding {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Binding::HttpTrigger(b) => {
+            Self::HttpTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::HttpTrigger(#b))
             }
-            Binding::Http(b) => quote!(::azure_functions::codegen::bindings::Binding::Http(#b)),
-            Binding::TimerTrigger(b) => {
+            Self::Http(b) => quote!(::azure_functions::codegen::bindings::Binding::Http(#b)),
+            Self::TimerTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::TimerTrigger(#b))
             }
-            Binding::QueueTrigger(b) => {
+            Self::QueueTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::QueueTrigger(#b))
             }
-            Binding::Queue(b) => quote!(::azure_functions::codegen::bindings::Binding::Queue(#b)),
-            Binding::BlobTrigger(b) => {
+            Self::Queue(b) => quote!(::azure_functions::codegen::bindings::Binding::Queue(#b)),
+            Self::BlobTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::BlobTrigger(#b))
             }
-            Binding::Blob(b) => quote!(::azure_functions::codegen::bindings::Binding::Blob(#b)),
-            Binding::Table(b) => quote!(::azure_functions::codegen::bindings::Binding::Table(#b)),
-            Binding::EventGridTrigger(b) => {
+            Self::Blob(b) => quote!(::azure_functions::codegen::bindings::Binding::Blob(#b)),
+            Self::Table(b) => quote!(::azure_functions::codegen::bindings::Binding::Table(#b)),
+            Self::EventGridTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::EventGridTrigger(#b))
             }
-            Binding::EventHubTrigger(b) => {
+            Self::EventHubTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::EventHubTrigger(#b))
             }
-            Binding::EventHub(b) => {
+            Self::EventHub(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::EventHub(#b))
             }
-            Binding::CosmosDbTrigger(b) => {
+            Self::CosmosDbTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::CosmosDbTrigger(#b))
             }
-            Binding::CosmosDb(b) => {
+            Self::CosmosDb(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::CosmosDb(#b))
             }
-            Binding::SignalRConnectionInfo(b) => {
+            Self::SignalRConnectionInfo(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::SignalRConnectionInfo(#b))
             }
-            Binding::SignalR(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::SignalR(#b))
-            }
-            Binding::ServiceBusTrigger(b) => {
+            Self::SignalR(b) => quote!(::azure_functions::codegen::bindings::Binding::SignalR(#b)),
+            Self::ServiceBusTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ServiceBusTrigger(#b))
             }
-            Binding::ServiceBus(b) => {
+            Self::ServiceBus(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ServiceBus(#b))
             }
-            Binding::TwilioSms(b) => {
+            Self::TwilioSms(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::TwilioSms(#b))
             }
-            Binding::SendGrid(b) => {
+            Self::SendGrid(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::SendGrid(#b))
             }
-            Binding::GenericTrigger(b) => {
+            Self::GenericTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::GenericTrigger(#b))
             }
-            Binding::Generic(b) => {
-                quote!(::azure_functions::codegen::bindings::Binding::Generic(#b))
-            }
-            Binding::DurableClient(b) => {
+            Self::Generic(b) => quote!(::azure_functions::codegen::bindings::Binding::Generic(#b)),
+            Self::DurableClient(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::DurableClient(#b))
             }
-            Binding::OrchestrationTrigger(b) => {
+            Self::OrchestrationTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::OrchestrationTrigger(#b))
             }
-            Binding::ActivityTrigger(b) => {
+            Self::ActivityTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ActivityTrigger(#b))
             }
         }

@@ -520,7 +520,7 @@ impl<'a> Init<'a> {
             .any(|p| match p {
                 Ok(p) => {
                     let p = p.path();
-                    p.is_file() && p.extension().map(|x| x == "rs").unwrap_or(false)
+                    p.is_file() && p.extension().map_or(false, |x| x == "rs")
                 }
                 _ => false,
             })

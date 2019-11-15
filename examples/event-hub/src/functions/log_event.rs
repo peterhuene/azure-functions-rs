@@ -1,11 +1,8 @@
 use azure_functions::{bindings::EventHubTrigger, func};
 
 #[func]
-#[binding(
-    name = "trigger",
-    connection = "connection",
-    event_hub_name = "example"
-)]
-pub fn log_event(trigger: EventHubTrigger) {
-    log::info!("Event hub message: {}", trigger.message.as_str().unwrap());
+pub fn log_event(
+    #[binding(connection = "connection", event_hub_name = "example")] trigger: EventHubTrigger,
+) {
+    log::info!("Event hub message: {}", trigger.message.to_str().unwrap());
 }

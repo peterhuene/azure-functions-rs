@@ -3,16 +3,15 @@ use azure_functions::{
     bindings::{HttpRequest, SignalRMessage},
     func,
 };
-use serde_json::to_value;
+use serde_json::{from_slice, to_value};
 
 #[func(name = "messages")]
-#[binding(name = "req", auth_level = "anonymous", methods = "post")]
 #[binding(name = "$return", hub_name = "simplechat", connection = "connection")]
-pub fn send_message(req: HttpRequest) -> SignalRMessage {
-    let message: ChatMessage = req
-        .body()
-        .as_json()
-        .expect("failed to deserialize chat message");
+pub fn send_message(
+    #[binding(auth_level = "anonymous", methods = "post")] req: HttpRequest,
+) -> SignalRMessage {
+    let message: ChatMessage =
+        from_slice(req.body.as_bytes()).expect("failed to deserialize chat message");
 
     SignalRMessage {
         user_id: message.recipient.clone(),

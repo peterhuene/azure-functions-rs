@@ -8,15 +8,13 @@ An example Event Hub triggered Azure Function that runs when a new message is po
 to the `example` Event Hub:
 
 ```rust
-use azure_functions::{
-    bindings::EventHubTrigger,
-    func,
-};
+use azure_functions::{bindings::EventHubTrigger, func};
 
 #[func]
-#[binding(name = "trigger", connection = "connection", event_hub_name = "example")]
-pub fn log_event(trigger: EventHubTrigger) {
-    log::info!("Event hub message: {}", trigger.message.as_str().unwrap());
+pub fn log_event(
+    #[binding(connection = "connection", event_hub_name = "example")] trigger: EventHubTrigger,
+) {
+    log::info!("Event hub message: {}", trigger.message.to_str().unwrap());
 }
 ```
 
@@ -24,16 +22,20 @@ An example HTTP-triggered Azure Function that outputs a message to the `example`
 
 ```rust
 use azure_functions::{
-    bindings::{HttpRequest, HttpResponse, EventHubMessage},
+    bindings::{EventHubMessage, HttpRequest, HttpResponse},
     func,
 };
 
 #[func]
-#[binding(name = "output1", connection = "connection", event_hub_name = "example")]
+#[binding(
+    name = "output1",
+    connection = "connection",
+    event_hub_name = "example"
+)]
 pub fn create_event(_req: HttpRequest) -> (HttpResponse, EventHubMessage) {
     (
         "Created Event Hub message.".into(),
-        "Hello from Rust!".into()
+        "Hello from Rust!".into(),
     )
 }
 ```

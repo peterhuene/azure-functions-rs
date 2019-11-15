@@ -16,7 +16,7 @@ pub enum BlobType {
 
 impl Default for BlobType {
     fn default() -> Self {
-        BlobType::Unspecified
+        Self::Unspecified
     }
 }
 
@@ -33,7 +33,7 @@ pub enum LeaseDuration {
 
 impl Default for LeaseDuration {
     fn default() -> Self {
-        LeaseDuration::Unspecified
+        Self::Unspecified
     }
 }
 
@@ -56,7 +56,7 @@ pub enum LeaseState {
 
 impl Default for LeaseState {
     fn default() -> Self {
-        LeaseState::Unspecified
+        Self::Unspecified
     }
 }
 
@@ -73,7 +73,7 @@ pub enum LeaseStatus {
 
 impl Default for LeaseStatus {
     fn default() -> Self {
-        LeaseStatus::Unspecified
+        Self::Unspecified
     }
 }
 
@@ -102,7 +102,7 @@ pub enum PremiumPageBlobTier {
 
 impl Default for PremiumPageBlobTier {
     fn default() -> Self {
-        PremiumPageBlobTier::Unknown
+        Self::Unknown
     }
 }
 
@@ -119,7 +119,7 @@ pub enum RehydrationStatus {
 
 impl Default for RehydrationStatus {
     fn default() -> Self {
-        RehydrationStatus::Unknown
+        Self::Unknown
     }
 }
 
@@ -138,7 +138,7 @@ pub enum StandardBlobTier {
 
 impl Default for StandardBlobTier {
     fn default() -> Self {
-        StandardBlobTier::Unknown
+        Self::Unknown
     }
 }
 

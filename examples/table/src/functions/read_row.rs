@@ -4,13 +4,14 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "read/{table}/{partition}/{row}")]
-#[binding(
-    name = "table",
-    table_name = "{table}",
-    partition_key = "{partition}",
-    row_key = "{row}"
-)]
-pub fn read_row(_req: HttpRequest, table: Table) -> HttpResponse {
+pub fn read_row(
+    #[binding(route = "read/{table}/{partition}/{row}")] _req: HttpRequest,
+    #[binding(
+        table_name = "{table}",
+        partition_key = "{partition}",
+        row_key = "{row}"
+    )]
+    table: Table,
+) -> HttpResponse {
     table.into()
 }

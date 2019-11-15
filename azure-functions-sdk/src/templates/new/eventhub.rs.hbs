@@ -4,11 +4,8 @@ use azure_functions::{
 };
 
 #[func]
-{{#if hub_name~}}
-#[binding(name = "trigger", connection = "{{connection}}", event_hub_name = "{{hub_name}}")]
-{{else~}}
-#[binding(name = "trigger", connection = "{{connection}}")]
-{{/if~}}
-pub fn {{name}}(trigger: EventHubTrigger) {
+pub fn {{name}}(
+    #[binding(connection = "{{connection}}"{{#if hub_name}}, event_hub_name = "{{hub_name}}"{{/if}})] trigger: EventHubTrigger
+) {
     // trigger.message contains the message posted to the Event Hub
 }

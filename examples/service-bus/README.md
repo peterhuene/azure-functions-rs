@@ -11,9 +11,10 @@ to the `example` queue:
 use azure_functions::{bindings::ServiceBusTrigger, func};
 
 #[func]
-#[binding(name = "trigger", queue_name = "example", connection = "connection")]
-pub fn log_queue_message(trigger: ServiceBusTrigger) {
-    log::info!("{}", trigger.message.as_str().unwrap());
+pub fn log_queue_message(
+    #[binding(queue_name = "example", connection = "connection")] trigger: ServiceBusTrigger,
+) {
+    log::info!("{}", trigger.message.to_str().unwrap());
 }
 ```
 
@@ -30,7 +31,7 @@ use azure_functions::{
 pub fn create_queue_message(req: HttpRequest) -> ServiceBusMessage {
     format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     )
     .into()
 }
@@ -43,14 +44,15 @@ to the `mytopic` topic and `mysubscription` subscription:
 use azure_functions::{bindings::ServiceBusTrigger, func};
 
 #[func]
-#[binding(
-    name = "trigger",
-    topic_name = "mytopic",
-    subscription_name = "mysubscription",
-    connection = "connection"
-)]
-pub fn log_topic_message(trigger: ServiceBusTrigger) {
-    log::info!("{}", trigger.message.as_str().unwrap());
+pub fn log_topic_message(
+    #[binding(
+        topic_name = "mytopic",
+        subscription_name = "mysubscription",
+        connection = "connection"
+    )]
+    trigger: ServiceBusTrigger,
+) {
+    log::info!("{}", trigger.message.to_str().unwrap());
 }
 ```
 
@@ -72,7 +74,7 @@ use azure_functions::{
 pub fn create_topic_message(req: HttpRequest) -> ServiceBusMessage {
     format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     )
     .into()
 }

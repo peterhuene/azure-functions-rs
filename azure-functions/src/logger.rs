@@ -10,8 +10,8 @@ pub struct Logger {
 }
 
 impl Logger {
-    pub fn new(level: Level, sender: Sender) -> Logger {
-        Logger { level, sender }
+    pub fn new(level: Level, sender: Sender) -> Self {
+        Self { level, sender }
     }
 }
 

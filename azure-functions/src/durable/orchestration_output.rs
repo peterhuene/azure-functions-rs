@@ -12,7 +12,7 @@ where
     T: Into<Value>,
 {
     fn from(t: T) -> Self {
-        OrchestrationOutput(t.into())
+        Self(t.into())
     }
 }
 
@@ -21,7 +21,7 @@ impl FromIterator<Value> for OrchestrationOutput {
     where
         I: IntoIterator<Item = Value>,
     {
-        OrchestrationOutput(Value::from_iter(iter))
+        Self(Value::from_iter(iter))
     }
 }
 

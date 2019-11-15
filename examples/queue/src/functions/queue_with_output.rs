@@ -4,9 +4,8 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "trigger", queue_name = "echo-in")]
 #[binding(name = "$return", queue_name = "echo-out")]
-pub fn queue_with_output(trigger: QueueTrigger) -> QueueMessage {
+pub fn queue_with_output(#[binding(queue_name = "echo-in")] trigger: QueueTrigger) -> QueueMessage {
     log::info!("Message: {}", trigger.message);
 
     trigger.message

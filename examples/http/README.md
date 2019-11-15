@@ -16,13 +16,13 @@ use azure_functions::{
 pub fn greet(req: HttpRequest) -> HttpResponse {
     format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     )
     .into()
 }
 ```
 
-An async version of the `greet` function when the example is built with a nightly compiler and the `unstable` feature enabled:
+An async version of the `greet` function:
 
 ```rust
 use azure_functions::{
@@ -33,13 +33,13 @@ use futures::future::ready;
 
 #[func]
 pub async fn greet_async(req: HttpRequest) -> HttpResponse {
-    // Use ready().await to simply demonstrate the async/await feature
-    ready(format!(
+    let response = format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
-    ))
-    .await
-    .into()
+        req.query_params.get("name").map_or("stranger", |x| x)
+    );
+
+    // Use ready().await to simply demonstrate the async/await feature
+    ready(response).await.into()
 }
 ```
 
@@ -52,7 +52,7 @@ use azure_functions::{
     http::Status,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
+use serde_json::{from_slice, to_value};
 
 #[derive(Deserialize)]
 struct Request {
@@ -66,7 +66,7 @@ struct Response {
 
 #[func]
 pub fn greet_with_json(req: HttpRequest) -> HttpResponse {
-    if let Ok(request) = req.body().as_json::<Request>() {
+    if let Ok(request) = from_slice::<Request>(req.body.as_bytes()) {
         let response = Response {
             message: format!("Hello from Rust, {}!", request.name),
         };
@@ -76,7 +76,7 @@ pub fn greet_with_json(req: HttpRequest) -> HttpResponse {
     HttpResponse::build()
         .status(Status::BadRequest)
         .body("Invalid JSON request.")
-        .into()
+        .finish()
 }
 ```
 
@@ -86,12 +86,6 @@ Run the example application with `cargo func run`:
 
 ```bash
 $ cargo func run
-```
-
-To run the example with support for async functions when using a nightly compiler:
-
-```bash
-$ cargo func run -- --features unstable
 ```
 
 # Invoking the functions
@@ -112,7 +106,7 @@ Hello from Rust, Peter!
 
 ## Invoke the `greet_async` function
 
-With support for async functions enabled, invoke the function with `curl`:
+The easiest way to invoke the function is to use `curl`:
 
 ```
 $ curl localhost:8080/api/greet_async\?name=Peter

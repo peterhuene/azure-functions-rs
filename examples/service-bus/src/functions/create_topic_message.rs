@@ -13,7 +13,7 @@ use azure_functions::{
 pub fn create_topic_message(req: HttpRequest) -> ServiceBusMessage {
     format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     )
     .into()
 }

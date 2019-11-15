@@ -97,7 +97,7 @@ impl From<(AttributeArgs, Span)> for Generic {
             );
         }
 
-        Generic {
+        Self {
             ty: Cow::from(ty.unwrap()),
             direction: Direction::In,
             name: Cow::from(name.unwrap()),

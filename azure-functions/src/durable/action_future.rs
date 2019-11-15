@@ -26,7 +26,7 @@ impl<T> ActionFuture<T> {
                 || (result.is_some() && event_index.is_some())
         );
 
-        ActionFuture {
+        Self {
             result,
             state,
             event_index,

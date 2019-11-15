@@ -52,7 +52,7 @@ impl GenericTrigger {
         for (k, v) in metadata.into_iter() {
             md.insert(k, v.into());
         }
-        GenericTrigger {
+        Self {
             data: data.into(),
             metadata: md,
         }

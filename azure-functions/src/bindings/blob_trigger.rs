@@ -32,9 +32,10 @@ const METADATA_KEY: &str = "Metadata";
 /// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "trigger", path = "example/")]
-/// pub fn print_blob(trigger: BlobTrigger) {
-///     info!("Blob (as string): {}", trigger.blob.as_str().unwrap());
+/// pub fn print_blob(
+///     #[binding(path = "example/")] trigger: BlobTrigger
+/// ) {
+///     info!("Blob (as string): {}", trigger.blob.to_str().unwrap());
 /// }
 /// ```
 #[derive(Debug)]
@@ -54,7 +55,7 @@ pub struct BlobTrigger {
 impl BlobTrigger {
     #[doc(hidden)]
     pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
-        BlobTrigger {
+        Self {
             blob: data.into(),
             path: metadata
                 .remove(PATH_KEY)

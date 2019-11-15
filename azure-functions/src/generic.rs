@@ -4,7 +4,6 @@ use crate::{
     rpc::{typed_data::Data, TypedData},
 };
 use serde_json::from_str;
-use std::borrow::Cow;
 
 /// Represents a value passed to or from a generic binding.
 #[derive(Debug, Clone, PartialEq)]
@@ -23,16 +22,10 @@ pub enum Value {
     Double(f64),
 }
 
-impl<'a> Into<Body<'a>> for Value {
-    fn into(self) -> Body<'a> {
-        match self {
-            Value::None => Body::Empty,
-            Value::String(s) => Body::String(Cow::Owned(s)),
-            Value::Json(v) => Body::Json(Cow::Owned(v.to_string())),
-            Value::Bytes(b) => Body::Bytes(Cow::Owned(b)),
-            Value::Integer(i) => Body::String(Cow::Owned(i.to_string())),
-            Value::Double(d) => Body::String(Cow::Owned(d.to_string())),
-        }
+impl Into<Body> for Value {
+    fn into(self) -> Body {
+        let d: TypedData = self.into();
+        d.into()
     }
 }
 
@@ -40,14 +33,14 @@ impl<'a> Into<Body<'a>> for Value {
 impl From<TypedData> for Value {
     fn from(data: TypedData) -> Self {
         match data.data {
-            None => Value::None,
-            Some(Data::String(s)) => Value::String(s),
-            Some(Data::Json(s)) => Value::Json(from_str(&s).unwrap()),
-            Some(Data::Bytes(b)) => Value::Bytes(b),
-            Some(Data::Stream(b)) => Value::Bytes(b),
-            Some(Data::Int(i)) => Value::Integer(i),
-            Some(Data::Double(d)) => Value::Double(d),
-            _ => panic!("unsupported type data")
+            None => Self::None,
+            Some(Data::String(s)) => Self::String(s),
+            Some(Data::Json(s)) => Self::Json(from_str(&s).unwrap()),
+            Some(Data::Bytes(b)) => Self::Bytes(b),
+            Some(Data::Stream(b)) => Self::Bytes(b),
+            Some(Data::Int(i)) => Self::Integer(i),
+            Some(Data::Double(d)) => Self::Double(d),
+            _ => panic!("unsupported type data"),
         }
     }
 }
@@ -56,20 +49,20 @@ impl From<TypedData> for Value {
 impl Into<TypedData> for Value {
     fn into(self) -> TypedData {
         match self {
-            Value::None => TypedData { data: None },
-            Value::String(s) => TypedData {
+            Self::None => TypedData { data: None },
+            Self::String(s) => TypedData {
                 data: Some(Data::String(s)),
             },
-            Value::Json(v) => TypedData {
+            Self::Json(v) => TypedData {
                 data: Some(Data::Json(v.to_string())),
             },
-            Value::Bytes(b) => TypedData {
+            Self::Bytes(b) => TypedData {
                 data: Some(Data::Bytes(b)),
             },
-            Value::Integer(i) => TypedData {
+            Self::Integer(i) => TypedData {
                 data: Some(Data::Int(i)),
             },
-            Value::Double(d) => TypedData {
+            Self::Double(d) => TypedData {
                 data: Some(Data::Double(d)),
             },
         }

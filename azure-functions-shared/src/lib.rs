@@ -5,6 +5,9 @@
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
+#![warn(clippy::use_self)]
+#![warn(clippy::option_map_unwrap_or)]
+#![warn(clippy::option_map_unwrap_or_else)]
 #![allow(clippy::large_enum_variant)]
 
 #[doc(hidden)]

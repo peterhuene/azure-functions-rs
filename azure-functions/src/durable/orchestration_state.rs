@@ -36,7 +36,7 @@ impl OrchestrationState {
             .position(|event| event.event_type == EventType::OrchestratorCompleted)
             .map(|pos| pos + started_index);
 
-        OrchestrationState {
+        Self {
             history,
             result: ExecutionResult::default(),
             started_index,
