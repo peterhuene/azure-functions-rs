@@ -45,9 +45,9 @@ impl From<TypedData> for Value {
             Some(Data::Json(s)) => Value::Json(from_str(&s).unwrap()),
             Some(Data::Bytes(b)) => Value::Bytes(b),
             Some(Data::Stream(b)) => Value::Bytes(b),
-            Some(Data::Http(_)) => panic!("generic bindings cannot contain HTTP data"),
             Some(Data::Int(i)) => Value::Integer(i),
             Some(Data::Double(d)) => Value::Double(d),
+            _ => panic!("unsupported type data")
         }
     }
 }

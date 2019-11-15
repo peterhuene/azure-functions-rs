@@ -346,6 +346,22 @@ pub struct InvocationRequest {
     /// binding metadata from trigger
     #[prost(map = "string, message", tag = "4")]
     pub trigger_metadata: ::std::collections::HashMap<std::string::String, TypedData>,
+    /// Populates activityId, tracestate and tags from host
+    #[prost(message, optional, tag = "5")]
+    pub trace_context: ::std::option::Option<RpcTraceContext>,
+}
+/// Host sends ActivityId, traceStateString and Tags from host
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RpcTraceContext {
+    /// This corresponds to Activity.Current?.Id
+    #[prost(string, tag = "1")]
+    pub trace_parent: std::string::String,
+    /// This corresponds to Activity.Current?.TraceStateString
+    #[prost(string, tag = "2")]
+    pub trace_state: std::string::String,
+    /// This corresponds to Activity.Current?.Tags
+    #[prost(map = "string, string", tag = "3")]
+    pub attributes: ::std::collections::HashMap<std::string::String, std::string::String>,
 }
 /// Host requests worker to cancel invocation
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -378,7 +394,7 @@ pub struct InvocationResponse {
 /// Used to encapsulate data which could be a variety of types
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TypedData {
-    #[prost(oneof = "typed_data::Data", tags = "1, 2, 3, 4, 5, 6, 7")]
+    #[prost(oneof = "typed_data::Data", tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")]
     pub data: ::std::option::Option<typed_data::Data>,
 }
 pub mod typed_data {
@@ -398,7 +414,39 @@ pub mod typed_data {
         Int(i64),
         #[prost(double, tag = "7")]
         Double(f64),
+        #[prost(message, tag = "8")]
+        CollectionBytes(super::CollectionBytes),
+        #[prost(message, tag = "9")]
+        CollectionString(super::CollectionString),
+        #[prost(message, tag = "10")]
+        CollectionDouble(super::CollectionDouble),
+        #[prost(message, tag = "11")]
+        CollectionSint64(super::CollectionSInt64),
     }
+}
+/// Used to encapsulate collection string
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CollectionString {
+    #[prost(string, repeated, tag = "1")]
+    pub string: ::std::vec::Vec<std::string::String>,
+}
+/// Used to encapsulate collection bytes
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CollectionBytes {
+    #[prost(bytes, repeated, tag = "1")]
+    pub bytes: ::std::vec::Vec<std::vec::Vec<u8>>,
+}
+/// Used to encapsulate collection double
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CollectionDouble {
+    #[prost(double, repeated, tag = "1")]
+    pub double: ::std::vec::Vec<f64>,
+}
+/// Used to encapsulate collection sint64
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CollectionSInt64 {
+    #[prost(sint64, repeated, tag = "1")]
+    pub sint64: ::std::vec::Vec<i64>,
 }
 /// Used to describe a given binding on invocation
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -466,6 +514,9 @@ pub struct RpcLog {
     /// json serialized property bag, or could use a type scheme like map<string, TypedData>
     #[prost(string, tag = "7")]
     pub properties: std::string::String,
+    /// Category of the log. Either user(default) or system.
+    #[prost(enumeration = "rpc_log::RpcLogCategory", tag = "8")]
+    pub log_category: i32,
 }
 pub mod rpc_log {
     /// Matching ILogger semantics
@@ -482,6 +533,13 @@ pub mod rpc_log {
         Critical = 5,
         None = 6,
     }
+    /// Category of the log. Defaults to User if not specified.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RpcLogCategory {
+        User = 0,
+        System = 1,
+    }
 }
 /// Encapsulates an Exception
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -492,7 +550,7 @@ pub struct RpcException {
     /// Stack trace for the exception
     #[prost(string, tag = "1")]
     pub stack_trace: std::string::String,
-    /// Textual message describing hte exception
+    /// Textual message describing the exception
     #[prost(string, tag = "2")]
     pub message: std::string::String,
 }
