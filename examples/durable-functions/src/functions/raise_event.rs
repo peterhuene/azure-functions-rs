@@ -4,7 +4,12 @@ use azure_functions::{
 };
 
 #[func]
-pub async fn raise_event(req: HttpRequest, client: DurableOrchestrationClient) -> HttpResponse {
+pub async fn raise_event(mut req: HttpRequest, client: DurableOrchestrationClient) -> HttpResponse {
+    let value = req
+        .query_params
+        .remove("value")
+        .expect("expected a 'value' parameter");
+
     let id = req
         .query_params
         .get("id")
@@ -14,12 +19,6 @@ pub async fn raise_event(req: HttpRequest, client: DurableOrchestrationClient) -
         .query_params
         .get("name")
         .expect("expected a 'name' parameter");
-
-    let value = req
-        .query_params
-        .get("value")
-        .expect("expected a 'value' parameter")
-        .clone();
 
     match client.raise_event(id, name, value).await {
         Ok(_) => format!("Raised event named '{}'.", name).into(),
