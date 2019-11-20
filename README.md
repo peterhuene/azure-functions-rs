@@ -47,7 +47,7 @@ use azure_functions::{
 pub fn greet(req: HttpRequest) -> HttpResponse {
     format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     )
     .into()
 }
@@ -67,7 +67,7 @@ pub async fn greet_async(req: HttpRequest) -> HttpResponse {
     // Use ready().await to simply demonstrate the async/await feature
     ready(format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     ))
     .await
     .into()

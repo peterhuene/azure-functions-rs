@@ -83,7 +83,7 @@ impl DurableOrchestrationContext {
                 let data: BindingData =
                     from_str(s).expect("failed to parse orchestration context data");
 
-                DurableOrchestrationContext {
+                Self {
                     instance_id: data.instance_id,
                     parent_instance_id: data.parent_instance_id,
                     input: data.input,

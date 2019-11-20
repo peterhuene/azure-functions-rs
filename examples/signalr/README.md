@@ -15,14 +15,15 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", auth_level = "anonymous")]
-#[binding(
-    name = "info",
-    hub_name = "simplechat",
-    user_id = "{headers.x-ms-signalr-userid}",
-    connection = "connection"
-)]
-pub fn negotiate(_req: HttpRequest, info: SignalRConnectionInfo) -> HttpResponse {
+pub fn negotiate(
+    #[binding(auth_level = "anonymous")] _req: HttpRequest,
+    #[binding(
+        hub_name = "simplechat",
+        user_id = "{headers.x-ms-signalr-userid}",
+        connection = "connection"
+    )]
+    info: SignalRConnectionInfo,
+) -> HttpResponse {
     info.into()
 }
 ```
@@ -37,16 +38,15 @@ use azure_functions::{
     bindings::{HttpRequest, SignalRMessage},
     func,
 };
-use serde_json::to_value;
+use serde_json::{from_slice, to_value};
 
 #[func(name = "messages")]
-#[binding(name = "req", auth_level = "anonymous", methods = "post")]
 #[binding(name = "$return", hub_name = "simplechat", connection = "connection")]
-pub fn send_message(req: HttpRequest) -> SignalRMessage {
-    let message: ChatMessage = req
-        .body()
-        .as_json()
-        .expect("failed to deserialize chat message");
+pub fn send_message(
+    #[binding(auth_level = "anonymous", methods = "post")] req: HttpRequest,
+) -> SignalRMessage {
+    let message: ChatMessage =
+        from_slice(req.body.as_bytes()).expect("failed to deserialize chat message");
 
     SignalRMessage {
         user_id: message.recipient.clone(),
@@ -68,15 +68,16 @@ use azure_functions::{
     func,
     signalr::GroupAction,
 };
+use serde_json::from_slice;
 
 #[func(name = "addToGroup")]
-#[binding(name = "req", auth_level = "anonymous", methods = "post")]
 #[binding(name = "$return", hub_name = "simplechat", connection = "connection")]
-pub fn add_to_group(req: HttpRequest) -> SignalRGroupAction {
-    let message: ChatMessage = req
-        .body()
-        .as_json()
-        .expect("failed to deserialize chat message");
+pub fn add_to_group(
+    #[binding(auth_level = "anonymous", methods = "post")] req: HttpRequest,
+) -> SignalRGroupAction {
+    let message: ChatMessage =
+        from_slice(req.body.as_bytes()).expect("failed to deserialize chat message");
+
     SignalRGroupAction {
         user_id: message.recipient.unwrap(),
         group_name: message.group_name.unwrap(),
@@ -94,15 +95,16 @@ use azure_functions::{
     func,
     signalr::GroupAction,
 };
+use serde_json::from_slice;
 
 #[func(name = "removeFromGroup")]
-#[binding(name = "req", auth_level = "anonymous", methods = "post")]
 #[binding(name = "$return", hub_name = "simplechat", connection = "connection")]
-pub fn remove_from_group(req: HttpRequest) -> SignalRGroupAction {
-    let message: ChatMessage = req
-        .body()
-        .as_json()
-        .expect("failed to deserialize chat message");
+pub fn remove_from_group(
+    #[binding(auth_level = "anonymous", methods = "post")] req: HttpRequest,
+) -> SignalRGroupAction {
+    let message: ChatMessage =
+        from_slice(req.body.as_bytes()).expect("failed to deserialize chat message");
+
     SignalRGroupAction {
         user_id: message.recipient.unwrap(),
         group_name: message.group_name.unwrap(),

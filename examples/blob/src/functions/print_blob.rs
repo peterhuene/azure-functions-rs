@@ -4,8 +4,9 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "print/blob/{container}/{path}")]
-#[binding(name = "blob", path = "{container}/{path}")]
-pub fn print_blob(_req: HttpRequest, blob: Blob) -> HttpResponse {
+pub fn print_blob(
+    #[binding(route = "print/blob/{container}/{path}")] _req: HttpRequest,
+    #[binding(path = "{container}/{path}")] blob: Blob,
+) -> HttpResponse {
     blob.into()
 }

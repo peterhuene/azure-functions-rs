@@ -4,9 +4,10 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "copy/blob/{container}/{name}")]
-#[binding(name = "blob", path = "{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}.copy")]
-pub fn copy_blob(_req: HttpRequest, blob: Blob) -> (HttpResponse, Blob) {
+pub fn copy_blob(
+    #[binding(route = "copy/blob/{container}/{name}")] _req: HttpRequest,
+    #[binding(path = "{container}/{name}")] blob: Blob,
+) -> (HttpResponse, Blob) {
     ("blob has been copied.".into(), blob)
 }

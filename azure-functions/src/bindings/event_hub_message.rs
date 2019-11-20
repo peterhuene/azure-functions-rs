@@ -3,10 +3,7 @@ use crate::{
     rpc::{typed_data::Data, TypedData},
     FromVec,
 };
-use serde::de::Error;
-use serde::Deserialize;
-use serde_json::{from_str, Result, Value};
-use std::borrow::Cow;
+use serde_json::{from_str, Value};
 use std::fmt;
 use std::str::from_utf8;
 
@@ -68,7 +65,7 @@ impl EventHubMessage {
     /// Gets the content of the message as a string.
     ///
     /// Returns None if there is no valid string representation of the message.
-    pub fn as_str(&self) -> Option<&str> {
+    pub fn to_str(&self) -> Option<&str> {
         match &self.0.data {
             Some(Data::String(s)) => Some(s),
             Some(Data::Json(s)) => Some(s),
@@ -88,29 +85,17 @@ impl EventHubMessage {
             _ => panic!("unexpected data for Event Hub message contents"),
         }
     }
-
-    /// Deserializes the message as JSON to the requested type.
-    pub fn as_json<'b, T>(&'b self) -> Result<T>
-    where
-        T: Deserialize<'b>,
-    {
-        from_str(
-            self.as_str().ok_or_else(|| {
-                ::serde_json::Error::custom("Event Hub message is not valid UTF-8")
-            })?,
-        )
-    }
 }
 
 impl fmt::Display for EventHubMessage {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.as_str().unwrap_or(""))
+        write!(f, "{}", self.to_str().unwrap_or(""))
     }
 }
 
-impl<'a> From<&'a str> for EventHubMessage {
-    fn from(content: &'a str) -> Self {
-        EventHubMessage(TypedData {
+impl From<&str> for EventHubMessage {
+    fn from(content: &str) -> Self {
+        Self(TypedData {
             data: Some(Data::String(content.to_owned())),
         })
     }
@@ -118,7 +103,7 @@ impl<'a> From<&'a str> for EventHubMessage {
 
 impl From<String> for EventHubMessage {
     fn from(content: String) -> Self {
-        EventHubMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::String(content)),
         })
     }
@@ -126,7 +111,7 @@ impl From<String> for EventHubMessage {
 
 impl From<&Value> for EventHubMessage {
     fn from(content: &Value) -> Self {
-        EventHubMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::Json(content.to_string())),
         })
     }
@@ -134,15 +119,15 @@ impl From<&Value> for EventHubMessage {
 
 impl From<Value> for EventHubMessage {
     fn from(content: Value) -> Self {
-        EventHubMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::Json(content.to_string())),
         })
     }
 }
 
-impl<'a> From<&'a [u8]> for EventHubMessage {
-    fn from(content: &'a [u8]) -> Self {
-        EventHubMessage(TypedData {
+impl From<&[u8]> for EventHubMessage {
+    fn from(content: &[u8]) -> Self {
+        Self(TypedData {
             data: Some(Data::Bytes(content.to_owned())),
         })
     }
@@ -150,7 +135,7 @@ impl<'a> From<&'a [u8]> for EventHubMessage {
 
 impl From<Vec<u8>> for EventHubMessage {
     fn from(content: Vec<u8>) -> Self {
-        EventHubMessage(TypedData {
+        Self(TypedData {
             data: Some(Data::Bytes(content)),
         })
     }
@@ -159,14 +144,14 @@ impl From<Vec<u8>> for EventHubMessage {
 #[doc(hidden)]
 impl From<TypedData> for EventHubMessage {
     fn from(data: TypedData) -> Self {
-        EventHubMessage(data)
+        Self(data)
     }
 }
 
 #[doc(hidden)]
 impl FromVec<EventHubMessage> for TypedData {
     fn from_vec(vec: Vec<EventHubMessage>) -> Self {
-        TypedData {
+        Self {
             data: Some(Data::Json(
                 Value::Array(vec.into_iter().map(Into::into).collect()).to_string(),
             )),
@@ -225,15 +210,9 @@ impl Into<Vec<u8>> for EventHubMessage {
     }
 }
 
-impl<'a> Into<Body<'a>> for EventHubMessage {
-    fn into(self) -> Body<'a> {
-        match self.0.data {
-            Some(Data::String(s)) => s.into(),
-            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
-            Some(Data::Bytes(b)) => b.into(),
-            Some(Data::Stream(s)) => s.into(),
-            _ => panic!("unexpected data for Event Hub message content"),
-        }
+impl Into<Body> for EventHubMessage {
+    fn into(self) -> Body {
+        self.0.into()
     }
 }
 
@@ -248,7 +227,7 @@ impl Into<TypedData> for EventHubMessage {
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
-    use serde_json::{json, to_value};
+    use serde_json::{from_slice, json, to_value};
     use std::fmt::Write;
 
     #[test]
@@ -256,7 +235,7 @@ mod tests {
         const MESSAGE: &'static str = "test message";
 
         let message: EventHubMessage = MESSAGE.into();
-        assert_eq!(message.as_str().unwrap(), MESSAGE);
+        assert_eq!(message.to_str().unwrap(), MESSAGE);
 
         let data: TypedData = message.into();
         assert_eq!(data.data, Some(Data::String(MESSAGE.to_string())));
@@ -275,11 +254,9 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let message: EventHubMessage = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(
-            message.as_json::<SerializedData>().unwrap().message,
-            MESSAGE
-        );
+        let message: EventHubMessage = to_value(data).unwrap().into();
+        let data: SerializedData = from_slice(message.as_bytes()).unwrap();
+        assert_eq!(data.message, MESSAGE);
 
         let data: TypedData = message.into();
         assert_eq!(
@@ -314,19 +291,19 @@ mod tests {
     #[test]
     fn it_converts_from_str() {
         let message: EventHubMessage = "test".into();
-        assert_eq!(message.as_str().unwrap(), "test");
+        assert_eq!(message.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_string() {
         let message: EventHubMessage = "test".to_string().into();
-        assert_eq!(message.as_str().unwrap(), "test");
+        assert_eq!(message.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_json() {
         let message: EventHubMessage = to_value("hello world").unwrap().into();
-        assert_eq!(message.as_str().unwrap(), r#""hello world""#);
+        assert_eq!(message.to_str().unwrap(), r#""hello world""#);
     }
 
     #[test]
@@ -366,11 +343,11 @@ mod tests {
     fn it_converts_to_body() {
         let message: EventHubMessage = "hello world!".into();
         let body: Body = message.into();
-        assert_eq!(body.as_str().unwrap(), "hello world!");
+        assert_eq!(body.to_str().unwrap(), "hello world!");
 
         let message: EventHubMessage = json!({"hello": "world"}).into();
         let body: Body = message.into();
-        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
+        assert_eq!(body.to_str().unwrap(), r#"{"hello":"world"}"#);
 
         let message: EventHubMessage = vec![1, 2, 3].into();
         let body: Body = message.into();

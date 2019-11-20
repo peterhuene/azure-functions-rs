@@ -42,7 +42,7 @@ pub struct DurableActivityContext {
 impl DurableActivityContext {
     #[doc(hidden)]
     pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
-        DurableActivityContext {
+        Self {
             input: match data.data {
                 Some(Data::String(s)) => Value::String(s),
                 Some(Data::Json(s)) => from_str(&s).unwrap_or_default(),

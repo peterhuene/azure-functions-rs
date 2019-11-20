@@ -33,8 +33,10 @@ const POP_RECEIPT_KEY: &str = "PopReceipt";
 /// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "trigger", queue_name = "example")]
-/// pub fn run_on_message(trigger: QueueTrigger) {
+///
+/// pub fn run_on_message(
+///     #[binding(queue_name = "example")] trigger: QueueTrigger
+/// ) {
 ///     info!("Rust function ran due to queue message: {}", trigger.message);
 /// }
 /// ```
@@ -59,7 +61,7 @@ pub struct QueueTrigger {
 impl QueueTrigger {
     #[doc(hidden)]
     pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
-        QueueTrigger {
+        Self {
             message: data.into(),
             id: metadata
                 .remove(ID_KEY)
@@ -170,6 +172,6 @@ mod tests {
         assert_eq!(trigger.insertion_time.to_rfc3339(), now.to_rfc3339());
         assert_eq!(trigger.next_visible_time.to_rfc3339(), now.to_rfc3339());
         assert_eq!(trigger.pop_receipt, POP_RECEIPT);
-        assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
+        assert_eq!(trigger.message.to_str().unwrap(), MESSAGE);
     }
 }

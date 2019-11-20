@@ -21,11 +21,11 @@ impl EmailAddress {
     /// assert_eq!(address.email, "foo@example.com");
     /// assert_eq!(address.name, None);
     /// ```
-    pub fn new<T>(email: T) -> EmailAddress
+    pub fn new<T>(email: T) -> Self
     where
         T: Into<String>,
     {
-        EmailAddress {
+        Self {
             email: email.into(),
             name: None,
         }
@@ -41,12 +41,12 @@ impl EmailAddress {
     /// assert_eq!(address.email, "foo@example.com");
     /// assert_eq!(address.name, Some("Peter".to_string()));
     /// ```
-    pub fn new_with_name<T, U>(email: T, name: U) -> EmailAddress
+    pub fn new_with_name<T, U>(email: T, name: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
     {
-        EmailAddress {
+        Self {
             email: email.into(),
             name: Some(name.into()),
         }
@@ -58,7 +58,7 @@ where
     T: Into<String>,
 {
     fn from(email: T) -> Self {
-        EmailAddress::new(email)
+        Self::new(email)
     }
 }
 

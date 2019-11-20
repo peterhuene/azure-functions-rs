@@ -36,8 +36,9 @@ const SYSTEM_PROPERTIES_KEY: &str = "SystemProperties";
 /// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "trigger", connection = "my_connection")]
-/// pub fn log_event(trigger: EventHubTrigger) {
+/// pub fn log_event(
+///     #[binding(connection = "my_connection")] trigger: EventHubTrigger
+/// ) {
 ///     log::info!("{:?}", trigger);
 /// }
 /// ```
@@ -62,7 +63,7 @@ pub struct EventHubTrigger {
 impl EventHubTrigger {
     #[doc(hidden)]
     pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
-        EventHubTrigger {
+        Self {
             message: data.into(),
             partition_context: from_str(
                 match &metadata
@@ -212,7 +213,7 @@ mod tests {
 
         let trigger = EventHubTrigger::new(data, metadata);
 
-        assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
+        assert_eq!(trigger.message.to_str().unwrap(), MESSAGE);
         assert_eq!(
             trigger.partition_context.consumer_group_name,
             CONSUMER_GROUP

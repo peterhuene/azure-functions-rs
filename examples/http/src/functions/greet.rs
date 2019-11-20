@@ -7,7 +7,7 @@ use azure_functions::{
 pub fn greet(req: HttpRequest) -> HttpResponse {
     format!(
         "Hello from Rust, {}!\n",
-        req.query_params().get("name").map_or("stranger", |x| x)
+        req.query_params.get("name").map_or("stranger", |x| x)
     )
     .into()
 }

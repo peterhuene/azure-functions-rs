@@ -25,7 +25,6 @@ use crate::{
 /// use serde_json::json;
 ///
 /// #[func]
-/// #[binding(name = "req", route = "create/{id}")]
 /// #[binding(
 ///     type = "cosmosDB",
 ///     name = "output1",
@@ -34,12 +33,14 @@ use crate::{
 ///     collectionName = "documents",
 ///     createIfNotExists = true
 /// )]
-/// pub fn create_document(req: HttpRequest) -> (HttpResponse, GenericOutput) {
+/// pub fn create_document(
+///     #[binding(route = "create/{id}")] mut req: HttpRequest,
+/// ) -> (HttpResponse, GenericOutput) {
 ///     (
 ///         "Document was created.".into(),
 ///         json!({
-///             "id": req.route_params().get("id").unwrap(),
-///             "name": req.query_params().get("name").map_or("stranger", |x| x)
+///             "id": req.route_params.remove("id").unwrap(),
+///             "name": req.query_params.remove("name").expect("expected a 'name' query parameter"),
 ///         })
 ///         .into(),
 ///     )
@@ -53,7 +54,7 @@ pub struct GenericOutput {
 
 impl From<&str> for GenericOutput {
     fn from(s: &str) -> Self {
-        GenericOutput {
+        Self {
             data: Value::String(s.to_owned()),
         }
     }
@@ -61,7 +62,7 @@ impl From<&str> for GenericOutput {
 
 impl From<String> for GenericOutput {
     fn from(s: String) -> Self {
-        GenericOutput {
+        Self {
             data: Value::String(s),
         }
     }
@@ -69,7 +70,7 @@ impl From<String> for GenericOutput {
 
 impl From<serde_json::Value> for GenericOutput {
     fn from(value: serde_json::Value) -> Self {
-        GenericOutput {
+        Self {
             data: Value::Json(value),
         }
     }
@@ -77,7 +78,7 @@ impl From<serde_json::Value> for GenericOutput {
 
 impl From<Vec<u8>> for GenericOutput {
     fn from(bytes: Vec<u8>) -> Self {
-        GenericOutput {
+        Self {
             data: Value::Bytes(bytes),
         }
     }
@@ -85,7 +86,7 @@ impl From<Vec<u8>> for GenericOutput {
 
 impl From<i64> for GenericOutput {
     fn from(integer: i64) -> Self {
-        GenericOutput {
+        Self {
             data: Value::Integer(integer),
         }
     }
@@ -93,7 +94,7 @@ impl From<i64> for GenericOutput {
 
 impl From<f64> for GenericOutput {
     fn from(double: f64) -> Self {
-        GenericOutput {
+        Self {
             data: Value::Double(double),
         }
     }

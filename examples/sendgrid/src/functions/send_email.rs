@@ -5,15 +5,24 @@ use azure_functions::{
 
 #[func]
 #[binding(name = "output1", from = "azure.functions.for.rust@example.com")]
-pub fn send_email(req: HttpRequest) -> (HttpResponse, SendGridMessage) {
-    let params = req.query_params();
-
+pub fn send_email(mut req: HttpRequest) -> (HttpResponse, SendGridMessage) {
     (
         "The email was sent.".into(),
         SendGridMessage::build()
-            .to(params.get("to").unwrap().as_str())
-            .subject(params.get("subject").unwrap().as_str())
-            .content(params.get("content").unwrap().as_str())
+            .to(req
+                .query_params
+                .remove("to")
+                .expect("expected a 'to' query parameter"))
+            .subject(
+                req.query_params
+                    .remove("subject")
+                    .expect("expected a 'subject' query parameter"),
+            )
+            .content(
+                req.query_params
+                    .remove("content")
+                    .expect("expected a 'content' query parameter"),
+            )
             .finish(),
     )
 }

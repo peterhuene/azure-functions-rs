@@ -1,7 +1,13 @@
 use crate::rpc::{typed_data::Data, TypedData};
 use chrono::{DateTime, FixedOffset, Utc};
-use serde::{de::Error, de::IntoDeserializer, Deserialize, Deserializer};
-use serde_json::from_str;
+use serde::{
+    de::{
+        value::{F64Deserializer, I64Deserializer},
+        Error, IntoDeserializer,
+    },
+    Deserialize, Deserializer,
+};
+use serde_json::{error, from_str};
 use std::str::{from_utf8, FromStr};
 
 pub fn convert_from<'a, T>(data: &'a TypedData) -> Option<T>
@@ -24,13 +30,11 @@ where
             None
         }
         Some(Data::Int(i)) => {
-            let deserializer: ::serde::de::value::I64Deserializer<::serde_json::error::Error> =
-                i.into_deserializer();
+            let deserializer: I64Deserializer<error::Error> = i.into_deserializer();
             T::deserialize(deserializer).ok()
         }
         Some(Data::Double(d)) => {
-            let deserializer: ::serde::de::value::F64Deserializer<::serde_json::error::Error> =
-                d.into_deserializer();
+            let deserializer: F64Deserializer<error::Error> = d.into_deserializer();
             T::deserialize(deserializer).ok()
         }
         _ => None,

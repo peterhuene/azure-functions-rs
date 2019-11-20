@@ -32,14 +32,12 @@ use std::collections::HashMap;
 /// #[func]
 /// #[binding(name = "output1", from = "azure.functions.for.rust@example.com")]
 /// pub fn send_email(req: HttpRequest) -> (HttpResponse, SendGridMessage) {
-///     let params = req.query_params();
-///
 ///     (
 ///         "The email was sent.".into(),
 ///         SendGridMessage::build()
-///             .to(params.get("to").unwrap().as_str())
-///             .subject(params.get("subject").unwrap().as_str())
-///             .content(params.get("content").unwrap().as_str())
+///             .to(req.query_params.get("to").unwrap().as_str())
+///             .subject(req.query_params.get("subject").unwrap().as_str())
+///             .content(req.query_params.get("content").unwrap().as_str())
 ///             .finish(),
 ///     )
 /// }
@@ -136,7 +134,7 @@ impl Into<TypedData> for SendGridMessage {
 #[doc(hidden)]
 impl FromVec<SendGridMessage> for TypedData {
     fn from_vec(vec: Vec<SendGridMessage>) -> Self {
-        TypedData {
+        Self {
             data: Some(Data::Json(
                 Value::Array(vec.into_iter().map(|m| to_value(m).unwrap()).collect()).to_string(),
             )),

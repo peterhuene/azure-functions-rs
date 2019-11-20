@@ -5,7 +5,6 @@ use crate::{
     FromVec, IntoVec,
 };
 use serde_json::{from_str, Map, Value};
-use std::borrow::Cow;
 use std::fmt;
 
 /// Represents the input or output binding for a Cosmos DB document.
@@ -56,16 +55,26 @@ use std::fmt;
 /// };
 ///
 /// #[func]
-/// #[binding(name = "_req", route = "read/{id}")]
-/// #[binding(
-///     name = "document",
-///     connection = "myconnection",
-///     database_name = "mydb",
-///     collection_name = "mycollection",
-///     id = "{id}",
-/// )]
-/// pub fn read_document(_req: HttpRequest, document: CosmosDbDocument) -> HttpResponse {
-///     document.into()
+/// pub fn read_document(
+///     #[binding(route = "read/{id}")] req: HttpRequest,
+///     #[binding(
+///         connection = "connection",
+///         database_name = "exampledb",
+///         collection_name = "documents",
+///         id = "{id}",
+///         partition_key = "{id}"
+///     )]
+///     document: CosmosDbDocument,
+/// ) -> HttpResponse {
+///     if document.is_null() {
+///         format!(
+///             "Document with id '{}' does not exist.",
+///             req.route_params.get("id").unwrap()
+///         )
+///         .into()
+///     } else {
+///         document.into()
+///     }
 /// }
 /// ```
 ///
@@ -103,11 +112,11 @@ impl CosmosDbDocument {
     /// Creates a new `CosmosDbDocument` from a JSON object value.
     ///
     /// The value must be a JSON object.
-    pub fn new(value: Value) -> CosmosDbDocument {
+    pub fn new(value: Value) -> Self {
         if !value.is_object() {
             panic!("expected a single object for a Cosmos DB document");
         }
-        CosmosDbDocument(value)
+        Self(value)
     }
 
     /// Gets whether or not the Cosmos DB document is null.
@@ -140,19 +149,19 @@ impl fmt::Display for CosmosDbDocument {
 
 impl<'a> From<&'a str> for CosmosDbDocument {
     fn from(json: &'a str) -> Self {
-        CosmosDbDocument::new(from_str(json).unwrap())
+        Self::new(from_str(json).unwrap())
     }
 }
 
 impl From<String> for CosmosDbDocument {
     fn from(json: String) -> Self {
-        CosmosDbDocument::new(from_str(&json).unwrap())
+        Self::new(from_str(&json).unwrap())
     }
 }
 
 impl From<Value> for CosmosDbDocument {
     fn from(value: Value) -> Self {
-        CosmosDbDocument::new(value)
+        Self::new(value)
     }
 }
 
@@ -175,7 +184,7 @@ impl IntoVec<CosmosDbDocument> for TypedData {
 #[doc(hidden)]
 impl FromVec<CosmosDbDocument> for TypedData {
     fn from_vec(vec: Vec<CosmosDbDocument>) -> Self {
-        TypedData {
+        Self {
             data: Some(Data::Json(
                 Value::Array(vec.into_iter().map(|d| d.0).collect()).to_string(),
             )),
@@ -187,21 +196,21 @@ impl FromVec<CosmosDbDocument> for TypedData {
 impl From<TypedData> for CosmosDbDocument {
     fn from(data: TypedData) -> Self {
         if data.data.is_none() {
-            return CosmosDbDocument(Value::Null);
+            return Self(Value::Null);
         }
 
         let value: Value = convert_from(&data).expect("expected JSON data for Cosmos DB document");
 
         match value {
-            Value::Null => CosmosDbDocument(Value::Null),
+            Value::Null => Self(Value::Null),
             Value::Array(mut arr) => {
                 if arr.is_empty() {
-                    CosmosDbDocument(Value::Null)
+                    Self(Value::Null)
                 } else {
-                    CosmosDbDocument::new(arr.swap_remove(0))
+                    Self::new(arr.swap_remove(0))
                 }
             }
-            Value::Object(obj) => CosmosDbDocument(Value::Object(obj)),
+            Value::Object(obj) => Self(Value::Object(obj)),
             _ => panic!("expected an array or object for Cosmos DB document data"),
         }
     }
@@ -219,17 +228,15 @@ impl Into<Value> for CosmosDbDocument {
     }
 }
 
-impl<'a> Into<Body<'a>> for CosmosDbDocument {
-    fn into(self) -> Body<'a> {
+impl<'a> Into<Body> for CosmosDbDocument {
+    fn into(self) -> Body {
         self.0.into()
     }
 }
 
-impl<'a> Into<Body<'a>> for Vec<CosmosDbDocument> {
-    fn into(self) -> Body<'a> {
-        Body::Json(Cow::from(
-            Value::Array(self.into_iter().map(|d| d.0).collect()).to_string(),
-        ))
+impl<'a> Into<Body> for Vec<CosmosDbDocument> {
+    fn into(self) -> Body {
+        Value::Array(self.into_iter().map(|d| d.0).collect()).into()
     }
 }
 
@@ -310,11 +317,11 @@ mod tests {
     fn it_converts_to_body() {
         let document: CosmosDbDocument = r#"{ "foo": "bar" }"#.into();
         let body: Body = document.into();
-        assert_eq!(body.as_str().unwrap(), r#"{"foo":"bar"}"#);
+        assert_eq!(body.to_str().unwrap(), r#"{"foo":"bar"}"#);
 
         let document: CosmosDbDocument = json!({"hello": "world"}).into();
         let body: Body = document.into();
-        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
+        assert_eq!(body.to_str().unwrap(), r#"{"hello":"world"}"#);
     }
 
     #[test]

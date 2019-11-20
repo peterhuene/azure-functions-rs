@@ -8,7 +8,7 @@ use serde_json::Value;
 pub async fn start(req: HttpRequest, client: DurableOrchestrationClient) -> HttpResponse {
     match client
         .start_new(
-            req.query_params()
+            req.query_params
                 .get("function")
                 .expect("expected a function parameter"),
             None,

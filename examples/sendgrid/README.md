@@ -9,22 +9,30 @@ An example HTTP-triggered Azure Function that outputs a SendGrid email message:
 ```rust
 use azure_functions::{
     bindings::{HttpRequest, HttpResponse, SendGridMessage},
-    send_grid::MessageBuilder,
     func,
 };
 
 #[func]
 #[binding(name = "output1", from = "azure.functions.for.rust@example.com")]
-pub fn send_email(req: HttpRequest) -> (HttpResponse, SendGridMessage) {
-    let params = req.query_params();
-
+pub fn send_email(mut req: HttpRequest) -> (HttpResponse, SendGridMessage) {
     (
         "The email was sent.".into(),
-        MessageBuilder::new()
-            .to(params.get("to").unwrap().as_str())
-            .subject(params.get("subject").unwrap().as_str())
-            .content(params.get("content").unwrap().as_str())
-            .build(),
+        SendGridMessage::build()
+            .to(req
+                .query_params
+                .remove("to")
+                .expect("expected a 'to' query parameter"))
+            .subject(
+                req.query_params
+                    .remove("subject")
+                    .expect("expected a 'subject' query parameter"),
+            )
+            .content(
+                req.query_params
+                    .remove("content")
+                    .expect("expected a 'content' query parameter"),
+            )
+            .finish(),
     )
 }
 ```

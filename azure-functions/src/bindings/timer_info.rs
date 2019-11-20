@@ -27,8 +27,9 @@ use std::collections::HashMap;
 /// use log::info;
 ///
 /// #[func]
-/// #[binding(name = "_info", schedule = "0 */5 * * * *")]
-/// pub fn timer(_info: TimerInfo) {
+/// pub fn timer(
+///     #[binding(schedule = "0 */5 * * * *")] _info: TimerInfo
+/// ) {
 ///     info!("Rust Azure function ran!");
 /// }
 /// ```

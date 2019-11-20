@@ -3,6 +3,9 @@
 //! This crate supports the code generation for the `azure-functions` crate.
 #![recursion_limit = "128"]
 #![deny(unused_extern_crates)]
+#![warn(clippy::use_self)]
+#![warn(clippy::option_map_unwrap_or)]
+#![warn(clippy::option_map_unwrap_or_else)]
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 extern crate proc_macro;
 

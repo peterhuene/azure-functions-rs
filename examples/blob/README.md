@@ -11,8 +11,7 @@ in the `watching` Azure Storage blob container.
 use azure_functions::{bindings::BlobTrigger, func};
 
 #[func]
-#[binding(name = "trigger", path = "watching/{name}")]
-pub fn blob_watcher(trigger: BlobTrigger) {
+pub fn blob_watcher(#[binding(path = "watching/{name}")] trigger: BlobTrigger) {
     log::info!(
         "A blob was created at '{}' with contents: {:?}.",
         trigger.path,
@@ -31,15 +30,17 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "req", route = "create/blob/{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}")]
-pub fn create_blob(req: HttpRequest) -> (HttpResponse, Blob) {
+pub fn create_blob(
+    #[binding(route = "create/blob/{container}/{name}")] req: HttpRequest,
+) -> (HttpResponse, Blob) {
+    let data: Vec<u8> = req.body.into();
     (
         HttpResponse::build()
             .status(Status::Created)
             .body("blob has been created.")
-            .into(),
-        req.body().as_bytes().into(),
+            .finish(),
+        data.into(),
     )
 }
 ```
@@ -53,11 +54,12 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "copy/blob/{container}/{name}")]
-#[binding(name = "blob", path = "{container}/{name}")]
 #[binding(name = "output1", path = "{container}/{name}.copy")]
-pub fn copy_blob(_req: HttpRequest, blob: Blob) -> (HttpResponse, Blob) {
-    ("blob has been copied.".into(), blob.clone())
+pub fn copy_blob(
+    #[binding(route = "copy/blob/{container}/{name}")] _req: HttpRequest,
+    #[binding(path = "{container}/{name}")] blob: Blob,
+) -> (HttpResponse, Blob) {
+    ("blob has been copied.".into(), blob)
 }
 ```
 
@@ -70,10 +72,11 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "print/blob/{container}/{path}")]
-#[binding(name = "blob", path = "{container}/{path}")]
-pub fn print_blob(_req: HttpRequest, blob: Blob) -> HttpResponse {
-    blob.as_bytes().into()
+pub fn print_blob(
+    #[binding(route = "print/blob/{container}/{path}")] _req: HttpRequest,
+    #[binding(path = "{container}/{path}")] blob: Blob,
+) -> HttpResponse {
+    blob.into()
 }
 ```
 

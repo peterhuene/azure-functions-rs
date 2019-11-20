@@ -3,8 +3,7 @@ use crate::{
     rpc::{typed_data::Data, TypedData},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{from_str, to_string};
-use std::borrow::Cow;
+use serde_json::{from_str, to_value};
 
 /// Represents the SignalR connection information input binding.
 ///
@@ -28,14 +27,15 @@ use std::borrow::Cow;
 /// };
 ///
 /// #[func]
-/// #[binding(name = "_req", auth_level = "anonymous")]
-/// #[binding(
-///     name = "info",
-///     hub_name = "chat",
-///     user_id = "{headers.x-ms-signalr-userid}",
-///     connection = "myconnection"
-/// )]
-/// pub fn negotiate(_req: HttpRequest, info: SignalRConnectionInfo) -> HttpResponse {
+/// pub fn negotiate(
+///     #[binding(auth_level = "anonymous")] _req: HttpRequest,
+///     #[binding(
+///         hub_name = "simplechat",
+///         user_id = "{headers.x-ms-signalr-userid}",
+///         connection = "connection"
+///     )]
+///     info: SignalRConnectionInfo,
+/// ) -> HttpResponse {
 ///     info.into()
 /// }
 /// ```
@@ -58,17 +58,18 @@ impl From<TypedData> for SignalRConnectionInfo {
     }
 }
 
-impl<'a> Into<Body<'a>> for SignalRConnectionInfo {
-    fn into(self) -> Body<'a> {
-        Body::Json(Cow::from(
-            to_string(&self).expect("failed to serialize SignalR connection info"),
-        ))
+impl Into<Body> for SignalRConnectionInfo {
+    fn into(self) -> Body {
+        to_value(&self)
+            .expect("failed to serialize SignalR connection info")
+            .into()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::{from_slice, to_string};
 
     #[test]
     fn it_serializes_to_json() {
@@ -102,9 +103,8 @@ mod tests {
         };
 
         let body: Body = info.into();
-        assert_eq!(
-            body.as_str().unwrap(),
-            r#"{"url":"foo","accessToken":"bar"}"#
-        );
+        let info: SignalRConnectionInfo = from_slice(body.as_bytes()).unwrap();
+        assert_eq!(info.url, "foo",);
+        assert_eq!(info.access_token, "bar");
     }
 }

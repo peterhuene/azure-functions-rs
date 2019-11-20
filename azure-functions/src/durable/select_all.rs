@@ -39,7 +39,7 @@ where
         // The event index of a select is the minimum present index of the sequence
         let event_index = inner.iter().filter_map(|f| f.event_index()).min();
 
-        SelectAll {
+        Self {
             inner,
             state,
             event_index,

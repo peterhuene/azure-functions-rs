@@ -9,7 +9,7 @@ macro_rules! statuses {
             #[doc=$code_str]
             #[doc="</b>."]
             #[allow(non_upper_case_globals)]
-            pub const $name: Status = Status($code);
+            pub const $name: Self = Self($code);
          )+
 
         /// Returns a `Status` given a status code `code`.
@@ -25,8 +25,8 @@ macro_rules! statuses {
         /// ```
         pub fn from_code(code: u16) -> Self {
             match code {
-                $($code => Status::$name,)+
-                _ => Status(code)
+                $($code => Self::$name,)+
+                _ => Self(code)
             }
         }
     };
@@ -105,7 +105,7 @@ impl ToString for Status {
 
 impl From<u16> for Status {
     fn from(code: u16) -> Self {
-        Status::from_code(code)
+        Self::from_code(code)
     }
 }
 

@@ -60,7 +60,7 @@ impl CosmosDbTrigger {
     pub fn new(data: TypedData, _metadata: HashMap<String, TypedData>) -> Self {
         let value = convert_from(&data).expect("expected JSON document data");
         match value {
-            Value::Array(array) => CosmosDbTrigger { documents: array },
+            Value::Array(array) => Self { documents: array },
             _ => panic!("expected a JSON array for Cosmos DB trigger data"),
         }
     }

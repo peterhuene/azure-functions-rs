@@ -7,9 +7,9 @@ pub struct Backtrace {
 }
 
 impl Backtrace {
-    pub fn new() -> Backtrace {
-        if !Backtrace::is_enabled() {
-            return Backtrace {
+    pub fn new() -> Self {
+        if !Self::is_enabled() {
+            return Self {
                 inner: Vec::<BacktraceFrame>::new().into(),
             };
         }
@@ -52,7 +52,7 @@ impl Backtrace {
             })
             .collect();
 
-        Backtrace {
+        Self {
             inner: frames.into(),
         }
     }
@@ -66,7 +66,7 @@ impl fmt::Display for Backtrace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use std::fmt::Debug;
 
-        if !Backtrace::is_enabled() {
+        if !Self::is_enabled() {
             return write!(
                 f,
                 "\nNote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace."

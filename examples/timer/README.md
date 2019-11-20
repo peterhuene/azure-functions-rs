@@ -10,8 +10,7 @@ The example timer-triggered Azure Function that runs every minute:
 use azure_functions::{bindings::TimerInfo, func};
 
 #[func]
-#[binding(name = "info", schedule = "0 */1 * * * *")]
-pub fn timer(info: TimerInfo) {
+pub fn timer(#[binding(schedule = "0 */1 * * * *")] info: TimerInfo) {
     log::info!("Hello from Rust!");
     log::info!("Timer information: {:?}", info);
 }

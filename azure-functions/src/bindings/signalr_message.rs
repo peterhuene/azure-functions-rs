@@ -27,14 +27,15 @@ use serde_json::{to_string, to_value, Value};
 /// use serde_json::{to_value, Value};
 ///
 /// #[func]
-/// #[binding(name = "req", auth_level = "anonymous", methods = "post")]
 /// #[binding(name = "$return", hub_name = "chat", connection = "myconnection")]
-/// pub fn send_message(req: HttpRequest) -> SignalRMessage {
+/// pub fn send_message(
+///     #[binding(auth_level = "anonymous", methods = "post")] mut req: HttpRequest
+/// ) -> SignalRMessage {
 ///     SignalRMessage {
-///         user_id: req.query_params().get("user").map(|v| v.to_owned()),
-///         group_name: req.query_params().get("group").map(|v| v.to_owned()),
+///         user_id: req.query_params.remove("user"),
+///         group_name: req.query_params.remove("group"),
 ///         target: "newMessage".to_owned(),
-///         arguments: vec![req.query_params().get("message").map_or(Value::Null, |v| to_value(v).unwrap())],
+///         arguments: vec![req.query_params.remove("message").map_or(Value::Null, |v| to_value(v).unwrap())],
 ///     }
 /// }
 /// ```
@@ -65,7 +66,7 @@ impl Into<TypedData> for SignalRMessage {
 #[doc(hidden)]
 impl FromVec<SignalRMessage> for TypedData {
     fn from_vec(vec: Vec<SignalRMessage>) -> Self {
-        TypedData {
+        Self {
             data: Some(Data::Json(
                 Value::Array(vec.into_iter().map(|m| to_value(m).unwrap()).collect()).to_string(),
             )),

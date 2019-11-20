@@ -52,7 +52,7 @@ where
             })
             .unwrap_or(None);
 
-        JoinAll {
+        Self {
             inner: join_all(inner),
             state,
             event_index,

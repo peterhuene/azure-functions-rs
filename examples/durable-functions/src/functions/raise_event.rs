@@ -6,17 +6,17 @@ use azure_functions::{
 #[func]
 pub async fn raise_event(req: HttpRequest, client: DurableOrchestrationClient) -> HttpResponse {
     let id = req
-        .query_params()
+        .query_params
         .get("id")
         .expect("expected a 'id' parameter");
 
     let name = req
-        .query_params()
+        .query_params
         .get("name")
         .expect("expected a 'name' parameter");
 
     let value = req
-        .query_params()
+        .query_params
         .get("value")
         .expect("expected a 'value' parameter")
         .clone();

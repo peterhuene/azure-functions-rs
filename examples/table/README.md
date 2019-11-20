@@ -11,22 +11,23 @@ use azure_functions::{
     bindings::{HttpRequest, Table},
     func,
 };
-use serde_json::Value;
+use serde_json::from_slice;
 
 #[func]
-#[binding(name = "req", route = "create/{table}/{partition}/{row}")]
 #[binding(name = "output1", table_name = "{table}")]
-pub fn create_row(req: HttpRequest) -> ((), Table) {
+pub fn create_row(
+    #[binding(route = "create/{table}/{partition}/{row}")] req: HttpRequest,
+) -> ((), Table) {
     let mut table = Table::new();
     {
         let row = table.add_row(
-            req.route_params().get("partition").unwrap(),
-            req.route_params().get("row").unwrap(),
+            req.route_params.get("partition").unwrap(),
+            req.route_params.get("row").unwrap(),
         );
 
         row.insert(
             "body".to_string(),
-            Value::String(req.body().as_str().unwrap().to_owned()),
+            from_slice(req.body.as_bytes()).expect("expected JSON body"),
         );
     }
     ((), table)
@@ -40,18 +41,18 @@ use azure_functions::{
     bindings::{HttpRequest, HttpResponse, Table},
     func,
 };
-use serde_json::Value;
 
 #[func]
-#[binding(name = "_req", route = "read/{table}/{partition}/{row}")]
-#[binding(
-    name = "table",
-    table_name = "{table}",
-    partition_key = "{partition}",
-    row_key = "{row}"
-)]
-pub fn read_row(_req: HttpRequest, table: Table) -> HttpResponse {
-    table.as_value().get(0).unwrap_or(&Value::Null).into()
+pub fn read_row(
+    #[binding(route = "read/{table}/{partition}/{row}")] _req: HttpRequest,
+    #[binding(
+        table_name = "{table}",
+        partition_key = "{partition}",
+        row_key = "{row}"
+    )]
+    table: Table,
+) -> HttpResponse {
+    table.into()
 }
 ```
 

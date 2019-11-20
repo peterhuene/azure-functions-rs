@@ -2,10 +2,7 @@ use crate::{
     http::Body,
     rpc::{typed_data::Data, TypedData},
 };
-use serde::de::Error;
-use serde::Deserialize;
-use serde_json::{from_str, Result, Value};
-use std::borrow::Cow;
+use serde_json::{from_str, Value};
 use std::fmt;
 use std::str::from_utf8;
 
@@ -67,8 +64,9 @@ impl Blob {
     /// Gets the content of the blob as a string.
     ///
     /// Returns None if there is no valid string representation of the blob.
-    pub fn as_str(&self) -> Option<&str> {
+    pub fn to_str(&self) -> Option<&str> {
         match &self.0.data {
+            None => Some(""),
             Some(Data::String(s)) => Some(s),
             Some(Data::Json(s)) => Some(s),
             Some(Data::Bytes(b)) => from_utf8(b).ok(),
@@ -80,6 +78,7 @@ impl Blob {
     /// Gets the content of the blob as a slice of bytes.
     pub fn as_bytes(&self) -> &[u8] {
         match &self.0.data {
+            None => &[],
             Some(Data::String(s)) => s.as_bytes(),
             Some(Data::Json(s)) => s.as_bytes(),
             Some(Data::Bytes(b)) => b,
@@ -87,28 +86,17 @@ impl Blob {
             _ => panic!("unexpected data for blob content"),
         }
     }
-
-    /// Deserializes the blob as JSON to the requested type.
-    pub fn as_json<'b, T>(&'b self) -> Result<T>
-    where
-        T: Deserialize<'b>,
-    {
-        from_str(
-            self.as_str()
-                .ok_or_else(|| ::serde_json::Error::custom("blob is not valid UTF-8"))?,
-        )
-    }
 }
 
 impl fmt::Display for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.as_str().unwrap_or(""))
+        write!(f, "{}", self.to_str().unwrap_or(""))
     }
 }
 
-impl<'a> From<&'a str> for Blob {
-    fn from(content: &'a str) -> Self {
-        Blob(TypedData {
+impl From<&str> for Blob {
+    fn from(content: &str) -> Self {
+        Self(TypedData {
             data: Some(Data::String(content.to_owned())),
         })
     }
@@ -116,7 +104,7 @@ impl<'a> From<&'a str> for Blob {
 
 impl From<String> for Blob {
     fn from(content: String) -> Self {
-        Blob(TypedData {
+        Self(TypedData {
             data: Some(Data::String(content)),
         })
     }
@@ -124,7 +112,7 @@ impl From<String> for Blob {
 
 impl From<&Value> for Blob {
     fn from(content: &Value) -> Self {
-        Blob(TypedData {
+        Self(TypedData {
             data: Some(Data::Json(content.to_string())),
         })
     }
@@ -132,15 +120,15 @@ impl From<&Value> for Blob {
 
 impl From<Value> for Blob {
     fn from(content: Value) -> Self {
-        Blob(TypedData {
+        Self(TypedData {
             data: Some(Data::Json(content.to_string())),
         })
     }
 }
 
-impl<'a> From<&'a [u8]> for Blob {
-    fn from(content: &'a [u8]) -> Self {
-        Blob(TypedData {
+impl From<&[u8]> for Blob {
+    fn from(content: &[u8]) -> Self {
+        Self(TypedData {
             data: Some(Data::Bytes(content.to_owned())),
         })
     }
@@ -148,7 +136,7 @@ impl<'a> From<&'a [u8]> for Blob {
 
 impl From<Vec<u8>> for Blob {
     fn from(content: Vec<u8>) -> Self {
-        Blob(TypedData {
+        Self(TypedData {
             data: Some(Data::Bytes(content)),
         })
     }
@@ -157,7 +145,7 @@ impl From<Vec<u8>> for Blob {
 #[doc(hidden)]
 impl From<TypedData> for Blob {
     fn from(data: TypedData) -> Self {
-        Blob(data)
+        Self(data)
     }
 }
 
@@ -180,7 +168,7 @@ impl Into<String> for Blob {
 impl Into<Value> for Blob {
     fn into(self) -> Value {
         from_str(
-            self.as_str()
+            self.to_str()
                 .expect("blob does not contain valid UTF-8 data"),
         )
         .expect("blob does not contain valid JSON data")
@@ -199,15 +187,9 @@ impl Into<Vec<u8>> for Blob {
     }
 }
 
-impl<'a> Into<Body<'a>> for Blob {
-    fn into(self) -> Body<'a> {
-        match self.0.data {
-            Some(Data::String(s)) => s.into(),
-            Some(Data::Json(s)) => Body::Json(Cow::from(s)),
-            Some(Data::Bytes(b)) => b.into(),
-            Some(Data::Stream(s)) => s.into(),
-            _ => panic!("unexpected data for blob content"),
-        }
+impl Into<Body> for Blob {
+    fn into(self) -> Body {
+        self.0.into()
     }
 }
 
@@ -222,8 +204,7 @@ impl Into<TypedData> for Blob {
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
-    use serde_json::json;
-    use serde_json::to_value;
+    use serde_json::{from_slice, json, to_value};
     use std::fmt::Write;
 
     #[test]
@@ -231,7 +212,7 @@ mod tests {
         const BLOB: &'static str = "test blob";
 
         let blob: Blob = BLOB.into();
-        assert_eq!(blob.as_str().unwrap(), BLOB);
+        assert_eq!(blob.to_str().unwrap(), BLOB);
 
         let data: TypedData = blob.into();
         assert_eq!(data.data, Some(Data::String(BLOB.to_string())));
@@ -250,8 +231,9 @@ mod tests {
             message: MESSAGE.to_string(),
         };
 
-        let blob: Blob = ::serde_json::to_value(data).unwrap().into();
-        assert_eq!(blob.as_json::<SerializedData>().unwrap().message, MESSAGE);
+        let blob: Blob = to_value(data).unwrap().into();
+        let data: SerializedData = from_slice(blob.as_bytes()).unwrap();
+        assert_eq!(data.message, MESSAGE);
 
         let data: TypedData = blob.into();
         assert_eq!(
@@ -286,19 +268,19 @@ mod tests {
     #[test]
     fn it_converts_from_str() {
         let blob: Blob = "test".into();
-        assert_eq!(blob.as_str().unwrap(), "test");
+        assert_eq!(blob.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_string() {
         let blob: Blob = "test".to_string().into();
-        assert_eq!(blob.as_str().unwrap(), "test");
+        assert_eq!(blob.to_str().unwrap(), "test");
     }
 
     #[test]
     fn it_converts_from_json() {
         let blob: Blob = to_value("hello world").unwrap().into();
-        assert_eq!(blob.as_str().unwrap(), r#""hello world""#);
+        assert_eq!(blob.to_str().unwrap(), r#""hello world""#);
     }
 
     #[test]
@@ -322,7 +304,7 @@ mod tests {
         };
 
         let blob: Blob = data.into();
-        assert_eq!(blob.as_str().unwrap(), BLOB);
+        assert_eq!(blob.to_str().unwrap(), BLOB);
     }
 
     #[test]
@@ -350,11 +332,11 @@ mod tests {
     fn it_converts_to_body() {
         let blob: Blob = "hello world!".into();
         let body: Body = blob.into();
-        assert_eq!(body.as_str().unwrap(), "hello world!");
+        assert_eq!(body.to_str().unwrap(), "hello world!");
 
         let blob: Blob = json!({"hello": "world"}).into();
         let body: Body = blob.into();
-        assert_eq!(body.as_str().unwrap(), r#"{"hello":"world"}"#);
+        assert_eq!(body.to_str().unwrap(), r#"{"hello":"world"}"#);
 
         let blob: Blob = vec![1, 2, 3].into();
         let body: Body = blob.into();

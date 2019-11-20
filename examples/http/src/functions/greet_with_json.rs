@@ -4,7 +4,7 @@ use azure_functions::{
     http::Status,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
+use serde_json::{from_slice, to_value};
 
 #[derive(Deserialize)]
 struct Request {
@@ -18,7 +18,7 @@ struct Response {
 
 #[func]
 pub fn greet_with_json(req: HttpRequest) -> HttpResponse {
-    if let Ok(request) = req.body().as_json::<Request>() {
+    if let Ok(request) = from_slice::<Request>(req.body.as_bytes()) {
         let response = Response {
             message: format!("Hello from Rust, {}!", request.name),
         };

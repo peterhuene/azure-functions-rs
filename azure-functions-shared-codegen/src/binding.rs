@@ -81,7 +81,7 @@ impl From<AttributeArgs> for BindingArguments {
             );
         }
 
-        BindingArguments {
+        Self {
             name: name.unwrap(),
             direction,
             validate,
@@ -120,7 +120,7 @@ impl From<AttributeArgs> for FieldArguments {
             true
         });
 
-        FieldArguments {
+        Self {
             name,
             camel_case_value,
             values,
@@ -160,14 +160,14 @@ impl From<&TypePath> for FieldType {
         type_name.retain(|c| c != ' ');
 
         match type_name.as_ref() {
-            "Cow<'static,str>" => FieldType::String,
-            "Option<Cow<'static,str>>" => FieldType::OptionalString,
-            "bool" => FieldType::Boolean,
-            "Option<bool>" => FieldType::OptionalBoolean,
-            "Direction" => FieldType::Direction,
-            "Cow<'static,[Cow<'static,str>]>" => FieldType::StringArray,
-            "i64" => FieldType::Integer,
-            "Option<i64>" => FieldType::OptionalInteger,
+            "Cow<'static,str>" => Self::String,
+            "Option<Cow<'static,str>>" => Self::OptionalString,
+            "bool" => Self::Boolean,
+            "Option<bool>" => Self::OptionalBoolean,
+            "Direction" => Self::Direction,
+            "Cow<'static,[Cow<'static,str>]>" => Self::StringArray,
+            "i64" => Self::Integer,
+            "Option<i64>" => Self::OptionalInteger,
             _ => macro_panic(
                 tp.span(),
                 format!("field type '{}' is not supported for a binding", type_name),
@@ -374,7 +374,7 @@ impl From<&syn::Field> for Field {
             args = Some(parse_attribute_args(&attr));
         }
 
-        Field {
+        Self {
             ident: field.ident.as_ref().unwrap().clone(),
             args: args.map(Into::into),
             ty: match &field.ty {

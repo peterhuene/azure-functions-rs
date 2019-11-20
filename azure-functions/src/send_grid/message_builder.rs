@@ -10,8 +10,8 @@ pub struct MessageBuilder(SendGridMessage);
 
 impl MessageBuilder {
     /// Creates a new message builder.
-    pub fn new() -> MessageBuilder {
-        MessageBuilder(SendGridMessage::default())
+    pub fn new() -> Self {
+        Self(SendGridMessage::default())
     }
 
     /// Appends the given "to" email address to the first personalization of the message.
@@ -26,7 +26,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].to[0].email, "foo@example.com");
     /// assert_eq!(message.personalizations[0].to[0].name, None);
     /// ```
-    pub fn to<T>(mut self, email: T) -> MessageBuilder
+    pub fn to<T>(mut self, email: T) -> Self
     where
         T: Into<String>,
     {
@@ -47,7 +47,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].to[0].name, Some("Peter".to_owned()));
     /// ```
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_with_name<T, U>(mut self, email: T, name: U) -> MessageBuilder
+    pub fn to_with_name<T, U>(mut self, email: T, name: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -75,7 +75,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].to[1].email, "bar@example.com");
     /// assert_eq!(message.personalizations[0].to[1].name, Some("Peter".to_owned()));
     /// ```
-    pub fn tos<T>(mut self, addresses: T) -> MessageBuilder
+    pub fn tos<T>(mut self, addresses: T) -> Self
     where
         T: IntoIterator<Item = EmailAddress>,
     {
@@ -96,7 +96,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].cc[0].email, "foo@example.com");
     /// assert_eq!(message.personalizations[0].cc[0].name, None);
     /// ```
-    pub fn cc<T>(mut self, email: T) -> MessageBuilder
+    pub fn cc<T>(mut self, email: T) -> Self
     where
         T: Into<String>,
     {
@@ -116,7 +116,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].cc[0].email, "foo@example.com");
     /// assert_eq!(message.personalizations[0].cc[0].name, Some("Peter".to_owned()));
     /// ```
-    pub fn cc_with_name<T, U>(mut self, email: T, name: U) -> MessageBuilder
+    pub fn cc_with_name<T, U>(mut self, email: T, name: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -144,7 +144,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].cc[1].email, "bar@example.com");
     /// assert_eq!(message.personalizations[0].cc[1].name, Some("Peter".to_owned()));
     /// ```
-    pub fn ccs<T>(mut self, addresses: T) -> MessageBuilder
+    pub fn ccs<T>(mut self, addresses: T) -> Self
     where
         T: IntoIterator<Item = EmailAddress>,
     {
@@ -165,7 +165,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].bcc[0].email, "foo@example.com");
     /// assert_eq!(message.personalizations[0].bcc[0].name, None);
     /// ```
-    pub fn bcc<T>(mut self, email: T) -> MessageBuilder
+    pub fn bcc<T>(mut self, email: T) -> Self
     where
         T: Into<String>,
     {
@@ -185,7 +185,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].bcc[0].email, "foo@example.com");
     /// assert_eq!(message.personalizations[0].bcc[0].name, Some("Peter".to_owned()));
     /// ```
-    pub fn bcc_with_name<T, U>(mut self, email: T, name: U) -> MessageBuilder
+    pub fn bcc_with_name<T, U>(mut self, email: T, name: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -213,7 +213,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].bcc[1].email, "bar@example.com");
     /// assert_eq!(message.personalizations[0].bcc[1].name, Some("Peter".to_owned()));
     /// ```
-    pub fn bccs<T>(mut self, addresses: T) -> MessageBuilder
+    pub fn bccs<T>(mut self, addresses: T) -> Self
     where
         T: IntoIterator<Item = EmailAddress>,
     {
@@ -233,7 +233,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.personalizations[0].subject, Some("hello world!".to_owned()));
     /// ```
-    pub fn subject<T>(mut self, subject: T) -> MessageBuilder
+    pub fn subject<T>(mut self, subject: T) -> Self
     where
         T: Into<String>,
     {
@@ -253,7 +253,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.personalizations[0].headers.get("foo").map(String::as_str), Some("bar"));
     /// ```
-    pub fn header<T, U>(mut self, key: T, value: U) -> MessageBuilder
+    pub fn header<T, U>(mut self, key: T, value: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -282,7 +282,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].headers.get("foo").map(String::as_str), Some("bar"));
     /// assert_eq!(message.personalizations[0].headers.get("bar").map(String::as_str), Some("baz"));
     /// ```
-    pub fn headers<T>(mut self, headers: T) -> MessageBuilder
+    pub fn headers<T>(mut self, headers: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -302,7 +302,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.personalizations[0].substitutions.get("foo").map(String::as_str), Some("bar"));
     /// ```
-    pub fn substitution<T, U>(mut self, key: T, value: U) -> MessageBuilder
+    pub fn substitution<T, U>(mut self, key: T, value: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -331,7 +331,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].substitutions.get("foo").map(String::as_str), Some("bar"));
     /// assert_eq!(message.personalizations[0].substitutions.get("bar").map(String::as_str), Some("baz"));
     /// ```
-    pub fn substitutions<T>(mut self, substitutions: T) -> MessageBuilder
+    pub fn substitutions<T>(mut self, substitutions: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -354,7 +354,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(to_string(message.personalizations[0].template_data.as_ref().unwrap()).unwrap(), r#"{"foo":"bar"}"#);
     /// ```
-    pub fn template_data(mut self, data: Value) -> MessageBuilder {
+    pub fn template_data(mut self, data: Value) -> Self {
         if let Value::Object(map) = data {
             self.initialize_personalization();
             self.0.personalizations[0].template_data = Some(map);
@@ -376,7 +376,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.personalizations[0].custom_args.get("foo").map(String::as_str), Some("bar"));
     /// ```
-    pub fn custom_arg<T, U>(mut self, key: T, value: U) -> MessageBuilder
+    pub fn custom_arg<T, U>(mut self, key: T, value: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -405,7 +405,7 @@ impl MessageBuilder {
     /// assert_eq!(message.personalizations[0].custom_args.get("foo").map(String::as_str), Some("bar"));
     /// assert_eq!(message.personalizations[0].custom_args.get("bar").map(String::as_str), Some("baz"));
     /// ```
-    pub fn custom_args<T>(mut self, args: T) -> MessageBuilder
+    pub fn custom_args<T>(mut self, args: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -428,7 +428,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.personalizations[0].send_at, Some(1555890183));
     /// ```
-    pub fn send_at(mut self, timestamp: i64) -> MessageBuilder {
+    pub fn send_at(mut self, timestamp: i64) -> Self {
         self.initialize_personalization();
         self.0.personalizations[0].send_at = Some(timestamp);
         self
@@ -446,7 +446,7 @@ impl MessageBuilder {
     /// assert_eq!(message.from.as_ref().unwrap().email, "foo@example.com");
     /// assert_eq!(message.from.as_ref().unwrap().name, None);
     /// ```
-    pub fn from<T>(mut self, email: T) -> MessageBuilder
+    pub fn from<T>(mut self, email: T) -> Self
     where
         T: Into<String>,
     {
@@ -467,7 +467,7 @@ impl MessageBuilder {
     /// assert_eq!(message.from.as_ref().unwrap().name, Some("Peter".to_owned()));
     /// ```
     #[allow(clippy::wrong_self_convention)]
-    pub fn from_with_name<T, U>(mut self, email: T, name: U) -> MessageBuilder
+    pub fn from_with_name<T, U>(mut self, email: T, name: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -487,7 +487,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.subject, Some("hello world".to_owned()));
     /// ```
-    pub fn global_subject<T>(mut self, subject: T) -> MessageBuilder
+    pub fn global_subject<T>(mut self, subject: T) -> Self
     where
         T: Into<String>,
     {
@@ -507,7 +507,7 @@ impl MessageBuilder {
     /// assert_eq!(message.contents[0].mime_type, "text/plain");
     /// assert_eq!(message.contents[0].value, "hello world");
     /// ```
-    pub fn content<T>(mut self, text: T) -> MessageBuilder
+    pub fn content<T>(mut self, text: T) -> Self
     where
         T: Into<String>,
     {
@@ -531,7 +531,7 @@ impl MessageBuilder {
     /// assert_eq!(message.contents[0].mime_type, "text/plain");
     /// assert_eq!(message.contents[0].value, "hello world");
     /// ```
-    pub fn content_with_type<T, U>(mut self, content: T, mime_type: U) -> MessageBuilder
+    pub fn content_with_type<T, U>(mut self, content: T, mime_type: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -562,7 +562,7 @@ impl MessageBuilder {
     /// assert_eq!(message.contents[0].mime_type, "text/plain");
     /// assert_eq!(message.contents[0].value, "hello world");
     /// ```
-    pub fn contents<T>(mut self, contents: T) -> MessageBuilder
+    pub fn contents<T>(mut self, contents: T) -> Self
     where
         T: IntoIterator<Item = Content>,
     {
@@ -586,7 +586,7 @@ impl MessageBuilder {
     /// assert_eq!(message.attachments[0].mime_type, "text/plain");
     /// assert_eq!(message.attachments[0].content, "aGVsbG8gd29ybGQ=");
     /// ```
-    pub fn attachment<T, U, V>(mut self, filename: T, mime_type: U, content: V) -> MessageBuilder
+    pub fn attachment<T, U, V>(mut self, filename: T, mime_type: U, content: V) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -625,7 +625,7 @@ impl MessageBuilder {
         mime_type: U,
         content: V,
         content_id: W,
-    ) -> MessageBuilder
+    ) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -664,7 +664,7 @@ impl MessageBuilder {
     /// assert_eq!(message.attachments[0].mime_type, "text/plain");
     /// assert_eq!(message.attachments[0].content, "aGVsbG8gd29ybGQ=");
     /// ```
-    pub fn attachments<T>(mut self, attachments: T) -> MessageBuilder
+    pub fn attachments<T>(mut self, attachments: T) -> Self
     where
         T: IntoIterator<Item = Attachment>,
     {
@@ -683,7 +683,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.template_id, Some("id".to_owned()));
     /// ```
-    pub fn template_id<T>(mut self, id: T) -> MessageBuilder
+    pub fn template_id<T>(mut self, id: T) -> Self
     where
         T: Into<String>,
     {
@@ -702,7 +702,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.sections.get("foo").map(String::as_str), Some("bar"));
     /// ```
-    pub fn section<T, U>(mut self, key: T, value: U) -> MessageBuilder
+    pub fn section<T, U>(mut self, key: T, value: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -728,7 +728,7 @@ impl MessageBuilder {
     /// assert_eq!(message.sections.get("foo").map(String::as_str), Some("bar"));
     /// assert_eq!(message.sections.get("bar").map(String::as_str), Some("baz"));
     /// ```
-    pub fn sections<T>(mut self, sections: T) -> MessageBuilder
+    pub fn sections<T>(mut self, sections: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -747,7 +747,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.categories[0], "foo");
     /// ```
-    pub fn category<T>(mut self, category: T) -> MessageBuilder
+    pub fn category<T>(mut self, category: T) -> Self
     where
         T: Into<String>,
     {
@@ -768,7 +768,7 @@ impl MessageBuilder {
     /// assert_eq!(message.categories[1], "bar");
     /// assert_eq!(message.categories[2], "baz");
     /// ```
-    pub fn categories<T>(mut self, categories: T) -> MessageBuilder
+    pub fn categories<T>(mut self, categories: T) -> Self
     where
         T: IntoIterator<Item = String>,
     {
@@ -787,7 +787,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.headers.get("foo").map(String::as_str), Some("bar"));
     /// ```
-    pub fn global_header<T, U>(mut self, key: T, value: U) -> MessageBuilder
+    pub fn global_header<T, U>(mut self, key: T, value: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -813,7 +813,7 @@ impl MessageBuilder {
     /// assert_eq!(message.headers.get("foo").map(String::as_str), Some("bar"));
     /// assert_eq!(message.headers.get("bar").map(String::as_str), Some("baz"));
     /// ```
-    pub fn global_headers<T>(mut self, headers: T) -> MessageBuilder
+    pub fn global_headers<T>(mut self, headers: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -832,7 +832,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.custom_args.get("foo").map(String::as_str), Some("bar"));
     /// ```
-    pub fn global_custom_arg<T, U>(mut self, key: T, value: U) -> MessageBuilder
+    pub fn global_custom_arg<T, U>(mut self, key: T, value: U) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -859,7 +859,7 @@ impl MessageBuilder {
     /// assert_eq!(message.custom_args.get("foo").map(String::as_str), Some("bar"));
     /// assert_eq!(message.custom_args.get("bar").map(String::as_str), Some("baz"));
     /// ```
-    pub fn global_custom_args<T>(mut self, args: T) -> MessageBuilder
+    pub fn global_custom_args<T>(mut self, args: T) -> Self
     where
         T: IntoIterator<Item = (String, String)>,
     {
@@ -882,7 +882,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.send_at, Some(1555890183));
     /// ```
-    pub fn global_send_at(mut self, timestamp: i64) -> MessageBuilder {
+    pub fn global_send_at(mut self, timestamp: i64) -> Self {
         self.initialize_personalization();
         self.0.send_at = Some(timestamp);
         self
@@ -899,7 +899,7 @@ impl MessageBuilder {
     ///
     /// assert_eq!(message.batch_id.unwrap(), "HkJ5yLYULb7Rj8GKSx7u025ouWVlMgAi");
     /// ```
-    pub fn batch_id<T>(mut self, id: T) -> MessageBuilder
+    pub fn batch_id<T>(mut self, id: T) -> Self
     where
         T: Into<String>,
     {

@@ -4,8 +4,9 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "trigger", path = "{{path}}")]
-pub fn {{name}}(trigger: BlobTrigger) {
+pub fn {{name}}(
+    #[binding(path = "{{path}}")] trigger: BlobTrigger
+) {
     // trigger.path has the path to the blob that triggered the function
     // trigger.blob has the contents of the blob
 }

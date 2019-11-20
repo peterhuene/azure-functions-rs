@@ -50,6 +50,9 @@
 //! ```
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]
+#![warn(clippy::use_self)]
+#![warn(clippy::option_map_unwrap_or)]
+#![warn(clippy::option_map_unwrap_or_else)]
 
 mod commands;
 mod util;

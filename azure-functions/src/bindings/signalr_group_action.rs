@@ -28,12 +28,14 @@ use serde_json::{to_string, to_value, Value};
 /// };
 ///
 /// #[func]
-/// #[binding(name = "req", auth_level = "anonymous", methods = "post")]
+///
 /// #[binding(name = "$return", hub_name = "chat", connection = "myconnection")]
-/// pub fn add_to_group(req: HttpRequest) -> SignalRGroupAction {
+/// pub fn add_to_group(
+///     #[binding(auth_level = "anonymous", methods = "post")] mut req: HttpRequest
+/// ) -> SignalRGroupAction {
 ///     SignalRGroupAction {
-///         user_id: req.query_params().get("user").unwrap().to_owned(),
-///         group_name: req.query_params().get("group").unwrap().to_owned(),
+///         user_id: req.query_params.remove("user").unwrap(),
+///         group_name: req.query_params.remove("group").unwrap(),
 ///         action: GroupAction::Add,
 ///     }
 /// }
@@ -63,7 +65,7 @@ impl Into<TypedData> for SignalRGroupAction {
 #[doc(hidden)]
 impl FromVec<SignalRGroupAction> for TypedData {
     fn from_vec(vec: Vec<SignalRGroupAction>) -> Self {
-        TypedData {
+        Self {
             data: Some(Data::Json(
                 Value::Array(vec.into_iter().map(|a| to_value(a).unwrap()).collect()).to_string(),
             )),

@@ -89,6 +89,9 @@
 //! The expected response would be `Hello from Rust!`.
 #![deny(unused_extern_crates)]
 #![deny(missing_docs)]
+#![warn(clippy::use_self)]
+#![warn(clippy::option_map_unwrap_or)]
+#![warn(clippy::option_map_unwrap_or_else)]
 #![cfg_attr(test, recursion_limit = "128")]
 
 #[doc(no_inline)]

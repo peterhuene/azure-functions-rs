@@ -43,9 +43,10 @@ const USER_PROPERTIES_KEY: &str = "UserProperties";
 /// };
 ///
 /// #[func]
-/// #[binding(name = "trigger", queue_name = "example", connection = "connection")]
-/// pub fn log_message(trigger: ServiceBusTrigger) {
-///     log::info!("{}", trigger.message.as_str().unwrap());
+/// pub fn log_message(
+///     #[binding(queue_name = "example", connection = "connection")] trigger: ServiceBusTrigger
+/// ) {
+///     log::info!("{}", trigger.message.to_str().unwrap());
 /// }
 /// ```
 ///
@@ -55,14 +56,15 @@ const USER_PROPERTIES_KEY: &str = "UserProperties";
 /// use azure_functions::{bindings::ServiceBusTrigger, func};
 ///
 /// #[func]
-/// #[binding(
-///     name = "trigger",
-///     topic_name = "mytopic",
-///     subscription_name = "mysubscription",
-///     connection = "connection"
-/// )]
-/// pub fn log_topic_message(trigger: ServiceBusTrigger) {
-///     log::info!("{}", trigger.message.as_str().unwrap());
+/// pub fn log_topic_message(
+///     #[binding(
+///         topic_name = "mytopic",
+///         subscription_name = "mysubscription",
+///         connection = "connection"
+///     )]
+///     trigger: ServiceBusTrigger,
+/// ) {
+///     log::info!("{}", trigger.message.to_str().unwrap());
 /// }
 /// ```
 #[derive(Debug)]
@@ -98,7 +100,7 @@ pub struct ServiceBusTrigger {
 impl ServiceBusTrigger {
     #[doc(hidden)]
     pub fn new(data: TypedData, mut metadata: HashMap<String, TypedData>) -> Self {
-        ServiceBusTrigger {
+        Self {
             message: data.into(),
             delivery_count: convert_from(
                 metadata
@@ -161,15 +163,12 @@ impl ServiceBusTrigger {
                     Some(Data::String(s)) => s,
                     _ => panic!("expected a string for correlation id"),
                 }),
-            user_properties: from_str(
-                metadata
-                    .get(USER_PROPERTIES_KEY)
-                    .map(|data| match &data.data {
-                        Some(Data::Json(s)) => s.as_str(),
-                        _ => panic!("expected JSON data for user properties"),
-                    })
-                    .unwrap_or("{}"),
-            )
+            user_properties: from_str(metadata.get(USER_PROPERTIES_KEY).map_or("{}", |data| {
+                match &data.data {
+                    Some(Data::Json(s)) => s.as_str(),
+                    _ => panic!("expected JSON data for user properties"),
+                }
+            }))
             .expect("failed to convert user properties"),
         }
     }
@@ -299,6 +298,6 @@ mod tests {
         assert_eq!(trigger.correlation_id.unwrap(), CORRELATION_ID);
         assert_eq!(trigger.user_properties.len(), 1);
         assert_eq!(trigger.user_properties["hello"].as_str().unwrap(), "world");
-        assert_eq!(trigger.message.as_str().unwrap(), MESSAGE);
+        assert_eq!(trigger.message.to_str().unwrap(), MESSAGE);
     }
 }

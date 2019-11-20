@@ -14,7 +14,6 @@ use azure_functions::{
 use serde_json::json;
 
 #[func]
-#[binding(name = "req", route = "create/{id}")]
 #[binding(
     name = "output1",
     connection = "connection",
@@ -22,12 +21,14 @@ use serde_json::json;
     collection_name = "documents",
     create_collection = true
 )]
-pub fn create_document(req: HttpRequest) -> (HttpResponse, CosmosDbDocument {
+pub fn create_document(
+    #[binding(route = "create/{id}")] mut req: HttpRequest,
+) -> (HttpResponse, CosmosDbDocument) {
     (
         "Document was created.".into(),
         json!({
-            "id": req.route_params().get("id").unwrap(),
-            "name": req.query_params().get("name").map_or("stranger", |x| x)
+            "id": req.route_params.remove("id").unwrap(),
+            "name": req.query_params.remove("name").expect("expected a 'name' query parameter"),
         })
         .into(),
     )
@@ -41,15 +42,17 @@ use azure_functions::{bindings::CosmosDbTrigger, func};
 use log::info;
 
 #[func]
-#[binding(
-    name = "trigger",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents"
-)]
-pub fn log_documents(trigger: CosmosDbTrigger) {
+pub fn log_documents(
+    #[binding(
+        connection = "connection",
+        database_name = "exampledb",
+        collection_name = "documents",
+        create_lease_collection = true
+    )]
+    trigger: CosmosDbTrigger,
+) {
     for document in trigger.documents {
-        info!("{}", document);
+        info!("{:#?}", document);
     }
 }
 ```
@@ -63,16 +66,17 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "query/{name}")]
-#[binding(
-    name = "documents",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents",
-    sql_query="select * from documents d where contains(d.name, {name})",
-    create_collection = true,
-)]
-pub fn query_documents(_req: HttpRequest, documents: Vec<CosmosDbDocument>) -> HttpResponse {
+pub fn query_documents(
+    #[binding(route = "query/{name}")] _req: HttpRequest,
+    #[binding(
+        connection = "connection",
+        database_name = "exampledb",
+        collection_name = "documents",
+        sql_query = "select * from documents d where contains(d.name, {name})",
+        create_collection = true
+    )]
+    documents: Vec<CosmosDbDocument>,
+) -> HttpResponse {
     documents.into()
 }
 ```
@@ -86,20 +90,21 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "req", route = "read/{id}")]
-#[binding(
-    name = "documents",
-    connection = "connection",
-    database_name = "exampledb",
-    collection_name = "documents",
-    id = "{id}",
-    partition_key = "{id}",
-)]
-pub fn read_document(req: HttpRequest, document: CosmosDbDocument) -> HttpResponse {
+pub fn read_document(
+    #[binding(route = "read/{id}")] req: HttpRequest,
+    #[binding(
+        connection = "connection",
+        database_name = "exampledb",
+        collection_name = "documents",
+        id = "{id}",
+        partition_key = "{id}"
+    )]
+    document: CosmosDbDocument,
+) -> HttpResponse {
     if document.is_null() {
         format!(
             "Document with id '{}' does not exist.",
-            req.route_params().get("id").unwrap()
+            req.route_params.get("id").unwrap()
         )
         .into()
     } else {

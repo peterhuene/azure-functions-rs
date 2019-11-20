@@ -43,7 +43,7 @@ impl<F> ContextFuture<F> {
         function_name: &'static str,
         sender: Sender,
     ) -> Self {
-        ContextFuture {
+        Self {
             inner,
             invocation_id,
             function_id,
@@ -124,11 +124,11 @@ impl Worker {
                 .map_err(|e| panic!("failed to read event stream response: {}", e))
                 .unwrap();
 
-            Worker::handle_worker_init_request(sender.clone(), init_req).await;
+            Self::handle_worker_init_request(sender.clone(), init_req).await;
 
             stream
                 .for_each(move |req| {
-                    Worker::handle_request(
+                    Self::handle_request(
                         &mut registry,
                         sender.clone(),
                         req.expect("expected a request"),
@@ -154,7 +154,7 @@ impl Worker {
                 )))
                 .expect("failed to set the global logger instance");
 
-                set_hook(Box::new(Worker::handle_panic));
+                set_hook(Box::new(Self::handle_panic));
 
                 log::set_max_level(log::LevelFilter::Trace);
 
@@ -179,13 +179,13 @@ impl Worker {
     fn handle_request(registry: &mut Registry<'static>, sender: Sender, req: StreamingMessage) {
         match req.content {
             Some(Content::FunctionLoadRequest(req)) => {
-                Worker::handle_function_load_request(registry, sender, req)
+                Self::handle_function_load_request(registry, sender, req)
             }
             Some(Content::InvocationRequest(req)) => {
-                Worker::handle_invocation_request(registry, sender, req)
+                Self::handle_invocation_request(registry, sender, req)
             }
             Some(Content::WorkerStatusRequest(req)) => {
-                Worker::handle_worker_status_request(sender, req)
+                Self::handle_worker_status_request(sender, req)
             }
             Some(Content::FileChangeEventRequest(_)) => {}
             Some(Content::InvocationCancel(_)) => {}
@@ -234,7 +234,7 @@ impl Worker {
         req: InvocationRequest,
     ) {
         if let Some(func) = registry.get(&req.function_id) {
-            Worker::invoke_function(func, sender, req);
+            Self::invoke_function(func, sender, req);
             return;
         }
 
@@ -322,8 +322,7 @@ impl Worker {
                         .unwrap_or_else(|| info
                             .payload()
                             .downcast_ref::<String>()
-                            .map(String::as_str)
-                            .unwrap_or("")),
+                            .map_or("", String::as_str)),
                     location.file(),
                     location.line(),
                     location.column(),
@@ -340,8 +339,7 @@ impl Worker {
                         .unwrap_or_else(|| info
                             .payload()
                             .downcast_ref::<String>()
-                            .map(String::as_str)
-                            .unwrap_or("")),
+                            .map_or("", String::as_str)),
                     backtrace
                 );
             }

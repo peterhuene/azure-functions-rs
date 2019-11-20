@@ -4,16 +4,17 @@ use azure_functions::{
 };
 
 #[func]
-#[binding(name = "_req", route = "query/{name}")]
-#[binding(
-    type = "cosmosDB",
-    name = "documents",
-    connectionStringSetting = "connection",
-    databaseName = "exampledb",
-    collectionName = "documents",
-    sqlQuery = "select * from documents d where contains(d.name, {name})",
-    createIfNotExists = true
-)]
-pub fn query_documents(_req: HttpRequest, documents: GenericInput) -> HttpResponse {
+pub fn query_documents(
+    #[binding(route = "query/{name}")] _req: HttpRequest,
+    #[binding(
+        type = "cosmosDB",
+        connectionStringSetting = "connection",
+        databaseName = "exampledb",
+        collectionName = "documents",
+        sqlQuery = "select * from documents d where contains(d.name, {name})",
+        createIfNotExists = true
+    )]
+    documents: GenericInput,
+) -> HttpResponse {
     documents.into()
 }
