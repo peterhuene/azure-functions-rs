@@ -258,6 +258,7 @@ impl Client {
             Ok(res) => match res.status() {
                 StatusCode::OK => Ok(()),
                 StatusCode::NOT_FOUND => Err(ClientError::InstanceNotFound),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
                 _ => unreachable!("unexpected response from server"),
             },
             Err(e) => Err(ClientError::Message(format!(
@@ -319,6 +320,7 @@ impl Client {
                     Ok(result.instances_deleted)
                 }
                 StatusCode::NOT_FOUND => Err(ClientError::InstanceNotFound),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
                 _ => unreachable!("unexpected response from server"),
             },
             Err(e) => Err(ClientError::Message(format!(
@@ -355,6 +357,7 @@ impl Client {
                 StatusCode::NOT_FOUND => Err(ClientError::InstanceNotFound),
                 StatusCode::BAD_REQUEST => Err(ClientError::BadRequest),
                 StatusCode::GONE => Err(ClientError::InstanceCompletedOrFailed),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
                 _ => unreachable!("unexpected response from server"),
             },
             Err(e) => Err(ClientError::Message(format!(
@@ -379,6 +382,7 @@ impl Client {
                 StatusCode::NOT_FOUND => Err(ClientError::InstanceNotFound),
                 StatusCode::BAD_REQUEST => Err(ClientError::BadRequest),
                 StatusCode::GONE => Err(ClientError::InstanceCompletedOrFailed),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
                 _ => unreachable!("unexpected response from server"),
             },
             Err(e) => Err(ClientError::Message(format!(
@@ -398,15 +402,28 @@ impl Client {
     where
         D: Into<Value>,
     {
-        let req = Request::builder()
+        // FIX ME: these changes are a workaround for https://github.com/Azure/azure-functions-durable-extension/issues/1156
+        // Revert this once fixed
+        let input = input.into();
+        let mut builder = Request::builder()
             .method("POST")
             .uri(
                 self.endpoint
                     .create_new_instance_url(function_name, instance_id)
                     .into_string(),
             )
-            .header("Content-Type", "application/json")
-            .body(Body::from(input.into().to_string()))
+            .header("Content-Type", "application/json");
+
+        if input == Value::Null {
+            builder = builder.header("Content-Length", "0");
+        }
+
+        let req = builder
+            .body(if input == Value::Null {
+                Body::from("")
+            } else {
+                Body::from(input.to_string())
+            })
             .unwrap();
 
         match self.client.request(req).await {
@@ -421,6 +438,7 @@ impl Client {
                     })
                 }
                 StatusCode::BAD_REQUEST => Err(ClientError::BadCreateRequest),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
                 _ => unreachable!("unexpected response from server"),
             },
             Err(e) => Err(ClientError::Message(format!(
@@ -448,6 +466,77 @@ impl Client {
                 StatusCode::ACCEPTED => Ok(()),
                 StatusCode::NOT_FOUND => Err(ClientError::InstanceNotFound),
                 StatusCode::GONE => Err(ClientError::InstanceCompletedOrFailed),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
+                _ => unreachable!("unexpected response from server"),
+            },
+            Err(e) => Err(ClientError::Message(format!(
+                "failed to send request: {}",
+                e
+            ))),
+        }
+    }
+
+    /// Sends a one-way operation message to a Durable Entity.
+    ///
+    /// If the entity doesn't exist, it will be created automatically.
+    pub async fn signal_entity<D>(
+        &self,
+        entity_type: &str,
+        entity_key: &str,
+        operation: Option<&str>,
+        content: D,
+    ) -> Result<()>
+    where
+        D: Into<Value>,
+    {
+        let req = Request::builder()
+            .method("POST")
+            .uri(
+                self.endpoint
+                    .signal_entity_url(entity_type, entity_key, operation)
+                    .into_string(),
+            )
+            .header("Content-Type", "application/json")
+            .body(Body::from(to_string(&content.into()).unwrap()))
+            .unwrap();
+
+        match self.client.request(req).await {
+            Ok(res) => match res.status() {
+                StatusCode::ACCEPTED => Ok(()),
+                StatusCode::NOT_FOUND => Err(ClientError::EntityNotFound),
+                StatusCode::BAD_REQUEST => Err(ClientError::BadRequest),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
+                _ => unreachable!("unexpected response from server"),
+            },
+            Err(e) => Err(ClientError::Message(format!(
+                "failed to send request: {}",
+                e
+            ))),
+        }
+    }
+
+    /// Query the state of the specified entity.
+    pub async fn query_entity(&self, entity_type: &str, entity_key: &str) -> Result<Value> {
+        let req = Request::builder()
+            .method("GET")
+            .uri(
+                self.endpoint
+                    .query_entity_url(entity_type, entity_key)
+                    .into_string(),
+            )
+            .body(Body::empty())
+            .unwrap();
+
+        match self.client.request(req).await {
+            Ok(res) => match res.status() {
+                StatusCode::OK => {
+                    let body = body_from_response(res).await?;
+                    from_slice(body.bytes()).map_err(|e| {
+                        ClientError::Message(format!("failed to deserialize entity data: {}", e))
+                    })
+                }
+                StatusCode::NOT_FOUND => Err(ClientError::EntityNotFound),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(ClientError::InternalServerError),
                 _ => unreachable!("unexpected response from server"),
             },
             Err(e) => Err(ClientError::Message(format!(

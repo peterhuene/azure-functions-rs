@@ -1,3 +1,4 @@
+use crate::durable::HttpRequest;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use serde_json::Value;
@@ -78,6 +79,16 @@ pub(crate) enum Action {
 
     #[serde(rename_all = "camelCase")]
     WaitForExternalEvent { external_event_name: String },
+
+    #[serde(rename_all = "camelCase")]
+    CallEntity {
+        instance_id: String,
+        operation: String,
+        input: Value,
+    },
+
+    #[serde(rename_all = "camelCase")]
+    CallHttp { http_request: HttpRequest },
 }
 
 #[cfg(test)]

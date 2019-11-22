@@ -27,24 +27,47 @@ const ORCHESTRATION_CONTEXT_TYPE: &str = "DurableOrchestrationContext";
 const ORCHESTRATION_OUTPUT_TYPE: &str = "OrchestrationOutput";
 const ACTIVITY_CONTEXT_TYPE: &str = "DurableActivityContext";
 const ACTIVITY_OUTPUT_TYPE: &str = "ActivityOutput";
+const ENTITY_CONTEXT_TYPE: &str = "DurableEntityContext";
 
-fn has_parameter_of_type(func: &ItemFn, type_name: &str) -> bool {
-    func.sig.inputs.iter().any(|arg| {
+#[derive(Copy, Debug, Clone, PartialEq)]
+pub enum FunctionType {
+    Normal,
+    Orchestration,
+    Activity,
+    Entity,
+}
+
+fn get_function_type(func: &ItemFn) -> FunctionType {
+    for arg in func.sig.inputs.iter() {
         if let FnArg::Typed(arg) = arg {
-            match &*arg.ty {
+            let ty = match &*arg.ty {
                 Type::Reference(tr) => {
                     if let Type::Path(tp) = &*tr.elem {
-                        return last_segment_in_path(&tp.path).ident == type_name;
+                        &last_segment_in_path(&tp.path).ident
+                    } else {
+                        continue;
                     }
                 }
-                Type::Path(tp) => {
-                    return last_segment_in_path(&tp.path).ident == type_name;
+                Type::Path(tp) => &last_segment_in_path(&tp.path).ident,
+                _ => {
+                    continue;
                 }
-                _ => {}
+            };
+
+            if ty == ORCHESTRATION_CONTEXT_TYPE {
+                return FunctionType::Orchestration;
+            }
+
+            if ty == ACTIVITY_CONTEXT_TYPE {
+                return FunctionType::Activity;
+            }
+
+            if ty == ENTITY_CONTEXT_TYPE {
+                return FunctionType::Entity;
             }
         }
-        false
-    })
+    }
+    FunctionType::Normal
 }
 
 fn validate_orchestration_function(func: &ItemFn) {
@@ -56,22 +79,6 @@ fn validate_orchestration_function(func: &ItemFn) {
     }
 
     if func.sig.inputs.len() != 1 {
-        macro_panic(
-            func.sig.ident.span(),
-            format!(
-                "orchestration functions must have exactly one parameter of type `{}`",
-                ORCHESTRATION_CONTEXT_TYPE
-            ),
-        );
-    }
-
-    if !match func.sig.inputs.iter().nth(0).unwrap() {
-        FnArg::Typed(arg) => match &*arg.ty {
-            Type::Path(tp) => last_segment_in_path(&tp.path).ident == ORCHESTRATION_CONTEXT_TYPE,
-            _ => false,
-        },
-        _ => false,
-    } {
         macro_panic(
             func.sig.ident.span(),
             format!(
@@ -112,7 +119,7 @@ fn validate_activity_function(func: &ItemFn) {
     fn validate_return_binding(ty: &Type) {
         match ty {
             Type::Tuple(tuple) => {
-                if let Some(first) = tuple.elems.iter().nth(0) {
+                if let Some(first) = tuple.elems.iter().next() {
                     validate_return_binding(first)
                 }
             }
@@ -140,6 +147,22 @@ fn validate_activity_function(func: &ItemFn) {
 
     if let ReturnType::Type(_, ty) = &func.sig.output {
         validate_return_binding(&*ty);
+    }
+}
+
+fn validate_entity_function(func: &ItemFn) {
+    if func.sig.inputs.len() != 1 {
+        macro_panic(
+            func.sig.ident.span(),
+            format!(
+                "entity functions must have exactly one parameter of type `{}`",
+                ENTITY_CONTEXT_TYPE
+            ),
+        );
+    }
+
+    if let ReturnType::Type(_, ty) = &func.sig.output {
+        macro_panic(ty.span(), "entity functions cannot return a value");
     }
 }
 
@@ -201,7 +224,7 @@ fn get_generic_argument_type<'a>(
             if gen_args.args.len() != 1 {
                 return None;
             }
-            match gen_args.args.iter().nth(0) {
+            match gen_args.args.iter().next() {
                 Some(GenericArgument::Type(t)) => Some(t),
                 _ => None,
             }
@@ -564,13 +587,12 @@ pub fn func_impl(
 
     validate_function(&target);
 
-    let is_orchestration = has_parameter_of_type(&target, ORCHESTRATION_CONTEXT_TYPE);
-    let is_activity = has_parameter_of_type(&target, ACTIVITY_CONTEXT_TYPE);
-
-    if is_orchestration {
-        validate_orchestration_function(&target);
-    } else if is_activity {
-        validate_activity_function(&target);
+    let func_type = get_function_type(&target);
+    match func_type {
+        FunctionType::Normal => {}
+        FunctionType::Orchestration => validate_orchestration_function(&target),
+        FunctionType::Activity => validate_activity_function(&target),
+        FunctionType::Entity => validate_entity_function(&target),
     }
 
     let mut func = Function::from(match syn::parse_macro_input::parse::<AttributeArgs>(args) {
@@ -604,9 +626,13 @@ pub fn func_impl(
         );
     }
 
-    if !is_orchestration {
-        for binding in
-            bind_return_type(&target.sig.output, &mut binding_args, is_activity).into_iter()
+    if func_type != FunctionType::Orchestration {
+        for binding in bind_return_type(
+            &target.sig.output,
+            &mut binding_args,
+            func_type == FunctionType::Activity,
+        )
+        .into_iter()
         {
             if let Some(name) = binding.name() {
                 if !names.insert(name.to_string()) {
@@ -621,7 +647,7 @@ pub fn func_impl(
         }
     }
 
-    if let Some((_, args)) = binding_args.iter().nth(0) {
+    if let Some((_, args)) = binding_args.iter().next() {
         iter_attribute_args(&args.0, |k, v| {
             if k != "name" {
                 return true;
@@ -629,22 +655,17 @@ pub fn func_impl(
 
             if let Lit::Str(s) = v {
                 match s.value().as_ref() {
-                    RETURN_BINDING_NAME => if is_orchestration {
+                    RETURN_BINDING_NAME => {
                         macro_panic(
                             v.span(),
-                            "cannot bind to the return value of an orchestration function",
-                        )
-                    } else if is_activity {
-                        macro_panic(
-                            v.span(),
-                            "cannot bind to the return value of an activity function",
-                        )
-                    } else {
-                        macro_panic(
-                            v.span(),
-                            "cannot bind to a function without a return value",
-                        )
-                    },
+                            match func_type {
+                                FunctionType::Orchestration => "cannot bind to the return value of an orchestration function",
+                                FunctionType::Activity => "cannot bind to the return value of an activity function",
+                                FunctionType::Entity => "cannot bind to the return value of an entity function",
+                                _ => "cannot bind to a function without a return value",
+                            }
+                        );
+                    }
                     v => macro_panic(
                         v.span(),
                         format!(
@@ -664,7 +685,7 @@ pub fn func_impl(
 
     let invoker = Invoker {
         func: &target,
-        is_orchestration,
+        func_type,
     };
 
     let target_name = target.sig.ident.to_string();
@@ -672,7 +693,7 @@ pub fn func_impl(
         func.name = Cow::Owned(target_name.clone());
     }
 
-    if !is_orchestration && target.sig.asyncness.is_some() {
+    if func_type != FunctionType::Orchestration && target.sig.asyncness.is_some() {
         func.invoker = Some(azure_functions_shared::codegen::Invoker {
             name: Cow::Owned(invoker.name()),
             invoker_fn: InvokerFn::Async(None),

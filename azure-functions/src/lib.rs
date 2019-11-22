@@ -93,7 +93,6 @@
 #![warn(clippy::option_map_unwrap_or)]
 #![warn(clippy::option_map_unwrap_or_else)]
 #![allow(clippy::needless_doctest_main)]
-#![cfg_attr(test, recursion_limit = "128")]
 
 #[doc(no_inline)]
 pub use azure_functions_codegen::export;

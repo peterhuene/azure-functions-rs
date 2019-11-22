@@ -1,7 +1,6 @@
 //! # Azure Functions for Rust
 //!
 //! This crate shares types between the `azure-functions-codegen` and `azure-functions` crates.
-#![recursion_limit = "128"]
 #![cfg_attr(feature = "unstable", feature(proc_macro_diagnostic))]
 #![deny(missing_docs)]
 #![deny(unused_extern_crates)]

@@ -95,6 +95,33 @@ impl Endpoint {
         url
     }
 
+    /// Gets the "signal entity" URL.
+    pub fn signal_entity_url(&self, entity_type: &str, entity_key: &str, op: Option<&str>) -> Url {
+        let mut url = self.base_uri.clone();
+
+        url.set_path(&format!(
+            "/runtime/webhooks/durabletask/entities/{}/{}",
+            entity_type, entity_key
+        ));
+
+        url.query_pairs_mut()
+            .clear()
+            .append_pair("taskHub", &self.task_hub)
+            .append_pair("connection", &self.connection)
+            .append_pair("code", &self.code);
+
+        if let Some(op) = op {
+            url.query_pairs_mut().append_pair("op", op);
+        }
+
+        url
+    }
+
+    /// Gets the "query entity" URL.
+    pub fn query_entity_url(&self, entity_type: &str, entity_key: &str) -> Url {
+        self.signal_entity_url(entity_type, entity_key, None)
+    }
+
     fn build_query_url(&self, instance_id: Option<&str>, action: Option<&str>) -> Url {
         let mut url = self.base_uri.clone();
         let mut path = "/runtime/webhooks/durabletask/instances".to_string();

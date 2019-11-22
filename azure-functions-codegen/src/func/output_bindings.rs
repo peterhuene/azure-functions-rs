@@ -6,7 +6,6 @@ use syn::{FnArg, Ident, Index, ItemFn, Pat, ReturnType, Type};
 
 pub struct OutputBindings<'a> {
     pub func: &'a ItemFn,
-    pub is_orchestration: bool,
 }
 
 impl<'a> OutputBindings<'a> {
@@ -144,7 +143,7 @@ impl<'a> OutputBindings<'a> {
             }
         } else {
             if let Type::Tuple(tuple) = &*ty {
-                if let Some(first) = tuple.elems.iter().nth(0) {
+                if let Some(first) = tuple.elems.iter().next() {
                     return OutputBindings::get_return_binding(first, true);
                 }
                 return None;
@@ -170,11 +169,6 @@ impl<'a> OutputBindings<'a> {
 
 impl ToTokens for OutputBindings<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        // Orchestration functions have no output bindings
-        if self.is_orchestration {
-            return;
-        }
-
         for binding in self.get_output_argument_bindings() {
             binding.to_tokens(tokens);
         }

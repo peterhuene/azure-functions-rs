@@ -1,7 +1,8 @@
+use crate::util::nested_json;
 use crate::{
     durable::{
-        Action, ActionFuture, EventType, HistoryEvent, JoinAll, OrchestrationFuture,
-        OrchestrationState, RetryOptions, SelectAll,
+        Action, ActionFuture, EventType, HistoryEvent, HttpRequest, HttpResponse, JoinAll,
+        OrchestrationFuture, OrchestrationState, RetryOptions, SelectAll,
     },
     rpc::{typed_data::Data, TypedData},
 };
@@ -119,7 +120,7 @@ impl DurableOrchestrationContext {
     }
 
     #[doc(hidden)]
-    pub fn state(&self) -> Rc<RefCell<OrchestrationState>> {
+    pub fn _state(&self) -> Rc<RefCell<OrchestrationState>> {
         self.state.clone()
     }
 
@@ -302,20 +303,84 @@ impl DurableOrchestrationContext {
 
         if let Some((idx, raised)) = state.find_event_raised(name) {
             raised.is_processed = true;
-            // For some reason, the data comes through as stringified JSON, so parse it
             input = Some(Ok(raised
                 .input
                 .as_ref()
-                .map(|v| {
-                    v.as_str()
-                        .map(|s| from_str(&s).unwrap_or_default())
-                        .unwrap_or_default()
-                })
-                .unwrap_or_default()));
+                .map_or(Value::Null, |s| from_str::<Value>(&s).unwrap_or_default())));
             event_index = Some(idx);
         }
 
         ActionFuture::new(input, self.state.clone(), event_index)
+    }
+
+    /// Calls an operation on an entity and waits on the operation to complete.
+    pub fn call_entity<T>(
+        &self,
+        name: &str,
+        key: &str,
+        operation: &str,
+        input: T,
+    ) -> ActionFuture<Result<Value, String>>
+    where
+        T: Into<Value>,
+    {
+        let mut state = self.state.borrow_mut();
+
+        let mut result: Option<Result<Value, String>> = None;
+        let mut event_index = None;
+
+        let id = Self::format_entity_id(name, key);
+
+        #[derive(Deserialize)]
+        struct EntityRequestMessage {
+            id: String,
+        }
+
+        #[derive(Deserialize)]
+        struct EntityResponseMessage {
+            #[serde(with = "nested_json")]
+            result: Value,
+        }
+
+        if let Some((_, scheduled)) = state.find_event_sent(&id, "op") {
+            scheduled.is_processed = true;
+
+            let request: EntityRequestMessage = from_str(
+                scheduled
+                    .input
+                    .as_ref()
+                    .expect("expected an entity request message"),
+            )
+            .expect("failed to parse entity request message");
+
+            if let Some((idx, raised)) = state.find_event_raised(&request.id) {
+                raised.is_processed = true;
+                event_index = Some(idx);
+
+                let response: EntityResponseMessage = from_str(
+                    raised
+                        .input
+                        .as_ref()
+                        .expect("expected a entity response message"),
+                )
+                .expect("failed to parse entity response message");
+
+                result = Some(Ok(response.result));
+            }
+        }
+
+        state.push_action(Action::CallEntity {
+            instance_id: id,
+            operation: operation.into(),
+            input: input.into(),
+        });
+
+        ActionFuture::new(result, self.state.clone(), event_index)
+    }
+
+    /// Calls an HTTP endpoint using the information in the given request.
+    pub async fn call_http(&self, req: HttpRequest) -> ActionFuture<Result<HttpResponse, String>> {
+        unimplemented!()
     }
 
     fn perform_call_action(
@@ -344,8 +409,7 @@ impl DurableOrchestrationContext {
                     result = Some(Ok(finished
                         .result
                         .as_ref()
-                        .map(|s| from_str(&s).unwrap_or_default())
-                        .unwrap_or_default()));
+                        .map_or(Value::Null, |s| from_str(&s).unwrap_or_default())));
                 } else if let Some(failed_type) = failed_type {
                     if finished.event_type == failed_type {
                         result = Some(Err(finished.reason.clone().unwrap_or_default()));
@@ -357,6 +421,10 @@ impl DurableOrchestrationContext {
         }
 
         ActionFuture::new(result, self.state.clone(), event_index)
+    }
+
+    fn format_entity_id(entity_type: &str, entity_key: &str) -> String {
+        format!("@{}@{}", entity_type.to_lowercase(), entity_key)
     }
 }
 

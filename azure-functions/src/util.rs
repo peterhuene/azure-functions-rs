@@ -54,8 +54,35 @@ where
     }
 
     s.parse::<DateTime<FixedOffset>>()
-        .map_err(|e| Error::custom(format!("{}", e)))
         .map(|dt| dt.with_timezone(&Utc))
+        .map_err(Error::custom)
+}
+
+pub mod nested_json {
+    use serde::de::{self, Deserialize, DeserializeOwned, Deserializer};
+    use serde::ser::{self, Serialize, Serializer};
+    use serde_json::{from_str, to_string};
+
+    pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        T: Serialize,
+        S: Serializer,
+    {
+        to_string(value)
+            .map_err(ser::Error::custom)?
+            .serialize(serializer)
+    }
+
+    pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+    where
+        T: DeserializeOwned + Default,
+        D: Deserializer<'de>,
+    {
+        match Option::<String>::deserialize(deserializer)? {
+            Some(s) => from_str(&s).map_err(de::Error::custom),
+            None => Ok(T::default()),
+        }
+    }
 }
 
 #[cfg(test)]

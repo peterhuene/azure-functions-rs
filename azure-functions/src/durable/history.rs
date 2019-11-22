@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use serde_json::Value;
 use serde_repr::Deserialize_repr;
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -17,11 +16,11 @@ pub struct HistoryEvent {
     #[serde(skip)]
     pub is_processed: bool,
 
-    // Used by: EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
+    // Used by: EventSent, EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
     pub name: Option<String>,
 
-    // Used by: EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
-    pub input: Option<Value>,
+    // Used by: EventSent, EventRaised, ExecutionStarted, SubOrchestrationInstanceCreated, TaskScheduled
+    pub input: Option<String>,
 
     // Used by: SubOrchestrationInstanceCompleted, TaskCompleted
     pub result: Option<String>,
@@ -29,7 +28,7 @@ pub struct HistoryEvent {
     // Used by: SubOrchestrationInstanceCompleted , SubOrchestrationInstanceFailed, TaskCompleted,TaskFailed
     pub task_scheduled_id: Option<i32>,
 
-    // Used by: SubOrchestrationInstanceCreated
+    // Used by: EventSent, SubOrchestrationInstanceCreated
     pub instance_id: Option<String>,
 
     // Used by: SubOrchestrationInstanceFailed, TaskFailed

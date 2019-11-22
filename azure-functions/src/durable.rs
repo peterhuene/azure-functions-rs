@@ -1,8 +1,9 @@
 //! Module for Durable Functions types.
+use crate::bindings::DurableEntityContext;
 use crate::rpc::{
     status_result::Status, typed_data::Data, InvocationResponse, StatusResult, TypedData,
 };
-use serde_json::Value;
+use serde_json::{to_string, Value};
 use std::{
     cell::RefCell,
     future::Future,
@@ -14,7 +15,10 @@ use std::{
 mod action_future;
 mod actions;
 mod activity_output;
+mod entity_state;
 mod history;
+mod http_request;
+mod http_response;
 mod join_all;
 mod orchestration_output;
 mod orchestration_state;
@@ -23,7 +27,10 @@ mod select_all;
 pub use self::action_future::*;
 pub use self::actions::*;
 pub use self::activity_output::*;
+pub use self::entity_state::*;
 pub(crate) use self::history::*;
+pub use self::http_request::*;
+pub use self::http_response::*;
 pub use self::join_all::*;
 pub use self::orchestration_output::*;
 pub use self::orchestration_state::*;
@@ -95,6 +102,39 @@ where
         result: Some(StatusResult {
             status: Status::Success as i32,
             ..Default::default()
+        }),
+        ..Default::default()
+    }
+}
+
+/// The entrypoint for entity functions.
+#[doc(hidden)]
+pub fn run_entity(
+    id: String,
+    target: fn(DurableEntityContext),
+    mut trigger: DurableEntityContext,
+) -> InvocationResponse {
+    let count = trigger.count();
+    let state = trigger.internal_state();
+
+    for i in 0..count {
+        let mut next = trigger.clone();
+        next.set_index(i + 1);
+        target(trigger);
+        trigger = next;
+    }
+
+    let state = &*state.borrow();
+    let output = to_string(state).unwrap();
+
+    InvocationResponse {
+        invocation_id: id,
+        result: Some(StatusResult {
+            status: Status::Success as i32,
+            ..Default::default()
+        }),
+        return_value: Some(TypedData {
+            data: Some(Data::Json(output)),
         }),
         ..Default::default()
     }

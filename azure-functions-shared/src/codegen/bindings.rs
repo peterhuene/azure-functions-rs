@@ -4,6 +4,7 @@ mod blob_trigger;
 mod cosmos_db;
 mod cosmos_db_trigger;
 mod durable_client;
+mod entity_trigger;
 mod event_grid_trigger;
 mod event_hub;
 mod event_hub_trigger;
@@ -28,6 +29,7 @@ pub use self::blob_trigger::*;
 pub use self::cosmos_db::*;
 pub use self::cosmos_db_trigger::*;
 pub use self::durable_client::*;
+pub use self::entity_trigger::*;
 pub use self::event_grid_trigger::*;
 pub use self::event_hub::*;
 pub use self::event_hub_trigger::*;
@@ -95,6 +97,7 @@ pub enum Binding {
     DurableClient(DurableClient),
     OrchestrationTrigger(OrchestrationTrigger),
     ActivityTrigger(ActivityTrigger),
+    EntityTrigger(EntityTrigger),
 }
 
 impl Binding {
@@ -124,6 +127,7 @@ impl Binding {
             Self::DurableClient(b) => Some(&b.name),
             Self::OrchestrationTrigger(b) => Some(&b.name),
             Self::ActivityTrigger(b) => Some(&b.name),
+            Self::EntityTrigger(b) => Some(&b.name),
         }
     }
 
@@ -153,6 +157,7 @@ impl Binding {
             Self::DurableClient(_) => Some(DurableClient::binding_type()),
             Self::OrchestrationTrigger(_) => Some(OrchestrationTrigger::binding_type()),
             Self::ActivityTrigger(_) => Some(ActivityTrigger::binding_type()),
+            Self::EntityTrigger(_) => Some(EntityTrigger::binding_type()),
         }
     }
 
@@ -168,7 +173,8 @@ impl Binding {
             | Self::ServiceBusTrigger(_)
             | Self::GenericTrigger(_)
             | Self::OrchestrationTrigger(_)
-            | Self::ActivityTrigger(_) => true,
+            | Self::ActivityTrigger(_)
+            | Self::EntityTrigger(_) => true,
             _ => false,
         }
     }
@@ -237,6 +243,9 @@ impl ToTokens for Binding {
             Self::ActivityTrigger(b) => {
                 quote!(::azure_functions::codegen::bindings::Binding::ActivityTrigger(#b))
             }
+            Self::EntityTrigger(b) => {
+                quote!(::azure_functions::codegen::bindings::Binding::EntityTrigger(#b))
+            }
         }
         .to_tokens(tokens);
     }
@@ -280,6 +289,9 @@ lazy_static! {
         });
         map.insert("DurableActivityContext", |args, span| {
             Binding::ActivityTrigger(ActivityTrigger::from((args, span)))
+        });
+        map.insert("DurableEntityContext", |args, span| {
+            Binding::EntityTrigger(EntityTrigger::from((args, span)))
         });
         map
     };

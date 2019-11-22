@@ -1,5 +1,7 @@
+use serde::Deserialize;
+
 /// Represents a HTTP status code.
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, Hash, Deserialize, PartialEq, Eq)]
 pub struct Status(u16);
 
 macro_rules! statuses {

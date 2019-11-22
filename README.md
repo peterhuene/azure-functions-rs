@@ -180,21 +180,6 @@ cargo build --features unstable
 
 This enables Azure Functions for Rust to emit diagnostic messages that will include the position of an error within an attribute.
 
-## Building an async Azure Functions application
-
-To build with support for async Azure Functions, add the following to your `Cargo.toml`:
-
-```toml
-[dependencies]
-futures = "0.3"
-```
-
-And then build:
-
-```bash
-cargo build
-```
-
 ## Running the Azure Functions application
 
 To build and run your Azure Functions application, use `cargo func run`:

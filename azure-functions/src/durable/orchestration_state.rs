@@ -85,7 +85,7 @@ impl OrchestrationState {
         let index = self.history.iter().position(|event| {
             !event.is_processed
                 && event.event_type == event_type
-                && event.name.as_ref().map(|n| n.as_ref()) == Some(name)
+                && event.name.as_deref() == Some(name)
         })?;
 
         Some((index, &mut self.history[index]))
@@ -148,11 +148,26 @@ impl OrchestrationState {
         Some((index, &mut self.history[index]))
     }
 
+    pub(crate) fn find_event_sent(
+        &mut self,
+        instance_id: &str,
+        name: &str,
+    ) -> Option<(usize, &mut HistoryEvent)> {
+        let index = self.history.iter().position(|event| {
+            !event.is_processed
+                && event.event_type == EventType::EventSent
+                && event.instance_id.as_deref() == Some(instance_id)
+                && event.name.as_deref() == Some(name)
+        })?;
+
+        Some((index, &mut self.history[index]))
+    }
+
     pub(crate) fn find_event_raised(&mut self, name: &str) -> Option<(usize, &mut HistoryEvent)> {
         let index = self.history.iter().position(|event| {
             !event.is_processed
                 && event.event_type == EventType::EventRaised
-                && event.name.as_ref().map(|n| n.as_ref()) == Some(name)
+                && event.name.as_deref() == Some(name)
         })?;
 
         Some((index, &mut self.history[index]))
