@@ -1,4 +1,4 @@
-FROM rust:slim
+FROM rust:slim-stretch
 LABEL MAINTAINER Peter Huene <peterhuene@protonmail.com>
 
 ENV PATH "$PATH:/root/.cargo/bin"
