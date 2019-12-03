@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source code
-      uses: actions/checkout@master
+      uses: actions/checkout@v1
       with:
         submodules: true
     - name: Install Rust
@@ -52,7 +52,7 @@ jobs:
           toolchain: stable
     steps:
     - name: Checkout out source
-      uses: actions/checkout@master
+      uses: actions/checkout@v1
       with:
         submodules: true
     - name: Install Rust
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source code
-      uses: actions/checkout@master
+      uses: actions/checkout@v1
       with:
         submodules: true
     - name: Install Rust
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source code
-      uses: actions/checkout@master
+      uses: actions/checkout@v1
       with:
         submodules: true
     - name: Install Rust
@@ -114,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source code
-      uses: actions/checkout@master
+      uses: actions/checkout@v1
       with:
         submodules: true
     - name: Install Rust
