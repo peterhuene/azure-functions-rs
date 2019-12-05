@@ -13,7 +13,7 @@ azure-functions-shared-codegen = { version = "0.11.0", path = "../azure-function
 tonic = "0.1.0-alpha.6"
 prost = "0.5"
 prost-types = "0.5"
-bytes = "0.4"
+bytes = "0.5"
 serde = {version = "1.0.103", features = ["derive"] }
 serde_json = "1.0.44"
 quote = "1.0.2"
