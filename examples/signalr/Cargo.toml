@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 azure-functions = { path = "../../azure-functions" }
-serde_json = "1.0.42"
+serde_json = "1.0.44"
 serde = {version = "1.0.103", features = ["derive"] }
 
 [features]
