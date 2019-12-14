@@ -186,7 +186,7 @@ To build with support for async Azure Functions, add the following to your `Carg
 
 ```toml
 [dependencies]
-futures-preview = "0.3.0-alpha.19"
+futures = "0.3"
 ```
 
 And then build:

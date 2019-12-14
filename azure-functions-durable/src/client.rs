@@ -1,8 +1,8 @@
 use crate::endpoint::Endpoint;
 use crate::error::ClientError;
 use crate::Result;
+use bytes::Buf;
 use chrono::{DateTime, Utc};
-use futures::TryStreamExt;
 use hyper::{self, Body, Request, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_slice, to_string, Value};
@@ -93,6 +93,15 @@ pub struct Client {
     client: hyper::Client<hyper::client::HttpConnector>,
 }
 
+async fn body_from_response(res: hyper::Response<hyper::Body>) -> Result<impl bytes::Buf> {
+    hyper::body::aggregate(res).await.map_err(|e| {
+        ClientError::Message(format!(
+            "failed to read response: {}",
+            e
+        ))
+    })
+}
+
 impl Client {
     /// Creates a new client from the given status query URL.
     pub fn new(status_query_url: &str) -> Self {
@@ -141,20 +150,12 @@ impl Client {
         match self.client.request(req).await {
             Ok(res) => match res.status() {
                 StatusCode::OK | StatusCode::ACCEPTED => {
-                    let body = res.into_body().try_concat().await;
-                    body.map(|b| {
-                        from_slice(&b).map_err(|e| {
-                            ClientError::Message(format!(
-                                "failed to deserialize orchestration status: {}",
-                                e
-                            ))
-                        })
-                    })
-                    .unwrap_or_else(|e| {
-                        Err(ClientError::Message(format!(
-                            "failed to read response: {}",
+                    let body = body_from_response(res).await?;
+                    from_slice(body.bytes()).map_err(|e| {
+                        ClientError::Message(format!(
+                            "failed to deserialize orchestration status: {}",
                             e
-                        )))
+                        ))
                     })
                 }
                 StatusCode::BAD_REQUEST => Err(ClientError::InstanceFailedOrTerminated),
@@ -223,20 +224,12 @@ impl Client {
         match self.client.request(req).await {
             Ok(res) => match res.status() {
                 StatusCode::OK | StatusCode::ACCEPTED => {
-                    let body = res.into_body().try_concat().await;
-                    body.map(|b| {
-                        from_slice(&b).map_err(|e| {
-                            ClientError::Message(format!(
-                                "failed to deserialize orchestration status: {}",
-                                e
-                            ))
-                        })
-                    })
-                    .unwrap_or_else(|e| {
-                        Err(ClientError::Message(format!(
-                            "failed to read response: {}",
+                    let body = body_from_response(res).await?;
+                    from_slice(body.bytes()).map_err(|e| {
+                        ClientError::Message(format!(
+                            "failed to deserialize orchestration status: {}",
                             e
-                        )))
+                        ))
                     })
                 }
                 StatusCode::BAD_REQUEST => Err(ClientError::InstanceFailedOrTerminated),
@@ -318,22 +311,13 @@ impl Client {
         match self.client.request(req).await {
             Ok(res) => match res.status() {
                 StatusCode::OK => {
-                    let body = res.into_body().try_concat().await;
-                    let result: PurgeHistoryResult = body
-                        .map(|b| {
-                            from_slice(&b).map_err(|e| {
-                                ClientError::Message(format!(
-                                    "failed to deserialize orchestration status: {}",
-                                    e
-                                ))
-                            })
-                        })
-                        .unwrap_or_else(|e| {
-                            Err(ClientError::Message(format!(
-                                "failed to read response: {}",
-                                e
-                            )))
-                        })?;
+                    let body = body_from_response(res).await?;
+                    let result: PurgeHistoryResult = from_slice(body.bytes()).map_err(|e| {
+                        ClientError::Message(format!(
+                            "failed to deserialize orchestration status: {}",
+                            e
+                        ))
+                    })?;
 
                     Ok(result.instances_deleted)
                 }
@@ -431,20 +415,12 @@ impl Client {
         match self.client.request(req).await {
             Ok(res) => match res.status() {
                 StatusCode::ACCEPTED => {
-                    let body = res.into_body().try_concat().await;
-                    body.map(|b| {
-                        from_slice(&b).map_err(|e| {
-                            ClientError::Message(format!(
-                                "failed to deserialize orchestration data: {}",
-                                e
-                            ))
-                        })
-                    })
-                    .unwrap_or_else(|e| {
-                        Err(ClientError::Message(format!(
-                            "failed to read response: {}",
+                    let body = body_from_response(res).await?;
+                    from_slice(body.bytes()).map_err(|e| {
+                        ClientError::Message(format!(
+                            "failed to deserialize orchestration data: {}",
                             e
-                        )))
+                        ))
                     })
                 }
                 StatusCode::BAD_REQUEST => Err(ClientError::BadCreateRequest),

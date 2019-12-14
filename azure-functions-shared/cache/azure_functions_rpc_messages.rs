@@ -622,8 +622,8 @@ pub struct RpcHttp {
     #[prost(message, repeated, tag = "19")]
     pub cookies: ::std::vec::Vec<RpcHttpCookie>,
 }
-#[doc = r" Generated client implementations."]
-pub mod client {
+#[doc = r" Generated server implementations."]
+pub mod functionrpc_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
     #[doc = " Interface exported by the server."]
@@ -647,7 +647,6 @@ pub mod client {
         T::ResponseBody: Body + HttpBody + Send + 'static,
         T::Error: Into<StdError>,
         <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
-        <T::ResponseBody as HttpBody>::Data: Into<bytes::Bytes> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
