@@ -2,9 +2,11 @@
 
 mod create_row;
 mod read_row;
+mod update_row;
 
 // Export the Azure Functions here.
 azure_functions::export! {
     create_row::create_row,
     read_row::read_row,
+    update_row::update_row,
 }
