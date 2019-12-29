@@ -12,7 +12,7 @@ edition = "2018"
 azure-functions-shared = { version = "0.11.0", path = "../azure-functions-shared" }
 azure-functions-codegen = { version = "0.11.0", path = "../azure-functions-codegen" }
 azure-functions-durable = { version = "0.11.0", path = "../azure-functions-durable" }
-http = "0.1"
+http = "0.2"
 tonic = "0.1.0-alpha.6"
 log = { version = "0.4.8", features = ["std"] }
 futures-preview = "0.3.0-alpha.19"
