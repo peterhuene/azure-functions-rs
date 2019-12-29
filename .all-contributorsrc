@@ -97,11 +97,23 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "cbrevik",
+      "name": "Christian Brevik",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/4932625?v=4",
+      "profile": "https://www.cbrevik.com",
+      "contributions": [
+        "bug",
+        "code",
+        "tutorial"
+      ]
     }
   ],
   "contributorsPerLine": 7,
   "projectName": "azure-functions-rs",
   "projectOwner": "peterhuene",
   "repoType": "github",
-  "repoHost": "https://github.com"
+  "repoHost": "https://github.com",
+  "skipCi": true
 }
