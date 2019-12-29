@@ -1,0 +1,18 @@
+[workspace]
+
+members = [
+    "http",
+    "timer",
+    "queue",
+    "blob",
+    "table",
+    "event-grid",
+    "event-hub",
+    "cosmosdb",
+    "signalr",
+    "service-bus",
+    "twilio",
+    "sendgrid",
+    "generic",
+    "durable-functions",
+]
