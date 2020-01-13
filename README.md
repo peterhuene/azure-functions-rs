@@ -248,7 +248,7 @@ Use `docker push` to push the image to a repository that is accessible to Azure 
 docker push $TAG_NAME
 ```
 
-Create the Function App in [Azure](https://portal.azure.com) using the "Linux (Preview)" OS.  Under the "Publish" setting, select "Docker Image".
+Create the "Function App (Classic)" in [Azure](https://portal.azure.com) using the "Linux (Preview)" OS.  Under the "Publish" setting, select "Docker Image".
 
 From the "Configure Container" section, select the repository and enter the image you pushed.
 
