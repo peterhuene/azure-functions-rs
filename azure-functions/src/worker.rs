@@ -5,15 +5,16 @@ use crate::{
     logger,
     registry::Registry,
     rpc::{
-        client::FunctionRpcClient, status_result::Status, streaming_message::Content,
+        function_rpc_client::FunctionRpcClient, status_result::Status, streaming_message::Content,
         FunctionLoadRequest, FunctionLoadResponse, InvocationRequest, InvocationResponse,
         StartStream, StatusResult, StreamingMessage, WorkerInitResponse, WorkerStatusRequest,
         WorkerStatusResponse,
     },
 };
-use futures::{channel::mpsc::unbounded, future::FutureExt, stream::StreamExt};
+use futures::{channel::mpsc::unbounded, stream::StreamExt};
 use http::uri::Uri;
 use log::error;
+use pin_project::pin_project;
 use std::{
     cell::RefCell,
     future::Future,
@@ -21,13 +22,14 @@ use std::{
     pin::Pin,
     task::Poll,
 };
-use tokio::future::poll_fn;
-use tokio_executor::threadpool::blocking;
+use tokio::task;
 use tonic::Request;
 
 pub type Sender = futures::channel::mpsc::UnboundedSender<StreamingMessage>;
 
+#[pin_project]
 struct ContextFuture<F> {
+    #[pin]
     inner: F,
     invocation_id: String,
     function_id: String,
@@ -53,19 +55,21 @@ impl<F> ContextFuture<F> {
     }
 }
 
-impl<F: Future<Output = InvocationResponse> + Unpin> Future for ContextFuture<F> {
+impl<F: Future<Output = InvocationResponse>> Future for ContextFuture<F> {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context) -> Poll<Self::Output> {
-        let _guard = Context::set(&self.invocation_id, &self.function_id, self.function_name);
+    fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context) -> Poll<Self::Output> {
+        let this = self.project();
+        let _guard = Context::set(this.invocation_id, this.function_id, this.function_name);
 
-        let res = match catch_unwind(AssertUnwindSafe(|| self.inner.poll_unpin(cx))) {
+        let f = this.inner;
+        let res = match catch_unwind(AssertUnwindSafe(|| f.poll(cx))) {
             Ok(p) => match p {
                 Poll::Ready(res) => res,
                 Poll::Pending => return Poll::Pending,
             },
             Err(_) => InvocationResponse {
-                invocation_id: self.invocation_id.clone(),
+                invocation_id: this.invocation_id.clone(),
                 result: Some(StatusResult {
                     status: Status::Failure as i32,
                     result: "Azure Function panicked: see log for more information.".to_string(),
@@ -75,7 +79,7 @@ impl<F: Future<Output = InvocationResponse> + Unpin> Future for ContextFuture<F>
             },
         };
 
-        self.sender
+        this.sender
             .unbounded_send(StreamingMessage {
                 content: Some(Content::InvocationResponse(res)),
                 ..Default::default()
@@ -279,20 +283,14 @@ impl Worker {
                 let func_id = req.function_id.clone();
                 let req = RefCell::new(Some(req));
 
-                tokio::spawn(ContextFuture::new(
-                    poll_fn(move |_| {
-                        blocking(|| {
-                            invoker_fn.expect("invoker must have a callback")(
-                                req.replace(None).expect("only a single call to invoker"),
-                            )
-                        })
+                let f = async move {
+                    task::block_in_place(|| {
+                        invoker_fn.expect("invoker must have a callback")(
+                            req.replace(None).expect("only a single call to invoker"),
+                        )
                     })
-                    .map(|r| r.expect("expected a response")),
-                    id,
-                    func_id,
-                    &func.name,
-                    sender,
-                ));
+                };
+                tokio::spawn(ContextFuture::new(f, id, func_id, &func.name, sender));
             }
             InvokerFn::Async(invoker_fn) => {
                 let id = req.invocation_id.clone();

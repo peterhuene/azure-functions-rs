@@ -1,7 +1,6 @@
 //! # Azure Functions for Rust
 //!
 //! This crate supports code generation for the `azure-functions-shared` crate.
-#![deny(unused_extern_crates)]
 #![warn(clippy::use_self)]
 #![warn(clippy::option_map_unwrap_or)]
 #![warn(clippy::option_map_unwrap_or_else)]

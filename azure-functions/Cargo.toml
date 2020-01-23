@@ -12,13 +12,13 @@ edition = "2018"
 azure-functions-shared = { version = "0.11.0", path = "../azure-functions-shared" }
 azure-functions-codegen = { version = "0.11.0", path = "../azure-functions-codegen" }
 azure-functions-durable = { version = "0.11.0", path = "../azure-functions-durable" }
-http = "0.1"
-tonic = "0.1.0-alpha.6"
+http = "0.2.0"
+tonic = "0.1.1"
 log = { version = "0.4.8", features = ["std"] }
-futures-preview = "0.3.0-alpha.19"
+futures = "0.3.1"
+pin-project = "0.4.6"
 clap = "2.33.0"
-tokio = "0.2.0-alpha.6"
-tokio-executor = "0.2.0-alpha.6"
+tokio = { version = "0.2.10", default-features = false, features = ["blocking", "rt-threaded"] }
 serde = {version = "1.0.104", features = ["derive"] }
 serde_json = "1.0.44"
 serde_repr = "0.1.5"
@@ -32,7 +32,7 @@ fs_extra = "1.1.0"
 semver = "0.9.0"
 sha1 = "0.6.0"
 uuid = { version = "0.8.1", features = ["v5"] }
-prost-types = "0.5"
+prost-types = "0.6.1"
 
 [features]
 unstable = ["azure-functions-codegen/unstable", "azure-functions-shared/unstable"]
