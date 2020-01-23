@@ -441,6 +441,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="https://www.cbrevik.com"><img src="https://avatars2.githubusercontent.com/u/4932625?v=4" width="100px;" alt=""/><br /><sub><b>Christian Brevik</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/issues?q=author%3Acbrevik" title="Bug reports">🐛</a> <a href="https://github.com/peterhuene/azure-functions-rs/commits?author=cbrevik" title="Code">💻</a> <a href="#tutorial-cbrevik" title="Tutorials">✅</a></td>
+    <td align="center"><a href="https://github.com/dbcfd"><img src="https://avatars2.githubusercontent.com/u/1475860?v=4" width="100px;" alt=""/><br /><sub><b>Danny Browning</b></sub></a><br /><a href="https://github.com/peterhuene/azure-functions-rs/commits?author=dbcfd" title="Code">💻</a> <a href="#maintenance-dbcfd" title="Maintenance">🚧</a></td>
   </tr>
 </table>
 
