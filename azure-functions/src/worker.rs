@@ -5,7 +5,7 @@ use crate::{
     logger,
     registry::Registry,
     rpc::{
-        functionrpc_client::FunctionRpcClient, status_result::Status, streaming_message::Content,
+        function_rpc_client::FunctionRpcClient, status_result::Status, streaming_message::Content,
         FunctionLoadRequest, FunctionLoadResponse, InvocationRequest, InvocationResponse,
         StartStream, StatusResult, StreamingMessage, WorkerInitResponse, WorkerStatusRequest,
         WorkerStatusResponse,

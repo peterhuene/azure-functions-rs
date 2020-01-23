@@ -622,8 +622,8 @@ pub struct RpcHttp {
     #[prost(message, repeated, tag = "19")]
     pub cookies: ::std::vec::Vec<RpcHttpCookie>,
 }
-#[doc = r" Generated server implementations."]
-pub mod functionrpc_client {
+#[doc = r" Generated client implementations."]
+pub mod function_rpc_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
     #[doc = " Interface exported by the server."]
@@ -652,21 +652,21 @@ pub mod functionrpc_client {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        #[doc = r" Check if the service is ready."]
-        pub async fn ready(&mut self) -> Result<(), tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
+            Self { inner }
         }
         pub async fn event_stream(
             &mut self,
             request: impl tonic::IntoStreamingRequest<Message = super::StreamingMessage>,
         ) -> Result<tonic::Response<tonic::codec::Streaming<super::StreamingMessage>>, tonic::Status>
         {
-            self.ready().await?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/AzureFunctionsRpcMessages.FunctionRpc/EventStream",
