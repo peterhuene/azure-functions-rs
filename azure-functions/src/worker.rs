@@ -290,13 +290,7 @@ impl Worker {
                         )
                     })
                 };
-                tokio::spawn(ContextFuture::new(
-                    f,
-                    id,
-                    func_id,
-                    &func.name,
-                    sender,
-                ));
+                tokio::spawn(ContextFuture::new(f, id, func_id, &func.name, sender));
             }
             InvokerFn::Async(invoker_fn) => {
                 let id = req.invocation_id.clone();

@@ -94,12 +94,9 @@ pub struct Client {
 }
 
 async fn body_from_response(res: hyper::Response<hyper::Body>) -> Result<impl bytes::Buf> {
-    hyper::body::aggregate(res).await.map_err(|e| {
-        ClientError::Message(format!(
-            "failed to read response: {}",
-            e
-        ))
-    })
+    hyper::body::aggregate(res)
+        .await
+        .map_err(|e| ClientError::Message(format!("failed to read response: {}", e)))
 }
 
 impl Client {
