@@ -108,6 +108,16 @@
         "code",
         "tutorial"
       ]
+    },
+    {
+      "login": "dbcfd",
+      "name": "Danny Browning",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1475860?v=4",
+      "profile": "https://github.com/dbcfd",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
     }
   ],
   "contributorsPerLine": 7,
