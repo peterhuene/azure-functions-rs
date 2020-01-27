@@ -16,7 +16,7 @@ macro_rules! template {
 }
 
 lazy_static::lazy_static! {
-    static ref TEMPLATES: handlebars::Handlebars = {
+    static ref TEMPLATES: handlebars::Handlebars<'static> = {
         let mut templates = handlebars::Handlebars::new();
 
         template!(templates, "new-app", "local.settings.json");
