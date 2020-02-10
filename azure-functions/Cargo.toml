@@ -20,7 +20,7 @@ pin-project = "0.4.8"
 clap = "2.33.0"
 tokio = { version = "0.2.10", default-features = false, features = ["blocking", "rt-threaded"] }
 serde = {version = "1.0.104", features = ["derive"] }
-serde_json = "1.0.44"
+serde_json = "1.0.47"
 serde_repr = "0.1.5"
 chrono = { version = "0.4.10", features = ["serde"] }
 xml-rs = "0.8.0"
