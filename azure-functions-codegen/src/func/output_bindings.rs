@@ -144,7 +144,7 @@ impl<'a> OutputBindings<'a> {
             }
         } else {
             if let Type::Tuple(tuple) = &*ty {
-                if let Some(first) = tuple.elems.iter().nth(0) {
+                if let Some(first) = tuple.elems.iter().next() {
                     return OutputBindings::get_return_binding(first, true);
                 }
                 return None;

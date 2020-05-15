@@ -65,7 +65,7 @@ fn validate_orchestration_function(func: &ItemFn) {
         );
     }
 
-    if !match func.sig.inputs.iter().nth(0).unwrap() {
+    if !match func.sig.inputs.iter().next().unwrap() {
         FnArg::Typed(arg) => match &*arg.ty {
             Type::Path(tp) => last_segment_in_path(&tp.path).ident == ORCHESTRATION_CONTEXT_TYPE,
             _ => false,
@@ -112,7 +112,7 @@ fn validate_activity_function(func: &ItemFn) {
     fn validate_return_binding(ty: &Type) {
         match ty {
             Type::Tuple(tuple) => {
-                if let Some(first) = tuple.elems.iter().nth(0) {
+                if let Some(first) = tuple.elems.iter().next() {
                     validate_return_binding(first)
                 }
             }
@@ -201,7 +201,7 @@ fn get_generic_argument_type<'a>(
             if gen_args.args.len() != 1 {
                 return None;
             }
-            match gen_args.args.iter().nth(0) {
+            match gen_args.args.iter().next() {
                 Some(GenericArgument::Type(t)) => Some(t),
                 _ => None,
             }
@@ -572,7 +572,7 @@ pub fn func_impl(
         }
     }
 
-    if let Some((_, args)) = binding_args.iter().nth(0) {
+    if let Some((_, args)) = binding_args.iter().next() {
         iter_attribute_args(&args.0, |k, v| {
             if k != "name" {
                 return true;

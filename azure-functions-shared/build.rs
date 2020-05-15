@@ -24,7 +24,7 @@ fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
     for file in OUTPUT_FILES {
         let cached_output = cache_dir.join(file);
 
-        fs::copy(out_dir.join(file), &cached_output).expect(&format!(
+        fs::copy(out_dir.join(file), &cached_output).unwrap_or_else(|_| panic!(
             "can't update cache file '{}'",
             cached_output.display()
         ));
@@ -35,7 +35,7 @@ fn compile_protobufs(out_dir: &PathBuf, cache_dir: &PathBuf) {
 
 fn use_cached_files(out_dir: &PathBuf, cache_dir: &PathBuf) {
     for file in OUTPUT_FILES {
-        fs::copy(cache_dir.join(file), out_dir.join(file)).expect(&format!(
+        fs::copy(cache_dir.join(file), out_dir.join(file)).unwrap_or_else(|_| panic!(
             "can't copy cache file '{}' to output directory",
             file
         ));
