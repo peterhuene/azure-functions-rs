@@ -127,6 +127,12 @@ You may encrypt `local.settings.json`, if desired:
 $ func settings encrypt
 ```
 
+Insure the Azure Functions Signlar extension is installed:
+
+```
+$ func extensions install -p Microsoft.Azure.WebJobs.Extensions.SignalRService -v 1.0.0
+```
+
 Finally, start the Azure Functions application:
 
 ```
