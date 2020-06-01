@@ -1,3 +1,11 @@
+# Notice
+
+:warning: 
+
+This project is no longer being actively maintained by the original author.
+
+Forks or derivative works are encouraged!
+
 # Azure Functions for Rust
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
